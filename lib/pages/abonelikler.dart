@@ -51,6 +51,16 @@ class _SubscriptionsState extends State<Subscriptions> {
       isTVContainerTouched = true;
       isOyunContainerTouched = false;
       isMuzikContainerTouched = false;
+      isTextFormFieldVisible = false;
+      isTextFormFieldVisibleND =false;
+      isTextFormFieldVisibleRD = false;
+      isEditingList = false;
+      print("isEditingList: $isEditingList");
+      print("isEditingListND: $isEditingList");
+      print("isEditingListRD: $isEditingList");
+      print("isTextFormFieldVisible: $isTextFormFieldVisible");
+      print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
+      print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
     });
   }
   void handleOyunContainerTouch() {
@@ -58,6 +68,16 @@ class _SubscriptionsState extends State<Subscriptions> {
       isTVContainerTouched = false;
       isOyunContainerTouched = true;
       isMuzikContainerTouched = false;
+      isTextFormFieldVisible = false;
+      isTextFormFieldVisibleND =false;
+      isTextFormFieldVisibleRD = false;
+      isEditingListND = false;
+      print("isEditingList: $isEditingList");
+      print("isEditingListND: $isEditingList");
+      print("isEditingListRD: $isEditingList");
+      print("isTextFormFieldVisible: $isTextFormFieldVisible");
+      print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
+      print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
     });
   }
   void handleMuzikContainerTouch() {
@@ -65,6 +85,16 @@ class _SubscriptionsState extends State<Subscriptions> {
       isTVContainerTouched = false;
       isOyunContainerTouched = false;
       isMuzikContainerTouched = true;
+      isTextFormFieldVisible = false;
+      isTextFormFieldVisibleND =false;
+      isTextFormFieldVisibleRD = false;
+      isEditingListRD = false;
+      print("isEditingList: $isEditingList");
+      print("isEditingListND: $isEditingList");
+      print("isEditingListRD: $isEditingList");
+      print("isTextFormFieldVisible: $isTextFormFieldVisible");
+      print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
+      print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
     });
   }
 
@@ -246,31 +276,43 @@ class _SubscriptionsState extends State<Subscriptions> {
                                           : Container(
                                         padding: EdgeInsets.symmetric(vertical: 2),
                                         child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Text(
-                                              itemList[i],
-                                              style: TextStyle(fontSize: 18),
+                                            Flexible(
+                                              fit: FlexFit.tight,
+                                              child: Text(
+                                                itemList[i],
+                                                style: TextStyle(fontSize: 18),
+                                                overflow: TextOverflow.ellipsis
+                                              ),
                                             ),
-                                            Text(
-                                              pricesList[i].toString(),
-                                              style: TextStyle(fontSize: 18),
+                                            SizedBox(width: 25),
+                                            Flexible(
+                                              fit: FlexFit.tight,
+                                              child: Text(
+                                                pricesList[i].toString(),
+                                                style: TextStyle(fontSize: 18),
+                                                overflow: TextOverflow.ellipsis
+                                              ),
                                             ),
-                                            if(!isAddButtonActive)
-                                              IconButton(
-                                                  splashRadius: 0.0001,
+                                            if (!isAddButtonActive)
+                                              Container(
+                                                width: 21,
+                                                height: 21,
+                                                child: IconButton(
                                                   padding: EdgeInsets.zero,
-                                                  constraints: BoxConstraints(minWidth: 24, maxWidth: 24),
                                                   onPressed: () {
                                                     setState(() {
                                                       isEditingList = !isEditingList;
                                                       if (isEditingList) {
                                                         editController.text = itemList[i];
-                                                        platformPriceController.text = pricesList[i].toString(); // Set the correct value
+                                                        platformPriceController.text = pricesList[i].toString();
+                                                        // Set the correct value
                                                       }
                                                     });
                                                   },
-                                                  icon: Icon(Icons.edit))
+                                                  icon: Icon(Icons.edit, size: 21),
+                                                ),
+                                              ),
                                           ],
                                         ),
                                       ),
@@ -291,7 +333,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                             Column(
                                               children: [
                                                 Row(
-                                                  mainAxisAlignment: MainAxisAlignment.end,
+                                                  mainAxisAlignment: MainAxisAlignment.center,
                                                   children: [
                                                     IconButton(
                                                       splashRadius: 0.0001,
@@ -359,7 +401,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                   ],
                                 ),
                               ),
-                            if (isTextFormFieldVisible)
+                            if (isTextFormFieldVisible && isTVContainerTouched)
                               Container(
                                 padding: EdgeInsets.all(10),
                                 child: Row(
@@ -413,9 +455,20 @@ class _SubscriptionsState extends State<Subscriptions> {
                                 child: InkWell(
                                   onTap: () {
                                     setState(() {
+                                      isTVContainerTouched = true;
+                                      isOyunContainerTouched = false;
+                                      isMuzikContainerTouched = false;
                                       isAddButtonActive = true;
                                       isTextFormFieldVisible = true;
+                                      isTextFormFieldVisibleND =false;
+                                      isTextFormFieldVisibleRD = false;
                                       platformPriceController.clear();
+                                      print("isEditingList: $isEditingList");
+                                      print("isEditingListND: $isEditingList");
+                                      print("isEditingListRD: $isEditingList");
+                                      print("isTextFormFieldVisible: $isTextFormFieldVisible");
+                                      print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
+                                      print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
                                     });
                                   },
                                   child: Icon(Icons.add_circle, size: 26),
@@ -580,7 +633,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                   ],
                                 ),
                               ),
-                            if (isTextFormFieldVisibleND)
+                            if (isTextFormFieldVisibleND && isOyunContainerTouched)
                               Container(
                                 padding: EdgeInsets.all(10),
                                 child: Row(
@@ -634,9 +687,20 @@ class _SubscriptionsState extends State<Subscriptions> {
                                 child: InkWell(
                                   onTap: () {
                                     setState(() {
+                                      isTVContainerTouched = false;
+                                      isOyunContainerTouched = true;
+                                      isMuzikContainerTouched = false;
                                       isAddButtonActiveND = true;
-                                      isTextFormFieldVisibleND = true;
+                                      isTextFormFieldVisible = false;
+                                      isTextFormFieldVisibleND =true;
+                                      isTextFormFieldVisibleRD = false;
                                       NDplatformPriceController.clear();
+                                      print("isEditingList: $isEditingList");
+                                      print("isEditingListND: $isEditingList");
+                                      print("isEditingListRD: $isEditingList");
+                                      print("isTextFormFieldVisible: $isTextFormFieldVisible");
+                                      print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
+                                      print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
                                     });
                                   },
                                   child: Icon(Icons.add_circle, size: 26),
@@ -801,7 +865,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                   ],
                                 ),
                               ),
-                            if (isTextFormFieldVisibleRD)
+                            if (isTextFormFieldVisibleRD && isMuzikContainerTouched)
                               Container(
                                 padding: EdgeInsets.all(10),
                                 child: Row(
@@ -855,9 +919,20 @@ class _SubscriptionsState extends State<Subscriptions> {
                                 child: InkWell(
                                   onTap: () {
                                     setState(() {
+                                      isTVContainerTouched = false;
+                                      isOyunContainerTouched = false;
+                                      isMuzikContainerTouched = true;
                                       isAddButtonActiveRD = true;
+                                      isTextFormFieldVisible = false;
+                                      isTextFormFieldVisibleND =false;
                                       isTextFormFieldVisibleRD = true;
                                       RDplatformPriceController.clear();
+                                      print("isEditingList: $isEditingList");
+                                      print("isEditingListND: $isEditingList");
+                                      print("isEditingListRD: $isEditingList");
+                                      print("isTextFormFieldVisible: $isTextFormFieldVisible");
+                                      print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
+                                      print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
                                     });
                                   },
                                   child: Icon(Icons.add_circle, size: 26),
