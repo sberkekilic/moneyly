@@ -1,9 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:moneyly/pages/gelir-ekle.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
+import 'pages/gelir-ekle.dart';
+import 'pages/selection.dart';
+import 'routes/routes.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => IncomeSelections(),
+      child: MyApp(),
+    ),
+  );
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -11,13 +22,15 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        scaffoldBackgroundColor: Color(
+            0xfff0f0f1),
       ),
-      home: const MyHomePage(),
+      routerConfig: routes,
     );
   }
 }
@@ -37,10 +50,7 @@ class MyHomePage extends StatelessWidget {
             ),
             ElevatedButton(
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => AddIncome()),
-                  );
+                  GoRouter.of(context).replace("/gelir-ekle");
                 },
                 child: Text("İlerle")
             )

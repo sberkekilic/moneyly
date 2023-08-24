@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:untitled/pages/faturalar.dart';
-
+import 'abonelikler.dart';
 import 'diger-giderler.dart';
 import 'gelir-ekle.dart';
 
-class Subscriptions extends StatefulWidget {
-  const Subscriptions({Key? key}) : super(key: key);
+class Bills extends StatefulWidget {
+  const Bills({Key? key}) : super(key: key);
+
   @override
-  State<Subscriptions> createState() => _SubscriptionsState();
+  State<Bills> createState() => _BillsState();
 }
-class _SubscriptionsState extends State<Subscriptions> {
+
+class _BillsState extends State<Bills> {
   List<String> itemList = [];
   List<String> pricesList = [];
   List<String> NDitemList = [];
@@ -172,10 +173,11 @@ class _SubscriptionsState extends State<Subscriptions> {
   void goToPreviousPage() {
     Navigator.pop(context);
   }
+
   void goToNextPage() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => Bills()),
+      MaterialPageRoute(builder: (context) => OtherExpenses()),
     );
   }
 
@@ -193,38 +195,38 @@ class _SubscriptionsState extends State<Subscriptions> {
     double screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xfff0f0f1),
-        elevation: 0,
-        toolbarHeight: 70,
-        automaticallyImplyLeading: false,
-        leadingWidth: 30,
-        title: Stack(
-          alignment: Alignment.center,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  onPressed: () {
-                    GoRouter.of(context).replace("/gelir-ekle");
-                  },
-                  icon: Icon(Icons.arrow_back, color: Colors.black), // Replace with the desired left icon
-                ),
-                IconButton(
-                  onPressed: () {
-                    GoRouter.of(context).replace("/");
-                  },
-                  icon: Icon(Icons.clear, color: Colors.black), // Replace with the desired right icon
-                ),
-              ],
-            ),
-            Text(
-              "Gider Ekle",
-              style: TextStyle(color: Colors.black, fontSize: 28, fontWeight: FontWeight.normal),
-            ),
-          ],
+          backgroundColor: Color(0xfff0f0f1),
+          elevation: 0,
+          toolbarHeight: 70,
+          automaticallyImplyLeading: false,
+          leadingWidth: 30,
+          title: Stack(
+            alignment: Alignment.center,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      GoRouter.of(context).replace("/abonelikler");
+                    },
+                    icon: Icon(Icons.arrow_back, color: Colors.black), // Replace with the desired left icon
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      GoRouter.of(context).replace("/");
+                    },
+                    icon: Icon(Icons.clear, color: Colors.black), // Replace with the desired right icon
+                  ),
+                ],
+              ),
+              Text(
+                "Gider Ekle",
+                style: TextStyle(color: Colors.black, fontSize: 28, fontWeight: FontWeight.normal),
+              ),
+            ],
+          ),
         ),
-      ),
       bottomNavigationBar: BottomAppBar(
           child: Padding(
             padding: const EdgeInsets.only(top: 10, bottom: 10),
@@ -244,7 +246,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                       ),
                       clipBehavior: Clip.hardEdge,
                       onPressed: () async {
-                        GoRouter.of(context).replace("/faturalar");
+                        GoRouter.of(context).replace("/diger-giderler");
                       },
                       child: const Text('Next', style: TextStyle(fontSize: 18),),
                     ),
@@ -262,14 +264,14 @@ class _SubscriptionsState extends State<Subscriptions> {
             left: 0,
             right: 0,
             child: Container(
-              color: Color(
-                  0xfff0f0f1),
+              color: Color(0xfff0f0f1),
               padding: EdgeInsets.only(left: 20, right: 20),
               child: Column(
                 children: [
                   Container(
                     height: 60,
                     child: ListView(
+                      controller: ScrollController(initialScrollOffset: (screenWidth - 60) / 3 + 10),
                       scrollDirection: Axis.horizontal,
                       children: [
                         InkWell(
@@ -288,10 +290,10 @@ class _SubscriptionsState extends State<Subscriptions> {
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(10),
                                   child: Container(
-                                    height: 8,
+                                      height: 8,
                                       width: (screenWidth-60) / 3,
-                                    color: Color(
-                                        0xff1ab738)
+                                      color: Color(
+                                          0xff1ab738)
                                   ),
                                 )
                               ],
@@ -310,16 +312,14 @@ class _SubscriptionsState extends State<Subscriptions> {
                             width: (screenWidth-60) / 3,
                             child: Column(
                               children: [
-                                Align(child: Text("Abonelikler", style: TextStyle(color: Color(
-                                    0xff1ab738), fontWeight: FontWeight.bold, fontSize: 15)), alignment: Alignment.center),
+                                Align(child: Text("Abonelikler", style: TextStyle(color: Colors.black, fontSize: 15)), alignment: Alignment.center),
                                 SizedBox(height: 10),
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(10),
                                   child: Container(
                                     height: 8,
                                     width: (screenWidth-60) / 3,
-                                    color: Color(
-                                        0xff1ab738),
+                                    color: Color(0xff1ab738),
                                   ),
                                 )
                               ],
@@ -338,16 +338,14 @@ class _SubscriptionsState extends State<Subscriptions> {
                             width: (screenWidth-60) / 3,
                             child: Column(
                               children: [
-                                Align(child: Text("Faturalar", style: TextStyle(color: Color(
-                                    0xffc6c6c7), fontSize: 15)), alignment: Alignment.center),
+                                Align(child: Text("Faturalar", style: TextStyle(color: Color(0xff1ab738), fontWeight: FontWeight.bold, fontSize: 15)), alignment: Alignment.center),
                                 SizedBox(height: 10),
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(10),
                                   child: Container(
                                     height: 8,
                                     width: (screenWidth-60) / 3,
-                                    color: Color(
-                                        0xffc6c6c7),
+                                    color: Color(0xff1ab738),
                                   ),
                                 )
                               ],
@@ -408,7 +406,7 @@ class _SubscriptionsState extends State<Subscriptions> {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.only(topLeft: Radius.circular(15), topRight: Radius.circular(15)),
-                child:  Container(
+                child: Container(
                   color: Colors.white,
                   child: SingleChildScrollView(
                     keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
@@ -416,8 +414,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                       padding: const EdgeInsets.only(left:20, right: 20, bottom: 20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
+                        children: [Padding(
                             padding: const EdgeInsets.only(top: 40),
                             child: Center(
                               child: Column(
@@ -438,7 +435,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                         children: [
                                           Padding(
                                               padding: EdgeInsets.all(10),
-                                              child: Text("Film, Dizi ve TV",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),)
+                                              child: Text("Ev Faturaları",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),)
                                           ),
                                           for (int i = 0; i < itemList.length; i++)
                                             Padding(
@@ -682,7 +679,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                         children: [
                                           Padding(
                                               padding: EdgeInsets.all(10),
-                                              child: Text("Oyun",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),)
+                                              child: Text("İnternet",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),)
                                           ),
                                           for (int i = 0; i < NDitemList.length; i++)
                                             Padding(
@@ -914,7 +911,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                         children: [
                                           Padding(
                                               padding: EdgeInsets.all(10),
-                                              child: Text("Müzik",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),)
+                                              child: Text("Telefon",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),)
                                           ),
                                           for (int i = 0; i < RDitemList.length; i++)
                                             Padding(
@@ -1132,7 +1129,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                 ],
                               ),
                             ),
-                          ),
+                          )
                         ],
                       ),
                     ),
@@ -1146,4 +1143,3 @@ class _SubscriptionsState extends State<Subscriptions> {
     );
   }
 }
-
