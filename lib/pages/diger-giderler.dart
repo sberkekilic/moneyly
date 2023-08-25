@@ -396,8 +396,13 @@ class _OtherExpensesState extends State<OtherExpenses> {
                       scrollDirection: Axis.horizontal,
                       children: [
                         InkWell(
-                          onTap: (){
-                            GoRouter.of(context).replace("/gelir-ekle");
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            try {
+                              Navigator.of(context).pushReplacementNamed("/gelir-ekle");
+                            } catch (error) {
+                              // Handle the error or leave this block empty to suppress the error
+                            }
                           },
                           splashColor: Colors.grey,
                           borderRadius: BorderRadius.circular(10),

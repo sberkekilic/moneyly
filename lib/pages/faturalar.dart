@@ -276,7 +276,12 @@ class _BillsState extends State<Bills> {
                       children: [
                         InkWell(
                           onTap: (){
-                            GoRouter.of(context).replace("/gelir-ekle");
+                            Navigator.of(context).pop();
+                            try {
+                              Navigator.of(context).pushReplacementNamed("/gelir-ekle");
+                            } catch (error) {
+                              // Handle the error or leave this block empty to suppress the error
+                            }
                           },
                           splashColor: Colors.grey,
                           borderRadius: BorderRadius.circular(10),
@@ -328,9 +333,6 @@ class _BillsState extends State<Bills> {
                         ),
                         SizedBox(width: 10),
                         InkWell(
-                          onTap: (){
-                            GoRouter.of(context).replace("/faturalar");
-                          },
                           splashColor: Colors.grey,
                           borderRadius: BorderRadius.circular(10),
                           child: Container(
@@ -354,9 +356,6 @@ class _BillsState extends State<Bills> {
                         ),
                         SizedBox(width: 10),
                         InkWell(
-                          onTap: (){
-                            GoRouter.of(context).replace("/diger-giderler");
-                          },
                           splashColor: Colors.grey,
                           borderRadius: BorderRadius.circular(10),
                           child: Container(

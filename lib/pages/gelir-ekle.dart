@@ -3,9 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../main.dart';
 import 'abonelikler.dart';
-import 'diger-giderler.dart';
 import 'selection.dart';
-import 'faturalar.dart';
 
 class AddIncome extends StatefulWidget {
   const AddIncome({Key? key}) : super(key: key);
@@ -52,17 +50,8 @@ class _AddIncomeState extends State<AddIncome> {
     final selections = Provider.of<IncomeSelections>(context, listen: false);
     selections.setIncomeValue(incomeController.text);
     selections.setSelectedOption(selectedOption);
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => Subscriptions(
-        ),
-      ),
-    );
+    GoRouter.of(context).push("/abonelikler");
   }
-
-
 
   void handleButtonPress(String value) {
     setState(() {
@@ -206,12 +195,14 @@ class _AddIncomeState extends State<AddIncome> {
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        backgroundColor: Colors.black,
+                        backgroundColor: selectedOption != SelectedOption.None && incomeController.text.isNotEmpty ? Colors.black : Colors.grey ,
                       ),
                       clipBehavior: Clip.hardEdge,
-                      onPressed: () async {
-                        GoRouter.of(context).replace("/abonelikler");
-                      },
+                      onPressed: (selectedOption != SelectedOption.None && incomeController.text.isNotEmpty)
+                          ? () async {
+                        goToNextPage();
+                      }
+                          : null,
                       child: const Text(
                         'Next',
                         style: TextStyle(fontSize: 18),
@@ -234,8 +225,7 @@ class _AddIncomeState extends State<AddIncome> {
             child: Column(
               children: [
                 Container(
-                  color: Color(
-                      0xfff0f0f1),
+                  color: Color(0xfff0f0f1),
                   padding: EdgeInsets.only(left: 20, right: 20),
                   child: Column(
                     children: [
@@ -271,9 +261,6 @@ class _AddIncomeState extends State<AddIncome> {
                             ),
                             SizedBox(width: 10),
                             InkWell(
-                              onTap: (){
-                                GoRouter.of(context).replace("/abonelikler");
-                              },
                               splashColor: Colors.grey,
                               borderRadius: BorderRadius.circular(10),
                               child: Container(
@@ -297,9 +284,6 @@ class _AddIncomeState extends State<AddIncome> {
                             ),
                             SizedBox(width: 10),
                             InkWell(
-                              onTap: (){
-                                GoRouter.of(context).replace("/faturalar");
-                              },
                               splashColor: Colors.grey,
                               borderRadius: BorderRadius.circular(10),
                               child: Container(
@@ -324,9 +308,6 @@ class _AddIncomeState extends State<AddIncome> {
                             ),
                             SizedBox(width: 10),
                             InkWell(
-                              onTap: (){
-                                GoRouter.of(context).replace("/diger-giderler");
-                              },
                               splashColor: Colors.grey,
                               borderRadius: BorderRadius.circular(10),
                               child: Container(
@@ -389,7 +370,7 @@ class _AddIncomeState extends State<AddIncome> {
                             SizedBox(height: 10),
                             Row(
                               children: [
-                                Text("Aylık maaş seçin", style: TextStyle(fontSize: 18),)
+                                Text("Aylık gelir seçin", style: TextStyle(fontSize: 18),)
                               ],
                             ),
                             Padding(
@@ -426,102 +407,105 @@ class _AddIncomeState extends State<AddIncome> {
                             Visibility(
                               visible: selectedOption != SelectedOption.None,
                               child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Align(
+                                    alignment: Alignment.centerLeft,
                                     child: Text(
                                       selectedTitle,
                                       style: TextStyle(fontSize: 18),
                                     ),
-                                    alignment: Alignment.centerLeft,
                                   ),
-                                  SizedBox(height: 10,),
+                                  SizedBox(height: 10),
                                   Row(
                                     children: [
                                       Expanded(
-                                          child: TextFormField(
-                                            controller: incomeController,
-                                            textAlign: TextAlign.right,
-                                            readOnly: true,
-                                            style: TextStyle(fontSize: 20),
-                                            decoration: InputDecoration(
-                                              border: OutlineInputBorder(
-                                                  borderRadius: BorderRadius.circular(10),
-                                                  borderSide: BorderSide(color: Colors.black, width: 4, style: BorderStyle.solid)
-                                              ),
-                                              enabledBorder: OutlineInputBorder(
-                                                borderRadius: BorderRadius.circular(10),
-                                                borderSide: BorderSide(color: Colors.black, width: 3, style: BorderStyle.solid),
-                                              ),
-                                              focusedBorder: OutlineInputBorder(
-                                                borderRadius: BorderRadius.circular(10),
-                                                borderSide: BorderSide(color: Colors.black, width: 3, style: BorderStyle.solid),
-                                              ),
-                                              contentPadding: EdgeInsets.symmetric(vertical: 0),
-                                              suffixIcon: Container(
-                                                child: Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    ElevatedButton(
-                                                      style: ElevatedButton.styleFrom(
-                                                        minimumSize: Size(45, 45),
-                                                        backgroundColor: Colors.black,
-                                                        shape: RoundedRectangleBorder(
-                                                            borderRadius: BorderRadius.only(topLeft: Radius.circular(10), bottomLeft: Radius.circular(10))
-                                                        ),
+                                        child: TextFormField(
+                                          controller: incomeController,
+                                          textAlign: TextAlign.right,
+                                          readOnly: true,
+                                          style: TextStyle(fontSize: 20),
+                                          decoration: InputDecoration(
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                              borderSide: BorderSide(color: Colors.black, width: 4, style: BorderStyle.solid),
+                                            ),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                              borderSide: BorderSide(color: Colors.black, width: 3, style: BorderStyle.solid),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                              borderSide: BorderSide(color: Colors.black, width: 3, style: BorderStyle.solid),
+                                            ),
+                                            contentPadding: EdgeInsets.symmetric(vertical: 0),
+                                            suffixIcon: Container(
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  SizedBox(width: 20),
+                                                  ElevatedButton(
+                                                    style: ElevatedButton.styleFrom(
+                                                      minimumSize: Size((screenWidth - 60) / 3, 45),
+                                                      backgroundColor: Colors.black,
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius: BorderRadius.circular(10),
                                                       ),
-                                                      child: Icon(Icons.clear),
-                                                      onPressed: () {
-                                                        incomeController.clear();
-                                                        isDecimal = false;
-                                                      },
                                                     ),
-                                                    ElevatedButton(
-                                                      style: ElevatedButton.styleFrom(
-                                                        minimumSize: Size(45, 45),
-                                                        backgroundColor: Colors.black,
-                                                        shape: RoundedRectangleBorder(
-                                                            borderRadius: BorderRadius.only(topRight: Radius.circular(10), bottomRight: Radius.circular(10))
-                                                        ),
-                                                      ),
-                                                      child: Icon(Icons.done),
-                                                      onPressed: () {
-                                                      },
-                                                    ),
-                                                  ],
-                                                ),
+                                                    child: Icon(Icons.clear),
+                                                    onPressed: () {
+                                                      incomeController.clear();
+                                                      isDecimal = false;
+                                                    },
+                                                  ),
+                                                ],
                                               ),
                                             ),
-                                          )
-                                      )
+                                          ),
+                                        ),
+                                      ),
                                     ],
                                   ),
-                                  Container(
-                                    padding: EdgeInsets.only(top: 20),
-                                    child: GridView.count(
-                                      crossAxisCount: 3,
-                                      crossAxisSpacing: 7,
-                                      mainAxisSpacing: 7,
-                                      shrinkWrap: true,
-                                      childAspectRatio: 2.3,
-                                      children: [
-                                        buildNumberButton('1'),
-                                        buildNumberButton('2'),
-                                        buildNumberButton('3'),
-                                        buildNumberButton('4'),
-                                        buildNumberButton('5'),
-                                        buildNumberButton('6'),
-                                        buildNumberButton('7'),
-                                        buildNumberButton('8'),
-                                        buildNumberButton('9'),
-                                        buildNumberComa(','),
-                                        buildNumberButton('0'),
-                                        buildNumberIcon(Icon(Icons.backspace), textColor: Colors.blue),
-                                      ],
-                                    ),
-                                  )
+                                  SizedBox(height: 10),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      buildNumberButton('1'),
+                                      buildNumberButton('2'),
+                                      buildNumberButton('3'),
+                                    ],
+                                  ),
+                                  SizedBox(height: 7),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      buildNumberButton('4'),
+                                      buildNumberButton('5'),
+                                      buildNumberButton('6'),
+                                    ],
+                                  ),
+                                  SizedBox(height: 7),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      buildNumberButton('7'),
+                                      buildNumberButton('8'),
+                                      buildNumberButton('9'),
+                                    ],
+                                  ),
+                                  SizedBox(height: 7),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      buildNumberComa(','),
+                                      buildNumberButton('0'),
+                                      buildNumberIcon(Icon(Icons.backspace), textColor: Colors.blue),
+                                    ],
+                                  ),
                                 ],
                               ),
                             ),
+
                           ],
                         ),
                       ),
@@ -547,7 +531,7 @@ class _AddIncomeState extends State<AddIncome> {
         });
       },
       child: Container(
-        height: 200,
+        height: 160,
         decoration: BoxDecoration(
           border: Border.all(
             color: Colors.black,
@@ -583,12 +567,13 @@ class _AddIncomeState extends State<AddIncome> {
     );
   }
   Widget buildNumberButton(String value, {Color textColor = Colors.black}) {
+    double screenWidth = MediaQuery.of(context).size.width;
     return Container(
-      height: 60,
-      width: 60,
+      height: 50,
       child: ElevatedButton(
         onPressed: () => handleButtonPress(value),
         style: ElevatedButton.styleFrom(
+          minimumSize: Size((screenWidth - 60) / 3, 45),
           backgroundColor: Colors.white,
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -603,12 +588,13 @@ class _AddIncomeState extends State<AddIncome> {
     );
   }
   Widget buildNumberComa(String value, {Color textColor = Colors.white}) {
+    double screenWidth = MediaQuery.of(context).size.width;
     return Container(
-      height: 60,
-      width: 60,
+      height: 50,
       child: ElevatedButton(
         onPressed: () => handleButtonPress(value),
         style: ElevatedButton.styleFrom(
+            minimumSize: Size((screenWidth - 60) / 3, 45),
             backgroundColor: Colors.black,
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -623,12 +609,13 @@ class _AddIncomeState extends State<AddIncome> {
     );
   }
   Widget buildNumberIcon(Widget icon, {Color textColor = Colors.black}) {
+    double screenWidth = MediaQuery.of(context).size.width;
     return Container(
-      height: 60,
-      width: 60,
+      height: 50,
       child: ElevatedButton(
         onPressed: () => handleButtonPress(icon == Icon(Icons.backspace) ? '←' : ''),
         style: ElevatedButton.styleFrom(
+            minimumSize: Size((screenWidth - 60) / 3, 45),
             backgroundColor: Colors.black,
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10)

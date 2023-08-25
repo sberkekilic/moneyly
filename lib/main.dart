@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import 'pages/gelir-ekle.dart';
 import 'pages/selection.dart';
 import 'routes/routes.dart';
 
@@ -19,7 +18,6 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
@@ -27,8 +25,7 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        scaffoldBackgroundColor: Color(
-            0xfff0f0f1),
+        scaffoldBackgroundColor: Color(0xfff0f0f1),
       ),
       routerConfig: routes,
     );

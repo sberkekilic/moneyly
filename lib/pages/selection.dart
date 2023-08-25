@@ -14,6 +14,4 @@ class IncomeSelections with ChangeNotifier {
     selectedOption = option;
     notifyListeners();
   }
-
-// Add any other selections you want to store
 }
