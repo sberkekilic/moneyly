@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'abonelikler.dart';
+import 'package:provider/provider.dart';
+import '../form-data-provider.dart';
 import 'diger-giderler.dart';
-import 'gelir-ekle.dart';
+import 'selection.dart';
 
 class Bills extends StatefulWidget {
   const Bills({Key? key}) : super(key: key);
@@ -181,10 +182,10 @@ class _BillsState extends State<Bills> {
     );
   }
 
+
   @override
   void initState() {
     super.initState();
-    pricesList = [];
     editTextControllers = itemList.map((item) => TextEditingController(text: item)).toList();
     NDeditTextControllers = NDitemList.map((item) => TextEditingController(text: item)).toList();
     RDeditTextControllers = RDitemList.map((item) => TextEditingController(text: item)).toList();
@@ -192,6 +193,7 @@ class _BillsState extends State<Bills> {
 
   @override
   Widget build(BuildContext context) {
+    var formData = Provider.of<FormDataProvider>(context);
     double screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
       appBar: AppBar(
@@ -208,13 +210,13 @@ class _BillsState extends State<Bills> {
                 children: [
                   IconButton(
                     onPressed: () {
-                      GoRouter.of(context).replace("/abonelikler");
+                      Navigator.pushNamed(context, 'abonelikler');
                     },
                     icon: Icon(Icons.arrow_back, color: Colors.black), // Replace with the desired left icon
                   ),
                   IconButton(
                     onPressed: () {
-                      GoRouter.of(context).replace("/");
+                      Navigator.pushNamed(context, '/');
                     },
                     icon: Icon(Icons.clear, color: Colors.black), // Replace with the desired right icon
                   ),
@@ -246,7 +248,7 @@ class _BillsState extends State<Bills> {
                       ),
                       clipBehavior: Clip.hardEdge,
                       onPressed: () async {
-                        GoRouter.of(context).replace("/diger-giderler");
+                        Navigator.pushNamed(context, 'diger-giderler');
                       },
                       child: const Text('Next', style: TextStyle(fontSize: 18),),
                     ),
@@ -308,7 +310,7 @@ class _BillsState extends State<Bills> {
                         SizedBox(width: 10),
                         InkWell(
                           onTap: (){
-                            GoRouter.of(context).replace("/abonelikler");
+                            Navigator.pushNamed(context, 'abonelikler');
                           },
                           splashColor: Colors.grey,
                           borderRadius: BorderRadius.circular(10),

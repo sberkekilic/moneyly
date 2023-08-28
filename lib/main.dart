@@ -1,16 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:moneyly/form-data-provider.dart';
+import 'package:moneyly/pages/abonelikler.dart';
+import 'package:moneyly/pages/diger-giderler.dart';
+import 'package:moneyly/pages/faturalar.dart';
+import 'package:moneyly/pages/gelir-ekle.dart';
+import 'package:moneyly/pages/page5.dart';
 import 'package:provider/provider.dart';
 
 import 'pages/selection.dart';
-import 'routes/routes.dart';
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => IncomeSelections(),
-      child: MyApp(),
-    ),
+    MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (context) => IncomeSelections()),
+          ChangeNotifierProvider(create: (context) => FormDataProvider()),
+        ],
+        child: MyApp()
+    )
   );
 }
 
@@ -20,14 +27,22 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
+    return MaterialApp(
+      initialRoute: '/',
+      routes: {
+        '/': (context) => MyHomePage(),
+        'gelir-ekle': (context) => AddIncome(),
+        'abonelikler': (context) => Subscriptions(),
+        'faturalar': (context) => Bills(),
+        'diger-giderler': (context) => OtherExpenses(),
+        'page5': (context) => Page5()
+      },
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         scaffoldBackgroundColor: Color(0xfff0f0f1),
       ),
-      routerConfig: routes,
     );
   }
 }
@@ -47,7 +62,7 @@ class MyHomePage extends StatelessWidget {
             ),
             ElevatedButton(
                 onPressed: () {
-                  GoRouter.of(context).replace("/gelir-ekle");
+                  Navigator.pushNamed(context, 'gelir-ekle');
                 },
                 child: Text("İlerle")
             )

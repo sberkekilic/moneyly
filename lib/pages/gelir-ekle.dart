@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../main.dart';
-import 'abonelikler.dart';
 import 'selection.dart';
 
 class AddIncome extends StatefulWidget {
@@ -50,7 +49,7 @@ class _AddIncomeState extends State<AddIncome> {
     final selections = Provider.of<IncomeSelections>(context, listen: false);
     selections.setIncomeValue(incomeController.text);
     selections.setSelectedOption(selectedOption);
-    GoRouter.of(context).push("/abonelikler");
+    Navigator.pushNamed(context, 'abonelikler');
   }
 
   void handleButtonPress(String value) {
@@ -133,6 +132,15 @@ class _AddIncomeState extends State<AddIncome> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    if (Provider.of<IncomeSelections>(context, listen: false).incomeValue.isNotEmpty){
+      selectedOption = Provider.of<IncomeSelections>(context, listen: false).selectedOption;
+      incomeController.text = Provider.of<IncomeSelections>(context, listen: false).incomeValue;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
@@ -150,13 +158,13 @@ class _AddIncomeState extends State<AddIncome> {
                 children: [
                   IconButton(
                     onPressed: () {
-                      GoRouter.of(context).replace("/");
+                      Navigator.pushNamed(context, '/');
                     },
                     icon: Icon(Icons.arrow_back, color: Colors.black), // Replace with the desired left icon
                   ),
                   IconButton(
                     onPressed: () {
-                      GoRouter.of(context).replace("/");
+                      Navigator.pushNamed(context, '/');
                     },
                     icon: Icon(Icons.clear, color: Colors.black), // Replace with the desired right icon
                   ),
@@ -236,7 +244,7 @@ class _AddIncomeState extends State<AddIncome> {
                           children: [
                             InkWell(
                               onTap: (){
-                                GoRouter.of(context).replace("/gelir-ekle");
+                                Navigator.pushNamed(context, 'gelir-ekle');
                               },
                               splashColor: Colors.grey,
                               borderRadius: BorderRadius.circular(10),

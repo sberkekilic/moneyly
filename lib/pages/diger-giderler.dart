@@ -1,9 +1,6 @@
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'abonelikler.dart';
 import 'faturalar.dart';
-import 'gelir-ekle.dart';
 
 class OtherExpenses extends StatefulWidget {
   const OtherExpenses({Key? key}) : super(key: key);
@@ -328,13 +325,13 @@ class _OtherExpensesState extends State<OtherExpenses> {
                 children: [
                   IconButton(
                     onPressed: () {
-                      GoRouter.of(context).replace("/faturalar");
+                      Navigator.pushNamed(context, 'faturalar');
                     },
                     icon: Icon(Icons.arrow_back, color: Colors.black), // Replace with the desired left icon
                   ),
                   IconButton(
                     onPressed: () {
-                      GoRouter.of(context).replace("/");
+                      Navigator.pushNamed(context, '/');
                     },
                     icon: Icon(Icons.clear, color: Colors.black), // Replace with the desired right icon
                   ),
@@ -366,7 +363,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                       ),
                       clipBehavior: Clip.hardEdge,
                       onPressed: () async {
-                        GoRouter.of(context).replace("/diger-giderler");
+                        Navigator.pushNamed(context, 'page5');
                       },
                       child: const Text('Next', style: TextStyle(fontSize: 18),),
                     ),
@@ -428,7 +425,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                         SizedBox(width: 10),
                         InkWell(
                           onTap: (){
-                            GoRouter.of(context).replace("/abonelikler");
+                            Navigator.pushNamed(context, 'abonelikler');
                           },
                           splashColor: Colors.grey,
                           borderRadius: BorderRadius.circular(10),
@@ -455,7 +452,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                         SizedBox(width: 10),
                         InkWell(
                           onTap: (){
-                            GoRouter.of(context).replace("/faturalar");
+                            Navigator.pushNamed(context, 'faturalar');
                           },
                           splashColor: Colors.grey,
                           borderRadius: BorderRadius.circular(10),
@@ -481,7 +478,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                         SizedBox(width: 10),
                         InkWell(
                           onTap: (){
-                            GoRouter.of(context).replace("/diger-giderler");
+                            Navigator.pushNamed(context, 'diger-giderler');
                           },
                           splashColor: Colors.grey,
                           borderRadius: BorderRadius.circular(10),
