@@ -16,12 +16,20 @@ class _Page5State extends State<Page5> {
     final page1 = Provider.of<IncomeSelections>(context, listen: false);
     final page2 = Provider.of<FormDataProvider>(context, listen: false);
     String itemListText = "";
+    String itemListTextHomeBills = "";
     for (int i = 0; i<page2.itemList.length; i++){
       itemListText += "${page2.itemList[i]}, ${page2.pricesList[i]}";
 
     if (i < page2.itemList.length - 1){
       itemListText += "\n";
     }
+    }
+    for (int i = 0; i<page2.itemListHomeBills.length; i++){
+      itemListTextHomeBills += "${page2.itemListHomeBills[i]}, ${page2.pricesListHomeBills[i]}";
+
+      if (i < page2.itemListHomeBills.length - 1){
+        itemListTextHomeBills += "\n";
+      }
     }
     return Scaffold(
       body: Column(
@@ -33,7 +41,8 @@ class _Page5State extends State<Page5> {
           }, child: Text("Abonelikler")),
           Text("PAGE 1: GELİR TÜRÜ: ${page1.selectedOption}"),
           Text("PAGE 1: GELİR MİKTARI: ${page1.incomeValue}"),
-          Text("PAGE 2: FİLM,DİZİ VE TV: \n$itemListText")
+          Text("PAGE 2: FİLM,DİZİ VE TV: \n$itemListText"),
+          Text("PAGE 3: EV FATURALARI, : \n$itemListTextHomeBills")
         ],
       ),
     );

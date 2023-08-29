@@ -162,10 +162,91 @@ class _SubscriptionsState extends State<Subscriptions> {
     );
   }
 
+  void _showEditDialog(BuildContext context, int index) {
+    final formDataProvider = Provider.of<FormDataProvider>(context, listen: false);
+    TextEditingController editController =
+    TextEditingController(text: formDataProvider.itemList[index]);
+    TextEditingController priceController =
+    TextEditingController(text: formDataProvider.pricesList[index]);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10)
+          ),
+          title: Text('Edit Item'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Align(child: Text("Item"), alignment: Alignment.centerLeft),
+              SizedBox(height: 10),
+              TextFormField(
+                controller: editController,
+                decoration: InputDecoration(
+                    isDense: true,
+                    focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(width: 3, color: Colors.black)
+        ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
+                  ),
+                  contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
+                ),
+                style: TextStyle(fontSize: 20),
+              ),
+              SizedBox(height: 10),
+              Align(child: Text("Price"), alignment: Alignment.centerLeft),
+              SizedBox(height: 10),
+              TextFormField(
+                controller: priceController,
+                decoration: InputDecoration(
+                  isDense: true,
+                  focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(width: 3, color: Colors.black)
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
+                  ),
+                  contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
+                ),
+                style: TextStyle(fontSize: 20),
+                keyboardType: TextInputType.number,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                // Save changes or do other actions
+                setState(() {
+                  formDataProvider.itemList[index] = editController.text;
+                  formDataProvider.pricesList[index] = priceController.text;
+                });
+                Navigator.of(context).pop();
+              },
+              child: Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
-    print("SAYFA YÜKLENDİ");
     if(Provider.of<FormDataProvider>(context, listen: false).itemList.isNotEmpty){
       isTVContainerTouched = true;
     }
@@ -423,165 +504,47 @@ class _SubscriptionsState extends State<Subscriptions> {
                                             Container(
                                               child:
                                               ListView.builder(
-                                                  shrinkWrap: true,
-                                                  itemCount: formDataProvider.itemList.length,
-                                                  itemBuilder: (BuildContext context, int i){
-
-                                                    TextEditingController editController = TextEditingController(text: formDataProvider.itemList[i]);
-                                                    TextEditingController platformPriceController = TextEditingController(text: formDataProvider.pricesList[i].toString());
-
-                                                    TextFormField nan1Field = TextFormField(
-                                                      controller: editController,
-                                                      style: TextStyle(fontSize: 20),
-                                                      decoration: InputDecoration(
-                                                        border: InputBorder.none,
-                                                        hintText: 'NAN1',
-                                                      ),
-                                                    );
-
-                                                    TextFormField dob1Field = TextFormField(
-                                                      controller: platformPriceController,
-                                                      keyboardType: TextInputType.number,
-                                                      style: TextStyle(fontSize: 20),
-                                                      decoration: InputDecoration(
-                                                        border: InputBorder.none,
-                                                        hintText: 'DOB1',
-                                                      ),
-                                                    );
-                                                    return Padding(
+                                                shrinkWrap: true,
+                                                itemCount: formDataProvider.itemList.length,
+                                                itemBuilder: (BuildContext context, int i) {
+                                                  return Container(
                                                       padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
                                                       child: Row(
                                                         children: [
                                                           Flexible(
+                                                            flex: 2,
                                                             fit: FlexFit.tight,
-                                                            child: GestureDetector(
-                                                              onTap: () {
-                                                                setState(() {
-                                                                  editableIndex = (editableIndex == i) ? -1 : i;
-                                                                });
-                                                              },
-                                                              child: (editableIndex != i)
-                                                                  ? Text(
-                                                                  formDataProvider.itemList[i],
-                                                                  style: TextStyle(fontSize: 20),
-                                                                  overflow: TextOverflow.ellipsis
-                                                              )
-                                                                  : nan1Field,
-                                                            )
+                                                            child: Text(
+                                                              formDataProvider.itemList[i],
+                                                              style: TextStyle(fontSize: 20),
+                                                              overflow: TextOverflow.ellipsis,
+                                                            ),
                                                           ),
-                                                          SizedBox(width: 25),
                                                           Flexible(
+                                                            flex: 2,
                                                             fit: FlexFit.tight,
-                                                              child: (editableIndex != i)
-                                                                  ? Text(
+                                                            child: Text(
                                                                   textAlign: TextAlign.right,
                                                                   formDataProvider.pricesList[i].toString(),
                                                                   style: TextStyle(fontSize: 20),
-                                                                  overflow: TextOverflow.ellipsis
-                                                              )
-                                                                  : dob1Field,
+                                                                  overflow: TextOverflow.ellipsis,
+                                                                ),
                                                           ),
-                                                          SizedBox(width: 25),
-                                                          if (editableIndex == -1 || editableIndex == i)
-                                                            Container(
-                                                              width: 21,
-                                                              height: 21,
-                                                              child: IconButton(
+                                                         SizedBox(width: 20),
+                                                         IconButton(
+                                                                splashRadius: 0.0001,
                                                                 padding: EdgeInsets.zero,
+                                                                constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                                                icon: Icon(Icons.edit, size: 21),
                                                                 onPressed: () {
-                                                                  setState(() {
-                                                                    if (editableIndex == -1) {
-                                                                      editableIndex = i;
-                                                                    } else {
-                                                                      editableIndex = -1;
-                                                                    }
-                                                                    isEditingList = !isEditingList;
-                                                                    if (isEditingList) {
-                                                                      editController.text = formDataProvider.itemList[i];
-                                                                      platformPriceController.text = formDataProvider.pricesList[i].toString();
-                                                                    }
-                                                                  });
+                                                                  _showEditDialog(context, i); // Show the edit dialog
                                                                 },
-                                                                icon: Icon((editableIndex == i) ? null : Icons.edit, size: 21),
                                                               ),
-                                                            ),
-                                                          if (editableIndex == i)
-                                                          Container(
-                                                            height:23,
-                                                            width: 23,
-                                                            child: IconButton(
-                                                              iconSize: 23,
-                                                              splashRadius: 0.0001,
-                                                              padding: EdgeInsets.zero,
-                                                              constraints: BoxConstraints(minWidth: 21, maxWidth: 21),
-                                                              onPressed: () {
-                                                                setState(() {
-                                                                  editableIndex = -1;
-                                                                  isEditingList = false;
-                                                                  isAddButtonActive = false;
-                                                                  // Reset the text to the original item text when cancel is clicked
-                                                                  editController.text = formDataProvider.itemList[i];
-                                                                  platformPriceController.text = formDataProvider.pricesList[i].toString();
-                                                                  platformPriceController.clear();
-                                                                });
-                                                              },
-                                                              icon: Icon(Icons.cancel),
-                                                            ),
-                                                          ),
-                                                          SizedBox(width: 10),
-                                                          if (editableIndex == i)
-                                                          Container(
-                                                            height:23,
-                                                            width: 23,
-                                                            child: IconButton(
-                                                              iconSize: 23,
-                                                              splashRadius: 0.0001,
-                                                              padding: EdgeInsets.zero,
-                                                              constraints: BoxConstraints(minWidth: 21, maxWidth: 21),
-                                                              onPressed: () {
-                                                                setState(() {
-                                                                  editableIndex = -1;
-                                                                  isEditingList = false;
-                                                                  formDataProvider.itemList[i] = editController.text.trim();
-                                                                  double dPrice = double.tryParse(platformPriceController.text) ?? 0.0;
-                                                                  String editedPrice = dPrice.toStringAsFixed(2);
-                                                                  formDataProvider.pricesList[i] = editedPrice;
-                                                                  platformPriceController.text = editedPrice.toString(); // Update the controller value
-                                                                  platformPriceController.clear();
-                                                                });
-                                                              },
-                                                              icon: Icon(Icons.save),
-                                                            ),
-                                                          ),
-                                                          SizedBox(width: 10),
-                                                          if (editableIndex == i)
-                                                          Container(
-                                                            height:23,
-                                                            width: 23,
-                                                            child: IconButton(
-                                                              iconSize: 23,
-                                                              splashRadius: 0.0001,
-                                                              padding: EdgeInsets.zero,
-                                                              constraints: BoxConstraints(minWidth: 21, maxWidth: 21),
-                                                              onPressed: () {
-                                                                setState(() {
-                                                                  // Remove the item from the list
-                                                                  isEditingList = false;
-                                                                  isAddButtonActive = false;
-                                                                  formDataProvider.itemList.removeAt(i);
-                                                                  formDataProvider.pricesList.removeAt(i);
-                                                                  platformPriceController.clear();
-                                                                  editableIndex = -1;
-                                                                });
-                                                              },
-                                                              icon: Icon(Icons.delete),
-                                                            ),
-                                                          ),
                                                         ],
-                                                      )
-                                                    );
-                                                  }
-                                                  ),
+                                                      ),
+                                                  );
+                                                },
+                                              ),
                                             ),
                                           if (isTextFormFieldVisible && isTVContainerTouched)
                                             Container(
