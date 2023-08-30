@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import 'package:provider/provider.dart';
 import '../form-data-provider.dart';
@@ -176,11 +177,11 @@ class _SubscriptionsState extends State<Subscriptions> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10)
           ),
-          title: Text('Edit Item'),
+          title: Text('Edit Item',style: TextStyle(fontSize: 20)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Align(child: Text("Item"), alignment: Alignment.centerLeft),
+              Align(child: Text("Item", style: TextStyle(fontSize: 18),), alignment: Alignment.centerLeft,),
               SizedBox(height: 10),
               TextFormField(
                 controller: editController,
@@ -199,7 +200,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                 style: TextStyle(fontSize: 20),
               ),
               SizedBox(height: 10),
-              Align(child: Text("Price"), alignment: Alignment.centerLeft),
+              Align(child: Text("Price",style: TextStyle(fontSize: 18)), alignment: Alignment.centerLeft),
               SizedBox(height: 10),
               TextFormField(
                 controller: priceController,
@@ -238,6 +239,18 @@ class _SubscriptionsState extends State<Subscriptions> {
               },
               child: Text('Save'),
             ),
+            TextButton(
+                onPressed: () {
+                  setState(() {
+                    isEditingListND = false;
+                    isAddButtonActiveND = false;
+                    formDataProvider.itemList.removeAt(index);
+                    formDataProvider.pricesList.removeAt(index);
+                    priceController.clear();
+                    Navigator.of(context).pop();
+                  });
+                }, 
+                child: Text("Remove"))
           ],
         );
       },
@@ -252,12 +265,16 @@ class _SubscriptionsState extends State<Subscriptions> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     final formDataProvider = Provider.of<FormDataProvider>(context, listen: false);
     double screenWidth = MediaQuery.of(context).size.width;
+    double sum = 0.0;
+    for(String price in formDataProvider.pricesList){
+      sum += double.parse(price);
+    }
+    String convertSum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum);
+    formDataProvider.sumOfPrices = convertSum;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xfff0f0f1),
@@ -340,7 +357,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                       children: [
                         InkWell(
                           onTap: (){
-                            Navigator.of(context).pop();
+                            Navigator.pushNamed(context, 'gelir-ekle');
                           },
                           splashColor: Colors.grey,
                           borderRadius: BorderRadius.circular(10),
@@ -498,7 +515,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                         children: [
                                           Padding(
                                               padding: EdgeInsets.all(10),
-                                              child: Text("Film, Dizi ve TV",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),)
+                                              child: Text("Film, Dizi ve TV",style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),)
                                           ),
                                           if (formDataProvider.itemList.isNotEmpty && formDataProvider.pricesList.isNotEmpty)
                                             Container(
@@ -507,6 +524,8 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                 shrinkWrap: true,
                                                 itemCount: formDataProvider.itemList.length,
                                                 itemBuilder: (BuildContext context, int i) {
+                                                  double sum2 = double.parse(formDataProvider.pricesList[i]);
+                                                  String convertSum2 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum2);
                                                   return Container(
                                                       padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
                                                       child: Row(
@@ -525,7 +544,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                             fit: FlexFit.tight,
                                                             child: Text(
                                                                   textAlign: TextAlign.right,
-                                                                  formDataProvider.pricesList[i].toString(),
+                                                                  convertSum2,
                                                                   style: TextStyle(fontSize: 20),
                                                                   overflow: TextOverflow.ellipsis,
                                                                 ),
@@ -625,32 +644,41 @@ class _SubscriptionsState extends State<Subscriptions> {
                                           if (!isEditingList && !isTextFormFieldVisible)
                                             Container(
                                               padding: EdgeInsets.all(10),
-                                              child: InkWell(
-                                                onTap: () {
-                                                  setState(() {
-                                                    isTVContainerTouched = true;
-                                                    isOyunContainerTouched = false;
-                                                    isMuzikContainerTouched = false;
-                                                    isAddButtonActive = true;
-                                                    isTextFormFieldVisible = true;
-                                                    isTextFormFieldVisibleND =false;
-                                                    isTextFormFieldVisibleRD = false;
-                                                    platformPriceController.clear();
-                                                    formDataProvider.itemList.forEach((element) {
-                                                      print('itemList: $element');
-                                                    });
-                                                    formDataProvider.pricesList.forEach((element) {
-                                                      print('pricesList: $element');
-                                                    });
-                                                    //print("isEditingList: $isEditingList");
-                                                    //print("isEditingListND: $isEditingList");
-                                                    //print("isEditingListRD: $isEditingList");
-                                                    //print("isTextFormFieldVisible: $isTextFormFieldVisible");
-                                                    //print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-                                                    //print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
-                                                  });
-                                                },
-                                                child: Icon(Icons.add_circle, size: 26),
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  InkWell(
+                                                    onTap: () {
+                                                      setState(() {
+                                                        isTVContainerTouched = true;
+                                                        isOyunContainerTouched = false;
+                                                        isMuzikContainerTouched = false;
+                                                        isAddButtonActive = true;
+                                                        isTextFormFieldVisible = true;
+                                                        isTextFormFieldVisibleND =false;
+                                                        isTextFormFieldVisibleRD = false;
+                                                        platformPriceController.clear();
+                                                        formDataProvider.itemList.forEach((element) {
+                                                          print('itemList: $element');
+                                                        });
+                                                        formDataProvider.pricesList.forEach((element) {
+                                                          print('pricesList: $element');
+                                                        });
+                                                        //print("isEditingList: $isEditingList");
+                                                        //print("isEditingListND: $isEditingList");
+                                                        //print("isEditingListRD: $isEditingList");
+                                                        //print("isTextFormFieldVisible: $isTextFormFieldVisible");
+                                                        //print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
+                                                        //print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
+                                                      });
+                                                    },
+                                                    child: Icon(Icons.add_circle, size: 26),
+                                                  ),
+                                                  Padding(
+                                                    padding: const EdgeInsets.only(right: 43),
+                                                    child: Text("Toplam: ${convertSum}", style: TextStyle(fontSize: 20),),
+                                                  ),
+                                                ],
                                               ),
                                             ),
                                         ],

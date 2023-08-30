@@ -11,6 +11,7 @@ class FormDataProvider with ChangeNotifier {
   FormData _formData = FormData('');
   List<String> itemList = [];
   List<String> pricesList = [];
+  String sumOfPrices = "";
   List<String> itemListHomeBills = [];
   List<String> pricesListHomeBills = [];
   TextEditingController controller1 = TextEditingController();

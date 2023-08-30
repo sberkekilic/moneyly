@@ -369,7 +369,7 @@ class _AddIncomeState extends State<AddIncome> {
                 borderRadius: BorderRadius.only(topLeft: Radius.circular(15), topRight: Radius.circular(15)),
                 child: Container(
                   color: Colors.white,
-                  child: ListView(
+                  child: Column(
                     children: [
                       Padding(
                         padding: const EdgeInsets.only(left: 20, right: 20),
@@ -421,7 +421,7 @@ class _AddIncomeState extends State<AddIncome> {
                                     alignment: Alignment.centerLeft,
                                     child: Text(
                                       selectedTitle,
-                                      style: TextStyle(fontSize: 18),
+                                      style: TextStyle(fontSize: 18, color: Colors.black),
                                     ),
                                   ),
                                   SizedBox(height: 10),
@@ -530,12 +530,12 @@ class _AddIncomeState extends State<AddIncome> {
 
   Widget selectableContainer(SelectedOption option, String label, IconData iconData) {
     bool isSelected = selectedOption == option;
+    selectedTitle = "$label gelirinizi yazın";
 
     return GestureDetector(
       onTap: () {
         setState(() {
           selectedOption = option;
-          selectedTitle = "$label gelirinizi yazın";
         });
       },
       child: Container(
