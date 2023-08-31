@@ -12,12 +12,6 @@ class Subscriptions extends StatefulWidget {
   State<Subscriptions> createState() => _SubscriptionsState();
 }
 class _SubscriptionsState extends State<Subscriptions> {
-  int editableIndex = -1;
-
-  List<String> NDitemList = [];
-  List<String> NDpricesList = [];
-  List<String> RDitemList = [];
-  List<String> RDpricesList = [];
 
   List<TextEditingController> editTextControllers = [];
   List<TextEditingController> NDeditTextControllers = [];
@@ -103,54 +97,6 @@ class _SubscriptionsState extends State<Subscriptions> {
     });
   }
 
-  void addItem() {
-
-  }
-  void addItemND() {
-    String text = NDtextController.text.trim();
-    String priceText = NDplatformPriceController.text.trim();
-    if (text.isNotEmpty && priceText.isNotEmpty) {
-      double dprice = double.tryParse(priceText) ?? 0.0;
-      String price = dprice.toStringAsFixed(2);
-      setState(() {
-        NDpricesList.add(price);
-        NDitemList.add(text);
-        isEditingListND = false; // Add a corresponding entry for the new item
-        NDtextController.clear();
-        NDplatformPriceController.clear();
-        isTextFormFieldVisibleND = false;
-        isAddButtonActiveND = false;
-        //***********************//
-        NDitemList.forEach((item) {
-          print("add item: $item");
-        });
-        //***********************//
-      });
-    }
-  }
-  void addItemRD() {
-    String text = RDtextController.text.trim();
-    String priceText = RDplatformPriceController.text.trim();
-    if (text.isNotEmpty && priceText.isNotEmpty) {
-      double dprice = double.tryParse(priceText) ?? 0.0;
-      String price = dprice.toStringAsFixed(2);
-      setState(() {
-        RDpricesList.add(price);
-        RDitemList.add(text);
-        isEditingListRD = false; // Add a corresponding entry for the new item
-        RDtextController.clear();
-        RDplatformPriceController.clear();
-        isTextFormFieldVisibleRD = false;
-        isAddButtonActiveRD = false;
-        //***********************//
-        RDitemList.forEach((item) {
-          print("add item: $item");
-        });
-        //***********************//
-      });
-    }
-  }
-
   void goToPreviousPage() {
     Navigator.pop(context);
   }
@@ -163,12 +109,38 @@ class _SubscriptionsState extends State<Subscriptions> {
     );
   }
 
-  void _showEditDialog(BuildContext context, int index) {
+  void _showEditDialog(BuildContext context, int index, int orderIndex) {
     final formDataProvider = Provider.of<FormDataProvider>(context, listen: false);
-    TextEditingController editController =
-    TextEditingController(text: formDataProvider.itemList[index]);
-    TextEditingController priceController =
-    TextEditingController(text: formDataProvider.pricesList[index]);
+
+    TextEditingController selectedEditController = TextEditingController();
+    TextEditingController selectedPriceController = TextEditingController();
+
+    switch (orderIndex) {
+      case 1:
+        TextEditingController editController =
+        TextEditingController(text: formDataProvider.tvTitleList[index]);
+        TextEditingController priceController =
+        TextEditingController(text: formDataProvider.tvPriceList[index]);
+        selectedEditController = editController;
+        selectedPriceController = priceController;
+        break;
+      case 2:
+        TextEditingController NDeditController =
+        TextEditingController(text: formDataProvider.gamingTitleList[index]);
+        TextEditingController NDpriceController =
+        TextEditingController(text: formDataProvider.gamingPriceList[index]);
+        selectedEditController = NDeditController;
+        selectedPriceController = NDpriceController;
+        break;
+      case 3:
+        TextEditingController RDeditController =
+        TextEditingController(text: formDataProvider.musicTitleList[index]);
+        TextEditingController RDpriceController =
+        TextEditingController(text: formDataProvider.musicPriceList[index]);
+        selectedEditController = RDeditController;
+        selectedPriceController = RDpriceController;
+        break;
+    }
 
     showDialog(
       context: context,
@@ -184,7 +156,7 @@ class _SubscriptionsState extends State<Subscriptions> {
               Align(child: Text("Item", style: TextStyle(fontSize: 18),), alignment: Alignment.centerLeft,),
               SizedBox(height: 10),
               TextFormField(
-                controller: editController,
+                controller: selectedEditController,
                 decoration: InputDecoration(
                     isDense: true,
                     focusedBorder: OutlineInputBorder(
@@ -203,7 +175,7 @@ class _SubscriptionsState extends State<Subscriptions> {
               Align(child: Text("Price",style: TextStyle(fontSize: 18)), alignment: Alignment.centerLeft),
               SizedBox(height: 10),
               TextFormField(
-                controller: priceController,
+                controller: selectedPriceController,
                 decoration: InputDecoration(
                   isDense: true,
                   focusedBorder: OutlineInputBorder(
@@ -230,26 +202,62 @@ class _SubscriptionsState extends State<Subscriptions> {
             ),
             TextButton(
               onPressed: () {
-                // Save changes or do other actions
                 setState(() {
-                  formDataProvider.itemList[index] = editController.text;
-                  formDataProvider.pricesList[index] = priceController.text;
+                  switch (orderIndex){
+                    case 1:
+                      formDataProvider.tvTitleList[index] = selectedEditController.text;
+                      formDataProvider.tvPriceList[index] = selectedPriceController.text;
+                      break;
+                    case 2:
+                      formDataProvider.gamingTitleList[index] = selectedEditController.text;
+                      formDataProvider.gamingPriceList[index] = selectedPriceController.text;
+                      break;
+                    case 3:
+                      formDataProvider.musicTitleList[index] = selectedEditController.text;
+                      formDataProvider.musicPriceList[index] = selectedPriceController.text;
+                      break;
+                  }
                 });
                 Navigator.of(context).pop();
               },
+
               child: Text('Save'),
             ),
             TextButton(
                 onPressed: () {
                   setState(() {
-                    isEditingListND = false;
-                    isAddButtonActiveND = false;
-                    formDataProvider.itemList.removeAt(index);
-                    formDataProvider.pricesList.removeAt(index);
-                    priceController.clear();
+                    switch (orderIndex){
+                      case 1:
+                        TextEditingController priceController =
+                        TextEditingController(text: formDataProvider.tvPriceList[index]);
+                        formDataProvider.tvTitleList.removeAt(index);
+                        formDataProvider.tvPriceList.removeAt(index);
+                        priceController.clear();
+                        isEditingList = false;
+                        isAddButtonActive = false;
+                        break;
+                      case 2:
+                        TextEditingController NDpriceController =
+                        TextEditingController(text: formDataProvider.gamingPriceList[index]);
+                        formDataProvider.gamingTitleList.removeAt(index);
+                        formDataProvider.gamingPriceList.removeAt(index);
+                        NDpriceController.clear();
+                        isEditingListND = false;
+                        isAddButtonActiveND = false;
+                        break;
+                      case 3:
+                        TextEditingController RDpriceController =
+                        TextEditingController(text: formDataProvider.musicPriceList[index]);
+                        formDataProvider.musicTitleList.removeAt(index);
+                        formDataProvider.musicPriceList.removeAt(index);
+                        RDpriceController.clear();
+                        isEditingListRD = false;
+                        isAddButtonActiveRD = false;
+                        break;
+                    }
                     Navigator.of(context).pop();
                   });
-                }, 
+                },
                 child: Text("Remove"))
           ],
         );
@@ -260,8 +268,14 @@ class _SubscriptionsState extends State<Subscriptions> {
   @override
   void initState() {
     super.initState();
-    if(Provider.of<FormDataProvider>(context, listen: false).itemList.isNotEmpty){
+    if(Provider.of<FormDataProvider>(context, listen: false).tvTitleList.isNotEmpty){
       isTVContainerTouched = true;
+    }
+    if(Provider.of<FormDataProvider>(context, listen: false).gamingTitleList.isNotEmpty){
+      isOyunContainerTouched = true;
+    }
+    if(Provider.of<FormDataProvider>(context, listen: false).tvTitleList.isNotEmpty){
+      isMuzikContainerTouched = true;
     }
   }
 
@@ -270,11 +284,23 @@ class _SubscriptionsState extends State<Subscriptions> {
     final formDataProvider = Provider.of<FormDataProvider>(context, listen: false);
     double screenWidth = MediaQuery.of(context).size.width;
     double sum = 0.0;
-    for(String price in formDataProvider.pricesList){
+    for(String price in formDataProvider.tvPriceList){
       sum += double.parse(price);
     }
+    double sumoyun = 0.0;
+    for(String price in formDataProvider.gamingPriceList){
+      sumoyun += double.parse(price);
+    }
+    double summuzik = 0.0;
+    for(String price in formDataProvider.musicPriceList){
+      summuzik += double.parse(price);
+    }
     String convertSum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum);
-    formDataProvider.sumOfPrices = convertSum;
+    formDataProvider.sumOfTV = convertSum;
+    String convertSum2 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumoyun);
+    formDataProvider.sumOfGaming = convertSum2;
+    String convertSum3 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(summuzik);
+    formDataProvider.sumOfMusic = convertSum3;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xfff0f0f1),
@@ -517,15 +543,15 @@ class _SubscriptionsState extends State<Subscriptions> {
                                               padding: EdgeInsets.all(10),
                                               child: Text("Film, Dizi ve TV",style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),)
                                           ),
-                                          if (formDataProvider.itemList.isNotEmpty && formDataProvider.pricesList.isNotEmpty)
+                                          if (formDataProvider.tvTitleList.isNotEmpty && formDataProvider.tvPriceList.isNotEmpty)
                                             Container(
                                               child:
                                               ListView.builder(
                                                 shrinkWrap: true,
-                                                itemCount: formDataProvider.itemList.length,
+                                                itemCount: formDataProvider.tvTitleList.length,
                                                 itemBuilder: (BuildContext context, int i) {
-                                                  double sum2 = double.parse(formDataProvider.pricesList[i]);
-                                                  String convertSum2 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum2);
+                                                  double sum2 = double.parse(formDataProvider.tvPriceList[i]);
+                                                  String convertSumo = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum2);
                                                   return Container(
                                                       padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
                                                       child: Row(
@@ -534,7 +560,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                             flex: 2,
                                                             fit: FlexFit.tight,
                                                             child: Text(
-                                                              formDataProvider.itemList[i],
+                                                              formDataProvider.tvTitleList[i],
                                                               style: TextStyle(fontSize: 20),
                                                               overflow: TextOverflow.ellipsis,
                                                             ),
@@ -544,7 +570,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                             fit: FlexFit.tight,
                                                             child: Text(
                                                                   textAlign: TextAlign.right,
-                                                                  convertSum2,
+                                                                  convertSumo,
                                                                   style: TextStyle(fontSize: 20),
                                                                   overflow: TextOverflow.ellipsis,
                                                                 ),
@@ -556,7 +582,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                                 constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                                                 icon: Icon(Icons.edit, size: 21),
                                                                 onPressed: () {
-                                                                  _showEditDialog(context, i); // Show the edit dialog
+                                                                  _showEditDialog(context, i, 1); // Show the edit dialog
                                                                 },
                                                               ),
                                                         ],
@@ -601,8 +627,8 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                             double dprice = double.tryParse(priceText) ?? 0.0;
                                                             String price = dprice.toStringAsFixed(2);
                                                             setState(() {
-                                                              formDataProvider.updateTextValue(text, 2);
-                                                              formDataProvider.updateNumberValue(price, 2);
+                                                              formDataProvider.updateTextValue(text, 2, 1);
+                                                              formDataProvider.updateNumberValue(price, 2, 1);
                                                               isEditingList = false; // Add a corresponding entry for the new item
                                                               textController.clear();
                                                               formDataProvider.notifyListeners();
@@ -611,12 +637,12 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                               isTextFormFieldVisible = false;
                                                               isAddButtonActive = false;
                                                               //***********************//
-                                                              formDataProvider.itemList.forEach((item) {
+                                                              formDataProvider.tvTitleList.forEach((item) {
                                                                 print("ekle ikonu item: $item");
                                                               });
                                                               //***********************//
                                                               //***********************//
-                                                              formDataProvider.pricesList.forEach((item) {
+                                                              formDataProvider.tvPriceList.forEach((item) {
                                                                 print("ekle ikonu price: $item");
                                                               });
                                                               //***********************//
@@ -658,10 +684,10 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                         isTextFormFieldVisibleND =false;
                                                         isTextFormFieldVisibleRD = false;
                                                         platformPriceController.clear();
-                                                        formDataProvider.itemList.forEach((element) {
+                                                        formDataProvider.tvTitleList.forEach((element) {
                                                           print('itemList: $element');
                                                         });
-                                                        formDataProvider.pricesList.forEach((element) {
+                                                        formDataProvider.tvPriceList.forEach((element) {
                                                           print('pricesList: $element');
                                                         });
                                                         //print("isEditingList: $isEditingList");
@@ -674,6 +700,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                     },
                                                     child: Icon(Icons.add_circle, size: 26),
                                                   ),
+                                                  if (convertSum != "0,00")
                                                   Padding(
                                                     padding: const EdgeInsets.only(right: 43),
                                                     child: Text("Toplam: ${convertSum}", style: TextStyle(fontSize: 20),),
@@ -704,140 +731,52 @@ class _SubscriptionsState extends State<Subscriptions> {
                                               padding: EdgeInsets.all(10),
                                               child: Text("Oyun",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),)
                                           ),
-                                          for (int i = 0; i < NDitemList.length; i++)
-                                            Padding(
-                                              padding: const EdgeInsets.only(left: 10, right: 10),
-                                              child: Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: isEditingListND
-                                                        ? Column(
+                                          if (formDataProvider.gamingTitleList.isNotEmpty && formDataProvider.gamingPriceList.isNotEmpty)
+                                            Container(
+                                              child:
+                                              ListView.builder(
+                                                shrinkWrap: true,
+                                                itemCount: formDataProvider.gamingTitleList.length,
+                                                itemBuilder: (BuildContext context, int i) {
+                                                  double sum3 = double.parse(formDataProvider.gamingPriceList[i]);
+                                                  String convertSuma = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum3);
+                                                  return Container(
+                                                    padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+                                                    child: Row(
                                                       children: [
-                                                        TextFormField(
-                                                          controller: NDeditController,
-                                                          style: TextStyle(fontSize: 18),
-                                                          decoration: InputDecoration(
-                                                            border: InputBorder.none,
-                                                            hintText: 'NAN',
+                                                        Flexible(
+                                                          flex: 2,
+                                                          fit: FlexFit.tight,
+                                                          child: Text(
+                                                            formDataProvider.gamingTitleList[i],
+                                                            style: TextStyle(fontSize: 20),
+                                                            overflow: TextOverflow.ellipsis,
                                                           ),
                                                         ),
-                                                        SizedBox(height:34)
+                                                        Flexible(
+                                                          flex: 2,
+                                                          fit: FlexFit.tight,
+                                                          child: Text(
+                                                            textAlign: TextAlign.right,
+                                                            convertSuma,
+                                                            style: TextStyle(fontSize: 20),
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                        ),
+                                                        SizedBox(width: 20),
+                                                        IconButton(
+                                                          splashRadius: 0.0001,
+                                                          padding: EdgeInsets.zero,
+                                                          constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                                          icon: Icon(Icons.edit, size: 21),
+                                                          onPressed: () {
+                                                            _showEditDialog(context, i, 2); // Show the edit dialog
+                                                          },
+                                                        ),
                                                       ],
-                                                    )
-                                                        : Container(
-                                                      padding: EdgeInsets.symmetric(vertical: 2),
-                                                      child: Row(
-                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                        children: [
-                                                          Text(
-                                                            NDitemList[i],
-                                                            style: TextStyle(fontSize: 18),
-                                                          ),
-                                                          Text(
-                                                            NDpricesList[i].toString(),
-                                                            style: TextStyle(fontSize: 18),
-                                                          ),
-                                                          if(!isAddButtonActiveND)
-                                                            IconButton(
-                                                                splashRadius: 0.0001,
-                                                                padding: EdgeInsets.zero,
-                                                                constraints: BoxConstraints(minWidth: 24, maxWidth: 24),
-                                                                onPressed: () {
-                                                                  setState(() {
-                                                                    isEditingListND = !isEditingListND;
-                                                                    if (isEditingListND) {
-                                                                      NDeditController.text = NDitemList[i];
-                                                                      NDplatformPriceController.text = NDpricesList[i].toString(); // Set the correct value
-                                                                    }
-                                                                  });
-                                                                },
-                                                                icon: Icon(Icons.edit))
-                                                        ],
-                                                      ),
                                                     ),
-                                                  ),
-                                                  if (isEditingListND)
-                                                    Expanded(
-                                                      child: Column(
-                                                        children: [
-                                                          TextFormField(
-                                                            controller: NDplatformPriceController,
-                                                            keyboardType: TextInputType.number, // Show numeric keyboard
-                                                            style: TextStyle(fontSize: 18),
-                                                            decoration: InputDecoration(
-                                                              border: InputBorder.none,
-                                                              hintText: 'DOB',
-                                                            ),
-                                                          ),
-                                                          Column(
-                                                            children: [
-                                                              Row(
-                                                                mainAxisAlignment: MainAxisAlignment.end,
-                                                                children: [
-                                                                  IconButton(
-                                                                    splashRadius: 0.0001,
-                                                                    padding: EdgeInsets.zero,
-                                                                    constraints: BoxConstraints(minWidth: 24, maxWidth: 24),
-                                                                    onPressed: () {
-                                                                      setState(() {
-                                                                        isEditingListND = false;
-                                                                        NDitemList[i] = NDeditController.text.trim();
-                                                                        double dPrice = double.tryParse(NDplatformPriceController.text) ?? 0.0;
-                                                                        String editedPrice = dPrice.toStringAsFixed(2);
-                                                                        NDpricesList[i] = editedPrice;
-                                                                        NDplatformPriceController.text = editedPrice.toString(); // Update the controller value
-                                                                        NDplatformPriceController.clear();
-                                                                      });
-                                                                    },
-                                                                    icon: Icon(
-                                                                        Icons.save
-                                                                    ),
-                                                                  ),
-                                                                  SizedBox(width: 10,),
-                                                                  if (isEditingListND)
-                                                                    IconButton(
-                                                                      splashRadius: 0.0001,
-                                                                      padding: EdgeInsets.zero,
-                                                                      constraints: BoxConstraints(minWidth: 24, maxWidth: 24),
-                                                                      onPressed: () {
-                                                                        setState(() {
-                                                                          isEditingListND = false;
-                                                                          isAddButtonActiveND = false;
-                                                                          // Reset the text to the original item text when cancel is clicked
-                                                                          NDeditController.text = NDitemList[i];
-                                                                          NDplatformPriceController.text = NDpricesList[i].toString();
-                                                                          NDplatformPriceController.clear();
-                                                                        });
-                                                                      },
-                                                                      icon: Icon(Icons.cancel),
-                                                                    ),
-                                                                  SizedBox(width: 10,),
-                                                                  if (isEditingListND)
-                                                                    IconButton(
-                                                                      splashRadius: 0.0001,
-                                                                      padding: EdgeInsets.zero,
-                                                                      constraints: BoxConstraints(minWidth: 24, maxWidth: 24),
-                                                                      onPressed: () {
-                                                                        setState(() {
-                                                                          // Remove the item from the list
-                                                                          isEditingListND = false;
-                                                                          isAddButtonActiveND = false;
-                                                                          NDitemList.removeAt(i);
-                                                                          NDpricesList.removeAt(i);
-                                                                          NDplatformPriceController.clear();
-                                                                        });
-                                                                      },
-                                                                      icon: Icon(Icons.delete),
-                                                                    ),
-                                                                ],
-                                                              ),
-                                                              SizedBox(height: 10)
-                                                            ],
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                ],
+                                                  );
+                                                },
                                               ),
                                             ),
                                           if (isTextFormFieldVisibleND && isOyunContainerTouched)
@@ -869,7 +808,35 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                   Wrap(
                                                     children: [
                                                       IconButton(
-                                                        onPressed: addItemND,
+                                                        onPressed: () {
+                                                          final text = NDtextController.text.trim();
+                                                          final priceText = NDplatformPriceController.text.trim();
+                                                          if (text.isNotEmpty && priceText.isNotEmpty) {
+                                                            double dprice = double.tryParse(priceText) ?? 0.0;
+                                                            String price = dprice.toStringAsFixed(2);
+                                                            setState(() {
+                                                              formDataProvider.updateTextValue(text, 2, 2);
+                                                              formDataProvider.updateNumberValue(price, 2, 2);
+                                                              isEditingListND = false; // Add a corresponding entry for the new item
+                                                              NDtextController.clear();
+                                                              formDataProvider.notifyListeners();
+                                                              NDplatformPriceController.clear();
+                                                              formDataProvider.notifyListeners();
+                                                              isTextFormFieldVisibleND = false;
+                                                              isAddButtonActiveND = false;
+                                                              //***********************//
+                                                              formDataProvider.gamingTitleList.forEach((item) {
+                                                                print("ekle ikonu item: $item");
+                                                              });
+                                                              //***********************//
+                                                              //***********************//
+                                                              formDataProvider.tvPriceList.forEach((item) {
+                                                                print("ekle ikonu price: $item");
+                                                              });
+                                                              //***********************//
+                                                            });
+                                                          }
+                                                        },
                                                         icon: Icon(Icons.check_circle, size: 26),
                                                       ),
                                                       IconButton(
@@ -891,26 +858,42 @@ class _SubscriptionsState extends State<Subscriptions> {
                                           if (!isEditingListND && !isTextFormFieldVisibleND)
                                             Container(
                                               padding: EdgeInsets.all(10),
-                                              child: InkWell(
-                                                onTap: () {
-                                                  setState(() {
-                                                    isTVContainerTouched = false;
-                                                    isOyunContainerTouched = true;
-                                                    isMuzikContainerTouched = false;
-                                                    isAddButtonActiveND = true;
-                                                    isTextFormFieldVisible = false;
-                                                    isTextFormFieldVisibleND =true;
-                                                    isTextFormFieldVisibleRD = false;
-                                                    NDplatformPriceController.clear();
-                                                    print("isEditingList: $isEditingList");
-                                                    print("isEditingListND: $isEditingList");
-                                                    print("isEditingListRD: $isEditingList");
-                                                    print("isTextFormFieldVisible: $isTextFormFieldVisible");
-                                                    print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-                                                    print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
-                                                  });
-                                                },
-                                                child: Icon(Icons.add_circle, size: 26),
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  InkWell(
+                                                    onTap: () {
+                                                      setState(() {
+                                                        isTVContainerTouched = false;
+                                                        isOyunContainerTouched = true;
+                                                        isMuzikContainerTouched = false;
+                                                        isAddButtonActiveND = true;
+                                                        isTextFormFieldVisible = false;
+                                                        isTextFormFieldVisibleND =true;
+                                                        isTextFormFieldVisibleRD = false;
+                                                        NDplatformPriceController.clear();
+                                                        formDataProvider.gamingTitleList.forEach((element) {
+                                                          print('itemList: $element');
+                                                        });
+                                                        formDataProvider.gamingPriceList.forEach((element) {
+                                                          print('pricesList: $element');
+                                                        });
+                                                        //print("isEditingList: $isEditingList");
+                                                        //print("isEditingListND: $isEditingList");
+                                                        //print("isEditingListRD: $isEditingList");
+                                                        //print("isTextFormFieldVisible: $isTextFormFieldVisible");
+                                                        //print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
+                                                        //print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
+                                                      });
+                                                    },
+                                                    child: Icon(Icons.add_circle, size: 26),
+                                                  ),
+                                                  if (convertSum2 != "0,00")
+                                                    Padding(
+                                                      padding: const EdgeInsets.only(right: 43),
+                                                      child: Text("Toplam: ${convertSum2}", style: TextStyle(fontSize: 20),),
+                                                    ),
+                                                ],
                                               ),
                                             ),
                                         ],
@@ -934,142 +917,54 @@ class _SubscriptionsState extends State<Subscriptions> {
                                         children: [
                                           Padding(
                                               padding: EdgeInsets.all(10),
-                                              child: Text("Müzik",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),)
+                                              child: Text("Müzik",style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),)
                                           ),
-                                          for (int i = 0; i < RDitemList.length; i++)
-                                            Padding(
-                                              padding: const EdgeInsets.only(left: 10, right: 10),
-                                              child: Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: isEditingListRD
-                                                        ? Column(
+                                          if (formDataProvider.musicTitleList.isNotEmpty && formDataProvider.musicPriceList.isNotEmpty)
+                                            Container(
+                                              child:
+                                              ListView.builder(
+                                                shrinkWrap: true,
+                                                itemCount: formDataProvider.musicTitleList.length,
+                                                itemBuilder: (BuildContext context, int i) {
+                                                  double sum2 = double.parse(formDataProvider.musicPriceList[i]);
+                                                  String convertSumo = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum2);
+                                                  return Container(
+                                                    padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+                                                    child: Row(
                                                       children: [
-                                                        TextFormField(
-                                                          controller: RDeditController,
-                                                          style: TextStyle(fontSize: 18),
-                                                          decoration: InputDecoration(
-                                                            border: InputBorder.none,
-                                                            hintText: 'NAN',
+                                                        Flexible(
+                                                          flex: 2,
+                                                          fit: FlexFit.tight,
+                                                          child: Text(
+                                                            formDataProvider.musicTitleList[i],
+                                                            style: TextStyle(fontSize: 20),
+                                                            overflow: TextOverflow.ellipsis,
                                                           ),
                                                         ),
-                                                        SizedBox(height:34)
+                                                        Flexible(
+                                                          flex: 2,
+                                                          fit: FlexFit.tight,
+                                                          child: Text(
+                                                            textAlign: TextAlign.right,
+                                                            convertSumo,
+                                                            style: TextStyle(fontSize: 20),
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                        ),
+                                                        SizedBox(width: 20),
+                                                        IconButton(
+                                                          splashRadius: 0.0001,
+                                                          padding: EdgeInsets.zero,
+                                                          constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                                          icon: Icon(Icons.edit, size: 21),
+                                                          onPressed: () {
+                                                            _showEditDialog(context, i, 3); // Show the edit dialog
+                                                          },
+                                                        ),
                                                       ],
-                                                    )
-                                                        : Container(
-                                                      padding: EdgeInsets.symmetric(vertical: 2),
-                                                      child: Row(
-                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                        children: [
-                                                          Text(
-                                                            RDitemList[i],
-                                                            style: TextStyle(fontSize: 18),
-                                                          ),
-                                                          Text(
-                                                            RDpricesList[i].toString(),
-                                                            style: TextStyle(fontSize: 18),
-                                                          ),
-                                                          if(!isAddButtonActiveRD)
-                                                            IconButton(
-                                                                splashRadius: 0.0001,
-                                                                padding: EdgeInsets.zero,
-                                                                constraints: BoxConstraints(minWidth: 24, maxWidth: 24),
-                                                                onPressed: () {
-                                                                  setState(() {
-                                                                    isEditingListRD = !isEditingListRD;
-                                                                    if (isEditingListRD) {
-                                                                      RDeditController.text = RDitemList[i];
-                                                                      RDplatformPriceController.text = RDpricesList[i].toString(); // Set the correct value
-                                                                    }
-                                                                  });
-                                                                },
-                                                                icon: Icon(Icons.edit))
-                                                        ],
-                                                      ),
                                                     ),
-                                                  ),
-                                                  if (isEditingListRD)
-                                                    Expanded(
-                                                      child: Column(
-                                                        children: [
-                                                          TextFormField(
-                                                            controller: RDplatformPriceController,
-                                                            keyboardType: TextInputType.number, // Show numeric keyboard
-                                                            style: TextStyle(fontSize: 18),
-                                                            decoration: InputDecoration(
-                                                              border: InputBorder.none,
-                                                              hintText: 'DOB',
-                                                            ),
-                                                          ),
-                                                          Column(
-                                                            children: [
-                                                              Row(
-                                                                mainAxisAlignment: MainAxisAlignment.end,
-                                                                children: [
-                                                                  IconButton(
-                                                                    splashRadius: 0.0001,
-                                                                    padding: EdgeInsets.zero,
-                                                                    constraints: BoxConstraints(minWidth: 24, maxWidth: 24),
-                                                                    onPressed: () {
-                                                                      setState(() {
-                                                                        isEditingListRD = false;
-                                                                        RDitemList[i] = RDeditController.text.trim();
-                                                                        double dPrice = double.tryParse(RDplatformPriceController.text) ?? 0.0;
-                                                                        String editedPrice = dPrice.toStringAsFixed(2);
-                                                                        RDpricesList[i] = editedPrice;
-                                                                        RDplatformPriceController.text = editedPrice.toString(); // Update the controller value
-                                                                        RDplatformPriceController.clear();
-                                                                      });
-                                                                    },
-                                                                    icon: Icon(
-                                                                        Icons.save
-                                                                    ),
-                                                                  ),
-                                                                  SizedBox(width: 10,),
-                                                                  if (isEditingListRD)
-                                                                    IconButton(
-                                                                      splashRadius: 0.0001,
-                                                                      padding: EdgeInsets.zero,
-                                                                      constraints: BoxConstraints(minWidth: 24, maxWidth: 24),
-                                                                      onPressed: () {
-                                                                        setState(() {
-                                                                          isEditingListRD = false;
-                                                                          isAddButtonActiveRD = false;
-                                                                          // Reset the text to the original item text when cancel is clicked
-                                                                          RDeditController.text = RDitemList[i];
-                                                                          RDplatformPriceController.text = RDpricesList[i].toString();
-                                                                          RDplatformPriceController.clear();
-                                                                        });
-                                                                      },
-                                                                      icon: Icon(Icons.cancel),
-                                                                    ),
-                                                                  SizedBox(width: 10,),
-                                                                  if (isEditingListRD)
-                                                                    IconButton(
-                                                                      splashRadius: 0.0001,
-                                                                      padding: EdgeInsets.zero,
-                                                                      constraints: BoxConstraints(minWidth: 24, maxWidth: 24),
-                                                                      onPressed: () {
-                                                                        setState(() {
-                                                                          // Remove the item from the list
-                                                                          isEditingListRD = false;
-                                                                          isAddButtonActiveRD = false;
-                                                                          RDitemList.removeAt(i);
-                                                                          RDpricesList.removeAt(i);
-                                                                          RDplatformPriceController.clear();
-                                                                        });
-                                                                      },
-                                                                      icon: Icon(Icons.delete),
-                                                                    ),
-                                                                ],
-                                                              ),
-                                                              SizedBox(height: 10)
-                                                            ],
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                ],
+                                                  );
+                                                },
                                               ),
                                             ),
                                           if (isTextFormFieldVisibleRD && isMuzikContainerTouched)
@@ -1101,7 +996,35 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                   Wrap(
                                                     children: [
                                                       IconButton(
-                                                        onPressed: addItemRD,
+                                                        onPressed: () {
+                                                          final text = RDtextController.text.trim();
+                                                          final priceText = RDplatformPriceController.text.trim();
+                                                          if (text.isNotEmpty && priceText.isNotEmpty) {
+                                                            double dprice = double.tryParse(priceText) ?? 0.0;
+                                                            String price = dprice.toStringAsFixed(2);
+                                                            setState(() {
+                                                              formDataProvider.updateTextValue(text, 2, 3);
+                                                              formDataProvider.updateNumberValue(price, 2, 3);
+                                                              isEditingListRD = false; // Add a corresponding entry for the new item
+                                                              RDtextController.clear();
+                                                              formDataProvider.notifyListeners();
+                                                              RDplatformPriceController.clear();
+                                                              formDataProvider.notifyListeners();
+                                                              isTextFormFieldVisibleRD = false;
+                                                              isAddButtonActiveRD = false;
+                                                              //***********************//
+                                                              formDataProvider.tvTitleList.forEach((item) {
+                                                                print("ekle ikonu item: $item");
+                                                              });
+                                                              //***********************//
+                                                              //***********************//
+                                                              formDataProvider.tvPriceList.forEach((item) {
+                                                                print("ekle ikonu price: $item");
+                                                              });
+                                                              //***********************//
+                                                            });
+                                                          }
+                                                        },
                                                         icon: Icon(Icons.check_circle, size: 26),
                                                       ),
                                                       IconButton(
@@ -1123,26 +1046,42 @@ class _SubscriptionsState extends State<Subscriptions> {
                                           if (!isEditingListRD && !isTextFormFieldVisibleRD)
                                             Container(
                                               padding: EdgeInsets.all(10),
-                                              child: InkWell(
-                                                onTap: () {
-                                                  setState(() {
-                                                    isTVContainerTouched = false;
-                                                    isOyunContainerTouched = false;
-                                                    isMuzikContainerTouched = true;
-                                                    isAddButtonActiveRD = true;
-                                                    isTextFormFieldVisible = false;
-                                                    isTextFormFieldVisibleND =false;
-                                                    isTextFormFieldVisibleRD = true;
-                                                    RDplatformPriceController.clear();
-                                                    print("isEditingList: $isEditingList");
-                                                    print("isEditingListND: $isEditingList");
-                                                    print("isEditingListRD: $isEditingList");
-                                                    print("isTextFormFieldVisible: $isTextFormFieldVisible");
-                                                    print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-                                                    print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
-                                                  });
-                                                },
-                                                child: Icon(Icons.add_circle, size: 26),
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  InkWell(
+                                                    onTap: () {
+                                                      setState(() {
+                                                        isTVContainerTouched = false;
+                                                        isOyunContainerTouched = false;
+                                                        isMuzikContainerTouched = true;
+                                                        isAddButtonActiveRD = true;
+                                                        isTextFormFieldVisible = false;
+                                                        isTextFormFieldVisibleND =false;
+                                                        isTextFormFieldVisibleRD = true;
+                                                        RDplatformPriceController.clear();
+                                                        formDataProvider.musicTitleList.forEach((element) {
+                                                          print('itemList: $element');
+                                                        });
+                                                        formDataProvider.musicPriceList.forEach((element) {
+                                                          print('pricesList: $element');
+                                                        });
+                                                        //print("isEditingList: $isEditingList");
+                                                        //print("isEditingListND: $isEditingList");
+                                                        //print("isEditingListRD: $isEditingList");
+                                                        //print("isTextFormFieldVisible: $isTextFormFieldVisible");
+                                                        //print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
+                                                        //print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
+                                                      });
+                                                    },
+                                                    child: Icon(Icons.add_circle, size: 26),
+                                                  ),
+                                                  if (convertSum3 != "0,00")
+                                                    Padding(
+                                                      padding: const EdgeInsets.only(right: 43),
+                                                      child: Text("Toplam: ${convertSum3}", style: TextStyle(fontSize: 20),),
+                                                    ),
+                                                ],
                                               ),
                                             ),
                                         ],

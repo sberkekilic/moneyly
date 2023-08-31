@@ -9,15 +9,50 @@ class FormData {
 
 class FormDataProvider with ChangeNotifier {
   FormData _formData = FormData('');
-  List<String> itemList = [];
-  List<String> pricesList = [];
-  String sumOfPrices = "";
-  List<String> itemListHomeBills = [];
-  List<String> pricesListHomeBills = [];
-  TextEditingController controller1 = TextEditingController();
-  TextEditingController controller2 = TextEditingController();
-  TextEditingController controller3 = TextEditingController();
-  TextEditingController controller4 = TextEditingController();
+
+  List<String> tvTitleList = [];
+  List<String> tvPriceList = [];
+  String sumOfTV = "";
+
+  List<String> gamingTitleList = [];
+  List<String> gamingPriceList = [];
+  String sumOfGaming = "";
+
+  List<String> musicTitleList = [];
+  List<String> musicPriceList = [];
+  String sumOfMusic = "";
+
+  List<String> homeBillsTitleList = [];
+  List<String> homeBillsPriceList = [];
+  String sumOfHomeBills = "";
+
+  List<String> internetTitleList = [];
+  List<String> internetPriceList = [];
+  String sumOfInternet = "";
+
+  List<String> phoneTitleList = [];
+  List<String> phonePriceList = [];
+  String sumOfPhone = "";
+
+  List<String> rentTitleList = [];
+  List<String> rentPriceList = [];
+  String sumOfRent = "";
+
+  List<String> kitchenTitleList = [];
+  List<String> kitchenPriceList = [];
+  String sumOfKitchen = "";
+
+  List<String> cateringTitleList = [];
+  List<String> cateringPriceList = [];
+  String sumOfCatering = "";
+
+  List<String> entertainmentTitleList = [];
+  List<String> entertainmentPriceList = [];
+  String sumOfEntertainment = "";
+
+  List<String> otherTitleList = [];
+  List<String> otherPriceList = [];
+  String sumOfOther = "";
 
   FormData get formData => _formData;
 
@@ -25,92 +60,83 @@ class FormDataProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final textValue = prefs.getString('textValue') ?? '';
     _formData = FormData(textValue);
-    controller1.text = textValue;
-    controller2.text = textValue;
-    controller3.text = textValue;
-    controller4.text = textValue;
-    itemList = prefs.getStringList('itemList') ?? [];
-    pricesList = prefs.getStringList('pricesList') ?? [];
-    itemListHomeBills = prefs.getStringList('itemListHomeBills') ?? [];
-    pricesListHomeBills = prefs.getStringList('pricesListHomeBills') ?? [];
+    tvTitleList = prefs.getStringList('itemList') ?? [];
+    tvPriceList = prefs.getStringList('pricesList') ?? [];
+    homeBillsTitleList = prefs.getStringList('itemListHomeBills') ?? [];
+    homeBillsPriceList = prefs.getStringList('pricesListHomeBills') ?? [];
     notifyListeners();
   }
 
-  Future<void> updateTextValue(String value, int pageIndex) async {
+  Future<void> updateTextValue(String value, int pageIndex, int orderIndex) async {
     notifyListeners();
     _formData = FormData(value);
-    itemList.add(value); // Add value to the itemList
+    if (pageIndex == 1) {
+    } else if (pageIndex == 2) {
+      if (orderIndex == 1)
+      tvTitleList.add(value);
+      if (orderIndex == 2)
+      gamingTitleList.add(value);
+      if (orderIndex == 3)
+      musicTitleList.add(value);
+    } else if (pageIndex == 3) {
+      if (orderIndex == 1)
+      homeBillsTitleList.add(value);
+      if (orderIndex == 2)
+      internetTitleList.add(value);
+      if (orderIndex == 3)
+      phoneTitleList.add(value);
+    } else if (pageIndex == 4) {
+      if (orderIndex == 1)
+      rentTitleList.add(value);
+      if (orderIndex == 2)
+      kitchenTitleList.add(value);
+      if (orderIndex == 3)
+      cateringTitleList.add(value);
+      if (orderIndex == 4)
+      entertainmentTitleList.add(value);
+      if (orderIndex == 5)
+        otherTitleList.add(value);
+    }
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('textValue', value);
-    await prefs.setStringList('itemList', itemList);
-    await prefs.setStringList('pricesList', pricesList);// Update the itemList in SharedPreferences
-    if (pageIndex == 1) {
-      controller1.text = value;
-    } else if (pageIndex == 2) {
-      controller2.text = value;
-    } else if (pageIndex == 3) {
-      controller3.text = value;
-    } else if (pageIndex == 4) {
-      controller4.text = value;
-    }
+    await prefs.setStringList('itemList', tvTitleList);
+    await prefs.setStringList('pricesList', tvPriceList);// Update the itemList in SharedPreferences
     notifyListeners();
   }
 
-  Future<void> updateNumberValue(String value, int pageIndex) async {
+  Future<void> updateNumberValue(String value, int pageIndex, int orderIndex) async {
     notifyListeners();
     _formData = FormData(value);
-    pricesList.add(value);
+    if (pageIndex == 1) {
+    } else if (pageIndex == 2) {
+      if (orderIndex == 1)
+      tvPriceList.add(value);
+      if (orderIndex == 2)
+      gamingPriceList.add(value);
+      if (orderIndex == 3)
+      musicPriceList.add(value);
+    } else if (pageIndex == 3) {
+      if (orderIndex == 1)
+      homeBillsPriceList.add(value);
+      if (orderIndex == 2)
+      internetPriceList.add(value);
+      if (orderIndex == 3)
+      phonePriceList.add(value);
+    } else if (pageIndex == 4) {
+      if (orderIndex == 1)
+      rentPriceList.add(value);
+      if (orderIndex == 2)
+      kitchenPriceList.add(value);
+      if (orderIndex == 3)
+      cateringPriceList.add(value);
+      if (orderIndex == 4)
+      entertainmentPriceList.add(value);
+      if (orderIndex == 5)
+        otherPriceList.add(value);
+    }
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('textValue', value);
-    await prefs.setStringList('pricesList', pricesList);// Update the itemList in SharedPreferences
-    if (pageIndex == 1) {
-      controller1.text = value;
-    } else if (pageIndex == 2) {
-      controller2.text = value;
-    } else if (pageIndex == 3) {
-      controller3.text = value;
-    } else if (pageIndex == 4) {
-      controller4.text = value;
-    }
-    notifyListeners();
-  }
-
-  Future<void> updateTextValueHomeBills(String value, int pageIndex) async {
-    notifyListeners();
-    _formData = FormData(value);
-    itemListHomeBills.add(value); // Add value to the itemList
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('textValue', value);
-    await prefs.setStringList('itemListHomeBills', itemListHomeBills);
-    await prefs.setStringList('pricesListHomeBills', pricesListHomeBills);// Update the itemList in SharedPreferences
-    if (pageIndex == 1) {
-      controller1.text = value;
-    } else if (pageIndex == 2) {
-      controller2.text = value;
-    } else if (pageIndex == 3) {
-      controller3.text = value;
-    } else if (pageIndex == 4) {
-      controller4.text = value;
-    }
-    notifyListeners();
-  }
-
-  Future<void> updateNumberValueHomeBills(String value, int pageIndex) async {
-    notifyListeners();
-    _formData = FormData(value);
-    pricesListHomeBills.add(value);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('textValue', value);
-    await prefs.setStringList('pricesListHomeBills', pricesListHomeBills);// Update the itemList in SharedPreferences
-    if (pageIndex == 1) {
-      controller1.text = value;
-    } else if (pageIndex == 2) {
-      controller2.text = value;
-    } else if (pageIndex == 3) {
-      controller3.text = value;
-    } else if (pageIndex == 4) {
-      controller4.text = value;
-    }
+    await prefs.setStringList('pricesList', tvPriceList);// Update the itemList in SharedPreferences
     notifyListeners();
   }
 }

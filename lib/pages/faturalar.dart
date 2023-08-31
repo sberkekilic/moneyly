@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../form-data-provider.dart';
 import 'diger-giderler.dart';
@@ -13,20 +14,15 @@ class Bills extends StatefulWidget {
 }
 
 class _BillsState extends State<Bills> {
-  List<String> NDitemList = [];
-  List<String> NDpricesList = [];
-  List<String> RDitemList = [];
-  List<String> RDpricesList = [];
-
   List<TextEditingController> editTextControllers = [];
   List<TextEditingController> NDeditTextControllers = [];
   List<TextEditingController> RDeditTextControllers = [];
 
-  TextEditingController textController = TextEditingController();
+  final TextEditingController textController = TextEditingController();
   TextEditingController NDtextController = TextEditingController();
   TextEditingController RDtextController = TextEditingController();
 
-  TextEditingController platformPriceController = TextEditingController();
+  final TextEditingController platformPriceController = TextEditingController();
   TextEditingController NDplatformPriceController = TextEditingController();
   TextEditingController RDplatformPriceController = TextEditingController();
 
@@ -46,15 +42,15 @@ class _BillsState extends State<Bills> {
   bool isAddButtonActiveND = false;
   bool isAddButtonActiveRD = false;
 
-  bool isTVContainerTouched = false;
-  bool isOyunContainerTouched = false;
-  bool isMuzikContainerTouched = false;
+  bool isHomeBillsContainerTouched = false;
+  bool isInternetContainerTouched = false;
+  bool isPhoneContainerTouched = false;
 
   void handleHomeBillsContainer() {
     setState(() {
-      isTVContainerTouched = true;
-      isOyunContainerTouched = false;
-      isMuzikContainerTouched = false;
+      isHomeBillsContainerTouched = true;
+      isInternetContainerTouched = false;
+      isPhoneContainerTouched = false;
       isTextFormFieldVisible = false;
       isTextFormFieldVisibleND =false;
       isTextFormFieldVisibleRD = false;
@@ -67,11 +63,11 @@ class _BillsState extends State<Bills> {
       print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
     });
   }
-  void handleOyunContainerTouch() {
+  void handleInternetContainerTouch() {
     setState(() {
-      isTVContainerTouched = false;
-      isOyunContainerTouched = true;
-      isMuzikContainerTouched = false;
+      isHomeBillsContainerTouched = false;
+      isInternetContainerTouched = true;
+      isPhoneContainerTouched = false;
       isTextFormFieldVisible = false;
       isTextFormFieldVisibleND =false;
       isTextFormFieldVisibleRD = false;
@@ -84,11 +80,11 @@ class _BillsState extends State<Bills> {
       print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
     });
   }
-  void handleMuzikContainerTouch() {
+  void handlePhoneContainerTouch() {
     setState(() {
-      isTVContainerTouched = false;
-      isOyunContainerTouched = false;
-      isMuzikContainerTouched = true;
+      isHomeBillsContainerTouched = false;
+      isInternetContainerTouched = false;
+      isPhoneContainerTouched = true;
       isTextFormFieldVisible = false;
       isTextFormFieldVisibleND =false;
       isTextFormFieldVisibleRD = false;
@@ -102,53 +98,6 @@ class _BillsState extends State<Bills> {
     });
   }
 
-  void addItem() {
-  }
-  void addItemND() {
-    String text = NDtextController.text.trim();
-    String priceText = NDplatformPriceController.text.trim();
-    if (text.isNotEmpty && priceText.isNotEmpty) {
-      double dprice = double.tryParse(priceText) ?? 0.0;
-      String price = dprice.toStringAsFixed(2);
-      setState(() {
-        NDpricesList.add(price);
-        NDitemList.add(text);
-        isEditingListND = false; // Add a corresponding entry for the new item
-        NDtextController.clear();
-        NDplatformPriceController.clear();
-        isTextFormFieldVisibleND = false;
-        isAddButtonActiveND = false;
-        //***********************//
-        NDitemList.forEach((item) {
-          print("add item: $item");
-        });
-        //***********************//
-      });
-    }
-  }
-  void addItemRD() {
-    String text = RDtextController.text.trim();
-    String priceText = RDplatformPriceController.text.trim();
-    if (text.isNotEmpty && priceText.isNotEmpty) {
-      double dprice = double.tryParse(priceText) ?? 0.0;
-      String price = dprice.toStringAsFixed(2);
-      setState(() {
-        RDpricesList.add(price);
-        RDitemList.add(text);
-        isEditingListRD = false; // Add a corresponding entry for the new item
-        RDtextController.clear();
-        RDplatformPriceController.clear();
-        isTextFormFieldVisibleRD = false;
-        isAddButtonActiveRD = false;
-        //***********************//
-        RDitemList.forEach((item) {
-          print("add item: $item");
-        });
-        //***********************//
-      });
-    }
-  }
-
   void goToPreviousPage() {
     Navigator.pop(context);
   }
@@ -160,12 +109,38 @@ class _BillsState extends State<Bills> {
     );
   }
 
-  void _showEditDialog(BuildContext context, int index) {
+  void _showEditDialog(BuildContext context, int index, int orderIndex) {
     final formDataProvider = Provider.of<FormDataProvider>(context, listen: false);
-    TextEditingController editController =
-    TextEditingController(text: formDataProvider.itemListHomeBills[index]);
-    TextEditingController priceController =
-    TextEditingController(text: formDataProvider.pricesListHomeBills[index]);
+
+    TextEditingController selectedEditController = TextEditingController();
+    TextEditingController selectedPriceController = TextEditingController();
+
+    switch (orderIndex) {
+      case 1:
+        TextEditingController editController =
+        TextEditingController(text: formDataProvider.homeBillsTitleList[index]);
+        TextEditingController priceController =
+        TextEditingController(text: formDataProvider.homeBillsPriceList[index]);
+        selectedEditController = editController;
+        selectedPriceController = priceController;
+        break;
+      case 2:
+        TextEditingController NDeditController =
+        TextEditingController(text: formDataProvider.internetTitleList[index]);
+        TextEditingController NDpriceController =
+        TextEditingController(text: formDataProvider.internetPriceList[index]);
+        selectedEditController = NDeditController;
+        selectedPriceController = NDpriceController;
+        break;
+      case 3:
+        TextEditingController RDeditController =
+        TextEditingController(text: formDataProvider.phoneTitleList[index]);
+        TextEditingController RDpriceController =
+        TextEditingController(text: formDataProvider.phonePriceList[index]);
+        selectedEditController = RDeditController;
+        selectedPriceController = RDpriceController;
+        break;
+    }
 
     showDialog(
       context: context,
@@ -174,14 +149,14 @@ class _BillsState extends State<Bills> {
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10)
           ),
-          title: Text('Edit Item'),
+          title: Text('Edit Item',style: TextStyle(fontSize: 20)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Align(child: Text("Item"), alignment: Alignment.centerLeft),
+              Align(child: Text("Item", style: TextStyle(fontSize: 18),), alignment: Alignment.centerLeft,),
               SizedBox(height: 10),
               TextFormField(
-                controller: editController,
+                controller: selectedEditController,
                 decoration: InputDecoration(
                   isDense: true,
                   focusedBorder: OutlineInputBorder(
@@ -197,10 +172,10 @@ class _BillsState extends State<Bills> {
                 style: TextStyle(fontSize: 20),
               ),
               SizedBox(height: 10),
-              Align(child: Text("Price"), alignment: Alignment.centerLeft),
+              Align(child: Text("Price",style: TextStyle(fontSize: 18)), alignment: Alignment.centerLeft),
               SizedBox(height: 10),
               TextFormField(
-                controller: priceController,
+                controller: selectedPriceController,
                 decoration: InputDecoration(
                   isDense: true,
                   focusedBorder: OutlineInputBorder(
@@ -227,15 +202,63 @@ class _BillsState extends State<Bills> {
             ),
             TextButton(
               onPressed: () {
-                // Save changes or do other actions
                 setState(() {
-                  formDataProvider.itemListHomeBills[index] = editController.text;
-                  formDataProvider.pricesListHomeBills[index] = priceController.text;
+                  switch (orderIndex){
+                    case 1:
+                      formDataProvider.homeBillsTitleList[index] = selectedEditController.text;
+                      formDataProvider.homeBillsPriceList[index] = selectedPriceController.text;
+                      break;
+                    case 2:
+                      formDataProvider.internetTitleList[index] = selectedEditController.text;
+                      formDataProvider.internetPriceList[index] = selectedPriceController.text;
+                      break;
+                    case 3:
+                      formDataProvider.phoneTitleList[index] = selectedEditController.text;
+                      formDataProvider.phonePriceList[index] = selectedPriceController.text;
+                      break;
+                  }
                 });
                 Navigator.of(context).pop();
               },
+
               child: Text('Save'),
             ),
+            TextButton(
+                onPressed: () {
+                  setState(() {
+                    switch (orderIndex){
+                      case 1:
+                        TextEditingController priceController =
+                        TextEditingController(text: formDataProvider.homeBillsPriceList[index]);
+                        formDataProvider.homeBillsTitleList.removeAt(index);
+                        formDataProvider.homeBillsPriceList.removeAt(index);
+                        priceController.clear();
+                        isEditingList = false;
+                        isAddButtonActive = false;
+                        break;
+                      case 2:
+                        TextEditingController NDpriceController =
+                        TextEditingController(text: formDataProvider.internetPriceList[index]);
+                        formDataProvider.internetTitleList.removeAt(index);
+                        formDataProvider.internetPriceList.removeAt(index);
+                        NDpriceController.clear();
+                        isEditingListND = false;
+                        isAddButtonActiveND = false;
+                        break;
+                      case 3:
+                        TextEditingController RDpriceController =
+                        TextEditingController(text: formDataProvider.phonePriceList[index]);
+                        formDataProvider.phoneTitleList.removeAt(index);
+                        formDataProvider.phonePriceList.removeAt(index);
+                        RDpriceController.clear();
+                        isEditingListRD = false;
+                        isAddButtonActiveRD = false;
+                        break;
+                    }
+                    Navigator.of(context).pop();
+                  });
+                },
+                child: Text("Remove"))
           ],
         );
       },
@@ -245,8 +268,14 @@ class _BillsState extends State<Bills> {
   @override
   void initState() {
     super.initState();
-    if(Provider.of<FormDataProvider>(context, listen: false).itemListHomeBills.isNotEmpty) {
-      isTVContainerTouched = true;
+    if(Provider.of<FormDataProvider>(context, listen: false).homeBillsTitleList.isNotEmpty) {
+      isHomeBillsContainerTouched = true;
+    }
+    if(Provider.of<FormDataProvider>(context, listen: false).internetTitleList.isNotEmpty) {
+      isInternetContainerTouched = true;
+    }
+    if(Provider.of<FormDataProvider>(context, listen: false).phoneTitleList.isNotEmpty) {
+      isPhoneContainerTouched = true;
     }
   }
 
@@ -254,6 +283,24 @@ class _BillsState extends State<Bills> {
   Widget build(BuildContext context) {
     final formDataProvider = Provider.of<FormDataProvider>(context, listen: false);
     double screenWidth = MediaQuery.of(context).size.width;
+    double sum = 0.0;
+    for(String price in formDataProvider.homeBillsPriceList){
+      sum += double.parse(price);
+    }
+    double sumoyun = 0.0;
+    for(String price in formDataProvider.internetPriceList){
+      sumoyun += double.parse(price);
+    }
+    double summuzik = 0.0;
+    for(String price in formDataProvider.phonePriceList){
+      summuzik += double.parse(price);
+    }
+    String convertSum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum);
+    formDataProvider.sumOfHomeBills = convertSum;
+    String convertSum2 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumoyun);
+    formDataProvider.sumOfInternet = convertSum2;
+    String convertSum3 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(summuzik);
+    formDataProvider.sumOfPhone = convertSum3;
     return Scaffold(
       appBar: AppBar(
           backgroundColor: Color(0xfff0f0f1),
@@ -479,8 +526,8 @@ class _BillsState extends State<Bills> {
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
-                                        color: isTVContainerTouched ? Colors.black : Colors.black.withOpacity(0.5),
-                                        width: isTVContainerTouched ? 4 : 2,
+                                        color: isHomeBillsContainerTouched ? Colors.black : Colors.black.withOpacity(0.5),
+                                        width: isHomeBillsContainerTouched ? 4 : 2,
                                       ),
                                     ),
                                     child: InkWell(
@@ -492,12 +539,12 @@ class _BillsState extends State<Bills> {
                                               padding: EdgeInsets.all(10),
                                               child: Text("Ev Faturaları",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),)
                                           ),
-                                          if (formDataProvider.itemListHomeBills.isNotEmpty && formDataProvider.pricesListHomeBills.isNotEmpty)
+                                          if (formDataProvider.homeBillsTitleList.isNotEmpty && formDataProvider.homeBillsPriceList.isNotEmpty)
                                             Container(
                                               child:
                                               ListView.builder(
                                                 shrinkWrap: true,
-                                                itemCount: formDataProvider.itemListHomeBills.length,
+                                                itemCount: formDataProvider.homeBillsTitleList.length,
                                                 itemBuilder: (BuildContext context, int i) {
                                                   return Container(
                                                     padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
@@ -507,7 +554,7 @@ class _BillsState extends State<Bills> {
                                                           flex: 2,
                                                           fit: FlexFit.tight,
                                                           child: Text(
-                                                            formDataProvider.itemListHomeBills[i],
+                                                            formDataProvider.homeBillsTitleList[i],
                                                             style: TextStyle(fontSize: 20),
                                                             overflow: TextOverflow.ellipsis,
                                                           ),
@@ -517,7 +564,7 @@ class _BillsState extends State<Bills> {
                                                           fit: FlexFit.tight,
                                                           child: Text(
                                                             textAlign: TextAlign.right,
-                                                            formDataProvider.pricesListHomeBills[i].toString(),
+                                                            formDataProvider.homeBillsPriceList[i].toString(),
                                                             style: TextStyle(fontSize: 20),
                                                             overflow: TextOverflow.ellipsis,
                                                           ),
@@ -529,7 +576,7 @@ class _BillsState extends State<Bills> {
                                                           constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                                           icon: Icon(Icons.edit, size: 21),
                                                           onPressed: () {
-                                                            _showEditDialog(context, i); // Show the edit dialog
+                                                            _showEditDialog(context, i, 1); // Show the edit dialog
                                                           },
                                                         ),
                                                       ],
@@ -538,7 +585,7 @@ class _BillsState extends State<Bills> {
                                                 },
                                               ),
                                             ),
-                                          if (isTextFormFieldVisible && isTVContainerTouched)
+                                          if (isTextFormFieldVisible && isHomeBillsContainerTouched)
                                             Container(
                                               padding: EdgeInsets.all(10),
                                               child: Row(
@@ -574,8 +621,8 @@ class _BillsState extends State<Bills> {
                                                             double dprice = double.tryParse(priceText) ?? 0.0;
                                                             String price = dprice.toStringAsFixed(2);
                                                             setState(() {
-                                                              formDataProvider.updateTextValueHomeBills(text, 3);
-                                                              formDataProvider.updateNumberValueHomeBills(price, 3);
+                                                              formDataProvider.updateTextValue(text, 3, 1);
+                                                              formDataProvider.updateNumberValue(price, 3, 1);
                                                               isEditingList = false; // Add a corresponding entry for the new item
                                                               textController.clear();
                                                               formDataProvider.notifyListeners();
@@ -584,12 +631,12 @@ class _BillsState extends State<Bills> {
                                                               isTextFormFieldVisible = false;
                                                               isAddButtonActive = false;
                                                               //***********************//
-                                                              formDataProvider.itemListHomeBills.forEach((item) {
+                                                              formDataProvider.homeBillsTitleList.forEach((item) {
                                                                 print("ekle ikonu item: $item");
                                                               });
                                                               //***********************//
                                                               //***********************//
-                                                              formDataProvider.pricesListHomeBills.forEach((item) {
+                                                              formDataProvider.homeBillsPriceList.forEach((item) {
                                                                 print("ekle ikonu price: $item");
                                                               });
                                                               //***********************//
@@ -617,35 +664,45 @@ class _BillsState extends State<Bills> {
                                           if (!isEditingList && !isTextFormFieldVisible)
                                             Container(
                                               padding: EdgeInsets.all(10),
-                                              child: InkWell(
-                                                onTap: () {
-                                                  setState(() {
-                                                    isTVContainerTouched = true;
-                                                    isOyunContainerTouched = false;
-                                                    isMuzikContainerTouched = false;
-                                                    isAddButtonActive = true;
-                                                    isTextFormFieldVisible = true;
-                                                    isTextFormFieldVisibleND =false;
-                                                    isTextFormFieldVisibleRD = false;
-                                                    platformPriceController.clear();
-                                                    if (formDataProvider.itemListHomeBills.isEmpty){
-                                                      print("itemListHomeBills is empty!");
-                                                    }
-                                                    formDataProvider.itemListHomeBills.forEach((element) {
-                                                      print('itemList: $element');
-                                                    });
-                                                    formDataProvider.pricesListHomeBills.forEach((element) {
-                                                      print('pricesList: $element');
-                                                    });
-                                                    //print("isEditingList: $isEditingList");
-                                                    //print("isEditingListND: $isEditingList");
-                                                    //print("isEditingListRD: $isEditingList");
-                                                    //print("isTextFormFieldVisible: $isTextFormFieldVisible");
-                                                    //print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-                                                    //print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
-                                                  });
-                                                },
-                                                child: Icon(Icons.add_circle, size: 26),
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  InkWell(
+                                                    onTap: () {
+                                                      setState(() {
+                                                        isHomeBillsContainerTouched = true;
+                                                        isInternetContainerTouched = false;
+                                                        isPhoneContainerTouched = false;
+                                                        isAddButtonActive = true;
+                                                        isTextFormFieldVisible = true;
+                                                        isTextFormFieldVisibleND =false;
+                                                        isTextFormFieldVisibleRD = false;
+                                                        platformPriceController.clear();
+                                                        if (formDataProvider.homeBillsTitleList.isEmpty){
+                                                          print("homeBillsTitleList is empty!");
+                                                        }
+                                                        formDataProvider.homeBillsTitleList.forEach((element) {
+                                                          print('itemList: $element');
+                                                        });
+                                                        formDataProvider.homeBillsPriceList.forEach((element) {
+                                                          print('pricesList: $element');
+                                                        });
+                                                        //print("isEditingList: $isEditingList");
+                                                        //print("isEditingListND: $isEditingList");
+                                                        //print("isEditingListRD: $isEditingList");
+                                                        //print("isTextFormFieldVisible: $isTextFormFieldVisible");
+                                                        //print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
+                                                        //print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
+                                                      });
+                                                    },
+                                                    child: Icon(Icons.add_circle, size: 26),
+                                                  ),
+                                                  if (convertSum != "0,00")
+                                                    Padding(
+                                                      padding: const EdgeInsets.only(right: 43),
+                                                      child: Text("Toplam: ${convertSum}", style: TextStyle(fontSize: 20),),
+                                                    ),
+                                                ],
                                               ),
                                             ),
                                         ],
@@ -658,12 +715,12 @@ class _BillsState extends State<Bills> {
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
-                                        color: isOyunContainerTouched ? Colors.black : Colors.black.withOpacity(0.5),
-                                        width: isOyunContainerTouched ? 4 : 2,
+                                        color: isInternetContainerTouched ? Colors.black : Colors.black.withOpacity(0.5),
+                                        width: isInternetContainerTouched ? 4 : 2,
                                       ),
                                     ),
                                     child: InkWell(
-                                      onTap: handleOyunContainerTouch,
+                                      onTap: handleInternetContainerTouch,
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
@@ -671,143 +728,53 @@ class _BillsState extends State<Bills> {
                                               padding: EdgeInsets.all(10),
                                               child: Text("İnternet",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),)
                                           ),
-                                          for (int i = 0; i < NDitemList.length; i++)
-                                            Padding(
-                                              padding: const EdgeInsets.only(left: 10, right: 10),
-                                              child: Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: isEditingListND
-                                                        ? Column(
+                                          if (formDataProvider.internetTitleList.isNotEmpty && formDataProvider.internetPriceList.isNotEmpty)
+                                            Container(
+                                              child:
+                                              ListView.builder(
+                                                shrinkWrap: true,
+                                                itemCount: formDataProvider.internetTitleList.length,
+                                                itemBuilder: (BuildContext context, int i) {
+                                                  return Container(
+                                                    padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+                                                    child: Row(
                                                       children: [
-                                                        TextFormField(
-                                                          controller: NDeditController,
-                                                          style: TextStyle(fontSize: 18),
-                                                          decoration: InputDecoration(
-                                                            border: InputBorder.none,
-                                                            hintText: 'NAN',
+                                                        Flexible(
+                                                          flex: 2,
+                                                          fit: FlexFit.tight,
+                                                          child: Text(
+                                                            formDataProvider.internetTitleList[i],
+                                                            style: TextStyle(fontSize: 20),
+                                                            overflow: TextOverflow.ellipsis,
                                                           ),
                                                         ),
-                                                        SizedBox(height:34)
+                                                        Flexible(
+                                                          flex: 2,
+                                                          fit: FlexFit.tight,
+                                                          child: Text(
+                                                            textAlign: TextAlign.right,
+                                                            formDataProvider.internetPriceList[i].toString(),
+                                                            style: TextStyle(fontSize: 20),
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                        ),
+                                                        SizedBox(width: 20),
+                                                        IconButton(
+                                                          splashRadius: 0.0001,
+                                                          padding: EdgeInsets.zero,
+                                                          constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                                          icon: Icon(Icons.edit, size: 21),
+                                                          onPressed: () {
+                                                            _showEditDialog(context, i, 2); // Show the edit dialog
+                                                          },
+                                                        ),
                                                       ],
-                                                    )
-                                                        : Container(
-                                                      padding: EdgeInsets.symmetric(vertical: 2),
-                                                      child: Row(
-                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                        children: [
-                                                          Text(
-                                                            NDitemList[i],
-                                                            style: TextStyle(fontSize: 18),
-                                                          ),
-                                                          Text(
-                                                            NDpricesList[i].toString(),
-                                                            style: TextStyle(fontSize: 18),
-                                                          ),
-                                                          if(!isAddButtonActiveND)
-                                                            IconButton(
-                                                                splashRadius: 0.0001,
-                                                                padding: EdgeInsets.zero,
-                                                                constraints: BoxConstraints(minWidth: 24, maxWidth: 24),
-                                                                onPressed: () {
-                                                                  setState(() {
-                                                                    isEditingListND = !isEditingListND;
-                                                                    if (isEditingListND) {
-                                                                      NDeditController.text = NDitemList[i];
-                                                                      NDplatformPriceController.text = NDpricesList[i].toString(); // Set the correct value
-                                                                    }
-                                                                  });
-                                                                },
-                                                                icon: Icon(Icons.edit))
-                                                        ],
-                                                      ),
                                                     ),
-                                                  ),
-                                                  if (isEditingListND)
-                                                    Expanded(
-                                                      child: Column(
-                                                        children: [
-                                                          TextFormField(
-                                                            controller: NDplatformPriceController,
-                                                            keyboardType: TextInputType.number, // Show numeric keyboard
-                                                            style: TextStyle(fontSize: 18),
-                                                            decoration: InputDecoration(
-                                                              border: InputBorder.none,
-                                                              hintText: 'DOB',
-                                                            ),
-                                                          ),
-                                                          Column(
-                                                            children: [
-                                                              Row(
-                                                                mainAxisAlignment: MainAxisAlignment.end,
-                                                                children: [
-                                                                  IconButton(
-                                                                    splashRadius: 0.0001,
-                                                                    padding: EdgeInsets.zero,
-                                                                    constraints: BoxConstraints(minWidth: 24, maxWidth: 24),
-                                                                    onPressed: () {
-                                                                      setState(() {
-                                                                        isEditingListND = false;
-                                                                        NDitemList[i] = NDeditController.text.trim();
-                                                                        double dPrice = double.tryParse(NDplatformPriceController.text) ?? 0.0;
-                                                                        String editedPrice = dPrice.toStringAsFixed(2);
-                                                                        NDpricesList[i] = editedPrice;
-                                                                        NDplatformPriceController.text = editedPrice.toString(); // Update the controller value
-                                                                        NDplatformPriceController.clear();
-                                                                      });
-                                                                    },
-                                                                    icon: Icon(
-                                                                        Icons.save
-                                                                    ),
-                                                                  ),
-                                                                  SizedBox(width: 10,),
-                                                                  if (isEditingListND)
-                                                                    IconButton(
-                                                                      splashRadius: 0.0001,
-                                                                      padding: EdgeInsets.zero,
-                                                                      constraints: BoxConstraints(minWidth: 24, maxWidth: 24),
-                                                                      onPressed: () {
-                                                                        setState(() {
-                                                                          isEditingListND = false;
-                                                                          isAddButtonActiveND = false;
-                                                                          // Reset the text to the original item text when cancel is clicked
-                                                                          NDeditController.text = NDitemList[i];
-                                                                          NDplatformPriceController.text = NDpricesList[i].toString();
-                                                                          NDplatformPriceController.clear();
-                                                                        });
-                                                                      },
-                                                                      icon: Icon(Icons.cancel),
-                                                                    ),
-                                                                  SizedBox(width: 10,),
-                                                                  if (isEditingListND)
-                                                                    IconButton(
-                                                                      splashRadius: 0.0001,
-                                                                      padding: EdgeInsets.zero,
-                                                                      constraints: BoxConstraints(minWidth: 24, maxWidth: 24),
-                                                                      onPressed: () {
-                                                                        setState(() {
-                                                                          // Remove the item from the list
-                                                                          isEditingListND = false;
-                                                                          isAddButtonActiveND = false;
-                                                                          NDitemList.removeAt(i);
-                                                                          NDpricesList.removeAt(i);
-                                                                          NDplatformPriceController.clear();
-                                                                        });
-                                                                      },
-                                                                      icon: Icon(Icons.delete),
-                                                                    ),
-                                                                ],
-                                                              ),
-                                                              SizedBox(height: 10)
-                                                            ],
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                ],
+                                                  );
+                                                },
                                               ),
                                             ),
-                                          if (isTextFormFieldVisibleND && isOyunContainerTouched)
+                                          if (isTextFormFieldVisibleND && isInternetContainerTouched)
                                             Container(
                                               padding: EdgeInsets.all(10),
                                               child: Row(
@@ -836,7 +803,35 @@ class _BillsState extends State<Bills> {
                                                   Wrap(
                                                     children: [
                                                       IconButton(
-                                                        onPressed: addItemND,
+                                                        onPressed: () {
+                                                          final text = NDtextController.text.trim();
+                                                          final priceText = NDplatformPriceController.text.trim();
+                                                          if (text.isNotEmpty && priceText.isNotEmpty) {
+                                                            double dprice = double.tryParse(priceText) ?? 0.0;
+                                                            String price = dprice.toStringAsFixed(2);
+                                                            setState(() {
+                                                              formDataProvider.updateTextValue(text, 3, 2);
+                                                              formDataProvider.updateNumberValue(price, 3, 2);
+                                                              isEditingListND = false; // Add a corresponding entry for the new item
+                                                              NDtextController.clear();
+                                                              formDataProvider.notifyListeners();
+                                                              NDplatformPriceController.clear();
+                                                              formDataProvider.notifyListeners();
+                                                              isTextFormFieldVisibleND = false;
+                                                              isAddButtonActiveND = false;
+                                                              //***********************//
+                                                              formDataProvider.homeBillsTitleList.forEach((item) {
+                                                                print("ekle ikonu item: $item");
+                                                              });
+                                                              //***********************//
+                                                              //***********************//
+                                                              formDataProvider.homeBillsPriceList.forEach((item) {
+                                                                print("ekle ikonu price: $item");
+                                                              });
+                                                              //***********************//
+                                                            });
+                                                          }
+                                                        },
                                                         icon: Icon(Icons.check_circle, size: 26),
                                                       ),
                                                       IconButton(
@@ -858,26 +853,45 @@ class _BillsState extends State<Bills> {
                                           if (!isEditingListND && !isTextFormFieldVisibleND)
                                             Container(
                                               padding: EdgeInsets.all(10),
-                                              child: InkWell(
-                                                onTap: () {
-                                                  setState(() {
-                                                    isTVContainerTouched = false;
-                                                    isOyunContainerTouched = true;
-                                                    isMuzikContainerTouched = false;
-                                                    isAddButtonActiveND = true;
-                                                    isTextFormFieldVisible = false;
-                                                    isTextFormFieldVisibleND =true;
-                                                    isTextFormFieldVisibleRD = false;
-                                                    NDplatformPriceController.clear();
-                                                    print("isEditingList: $isEditingList");
-                                                    print("isEditingListND: $isEditingList");
-                                                    print("isEditingListRD: $isEditingList");
-                                                    print("isTextFormFieldVisible: $isTextFormFieldVisible");
-                                                    print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-                                                    print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
-                                                  });
-                                                },
-                                                child: Icon(Icons.add_circle, size: 26),
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  InkWell(
+                                                    onTap: () {
+                                                      setState(() {
+                                                        isHomeBillsContainerTouched = false;
+                                                        isInternetContainerTouched = true;
+                                                        isPhoneContainerTouched = false;
+                                                        isAddButtonActiveND = true;
+                                                        isTextFormFieldVisible = false;
+                                                        isTextFormFieldVisibleND =true;
+                                                        isTextFormFieldVisibleRD = false;
+                                                        NDplatformPriceController.clear();
+                                                        if (formDataProvider.internetTitleList.isEmpty){
+                                                          print("homeBillsTitleList is empty!");
+                                                        }
+                                                        formDataProvider.internetTitleList.forEach((element) {
+                                                          print('itemList: $element');
+                                                        });
+                                                        formDataProvider.internetPriceList.forEach((element) {
+                                                          print('pricesList: $element');
+                                                        });
+                                                        //print("isEditingList: $isEditingList");
+                                                        //print("isEditingListND: $isEditingList");
+                                                        //print("isEditingListRD: $isEditingList");
+                                                        //print("isTextFormFieldVisible: $isTextFormFieldVisible");
+                                                        //print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
+                                                        //print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
+                                                      });
+                                                    },
+                                                    child: Icon(Icons.add_circle, size: 26),
+                                                  ),
+                                                  if (convertSum2 != "0,00")
+                                                    Padding(
+                                                      padding: const EdgeInsets.only(right: 43),
+                                                      child: Text("Toplam: ${convertSum2}", style: TextStyle(fontSize: 20),),
+                                                    ),
+                                                ],
                                               ),
                                             ),
                                         ],
@@ -890,156 +904,66 @@ class _BillsState extends State<Bills> {
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
-                                        color: isMuzikContainerTouched ? Colors.black : Colors.black.withOpacity(0.5),
-                                        width: isMuzikContainerTouched ? 4 : 2,
+                                        color: isPhoneContainerTouched ? Colors.black : Colors.black.withOpacity(0.5),
+                                        width: isPhoneContainerTouched ? 4 : 2,
                                       ),
                                     ),
                                     child: InkWell(
-                                      onTap: handleMuzikContainerTouch,
+                                      onTap: handlePhoneContainerTouch,
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Padding(
                                               padding: EdgeInsets.all(10),
-                                              child: Text("Telefon",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),)
+                                              child: Text("Müzik",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),)
                                           ),
-                                          for (int i = 0; i < RDitemList.length; i++)
-                                            Padding(
-                                              padding: const EdgeInsets.only(left: 10, right: 10),
-                                              child: Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: isEditingListRD
-                                                        ? Column(
+                                          if (formDataProvider.phoneTitleList.isNotEmpty && formDataProvider.phonePriceList.isNotEmpty)
+                                            Container(
+                                              child:
+                                              ListView.builder(
+                                                shrinkWrap: true,
+                                                itemCount: formDataProvider.phoneTitleList.length,
+                                                itemBuilder: (BuildContext context, int i) {
+                                                  return Container(
+                                                    padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+                                                    child: Row(
                                                       children: [
-                                                        TextFormField(
-                                                          controller: RDeditController,
-                                                          style: TextStyle(fontSize: 18),
-                                                          decoration: InputDecoration(
-                                                            border: InputBorder.none,
-                                                            hintText: 'NAN',
+                                                        Flexible(
+                                                          flex: 2,
+                                                          fit: FlexFit.tight,
+                                                          child: Text(
+                                                            formDataProvider.phoneTitleList[i],
+                                                            style: TextStyle(fontSize: 20),
+                                                            overflow: TextOverflow.ellipsis,
                                                           ),
                                                         ),
-                                                        SizedBox(height:34)
+                                                        Flexible(
+                                                          flex: 2,
+                                                          fit: FlexFit.tight,
+                                                          child: Text(
+                                                            textAlign: TextAlign.right,
+                                                            formDataProvider.phonePriceList[i].toString(),
+                                                            style: TextStyle(fontSize: 20),
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                        ),
+                                                        SizedBox(width: 20),
+                                                        IconButton(
+                                                          splashRadius: 0.0001,
+                                                          padding: EdgeInsets.zero,
+                                                          constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                                          icon: Icon(Icons.edit, size: 21),
+                                                          onPressed: () {
+                                                            _showEditDialog(context, i, 3); // Show the edit dialog
+                                                          },
+                                                        ),
                                                       ],
-                                                    )
-                                                        : Container(
-                                                      padding: EdgeInsets.symmetric(vertical: 2),
-                                                      child: Row(
-                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                        children: [
-                                                          Text(
-                                                            RDitemList[i],
-                                                            style: TextStyle(fontSize: 18),
-                                                          ),
-                                                          Text(
-                                                            RDpricesList[i].toString(),
-                                                            style: TextStyle(fontSize: 18),
-                                                          ),
-                                                          if(!isAddButtonActiveRD)
-                                                            IconButton(
-                                                                splashRadius: 0.0001,
-                                                                padding: EdgeInsets.zero,
-                                                                constraints: BoxConstraints(minWidth: 24, maxWidth: 24),
-                                                                onPressed: () {
-                                                                  setState(() {
-                                                                    isEditingListRD = !isEditingListRD;
-                                                                    if (isEditingListRD) {
-                                                                      RDeditController.text = RDitemList[i];
-                                                                      RDplatformPriceController.text = RDpricesList[i].toString(); // Set the correct value
-                                                                    }
-                                                                  });
-                                                                },
-                                                                icon: Icon(Icons.edit))
-                                                        ],
-                                                      ),
                                                     ),
-                                                  ),
-                                                  if (isEditingListRD)
-                                                    Expanded(
-                                                      child: Column(
-                                                        children: [
-                                                          TextFormField(
-                                                            controller: RDplatformPriceController,
-                                                            keyboardType: TextInputType.number, // Show numeric keyboard
-                                                            style: TextStyle(fontSize: 18),
-                                                            decoration: InputDecoration(
-                                                              border: InputBorder.none,
-                                                              hintText: 'DOB',
-                                                            ),
-                                                          ),
-                                                          Column(
-                                                            children: [
-                                                              Row(
-                                                                mainAxisAlignment: MainAxisAlignment.end,
-                                                                children: [
-                                                                  IconButton(
-                                                                    splashRadius: 0.0001,
-                                                                    padding: EdgeInsets.zero,
-                                                                    constraints: BoxConstraints(minWidth: 24, maxWidth: 24),
-                                                                    onPressed: () {
-                                                                      setState(() {
-                                                                        isEditingListRD = false;
-                                                                        RDitemList[i] = RDeditController.text.trim();
-                                                                        double dPrice = double.tryParse(RDplatformPriceController.text) ?? 0.0;
-                                                                        String editedPrice = dPrice.toStringAsFixed(2);
-                                                                        RDpricesList[i] = editedPrice;
-                                                                        RDplatformPriceController.text = editedPrice.toString(); // Update the controller value
-                                                                        RDplatformPriceController.clear();
-                                                                      });
-                                                                    },
-                                                                    icon: Icon(
-                                                                        Icons.save
-                                                                    ),
-                                                                  ),
-                                                                  SizedBox(width: 10,),
-                                                                  if (isEditingListRD)
-                                                                    IconButton(
-                                                                      splashRadius: 0.0001,
-                                                                      padding: EdgeInsets.zero,
-                                                                      constraints: BoxConstraints(minWidth: 24, maxWidth: 24),
-                                                                      onPressed: () {
-                                                                        setState(() {
-                                                                          isEditingListRD = false;
-                                                                          isAddButtonActiveRD = false;
-                                                                          // Reset the text to the original item text when cancel is clicked
-                                                                          RDeditController.text = RDitemList[i];
-                                                                          RDplatformPriceController.text = RDpricesList[i].toString();
-                                                                          RDplatformPriceController.clear();
-                                                                        });
-                                                                      },
-                                                                      icon: Icon(Icons.cancel),
-                                                                    ),
-                                                                  SizedBox(width: 10,),
-                                                                  if (isEditingListRD)
-                                                                    IconButton(
-                                                                      splashRadius: 0.0001,
-                                                                      padding: EdgeInsets.zero,
-                                                                      constraints: BoxConstraints(minWidth: 24, maxWidth: 24),
-                                                                      onPressed: () {
-                                                                        setState(() {
-                                                                          // Remove the item from the list
-                                                                          isEditingListRD = false;
-                                                                          isAddButtonActiveRD = false;
-                                                                          RDitemList.removeAt(i);
-                                                                          RDpricesList.removeAt(i);
-                                                                          RDplatformPriceController.clear();
-                                                                        });
-                                                                      },
-                                                                      icon: Icon(Icons.delete),
-                                                                    ),
-                                                                ],
-                                                              ),
-                                                              SizedBox(height: 10)
-                                                            ],
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                ],
+                                                  );
+                                                },
                                               ),
                                             ),
-                                          if (isTextFormFieldVisibleRD && isMuzikContainerTouched)
+                                          if (isTextFormFieldVisibleRD && isPhoneContainerTouched)
                                             Container(
                                               padding: EdgeInsets.all(10),
                                               child: Row(
@@ -1068,7 +992,35 @@ class _BillsState extends State<Bills> {
                                                   Wrap(
                                                     children: [
                                                       IconButton(
-                                                        onPressed: addItemRD,
+                                                        onPressed: () {
+                                                          final text = RDtextController.text.trim();
+                                                          final priceText = RDplatformPriceController.text.trim();
+                                                          if (text.isNotEmpty && priceText.isNotEmpty) {
+                                                            double dprice = double.tryParse(priceText) ?? 0.0;
+                                                            String price = dprice.toStringAsFixed(2);
+                                                            setState(() {
+                                                              formDataProvider.updateTextValue(text, 3, 3);
+                                                              formDataProvider.updateNumberValue(price, 3, 3);
+                                                              isEditingListRD = false; // Add a corresponding entry for the new item
+                                                              RDtextController.clear();
+                                                              formDataProvider.notifyListeners();
+                                                              RDplatformPriceController.clear();
+                                                              formDataProvider.notifyListeners();
+                                                              isTextFormFieldVisibleRD = false;
+                                                              isAddButtonActiveRD = false;
+                                                              //***********************//
+                                                              formDataProvider.phoneTitleList.forEach((item) {
+                                                                print("ekle ikonu item: $item");
+                                                              });
+                                                              //***********************//
+                                                              //***********************//
+                                                              formDataProvider.phonePriceList.forEach((item) {
+                                                                print("ekle ikonu price: $item");
+                                                              });
+                                                              //***********************//
+                                                            });
+                                                          }
+                                                        },
                                                         icon: Icon(Icons.check_circle, size: 26),
                                                       ),
                                                       IconButton(
@@ -1090,26 +1042,45 @@ class _BillsState extends State<Bills> {
                                           if (!isEditingListRD && !isTextFormFieldVisibleRD)
                                             Container(
                                               padding: EdgeInsets.all(10),
-                                              child: InkWell(
-                                                onTap: () {
-                                                  setState(() {
-                                                    isTVContainerTouched = false;
-                                                    isOyunContainerTouched = false;
-                                                    isMuzikContainerTouched = true;
-                                                    isAddButtonActiveRD = true;
-                                                    isTextFormFieldVisible = false;
-                                                    isTextFormFieldVisibleND =false;
-                                                    isTextFormFieldVisibleRD = true;
-                                                    RDplatformPriceController.clear();
-                                                    print("isEditingList: $isEditingList");
-                                                    print("isEditingListND: $isEditingList");
-                                                    print("isEditingListRD: $isEditingList");
-                                                    print("isTextFormFieldVisible: $isTextFormFieldVisible");
-                                                    print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-                                                    print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
-                                                  });
-                                                },
-                                                child: Icon(Icons.add_circle, size: 26),
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  InkWell(
+                                                    onTap: () {
+                                                      setState(() {
+                                                        isHomeBillsContainerTouched = false;
+                                                        isInternetContainerTouched = false;
+                                                        isPhoneContainerTouched = true;
+                                                        isAddButtonActiveRD = true;
+                                                        isTextFormFieldVisible = false;
+                                                        isTextFormFieldVisibleND =false;
+                                                        isTextFormFieldVisibleRD = true;
+                                                        RDplatformPriceController.clear();
+                                                        if (formDataProvider.phoneTitleList.isEmpty){
+                                                          print("homeBillsTitleList is empty!");
+                                                        }
+                                                        formDataProvider.phoneTitleList.forEach((element) {
+                                                          print('itemList: $element');
+                                                        });
+                                                        formDataProvider.phonePriceList.forEach((element) {
+                                                          print('pricesList: $element');
+                                                        });
+                                                        //print("isEditingList: $isEditingList");
+                                                        //print("isEditingListND: $isEditingList");
+                                                        //print("isEditingListRD: $isEditingList");
+                                                        //print("isTextFormFieldVisible: $isTextFormFieldVisible");
+                                                        //print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
+                                                        //print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
+                                                      });
+                                                    },
+                                                    child: Icon(Icons.add_circle, size: 26),
+                                                  ),
+                                                  if (convertSum3 != "0,00")
+                                                    Padding(
+                                                      padding: const EdgeInsets.only(right: 43),
+                                                      child: Text("Toplam: ${convertSum3}", style: TextStyle(fontSize: 20),),
+                                                    ),
+                                                ],
                                               ),
                                             ),
                                         ],

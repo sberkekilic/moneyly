@@ -20,8 +20,24 @@ class _Page5State extends State<Page5> {
     final page2 = Provider.of<FormDataProvider>(context, listen: false);
 
     double incomeValue = NumberFormat.decimalPattern('tr_TR').parse(page1.incomeValue) as double;
-    double subsValue = NumberFormat.decimalPattern('tr_TR').parse(page2.sumOfPrices) as double;
-    double subsPercent = (subsValue / incomeValue) * 100;
+    double sumOfTV = NumberFormat.decimalPattern('tr_TR').parse(page2.sumOfTV) as double;
+    double sumOfGaming = NumberFormat.decimalPattern('tr_TR').parse(page2.sumOfGaming) as double;
+    double sumOfMusic = NumberFormat.decimalPattern('tr_TR').parse(page2.sumOfMusic) as double;
+    double sumOfHomeBills = NumberFormat.decimalPattern('tr_TR').parse(page2.sumOfHomeBills) as double;
+    double sumOfInternet = NumberFormat.decimalPattern('tr_TR').parse(page2.sumOfInternet) as double;
+    double sumOfPhone = NumberFormat.decimalPattern('tr_TR').parse(page2.sumOfPhone) as double;
+    double sumOfRent = NumberFormat.decimalPattern('tr_TR').parse(page2.sumOfRent) as double;
+    double sumOfKitchen = NumberFormat.decimalPattern('tr_TR').parse(page2.sumOfKitchen) as double;
+    double sumOfCatering = NumberFormat.decimalPattern('tr_TR').parse(page2.sumOfCatering) as double;
+    double sumOfEnt= NumberFormat.decimalPattern('tr_TR').parse(page2.sumOfEntertainment) as double;
+    double sumOfOther = NumberFormat.decimalPattern('tr_TR').parse(page2.sumOfOther) as double;
+    double sumOfSubs = sumOfTV+sumOfGaming+sumOfMusic;
+    double sumOfBills = sumOfHomeBills+sumOfInternet+sumOfPhone;
+    double sumOfOthers = sumOfRent+sumOfKitchen+sumOfCatering+sumOfEnt+sumOfOther;
+    double subsPercent = (sumOfSubs/ incomeValue) * 100;
+    double billsPercent = (sumOfBills/ incomeValue) * 100;
+    double othersPercent = (sumOfOthers/ incomeValue) * 100;
+    double outcomeValue = sumOfSubs+sumOfBills+sumOfOthers;
     double savingsValue = incomeValue * 0.2;
     double wantsNeedsValue = incomeValue * 0.3;
     double alimentValue = incomeValue * 0.5;
@@ -29,21 +45,40 @@ class _Page5State extends State<Page5> {
     String formattedWantsNeedsValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(wantsNeedsValue);
     String formattedAlimentValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(alimentValue);
     String notCalculatedValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(incomeValue);
-
+    String formattedOutcomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(outcomeValue);
+    String formattedSumOfSubs = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfSubs);
+    String formattedSumOfBills = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfBills);
+    String formattedSumOfOthers = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfOthers);
 
     String itemListText = "";
+    String oyunListe = "";
+    String muzikListe = "";
     String itemListTextHomeBills = "";
-    for (int i = 0; i<page2.itemList.length; i++){
-      itemListText += "${page2.itemList[i]}, ${page2.pricesList[i]}";
+    for (int i = 0; i<page2.tvTitleList.length; i++){
+      itemListText += "${page2.tvTitleList[i]}, ${page2.tvPriceList[i]}";
 
-    if (i < page2.itemList.length - 1){
+    if (i < page2.tvTitleList.length - 1){
       itemListText += "\n";
     }
     }
-    for (int i = 0; i<page2.itemListHomeBills.length; i++){
-      itemListTextHomeBills += "${page2.itemListHomeBills[i]}, ${page2.pricesListHomeBills[i]}";
+    for (int i = 0; i<page2.gamingTitleList.length; i++){
+      oyunListe += "${page2.gamingTitleList[i]}, ${page2.gamingPriceList[i]}";
 
-      if (i < page2.itemListHomeBills.length - 1){
+      if (i < page2.gamingTitleList.length - 1){
+        oyunListe += "\n";
+      }
+    }
+    for (int i = 0; i<page2.musicTitleList.length; i++){
+      muzikListe += "${page2.musicTitleList[i]}, ${page2.musicPriceList[i]}";
+
+      if (i < page2.musicTitleList.length - 1){
+        muzikListe += "\n";
+      }
+    }
+    for (int i = 0; i<page2.homeBillsTitleList.length; i++){
+      itemListTextHomeBills += "${page2.homeBillsTitleList[i]}, ${page2.homeBillsPriceList[i]}";
+
+      if (i < page2.homeBillsTitleList.length - 1){
         itemListTextHomeBills += "\n";
       }
 
@@ -166,7 +201,7 @@ class _Page5State extends State<Page5> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text("Gider", style: TextStyle(fontSize: 31)),
-                  Text("${notCalculatedValue}",style: TextStyle(fontSize: 25)),
+                  Text("${formattedOutcomeValue}",style: TextStyle(fontSize: 25)),
                   Row(
                     children: [
                       Flexible(
@@ -176,7 +211,7 @@ class _Page5State extends State<Page5> {
                       Flexible(
                           flex: 3,
                           fit: FlexFit.tight,
-                          child: Text(page2.sumOfPrices,style: TextStyle(fontSize: 16), textAlign: TextAlign.right,)),
+                          child: Text("${formattedSumOfSubs}",style: TextStyle(fontSize: 16), textAlign: TextAlign.right,)),
                       Flexible(
                           flex: 3,
                           fit: FlexFit.tight,
@@ -188,15 +223,15 @@ class _Page5State extends State<Page5> {
                       Flexible(
                           flex: 3,
                           fit: FlexFit.tight,
-                          child: Text("İstekler",style: TextStyle(fontSize: 16),)),
+                          child: Text("Faturalar",style: TextStyle(fontSize: 16),)),
                       Flexible(
                           flex: 3,
                           fit: FlexFit.tight,
-                          child: Text(formattedWantsNeedsValue,style: TextStyle(fontSize: 16), textAlign: TextAlign.right,)),
+                          child: Text(formattedSumOfBills,style: TextStyle(fontSize: 16), textAlign: TextAlign.right,)),
                       Flexible(
                           flex: 3,
                           fit: FlexFit.tight,
-                          child: Text("%30.00",style: TextStyle(fontSize: 16),textAlign: TextAlign.right)),
+                          child: Text("%${billsPercent.toStringAsFixed(2)}",style: TextStyle(fontSize: 16),textAlign: TextAlign.right)),
                     ],
                   ),
                   Row(
@@ -204,15 +239,15 @@ class _Page5State extends State<Page5> {
                       Flexible(
                           flex: 3,
                           fit: FlexFit.tight,
-                          child: Text("İhtiyaçlar",style: TextStyle(fontSize: 16),)),
+                          child: Text("Diğer Giderler",style: TextStyle(fontSize: 16),)),
                       Flexible(
                           flex: 3,
                           fit: FlexFit.tight,
-                          child: Text(formattedAlimentValue,style: TextStyle(fontSize: 16), textAlign: TextAlign.right,)),
+                          child: Text(formattedSumOfOthers,style: TextStyle(fontSize: 16), textAlign: TextAlign.right,)),
                       Flexible(
                           flex: 3,
                           fit: FlexFit.tight,
-                          child: Text("%50.00",style: TextStyle(fontSize: 16),textAlign: TextAlign.right)),
+                          child: Text("%${othersPercent.toStringAsFixed(2)}",style: TextStyle(fontSize: 16),textAlign: TextAlign.right)),
                     ],
                   ),
                 ],
@@ -224,7 +259,11 @@ class _Page5State extends State<Page5> {
             Text("PAGE 1: GELİR TÜRÜ: ${page1.selectedOption}"),
             Text("PAGE 1: GELİR MİKTARI: ${page1.incomeValue}"),
             Text("PAGE 2: FİLM,DİZİ VE TV: \n$itemListText"),
-            Text("PAGE 2: FİLM,DİZİ VE TV TOPLAM TUTARU: \n${page2.sumOfPrices}"),
+            Text("PAGE 2: OYUN: \n$oyunListe"),
+            Text("PAGE 2: MÜZİK: \n$muzikListe"),
+            Text("PAGE 2: FİLM,DİZİ VE TV TOPLAM TUTARI: \n${page2.sumOfTV}"),
+            Text("PAGE 2: OYUN TOPLAM TUTARI: \n${page2.sumOfGaming}"),
+            Text("PAGE 2: MÜZİK TOPLAM TUTARI: \n${page2.sumOfMusic}"),
             Text("PAGE 3: EV FATURALARI, : \n$itemListTextHomeBills"),
           ],
         ),
