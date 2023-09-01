@@ -915,7 +915,7 @@ class _BillsState extends State<Bills> {
                                         children: [
                                           Padding(
                                               padding: EdgeInsets.all(10),
-                                              child: Text("Müzik",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),)
+                                              child: Text("Telefon",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),)
                                           ),
                                           if (formDataProvider.phoneTitleList.isNotEmpty && formDataProvider.phonePriceList.isNotEmpty)
                                             Container(
