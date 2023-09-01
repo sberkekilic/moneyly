@@ -426,9 +426,9 @@ class _OtherExpensesState extends State<OtherExpenses> {
     String convertSum3 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumcatering);
     formDataProvider.sumOfCatering = convertSum3;
     String convertSum4 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sument);
-    formDataProvider.sumOfEntertainment = convertSum;
+    formDataProvider.sumOfEntertainment = convertSum4;
     String convertSum5 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumother);
-    formDataProvider.sumOfOther = convertSum;
+    formDataProvider.sumOfOther = convertSum5;
     return Scaffold(
       appBar: AppBar(
           backgroundColor: Color(0xfff0f0f1),
@@ -482,7 +482,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                       ),
                       clipBehavior: Clip.hardEdge,
                       onPressed: () async {
-                        Navigator.pushNamed(context, 'page5');
+                        Navigator.pushNamed(context, 'ana-sayfa');
                       },
                       child: const Text('Next', style: TextStyle(fontSize: 18),),
                     ),

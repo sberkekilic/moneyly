@@ -399,8 +399,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                   child: Container(
                                     height: 8,
                                       width: (screenWidth-60) / 3,
-                                    color: Color(
-                                        0xff1ab738)
+                                    color: Color(0xff1ab738)
                                   ),
                                 )
                               ],
@@ -419,8 +418,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                             width: (screenWidth-60) / 3,
                             child: Column(
                               children: [
-                                Align(child: Text("Abonelikler", style: TextStyle(color: Color(
-                                    0xff1ab738), fontWeight: FontWeight.bold, fontSize: 15)), alignment: Alignment.center),
+                                Align(child: Text("Abonelikler", style: TextStyle(color: Color(0xff1ab738), fontWeight: FontWeight.bold, fontSize: 15)), alignment: Alignment.center),
                                 SizedBox(height: 10),
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(10),
@@ -444,8 +442,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                             width: (screenWidth-60) / 3,
                             child: Column(
                               children: [
-                                Align(child: Text("Faturalar", style: TextStyle(color: Color(
-                                    0xffc6c6c7), fontSize: 15)), alignment: Alignment.center),
+                                Align(child: Text("Faturalar", style: TextStyle(color: Color(0xffc6c6c7), fontSize: 15)), alignment: Alignment.center),
                                 SizedBox(height: 10),
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(10),

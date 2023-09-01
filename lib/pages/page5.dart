@@ -38,17 +38,20 @@ class _Page5State extends State<Page5> {
     double billsPercent = (sumOfBills/ incomeValue) * 100;
     double othersPercent = (sumOfOthers/ incomeValue) * 100;
     double outcomeValue = sumOfSubs+sumOfBills+sumOfOthers;
+    double netProfit = incomeValue - outcomeValue;
     double savingsValue = incomeValue * 0.2;
     double wantsNeedsValue = incomeValue * 0.3;
     double alimentValue = incomeValue * 0.5;
     String formattedSavingsValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(savingsValue);
     String formattedWantsNeedsValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(wantsNeedsValue);
     String formattedAlimentValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(alimentValue);
-    String notCalculatedValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(incomeValue);
+    String formattedIncomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(incomeValue);
     String formattedOutcomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(outcomeValue);
+    String formattedProfitValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(netProfit);
     String formattedSumOfSubs = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfSubs);
     String formattedSumOfBills = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfBills);
     String formattedSumOfOthers = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfOthers);
+
 
     String itemListText = "";
     String oyunListe = "";
@@ -86,7 +89,7 @@ class _Page5State extends State<Page5> {
 
     return Scaffold(
       body: Padding(
-        padding: EdgeInsets.only(top: 50, left: 10, right: 10),
+        padding: EdgeInsets.only(top: 50, left: 20, right: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -97,7 +100,8 @@ class _Page5State extends State<Page5> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text("Gelir", style: TextStyle(fontSize: 31)),
-                  Text("${notCalculatedValue}",style: TextStyle(fontSize: 25)),
+                  Text("${formattedIncomeValue}",style: TextStyle(fontSize: 25)),
+                  SizedBox(height: 10),
                   if (page1.selectedOption == SelectedOption.Is)
                     Row(
                       children: [
@@ -132,7 +136,7 @@ class _Page5State extends State<Page5> {
                             flex: 3,
                             fit: FlexFit.tight,
                             child: Text(
-                                notCalculatedValue,
+                                formattedIncomeValue,
                                 style: TextStyle(fontSize: 16), textAlign: TextAlign.right)
                         ),
                         Flexible(
@@ -145,6 +149,7 @@ class _Page5State extends State<Page5> {
                         ),
                       ],
                     ),
+                  SizedBox(height: 5),
                   Row(
                     children: [
                       Flexible(
@@ -161,6 +166,7 @@ class _Page5State extends State<Page5> {
                           child: Text("%20.00",style: TextStyle(fontSize: 16),textAlign: TextAlign.right)),
                     ],
                   ),
+                  SizedBox(height: 5),
                   Row(
                     children: [
                       Flexible(
@@ -177,6 +183,7 @@ class _Page5State extends State<Page5> {
                           child: Text("%30.00",style: TextStyle(fontSize: 16),textAlign: TextAlign.right)),
                     ],
                   ),
+                  SizedBox(height: 5),
                   Row(
                     children: [
                       Flexible(
@@ -196,12 +203,14 @@ class _Page5State extends State<Page5> {
                 ],
               ),
             ),
+            SizedBox(height: 50),
             Container(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text("Gider", style: TextStyle(fontSize: 31)),
                   Text("${formattedOutcomeValue}",style: TextStyle(fontSize: 25)),
+                  SizedBox(height: 10),
                   Row(
                     children: [
                       Flexible(
@@ -218,6 +227,7 @@ class _Page5State extends State<Page5> {
                           child: Text("%${subsPercent.toStringAsFixed(2)}",style: TextStyle(fontSize: 16),textAlign: TextAlign.right)),
                     ],
                   ),
+                  SizedBox(height: 5),
                   Row(
                     children: [
                       Flexible(
@@ -234,6 +244,7 @@ class _Page5State extends State<Page5> {
                           child: Text("%${billsPercent.toStringAsFixed(2)}",style: TextStyle(fontSize: 16),textAlign: TextAlign.right)),
                     ],
                   ),
+                  SizedBox(height: 5),
                   Row(
                     children: [
                       Flexible(
@@ -253,18 +264,16 @@ class _Page5State extends State<Page5> {
                 ],
               ),
             ),
-            ElevatedButton(onPressed: () {
-              Navigator.pushNamed(context, 'abonelikler');
-            }, child: Text("Abonelikler")),
-            Text("PAGE 1: GELİR TÜRÜ: ${page1.selectedOption}"),
-            Text("PAGE 1: GELİR MİKTARI: ${page1.incomeValue}"),
-            Text("PAGE 2: FİLM,DİZİ VE TV: \n$itemListText"),
-            Text("PAGE 2: OYUN: \n$oyunListe"),
-            Text("PAGE 2: MÜZİK: \n$muzikListe"),
-            Text("PAGE 2: FİLM,DİZİ VE TV TOPLAM TUTARI: \n${page2.sumOfTV}"),
-            Text("PAGE 2: OYUN TOPLAM TUTARI: \n${page2.sumOfGaming}"),
-            Text("PAGE 2: MÜZİK TOPLAM TUTARI: \n${page2.sumOfMusic}"),
-            Text("PAGE 3: EV FATURALARI, : \n$itemListTextHomeBills"),
+            SizedBox(height: 50),
+            Container(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Net Kazanç", style: TextStyle(fontSize: 31)),
+                  Text(formattedProfitValue,style: TextStyle(fontSize: 25)),
+                ],
+              ),
+            ),
           ],
         ),
       ),
