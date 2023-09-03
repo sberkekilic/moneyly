@@ -25,14 +25,6 @@ class _HomePageState extends State<HomePage> {
 
   int _currentIndex = 0;
 
-  final List<Widget> _pages = [
-    HomePage(),
-    IncomePage(),
-    OutcomePage(),
-    InvestmentPage(),
-    WishesPage(),
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -76,16 +68,17 @@ class _HomePageState extends State<HomePage> {
 
     int incomeYuzdesi = incomeValue.toInt() ~/ 100;
     int netProfitYuzdesi = netProfit.toInt() ~/ 100;
-    double bolum = netProfit.toInt()/incomeValue.toInt();
-    if (netProfit.toInt() % incomeValue.toInt() != 0){
-      bolum = double.parse(bolum.toStringAsFixed(2));
-      netProfit = incomeValue.toInt()*bolum;
-      print("$netProfitYuzdesi if");
-      print("$bolum if bolum");
-    } else {
-      print("$netProfitYuzdesi else");
-      print("$bolum else bolum");
+    int bolum = (netProfit.toInt() * 100) ~/ incomeValue.toInt(); // Calculate as an integer
+    if (netProfit.toInt() % incomeValue.toInt() != 0) {
+      double bolumDouble = netProfit / incomeValue; // Calculate as a double
+      bolum = (bolumDouble * 100).toInt(); // Convert the double to an integer
+      netProfit = incomeValue.toInt() * bolumDouble;
     }
+    incomeYuzdesi = incomeYuzdesi*10;
+    print("$netProfitYuzdesi netProfitYuzdesi SON");
+    print("${bolum} bolum SON"); // Print as an integer
+    print("$incomeYuzdesi incomeYuzdesi SON");
+
 
     return Scaffold(
       appBar: AppBar(
@@ -146,46 +139,46 @@ class _HomePageState extends State<HomePage> {
                       child: Column(
                         children: [
                           SizedBox(
-                            child: CircularStepProgressIndicator(
-                              totalSteps: incomeYuzdesi,
-                              currentStep: netProfitYuzdesi,
-                              stepSize: 10,
-                              selectedStepSize: 10,
-                              width: 140,
-                              height: 140,
-                              padding: 0,
-                              circularDirection: CircularDirection.clockwise,
-                              selectedColor: Color(0xff1ab738),
-                              unselectedColor: Color(0xffc6c6c7),
-                              roundedCap: (_, __) => true,
-                              arcSize: 2 * math.pi * 0.75,
-                              startingAngle: -math.pi * 1.25,
-                              child: Container(
-                                alignment: Alignment.center,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      formattedProfitValue,
-                                      style: GoogleFonts.montserrat(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                child: CircularStepProgressIndicator(
+                                  totalSteps: incomeYuzdesi,
+                                  currentStep: bolum,
+                                  stepSize: 10,
+                                  selectedStepSize: 10,
+                                  width: 140,
+                                  height: 140,
+                                  padding: 0,
+                                  circularDirection: CircularDirection.clockwise,
+                                  selectedColor: Color(0xff1ab738),
+                                  unselectedColor: Color(0xffc6c6c7),
+                                  roundedCap: (_, __) => true,
+                                  arcSize: 2 * math.pi * 0.75,
+                                  startingAngle: -math.pi * 1.25,
+                                  child: Container(
+                                    alignment: Alignment.center,
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          formattedProfitValue,
+                                          style: GoogleFonts.montserrat(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Kalan',
+                                          style: GoogleFonts.montserrat(
+                                            fontSize: 16,
+                                            // You can also customize other text styles here
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ],
                                     ),
-                                    Text(
-                                      'Kalan',
-                                      style: GoogleFonts.montserrat(
-                                        fontSize: 16,
-                                        // You can also customize other text styles here
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          ),
                           SizedBox(height: 10),
                           Row(
                             children: [
