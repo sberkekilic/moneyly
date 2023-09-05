@@ -54,6 +54,9 @@ class _HomePageState extends State<HomePage> {
     double sumOfCatering = NumberFormat.decimalPattern('tr_TR').parse(formDataProvider.sumOfCatering) as double;
     double sumOfEnt= NumberFormat.decimalPattern('tr_TR').parse(formDataProvider.sumOfEntertainment) as double;
     double sumOfOther = NumberFormat.decimalPattern('tr_TR').parse(formDataProvider.sumOfOther) as double;
+    double savingsValue = incomeValue * 0.2;
+    double wishesValue = incomeValue * 0.3;
+    double needsValue = incomeValue * 0.5;
     double sumOfSubs = sumOfTV+sumOfGaming+sumOfMusic;
     double sumOfBills = sumOfHomeBills+sumOfInternet+sumOfPhone;
     double sumOfOthers = sumOfRent+sumOfKitchen+sumOfCatering+sumOfEnt+sumOfOther;
@@ -65,15 +68,20 @@ class _HomePageState extends State<HomePage> {
     String formattedSumOfSubs = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfSubs);
     String formattedSumOfBills = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfBills);
     String formattedSumOfOthers = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfOthers);
+    String formattedSavingsValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(savingsValue);
+    String formattedWishesValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(wishesValue);
+    String formattedNeedsValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(needsValue);
 
     int incomeYuzdesi = incomeValue.toInt() ~/ 100;
     int netProfitYuzdesi = netProfit.toInt() ~/ 100;
     int bolum = (netProfit.toInt() * 100) ~/ incomeValue.toInt(); // Calculate as an integer
     if (netProfit.toInt() % incomeValue.toInt() != 0) {
       double bolumDouble = netProfit / incomeValue; // Calculate as a double
+      print("$bolumDouble $netProfit bolumDouble IF");
       bolum = (bolumDouble * 100).toInt(); // Convert the double to an integer
       netProfit = incomeValue.toInt() * bolumDouble;
     }
+    String formattedBolum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(bolum);
     incomeYuzdesi = incomeYuzdesi*10;
     print("$netProfitYuzdesi netProfitYuzdesi SON");
     print("${bolum} bolum SON"); // Print as an integer
@@ -139,46 +147,46 @@ class _HomePageState extends State<HomePage> {
                       child: Column(
                         children: [
                           SizedBox(
-                                child: CircularStepProgressIndicator(
-                                  totalSteps: incomeYuzdesi,
-                                  currentStep: bolum,
-                                  stepSize: 10,
-                                  selectedStepSize: 10,
-                                  width: 140,
-                                  height: 140,
-                                  padding: 0,
-                                  circularDirection: CircularDirection.clockwise,
-                                  selectedColor: Color(0xff1ab738),
-                                  unselectedColor: Color(0xffc6c6c7),
-                                  roundedCap: (_, __) => true,
-                                  arcSize: 2 * math.pi * 0.75,
-                                  startingAngle: -math.pi * 1.25,
-                                  child: Container(
-                                    alignment: Alignment.center,
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.center,
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          formattedProfitValue,
-                                          style: GoogleFonts.montserrat(
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        Text(
-                                          'Kalan',
-                                          style: GoogleFonts.montserrat(
-                                            fontSize: 16,
-                                            // You can also customize other text styles here
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ],
+                            child: CircularStepProgressIndicator(
+                              totalSteps: 100,
+                              currentStep: bolum,
+                              stepSize: 10,
+                              selectedStepSize: 10,
+                              width: 140,
+                              height: 140,
+                              padding: 0,
+                              circularDirection: CircularDirection.clockwise,
+                              selectedColor: Color(0xff1ab738),
+                              unselectedColor: Color(0xffc6c6c7),
+                              roundedCap: (_, __) => true,
+                              arcSize: 2 * math.pi * 0.75,
+                              startingAngle: -math.pi * 1.25,
+                              child: Container(
+                                alignment: Alignment.center,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      formattedProfitValue,
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
+                                    Text(
+                                      'Kalan',
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: 16,
+                                        // You can also customize other text styles here
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
                                 ),
                               ),
+                            ),
+                          ),
                           SizedBox(height: 10),
                           Row(
                             children: [
@@ -339,8 +347,9 @@ class _HomePageState extends State<HomePage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("${incomeType} Geliri", style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.bold)),
+                          Text("${incomeType} Geliri", style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold)),
                           SizedBox(height: 10),
+                          Text(formattedIncomeValue, style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600)),
                           SizedBox(
                             child: LinearPercentIndicator(
                               padding: EdgeInsets.only(right: 10),
@@ -372,7 +381,7 @@ class _HomePageState extends State<HomePage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text("Birikim", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("0 / ${(incomeValue*0.2).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                                    Text("0,00 / ${formattedSavingsValue}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
                                   ],
                                 )
                               ],
@@ -394,7 +403,7 @@ class _HomePageState extends State<HomePage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text("İstekler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("0 / ${(incomeValue*0.3).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                                    Text("0,00 / ${formattedWishesValue}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
                                   ],
                                 )
                               ],
@@ -416,7 +425,7 @@ class _HomePageState extends State<HomePage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text("İhtiyaçlar", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("0 / ${(incomeValue*0.5).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                                    Text("0,00 / ${formattedNeedsValue}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
                                   ],
                                 )
                               ],
@@ -445,8 +454,9 @@ class _HomePageState extends State<HomePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Tüm Giderler", style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text("Tüm Giderler", style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold)),
                     SizedBox(height: 10),
+                    Text(formattedOutcomeValue, style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600)),
                     SizedBox(
                       child: LinearPercentIndicator(
                         padding: EdgeInsets.only(right: 10),
@@ -460,8 +470,6 @@ class _HomePageState extends State<HomePage> {
                         progressColor: Colors.purple,
                       ),
                     ),
-                    SizedBox(height: 10),
-                    Text("${formattedOutcomeValue} / ${formattedOutcomeValue}", style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w600)),
                     Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
                     Container(
                       child: Row(
@@ -492,7 +500,7 @@ class _HomePageState extends State<HomePage> {
                             radius: 30,
                             lineWidth: 7.0,
                             percent: sumOfBills/outcomeValue,
-                            center: new Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
+                            center: new Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfBills/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
                             progressColor: Colors.green,
                           ),
                           SizedBox(width: 10),
@@ -514,7 +522,7 @@ class _HomePageState extends State<HomePage> {
                             radius: 30,
                             lineWidth: 7.0,
                             percent: sumOfOthers/outcomeValue,
-                            center: new Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
+                            center: new Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfOthers/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
                             progressColor: Colors.green,
                           ),
                           SizedBox(width: 10),
