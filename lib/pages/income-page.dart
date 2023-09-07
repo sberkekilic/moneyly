@@ -15,9 +15,6 @@ class IncomePage extends StatefulWidget {
 }
 
 class _IncomePageState extends State<IncomePage> {
-
-  int _currentIndex = 1;
-
   @override
   Widget build(BuildContext context) {
 
@@ -30,7 +27,6 @@ class _IncomePageState extends State<IncomePage> {
     } else if (page1.selectedOption == SelectedOption.Emekli){
       incomeType = "Emekli";
     }
-    final formDataProvider = Provider.of<FormDataProvider>(context, listen: false);
     double incomeValue = NumberFormat.decimalPattern('tr_TR').parse(page1.incomeValue) as double;
     double savingsValue = incomeValue*0.2;
     double wishesValue = incomeValue*0.3;
@@ -181,7 +177,6 @@ class _IncomePageState extends State<IncomePage> {
                           Text("Birikim Ekle", style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w600)),
                           IconButton(
                               onPressed: () {
-
                               },
                               icon: Icon(Icons.add_circle)
                           )
@@ -328,11 +323,8 @@ class _IncomePageState extends State<IncomePage> {
             topRight: Radius.circular(10), // Adjust as needed
           ),
           child: BottomNavigationBar(
+            currentIndex: 1,
             onTap: (int index) {
-              setState(() {
-                _currentIndex = index;
-              });
-
               switch (index) {
                 case 0:
                   Navigator.pushNamed(context, 'ana-sayfa');

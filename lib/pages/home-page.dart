@@ -22,9 +22,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
-  int _currentIndex = 0;
-
   @override
   void initState() {
     super.initState();
@@ -547,9 +544,9 @@ class _HomePageState extends State<HomePage> {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              spreadRadius: 2,
-              blurRadius: 4,
+              color: Colors.black.withOpacity(0.5),
+              spreadRadius: 5,
+              blurRadius: 5,
               offset: Offset(0, 3),
             ),
           ],
@@ -564,11 +561,8 @@ class _HomePageState extends State<HomePage> {
             topRight: Radius.circular(10), // Adjust as needed
           ),
           child: BottomNavigationBar(
+            currentIndex: 0,
             onTap: (int index) {
-              setState(() {
-                _currentIndex = index;
-              });
-
               switch (index) {
                 case 0:
                   Navigator.pushNamed(context, 'ana-sayfa');
@@ -588,6 +582,8 @@ class _HomePageState extends State<HomePage> {
               }
             },
             type: BottomNavigationBarType.fixed,
+            selectedLabelStyle: GoogleFonts.montserrat(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w600),
+            unselectedLabelStyle: GoogleFonts.montserrat(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w600),
             items: [
               BottomNavigationBarItem(
                 icon: Icon(Icons.home, size: 30),
@@ -608,7 +604,7 @@ class _HomePageState extends State<HomePage> {
               BottomNavigationBarItem(
                 icon: Icon(Icons.star, size: 30),
                 label: 'İstekler',
-              ),
+              )
             ],
           ),
         ),

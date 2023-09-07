@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import 'package:provider/provider.dart';
@@ -54,12 +55,6 @@ class _SubscriptionsState extends State<Subscriptions> {
       isTextFormFieldVisibleND =false;
       isTextFormFieldVisibleRD = false;
       isEditingList = false;
-      //print("isEditingList: $isEditingList");
-      //print("isEditingListND: $isEditingList");
-      //print("isEditingListRD: $isEditingList");
-      //print("isTextFormFieldVisible: $isTextFormFieldVisible");
-      //print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-      //print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
     });
   }
   void handleOyunContainerTouch() {
@@ -71,12 +66,6 @@ class _SubscriptionsState extends State<Subscriptions> {
       isTextFormFieldVisibleND =false;
       isTextFormFieldVisibleRD = false;
       isEditingListND = false;
-      print("isEditingList: $isEditingList");
-      print("isEditingListND: $isEditingList");
-      print("isEditingListRD: $isEditingList");
-      print("isTextFormFieldVisible: $isTextFormFieldVisible");
-      print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-      print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
     });
   }
   void handleMuzikContainerTouch() {
@@ -88,12 +77,6 @@ class _SubscriptionsState extends State<Subscriptions> {
       isTextFormFieldVisibleND =false;
       isTextFormFieldVisibleRD = false;
       isEditingListRD = false;
-      print("isEditingList: $isEditingList");
-      print("isEditingListND: $isEditingList");
-      print("isEditingListRD: $isEditingList");
-      print("isTextFormFieldVisible: $isTextFormFieldVisible");
-      print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-      print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
     });
   }
 
@@ -149,11 +132,11 @@ class _SubscriptionsState extends State<Subscriptions> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10)
           ),
-          title: Text('Edit Item',style: TextStyle(fontSize: 20)),
+          title: Text('Edit Item',style: GoogleFonts.montserrat(fontSize: 20)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Align(child: Text("Item", style: TextStyle(fontSize: 18),), alignment: Alignment.centerLeft,),
+              Align(child: Text("Item", style: GoogleFonts.montserrat(fontSize: 18),), alignment: Alignment.centerLeft,),
               SizedBox(height: 10),
               TextFormField(
                 controller: selectedEditController,
@@ -169,10 +152,10 @@ class _SubscriptionsState extends State<Subscriptions> {
                   ),
                   contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
                 ),
-                style: TextStyle(fontSize: 20),
+                style: GoogleFonts.montserrat(fontSize: 20),
               ),
               SizedBox(height: 10),
-              Align(child: Text("Price",style: TextStyle(fontSize: 18)), alignment: Alignment.centerLeft),
+              Align(child: Text("Price",style: GoogleFonts.montserrat(fontSize: 18)), alignment: Alignment.centerLeft),
               SizedBox(height: 10),
               TextFormField(
                 controller: selectedPriceController,
@@ -188,7 +171,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                   ),
                   contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
                 ),
-                style: TextStyle(fontSize: 20),
+                style: GoogleFonts.montserrat(fontSize: 20),
                 keyboardType: TextInputType.number,
               ),
             ],
@@ -301,6 +284,11 @@ class _SubscriptionsState extends State<Subscriptions> {
     formDataProvider.sumOfGaming = convertSum2;
     String convertSum3 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(summuzik);
     formDataProvider.sumOfMusic = convertSum3;
+    double sumAll = 0.0;
+    sumAll += sum;
+    sumAll += sumoyun;
+    sumAll += summuzik;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xfff0f0f1),
@@ -330,7 +318,7 @@ class _SubscriptionsState extends State<Subscriptions> {
             ),
             Text(
               "Gider Ekle",
-              style: TextStyle(color: Colors.black, fontSize: 28, fontWeight: FontWeight.normal),
+              style: GoogleFonts.montserrat(color: Colors.black, fontSize: 28, fontWeight: FontWeight.normal),
             ),
           ],
         ),
@@ -350,13 +338,13 @@ class _SubscriptionsState extends State<Subscriptions> {
                       style: ElevatedButton.styleFrom(
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
-                        backgroundColor: Colors.black,
+                        backgroundColor: sumAll!=0.0 ? Colors.black : Colors.grey,
                       ),
                       clipBehavior: Clip.hardEdge,
                       onPressed: () {
                         Navigator.pushNamed(context, 'faturalar');
                       },
-                      child: const Text('Next', style: TextStyle(fontSize: 18),),
+                      child: Text('Sonraki', style: GoogleFonts.montserrat(fontSize: 18)),
                     ),
                   ),
                 ),
@@ -392,7 +380,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                             width: (screenWidth-60) / 3,
                             child: Column(
                               children: [
-                                Align(child: Text("Gelir", style: TextStyle(color: Colors.black, fontSize: 15)), alignment: Alignment.center),
+                                Align(child: Text("Gelir", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 15)), alignment: Alignment.center),
                                 SizedBox(height: 10),
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(10),
@@ -418,7 +406,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                             width: (screenWidth-60) / 3,
                             child: Column(
                               children: [
-                                Align(child: Text("Abonelikler", style: TextStyle(color: Color(0xff1ab738), fontWeight: FontWeight.bold, fontSize: 15)), alignment: Alignment.center),
+                                Align(child: Text("Abonelikler", style: GoogleFonts.montserrat(color: Color(0xff1ab738), fontWeight: FontWeight.bold, fontSize: 15)), alignment: Alignment.center),
                                 SizedBox(height: 10),
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(10),
@@ -442,7 +430,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                             width: (screenWidth-60) / 3,
                             child: Column(
                               children: [
-                                Align(child: Text("Faturalar", style: TextStyle(color: Color(0xffc6c6c7), fontSize: 15)), alignment: Alignment.center),
+                                Align(child: Text("Faturalar", style: GoogleFonts.montserrat(color: Color(0xffc6c6c7), fontSize: 15)), alignment: Alignment.center),
                                 SizedBox(height: 10),
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(10),
@@ -463,17 +451,17 @@ class _SubscriptionsState extends State<Subscriptions> {
                           borderRadius: BorderRadius.circular(10),
                           child: Container(
                             height: 50,
-                            width: (screenWidth-60) / 3,
+                            width: ((screenWidth-60) / 3) + 10,
                             child: Column(
                               children: [
-                                Align(child: Text("Diğer Giderler", style: TextStyle(color: Color(
+                                Align(child: Text("Diğer Giderler", style: GoogleFonts.montserrat(color: Color(
                                     0xffc6c6c7), fontSize: 15)), alignment: Alignment.center),
                                 SizedBox(height: 10),
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(10),
                                   child: Container(
                                     height: 8,
-                                    width: (screenWidth-60) / 3,
+                                    width: ((screenWidth-60) / 3) + 10,
                                     color: Color(
                                         0xffc6c6c7),
                                   ),
@@ -532,13 +520,24 @@ class _SubscriptionsState extends State<Subscriptions> {
                                       ),
                                     ),
                                     child: InkWell(
-                                      onTap: handleTVContainerTouch,
+                                      onTap: () {
+                                        if(isAddButtonActive==false){
+                                          print("if 1");
+                                          handleTVContainerTouch();
+                                          isAddButtonActiveND = false;
+                                          isAddButtonActiveRD = false;
+                                        } else {
+                                          print("else 1");
+                                          isAddButtonActiveND = false;
+                                          isAddButtonActiveRD = false;
+                                        }
+                                      },
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Padding(
                                               padding: EdgeInsets.all(10),
-                                              child: Text("Film, Dizi ve TV",style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),)
+                                              child: Text("Film, Dizi ve TV",style: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.bold),)
                                           ),
                                           if (formDataProvider.tvTitleList.isNotEmpty && formDataProvider.tvPriceList.isNotEmpty)
                                             Container(
@@ -558,7 +557,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                             fit: FlexFit.tight,
                                                             child: Text(
                                                               formDataProvider.tvTitleList[i],
-                                                              style: TextStyle(fontSize: 20),
+                                                              style: GoogleFonts.montserrat(fontSize: 20),
                                                               overflow: TextOverflow.ellipsis,
                                                             ),
                                                           ),
@@ -568,7 +567,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                             child: Text(
                                                                   textAlign: TextAlign.right,
                                                                   convertSumo,
-                                                                  style: TextStyle(fontSize: 20),
+                                                                  style: GoogleFonts.montserrat(fontSize: 20),
                                                                   overflow: TextOverflow.ellipsis,
                                                                 ),
                                                           ),
@@ -681,18 +680,6 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                         isTextFormFieldVisibleND =false;
                                                         isTextFormFieldVisibleRD = false;
                                                         platformPriceController.clear();
-                                                        formDataProvider.tvTitleList.forEach((element) {
-                                                          print('itemList: $element');
-                                                        });
-                                                        formDataProvider.tvPriceList.forEach((element) {
-                                                          print('pricesList: $element');
-                                                        });
-                                                        //print("isEditingList: $isEditingList");
-                                                        //print("isEditingListND: $isEditingList");
-                                                        //print("isEditingListRD: $isEditingList");
-                                                        //print("isTextFormFieldVisible: $isTextFormFieldVisible");
-                                                        //print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-                                                        //print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
                                                       });
                                                     },
                                                     child: Icon(Icons.add_circle, size: 26),
@@ -700,7 +687,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                   if (convertSum != "0,00")
                                                   Padding(
                                                     padding: const EdgeInsets.only(right: 43),
-                                                    child: Text("Toplam: ${convertSum}", style: TextStyle(fontSize: 20),),
+                                                    child: Text("Toplam: ${convertSum}", style: GoogleFonts.montserrat(fontSize: 20),),
                                                   ),
                                                 ],
                                               ),
@@ -720,13 +707,24 @@ class _SubscriptionsState extends State<Subscriptions> {
                                       ),
                                     ),
                                     child: InkWell(
-                                      onTap: handleOyunContainerTouch,
+                                      onTap: () {
+                                        if(isAddButtonActiveND==false){
+                                          print("if 2");
+                                          handleOyunContainerTouch();
+                                          isAddButtonActive = false;
+                                          isAddButtonActiveRD = false;
+                                        } else {
+                                          print("else 2");
+                                          isAddButtonActive = false;
+                                          isAddButtonActiveRD = false;
+                                        }
+                                      },
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Padding(
                                               padding: EdgeInsets.all(10),
-                                              child: Text("Oyun",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),)
+                                              child: Text("Oyun",style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold),)
                                           ),
                                           if (formDataProvider.gamingTitleList.isNotEmpty && formDataProvider.gamingPriceList.isNotEmpty)
                                             Container(
@@ -746,7 +744,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                           fit: FlexFit.tight,
                                                           child: Text(
                                                             formDataProvider.gamingTitleList[i],
-                                                            style: TextStyle(fontSize: 20),
+                                                            style: GoogleFonts.montserrat(fontSize: 20),
                                                             overflow: TextOverflow.ellipsis,
                                                           ),
                                                         ),
@@ -756,7 +754,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                           child: Text(
                                                             textAlign: TextAlign.right,
                                                             convertSuma,
-                                                            style: TextStyle(fontSize: 20),
+                                                            style: GoogleFonts.montserrat(fontSize: 20),
                                                             overflow: TextOverflow.ellipsis,
                                                           ),
                                                         ),
@@ -888,7 +886,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                   if (convertSum2 != "0,00")
                                                     Padding(
                                                       padding: const EdgeInsets.only(right: 43),
-                                                      child: Text("Toplam: ${convertSum2}", style: TextStyle(fontSize: 20),),
+                                                      child: Text("Toplam: ${convertSum2}", style: GoogleFonts.montserrat(fontSize: 20),),
                                                     ),
                                                 ],
                                               ),
@@ -908,13 +906,24 @@ class _SubscriptionsState extends State<Subscriptions> {
                                       ),
                                     ),
                                     child: InkWell(
-                                      onTap: handleMuzikContainerTouch,
+                                      onTap: () {
+                                        if(isAddButtonActiveRD==false){
+                                          print("if 3");
+                                          handleMuzikContainerTouch();
+                                          isAddButtonActive = false;
+                                          isAddButtonActiveND = false;
+                                        } else {
+                                          print("else 3");
+                                          isAddButtonActive = false;
+                                          isAddButtonActiveND = false;
+                                        }
+                                      },
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Padding(
                                               padding: EdgeInsets.all(10),
-                                              child: Text("Müzik",style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),)
+                                              child: Text("Müzik",style: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.bold),)
                                           ),
                                           if (formDataProvider.musicTitleList.isNotEmpty && formDataProvider.musicPriceList.isNotEmpty)
                                             Container(
@@ -934,7 +943,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                           fit: FlexFit.tight,
                                                           child: Text(
                                                             formDataProvider.musicTitleList[i],
-                                                            style: TextStyle(fontSize: 20),
+                                                            style: GoogleFonts.montserrat(fontSize: 20),
                                                             overflow: TextOverflow.ellipsis,
                                                           ),
                                                         ),
@@ -944,7 +953,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                           child: Text(
                                                             textAlign: TextAlign.right,
                                                             convertSumo,
-                                                            style: TextStyle(fontSize: 20),
+                                                            style: GoogleFonts.montserrat(fontSize: 20),
                                                             overflow: TextOverflow.ellipsis,
                                                           ),
                                                         ),
@@ -1076,7 +1085,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                   if (convertSum3 != "0,00")
                                                     Padding(
                                                       padding: const EdgeInsets.only(right: 43),
-                                                      child: Text("Toplam: ${convertSum3}", style: TextStyle(fontSize: 20),),
+                                                      child: Text("Toplam: ${convertSum3}", style: GoogleFonts.montserrat(fontSize: 20),),
                                                     ),
                                                 ],
                                               ),

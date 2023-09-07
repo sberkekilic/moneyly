@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../main.dart';
 import 'selection.dart';
@@ -172,7 +173,7 @@ class _AddIncomeState extends State<AddIncome> {
               ),
               Text(
                 "Gelir Ekle",
-                style: TextStyle(color: Colors.black, fontSize: 28, fontWeight: FontWeight.normal),
+                style: GoogleFonts.montserrat(color: Colors.black, fontSize: 28, fontWeight: FontWeight.normal),
               ),
             ],
           ),
@@ -211,9 +212,9 @@ class _AddIncomeState extends State<AddIncome> {
                         goToNextPage();
                       }
                           : null,
-                      child: const Text(
-                        'Next',
-                        style: TextStyle(fontSize: 18),
+                      child: Text(
+                        'Sonraki',
+                        style: GoogleFonts.montserrat(fontSize: 18),
                       ),
                     ),
                   ),
@@ -253,7 +254,7 @@ class _AddIncomeState extends State<AddIncome> {
                                 width: (screenWidth-60) / 3,
                                 child: Column(
                                   children: [
-                                    Align(child: Text("Gelir", style: TextStyle(color: Color(0xff1ab738), fontSize: 15, fontWeight: FontWeight.bold)), alignment: Alignment.center),
+                                    Align(child: Text("Gelir", style: GoogleFonts.montserrat(color: Color(0xff1ab738), fontSize: 15, fontWeight: FontWeight.bold)), alignment: Alignment.center),
                                     SizedBox(height: 10),
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(10),
@@ -276,7 +277,7 @@ class _AddIncomeState extends State<AddIncome> {
                                 width: (screenWidth-60) / 3,
                                 child: Column(
                                   children: [
-                                    Align(child: Text("Abonelikler", style: TextStyle(color: Color(0xffc6c6c7), fontSize: 15)), alignment: Alignment.center),
+                                    Align(child: Text("Abonelikler", style: GoogleFonts.montserrat(color: Color(0xffc6c6c7), fontSize: 15)), alignment: Alignment.center),
                                     SizedBox(height: 10),
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(10),
@@ -299,7 +300,7 @@ class _AddIncomeState extends State<AddIncome> {
                                 width: (screenWidth-60) / 3,
                                 child: Column(
                                   children: [
-                                    Align(child: Text("Faturalar", style: TextStyle(color: Color(0xffc6c6c7), fontSize: 15)), alignment: Alignment.center),
+                                    Align(child: Text("Faturalar", style: GoogleFonts.montserrat(color: Color(0xffc6c6c7), fontSize: 15)), alignment: Alignment.center),
                                     SizedBox(height: 10),
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(10),
@@ -320,17 +321,17 @@ class _AddIncomeState extends State<AddIncome> {
                               borderRadius: BorderRadius.circular(10),
                               child: Container(
                                 height: 50,
-                                width: (screenWidth-60) / 3,
+                                width: ((screenWidth-60) / 3) + 10,
                                 child: Column(
                                   children: [
-                                    Align(child: Text("Diğer Giderler", style: TextStyle(color: Color(
+                                    Align(child: Text("Diğer Giderler", style: GoogleFonts.montserrat(color: Color(
                                         0xffc6c6c7), fontSize: 15)), alignment: Alignment.center),
                                     SizedBox(height: 10),
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(10),
                                       child: Container(
                                         height: 8,
-                                        width: (screenWidth-60) / 3,
+                                        width: ((screenWidth-60) / 3) + 10,
                                         color: Color(
                                             0xffc6c6c7),
                                       ),
@@ -378,7 +379,7 @@ class _AddIncomeState extends State<AddIncome> {
                             SizedBox(height: 10),
                             Row(
                               children: [
-                                Text("Aylık gelir seçin", style: TextStyle(fontSize: 18),)
+                                Text("Aylık gelir seçin", style: GoogleFonts.montserrat(fontSize: 18),)
                               ],
                             ),
                             Padding(
@@ -421,7 +422,7 @@ class _AddIncomeState extends State<AddIncome> {
                                     alignment: Alignment.centerLeft,
                                     child: Text(
                                       selectedTitle,
-                                      style: TextStyle(fontSize: 18, color: Colors.black),
+                                      style: GoogleFonts.montserrat(fontSize: 18, color: Colors.black),
                                     ),
                                   ),
                                   SizedBox(height: 10),
@@ -432,7 +433,7 @@ class _AddIncomeState extends State<AddIncome> {
                                           controller: incomeController,
                                           textAlign: TextAlign.right,
                                           readOnly: true,
-                                          style: TextStyle(fontSize: 20),
+                                          style: GoogleFonts.montserrat(fontSize: 20),
                                           decoration: InputDecoration(
                                             border: OutlineInputBorder(
                                               borderRadius: BorderRadius.circular(10),
@@ -563,7 +564,7 @@ class _AddIncomeState extends State<AddIncome> {
                   alignment: Alignment.center,
                   child: Text(
                     label,
-                    style: TextStyle(
+                    style: GoogleFonts.montserrat(
                       fontSize: 20.0,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
@@ -590,7 +591,7 @@ class _AddIncomeState extends State<AddIncome> {
         ),
         child: Text(
           value,
-          style: TextStyle(color: textColor, fontSize: 20),
+          style: GoogleFonts.montserrat(color: textColor, fontSize: 20),
         ),
       ),
     );
@@ -611,7 +612,7 @@ class _AddIncomeState extends State<AddIncome> {
         ),
         child: Text(
           value,
-          style: TextStyle(color: textColor, fontSize: 20),
+          style: GoogleFonts.montserrat(color: textColor, fontSize: 20),
         ),
       ),
     );

@@ -429,6 +429,12 @@ class _OtherExpensesState extends State<OtherExpenses> {
     formDataProvider.sumOfEntertainment = convertSum4;
     String convertSum5 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumother);
     formDataProvider.sumOfOther = convertSum5;
+    double sumAll = 0.0;
+    sumAll += sum;
+    sumAll += sumkitchen;
+    sumAll += sumcatering;
+    sumAll += sument;
+    sumAll += sumother;
     return Scaffold(
       appBar: AppBar(
           backgroundColor: Color(0xfff0f0f1),
@@ -478,13 +484,13 @@ class _OtherExpensesState extends State<OtherExpenses> {
                       style: ElevatedButton.styleFrom(
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
-                        backgroundColor: Colors.black,
+                        backgroundColor: sumAll!=0.0 ? Colors.black : Colors.grey,
                       ),
                       clipBehavior: Clip.hardEdge,
                       onPressed: () async {
                         Navigator.pushNamed(context, 'ana-sayfa');
                       },
-                      child: const Text('Next', style: TextStyle(fontSize: 18),),
+                      child: const Text('Sonraki', style: TextStyle(fontSize: 18),),
                     ),
                   ),
                 ),
@@ -665,7 +671,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                       ),
                                     ),
                                     child: InkWell(
-                                      onTap: handleRentContainerTouch,
+                                      onTap: isAddButtonActive ? null : handleRentContainerTouch,
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
@@ -857,7 +863,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                       ),
                                     ),
                                     child: InkWell(
-                                      onTap: handleKitchenContainerTouch,
+                                      onTap: isAddButtonActiveND ? null : handleKitchenContainerTouch,
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
@@ -1049,7 +1055,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                       ),
                                     ),
                                     child: InkWell(
-                                      onTap: handleCateringContainerTouch,
+                                      onTap: isAddButtonActiveRD ? null :handleCateringContainerTouch,
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
@@ -1241,7 +1247,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                       ),
                                     ),
                                     child: InkWell(
-                                      onTap: handleEntContainerTouch,
+                                      onTap: isAddButtonActiveTH ? null :handleEntContainerTouch,
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
@@ -1432,7 +1438,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                     child: Container(
                                       width: double.infinity,
                                       child: InkWell(
-                                        onTap: handleOtherContainerTouch,
+                                        onTap: isAddButtonActiveOther ? null :handleOtherContainerTouch,
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
