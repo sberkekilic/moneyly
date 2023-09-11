@@ -358,9 +358,9 @@ class _BillsState extends State<Bills> {
                         backgroundColor: sumAll!=0.0 ? Colors.black : Colors.grey,
                       ),
                       clipBehavior: Clip.hardEdge,
-                      onPressed: () async {
+                      onPressed: sumAll!=0.0 ? () async {
                         Navigator.pushNamed(context, 'diger-giderler');
-                      },
+                      } : null,
                       child: Text('Sonraki', style: GoogleFonts.montserrat(fontSize: 18),),
                     ),
                   ),

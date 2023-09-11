@@ -21,341 +21,35 @@ class _OutcomePageState extends State<OutcomePage> {
 
   bool isSubsAddActive = false;
   bool hasSubsCategorySelected = false;
+  bool isBillsAddActive = false;
+  bool hasBillsCategorySelected = false;
+  bool isOthersAddActive = false;
+  bool hasOthersCategorySelected = false;
   // Initial Selected Value
-  String dropdownvalue = 'Film, Dizi ve TV';
+  String dropdownvaluesubs = 'Film, Dizi ve TV';
+  String dropdownvaluebills = 'Ev Faturaları';
+  String dropdownvalueothers = 'Kira';
 
   // List of items in our dropdown menu
-  var items = [
+  var subsItems = [
     'Film, Dizi ve TV',
     'Oyun',
     'Müzik',
   ];
 
-  void _showEditDialog(BuildContext context, int index, int page, int orderIndex) {
-    final formDataProvider = Provider.of<FormDataProvider>(context, listen: false);
+  var billsItems = [
+    'Ev Faturaları',
+    'İnternet',
+    'Telefon'
+  ];
 
-    TextEditingController selectedEditController = TextEditingController();
-    TextEditingController selectedPriceController = TextEditingController();
-
-    if(page == 1){
-      switch (orderIndex) {
-        case 1:
-          TextEditingController editController =
-          TextEditingController(text: formDataProvider.tvTitleList[index]);
-          TextEditingController priceController =
-          TextEditingController(text: formDataProvider.tvPriceList[index]);
-          selectedEditController = editController;
-          selectedPriceController = priceController;
-          break;
-        case 2:
-          TextEditingController NDeditController =
-          TextEditingController(text: formDataProvider.gamingTitleList[index]);
-          TextEditingController NDpriceController =
-          TextEditingController(text: formDataProvider.gamingPriceList[index]);
-          selectedEditController = NDeditController;
-          selectedPriceController = NDpriceController;
-          break;
-        case 3:
-          TextEditingController RDeditController =
-          TextEditingController(text: formDataProvider.musicTitleList[index]);
-          TextEditingController RDpriceController =
-          TextEditingController(text: formDataProvider.musicPriceList[index]);
-          selectedEditController = RDeditController;
-          selectedPriceController = RDpriceController;
-          break;
-      }
-    } else if (page == 2){
-      switch (orderIndex) {
-        case 1:
-          TextEditingController editController =
-          TextEditingController(text: formDataProvider.homeBillsTitleList[index]);
-          TextEditingController priceController =
-          TextEditingController(text: formDataProvider.homeBillsPriceList[index]);
-          selectedEditController = editController;
-          selectedPriceController = priceController;
-          break;
-        case 2:
-          TextEditingController NDeditController =
-          TextEditingController(text: formDataProvider.internetTitleList[index]);
-          TextEditingController NDpriceController =
-          TextEditingController(text: formDataProvider.internetPriceList[index]);
-          selectedEditController = NDeditController;
-          selectedPriceController = NDpriceController;
-          break;
-        case 3:
-          TextEditingController RDeditController =
-          TextEditingController(text: formDataProvider.phoneTitleList[index]);
-          TextEditingController RDpriceController =
-          TextEditingController(text: formDataProvider.phonePriceList[index]);
-          selectedEditController = RDeditController;
-          selectedPriceController = RDpriceController;
-          break;
-      }
-    } else if (page == 3){
-      switch (orderIndex) {
-        case 1:
-          TextEditingController editController =
-          TextEditingController(text: formDataProvider.rentTitleList[index]);
-          TextEditingController priceController =
-          TextEditingController(text: formDataProvider.rentPriceList[index]);
-          selectedEditController = editController;
-          selectedPriceController = priceController;
-          break;
-        case 2:
-          TextEditingController NDeditController =
-          TextEditingController(text: formDataProvider.kitchenTitleList[index]);
-          TextEditingController NDpriceController =
-          TextEditingController(text: formDataProvider.kitchenPriceList[index]);
-          selectedEditController = NDeditController;
-          selectedPriceController = NDpriceController;
-          break;
-        case 3:
-          TextEditingController RDeditController =
-          TextEditingController(text: formDataProvider.cateringTitleList[index]);
-          TextEditingController RDpriceController =
-          TextEditingController(text: formDataProvider.cateringPriceList[index]);
-          selectedEditController = RDeditController;
-          selectedPriceController = RDpriceController;
-          break;
-        case 4:
-          TextEditingController THeditController =
-          TextEditingController(text: formDataProvider.entertainmentTitleList[index]);
-          TextEditingController THpriceController =
-          TextEditingController(text: formDataProvider.entertainmentPriceList[index]);
-          selectedEditController = THeditController;
-          selectedPriceController = THpriceController;
-          break;
-        case 5:
-          TextEditingController otherEditController =
-          TextEditingController(text: formDataProvider.otherTitleList[index]);
-          TextEditingController otherPriceController =
-          TextEditingController(text: formDataProvider.otherPriceList[index]);
-          selectedEditController = otherEditController;
-          selectedPriceController = otherPriceController;
-          break;
-      }
-    }
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10)
-          ),
-          title: Text('Edit Item',style: TextStyle(fontSize: 20)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Align(child: Text("Item", style: TextStyle(fontSize: 18),), alignment: Alignment.centerLeft,),
-              SizedBox(height: 10),
-              TextFormField(
-                controller: selectedEditController,
-                decoration: InputDecoration(
-                  isDense: true,
-                  focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(width: 3, color: Colors.black)
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
-                  ),
-                  contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
-                ),
-                style: TextStyle(fontSize: 20),
-              ),
-              SizedBox(height: 10),
-              Align(child: Text("Price",style: TextStyle(fontSize: 18)), alignment: Alignment.centerLeft),
-              SizedBox(height: 10),
-              TextFormField(
-                controller: selectedPriceController,
-                decoration: InputDecoration(
-                  isDense: true,
-                  focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(width: 3, color: Colors.black)
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
-                  ),
-                  contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
-                ),
-                style: TextStyle(fontSize: 20),
-                keyboardType: TextInputType.number,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  if(page == 1){
-                    switch (orderIndex){
-                      case 1:
-                        formDataProvider.tvTitleList[index] = selectedEditController.text;
-                        formDataProvider.tvPriceList[index] = selectedPriceController.text;
-                        break;
-                      case 2:
-                        formDataProvider.gamingTitleList[index] = selectedEditController.text;
-                        formDataProvider.gamingPriceList[index] = selectedPriceController.text;
-                        break;
-                      case 3:
-                        formDataProvider.musicTitleList[index] = selectedEditController.text;
-                        formDataProvider.musicPriceList[index] = selectedPriceController.text;
-                        break;
-                    }
-                  } else if (page == 2){
-                    switch (orderIndex){
-                      case 1:
-                        formDataProvider.homeBillsTitleList[index] = selectedEditController.text;
-                        formDataProvider.homeBillsPriceList[index] = selectedPriceController.text;
-                        break;
-                      case 2:
-                        formDataProvider.internetTitleList[index] = selectedEditController.text;
-                        formDataProvider.internetPriceList[index] = selectedPriceController.text;
-                        break;
-                      case 3:
-                        formDataProvider.phoneTitleList[index] = selectedEditController.text;
-                        formDataProvider.phonePriceList[index] = selectedPriceController.text;
-                        break;
-                    }
-                  } else if (page == 3){
-                    switch (orderIndex){
-                      case 1:
-                        formDataProvider.rentTitleList[index] = selectedEditController.text;
-                        formDataProvider.rentPriceList[index] = selectedPriceController.text;
-                        break;
-                      case 2:
-                        formDataProvider.kitchenTitleList[index] = selectedEditController.text;
-                        formDataProvider.kitchenPriceList[index] = selectedPriceController.text;
-                        break;
-                      case 3:
-                        formDataProvider.cateringTitleList[index] = selectedEditController.text;
-                        formDataProvider.cateringPriceList[index] = selectedPriceController.text;
-                        break;
-                      case 4:
-                        formDataProvider.entertainmentTitleList[index] = selectedEditController.text;
-                        formDataProvider.entertainmentPriceList[index] = selectedPriceController.text;
-                        break;
-                      case 5:
-                        formDataProvider.otherTitleList[index] = selectedEditController.text;
-                        formDataProvider.otherPriceList[index] = selectedPriceController.text;
-                        break;
-                    }
-                  }
-                });
-                Navigator.pop(context);
-              },
-
-              child: Text('Save'),
-            ),
-            TextButton(
-                onPressed: () {
-                  setState(() {
-                    if(page == 1){
-                      switch (orderIndex){
-                        case 1:
-                          TextEditingController priceController =
-                          TextEditingController(text: formDataProvider.tvPriceList[index]);
-                          formDataProvider.tvTitleList.removeAt(index);
-                          formDataProvider.tvPriceList.removeAt(index);
-                          priceController.clear();
-                          break;
-                        case 2:
-                          TextEditingController NDpriceController =
-                          TextEditingController(text: formDataProvider.gamingPriceList[index]);
-                          formDataProvider.gamingTitleList.removeAt(index);
-                          formDataProvider.gamingPriceList.removeAt(index);
-                          NDpriceController.clear();
-                          break;
-                        case 3:
-                          TextEditingController RDpriceController =
-                          TextEditingController(text: formDataProvider.musicPriceList[index]);
-                          formDataProvider.musicTitleList.removeAt(index);
-                          formDataProvider.musicPriceList.removeAt(index);
-                          RDpriceController.clear();
-                          break;
-                      }
-                    } else if (page == 2){
-                      switch (orderIndex){
-                        case 1:
-                          TextEditingController priceController =
-                          TextEditingController(text: formDataProvider.homeBillsPriceList[index]);
-                          formDataProvider.homeBillsTitleList.removeAt(index);
-                          formDataProvider.homeBillsPriceList.removeAt(index);
-                          priceController.clear();
-                          break;
-                        case 2:
-                          TextEditingController NDpriceController =
-                          TextEditingController(text: formDataProvider.internetPriceList[index]);
-                          formDataProvider.internetTitleList.removeAt(index);
-                          formDataProvider.internetPriceList.removeAt(index);
-                          NDpriceController.clear();
-                          break;
-                        case 3:
-                          TextEditingController RDpriceController =
-                          TextEditingController(text: formDataProvider.phonePriceList[index]);
-                          formDataProvider.phoneTitleList.removeAt(index);
-                          formDataProvider.phonePriceList.removeAt(index);
-                          RDpriceController.clear();
-                          break;
-                      }
-                    } else if (page == 3){
-                      switch (orderIndex){
-                        case 1:
-                          TextEditingController priceController =
-                          TextEditingController(text: formDataProvider.rentPriceList[index]);
-                          formDataProvider.rentTitleList.removeAt(index);
-                          formDataProvider.rentPriceList.removeAt(index);
-                          priceController.clear();
-                          break;
-                        case 2:
-                          TextEditingController NDpriceController =
-                          TextEditingController(text: formDataProvider.kitchenPriceList[index]);
-                          formDataProvider.kitchenTitleList.removeAt(index);
-                          formDataProvider.kitchenPriceList.removeAt(index);
-                          NDpriceController.clear();
-                          break;
-                        case 3:
-                          TextEditingController RDpriceController =
-                          TextEditingController(text: formDataProvider.cateringPriceList[index]);
-                          formDataProvider.cateringTitleList.removeAt(index);
-                          formDataProvider.cateringPriceList.removeAt(index);
-                          RDpriceController.clear();
-                          break;
-                        case 4:
-                          TextEditingController THpriceController =
-                          TextEditingController(text: formDataProvider.entertainmentPriceList[index]);
-                          formDataProvider.entertainmentTitleList.removeAt(index);
-                          formDataProvider.entertainmentPriceList.removeAt(index);
-                          THpriceController.clear();
-                          break;
-                        case 5:
-                          TextEditingController otherPriceController =
-                          TextEditingController(text: formDataProvider.otherPriceList[index]);
-                          formDataProvider.otherTitleList.removeAt(index);
-                          formDataProvider.otherPriceList.removeAt(index);
-                          otherPriceController.clear();
-                          break;
-                      }
-                    }
-                    Navigator.of(context).pop();
-                  });
-                },
-                child: Text("Remove"))
-          ],
-        );
-      },
-    );
-  }
+  var othersItems = [
+    'Kira',
+    'Mutfak',
+    'Yeme İçme',
+    'Eğlence',
+    'Diğer'
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -490,6 +184,385 @@ class _OutcomePageState extends State<OutcomePage> {
     Color mediumColor = Color(0xFFFFA500);
     Color biggestColor = Color(0xFFFF8C00);
 
+    int totalSubsElement = formDataProvider.tvTitleList.length + formDataProvider.gamingTitleList.length + formDataProvider.musicTitleList.length;
+    int totalBillsElement = formDataProvider.homeBillsTitleList.length + formDataProvider.internetTitleList.length + formDataProvider.phoneTitleList.length;
+    int totalOthersElement = formDataProvider.rentTitleList.length + formDataProvider.kitchenTitleList.length + formDataProvider.cateringTitleList.length + formDataProvider.entertainmentTitleList.length + formDataProvider.otherTitleList.length;
+
+    void _showEditDialog(BuildContext context, int index, int page, int orderIndex) {
+      String caterogyName = "";
+      if(page == 1){
+        switch (orderIndex) {
+          case 1:
+            caterogyName = "TV";
+            break;
+          case 2:
+            caterogyName = "Gaming";
+            break;
+          case 3:
+            caterogyName = "Music";
+            break;
+        }
+      } else if (page == 2){
+        switch (orderIndex) {
+          case 1:
+            caterogyName = "Home Bills";
+            break;
+          case 2:
+            caterogyName = "Internet";
+            break;
+          case 3:
+            caterogyName = "Phone";
+            break;
+        }
+      } else if (page == 3){
+        switch (orderIndex) {
+          case 1:
+            caterogyName = "Rent";
+            break;
+          case 2:
+            caterogyName = "Kitchen";
+            break;
+          case 3:
+            caterogyName = "Catering";
+            break;
+          case 4:
+            caterogyName = "Entertainment";
+            break;
+          case 5:
+            caterogyName = "Other";
+            break;
+        }
+      }
+
+      TextEditingController selectedEditController = TextEditingController();
+      TextEditingController selectedPriceController = TextEditingController();
+
+      if(page == 1){
+        switch (orderIndex) {
+          case 1:
+            TextEditingController editController =
+            TextEditingController(text: formDataProvider.tvTitleList[index]);
+            TextEditingController priceController =
+            TextEditingController(text: formDataProvider.tvPriceList[index]);
+            selectedEditController = editController;
+            selectedPriceController = priceController;
+            break;
+          case 2:
+            TextEditingController NDeditController =
+            TextEditingController(text: formDataProvider.gamingTitleList[index]);
+            TextEditingController NDpriceController =
+            TextEditingController(text: formDataProvider.gamingPriceList[index]);
+            selectedEditController = NDeditController;
+            selectedPriceController = NDpriceController;
+            break;
+          case 3:
+            TextEditingController RDeditController =
+            TextEditingController(text: formDataProvider.musicTitleList[index]);
+            TextEditingController RDpriceController =
+            TextEditingController(text: formDataProvider.musicPriceList[index]);
+            selectedEditController = RDeditController;
+            selectedPriceController = RDpriceController;
+            break;
+        }
+      } else if (page == 2){
+        switch (orderIndex) {
+          case 1:
+            TextEditingController editController =
+            TextEditingController(text: formDataProvider.homeBillsTitleList[index]);
+            TextEditingController priceController =
+            TextEditingController(text: formDataProvider.homeBillsPriceList[index]);
+            selectedEditController = editController;
+            selectedPriceController = priceController;
+            break;
+          case 2:
+            TextEditingController NDeditController =
+            TextEditingController(text: formDataProvider.internetTitleList[index]);
+            TextEditingController NDpriceController =
+            TextEditingController(text: formDataProvider.internetPriceList[index]);
+            selectedEditController = NDeditController;
+            selectedPriceController = NDpriceController;
+            break;
+          case 3:
+            TextEditingController RDeditController =
+            TextEditingController(text: formDataProvider.phoneTitleList[index]);
+            TextEditingController RDpriceController =
+            TextEditingController(text: formDataProvider.phonePriceList[index]);
+            selectedEditController = RDeditController;
+            selectedPriceController = RDpriceController;
+            break;
+        }
+      } else if (page == 3){
+        switch (orderIndex) {
+          case 1:
+            TextEditingController editController =
+            TextEditingController(text: formDataProvider.rentTitleList[index]);
+            TextEditingController priceController =
+            TextEditingController(text: formDataProvider.rentPriceList[index]);
+            selectedEditController = editController;
+            selectedPriceController = priceController;
+            break;
+          case 2:
+            TextEditingController NDeditController =
+            TextEditingController(text: formDataProvider.kitchenTitleList[index]);
+            TextEditingController NDpriceController =
+            TextEditingController(text: formDataProvider.kitchenPriceList[index]);
+            selectedEditController = NDeditController;
+            selectedPriceController = NDpriceController;
+            break;
+          case 3:
+            TextEditingController RDeditController =
+            TextEditingController(text: formDataProvider.cateringTitleList[index]);
+            TextEditingController RDpriceController =
+            TextEditingController(text: formDataProvider.cateringPriceList[index]);
+            selectedEditController = RDeditController;
+            selectedPriceController = RDpriceController;
+            break;
+          case 4:
+            TextEditingController THeditController =
+            TextEditingController(text: formDataProvider.entertainmentTitleList[index]);
+            TextEditingController THpriceController =
+            TextEditingController(text: formDataProvider.entertainmentPriceList[index]);
+            selectedEditController = THeditController;
+            selectedPriceController = THpriceController;
+            break;
+          case 5:
+            TextEditingController otherEditController =
+            TextEditingController(text: formDataProvider.otherTitleList[index]);
+            TextEditingController otherPriceController =
+            TextEditingController(text: formDataProvider.otherPriceList[index]);
+            selectedEditController = otherEditController;
+            selectedPriceController = otherPriceController;
+            break;
+        }
+      }
+
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10)
+            ),
+            title: Text('Edit $caterogyName',style: TextStyle(fontSize: 20)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Align(child: Text("Item", style: TextStyle(fontSize: 18),), alignment: Alignment.centerLeft,),
+                SizedBox(height: 10),
+                TextFormField(
+                  controller: selectedEditController,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(width: 3, color: Colors.black)
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
+                    ),
+                    contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
+                  ),
+                  style: TextStyle(fontSize: 20),
+                ),
+                SizedBox(height: 10),
+                Align(child: Text("Price",style: TextStyle(fontSize: 18)), alignment: Alignment.centerLeft),
+                SizedBox(height: 10),
+                TextFormField(
+                  controller: selectedPriceController,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(width: 3, color: Colors.black)
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
+                    ),
+                    contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
+                  ),
+                  style: TextStyle(fontSize: 20),
+                  keyboardType: TextInputType.number,
+                ),
+              ],
+            ),
+            actions: [
+              IconButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  icon: Icon(Icons.cancel)
+              ),
+              IconButton(
+                  onPressed: () {
+                    setState(() {
+                      if(page == 1){
+                        switch (orderIndex){
+                          case 1:
+                            formDataProvider.tvTitleList[index] = selectedEditController.text;
+                            formDataProvider.tvPriceList[index] = selectedPriceController.text;
+                            break;
+                          case 2:
+                            formDataProvider.gamingTitleList[index] = selectedEditController.text;
+                            formDataProvider.gamingPriceList[index] = selectedPriceController.text;
+                            break;
+                          case 3:
+                            formDataProvider.musicTitleList[index] = selectedEditController.text;
+                            formDataProvider.musicPriceList[index] = selectedPriceController.text;
+                            break;
+                        }
+                      } else if (page == 2){
+                        switch (orderIndex){
+                          case 1:
+                            formDataProvider.homeBillsTitleList[index] = selectedEditController.text;
+                            formDataProvider.homeBillsPriceList[index] = selectedPriceController.text;
+                            break;
+                          case 2:
+                            formDataProvider.internetTitleList[index] = selectedEditController.text;
+                            formDataProvider.internetPriceList[index] = selectedPriceController.text;
+                            break;
+                          case 3:
+                            formDataProvider.phoneTitleList[index] = selectedEditController.text;
+                            formDataProvider.phonePriceList[index] = selectedPriceController.text;
+                            break;
+                        }
+                      } else if (page == 3){
+                        switch (orderIndex){
+                          case 1:
+                            formDataProvider.rentTitleList[index] = selectedEditController.text;
+                            formDataProvider.rentPriceList[index] = selectedPriceController.text;
+                            break;
+                          case 2:
+                            formDataProvider.kitchenTitleList[index] = selectedEditController.text;
+                            formDataProvider.kitchenPriceList[index] = selectedPriceController.text;
+                            break;
+                          case 3:
+                            formDataProvider.cateringTitleList[index] = selectedEditController.text;
+                            formDataProvider.cateringPriceList[index] = selectedPriceController.text;
+                            break;
+                          case 4:
+                            formDataProvider.entertainmentTitleList[index] = selectedEditController.text;
+                            formDataProvider.entertainmentPriceList[index] = selectedPriceController.text;
+                            break;
+                          case 5:
+                            formDataProvider.otherTitleList[index] = selectedEditController.text;
+                            formDataProvider.otherPriceList[index] = selectedPriceController.text;
+                            break;
+                        }
+                      }
+                    });
+                    Navigator.pop(context);
+                  },
+                  icon: Icon(Icons.save)
+              ),
+                IconButton(
+                    onPressed: () {
+                      setState(() {
+                        if(page == 1 && totalSubsElement != 1){
+                          switch (orderIndex){
+                            case 1:
+                              TextEditingController priceController =
+                              TextEditingController(text: formDataProvider.tvPriceList[index]);
+                              formDataProvider.tvTitleList.removeAt(index);
+                              formDataProvider.tvPriceList.removeAt(index);
+                              priceController.clear();
+                              break;
+                            case 2:
+                              TextEditingController NDpriceController =
+                              TextEditingController(text: formDataProvider.gamingPriceList[index]);
+                              formDataProvider.gamingTitleList.removeAt(index);
+                              formDataProvider.gamingPriceList.removeAt(index);
+                              NDpriceController.clear();
+                              break;
+                            case 3:
+                              TextEditingController RDpriceController =
+                              TextEditingController(text: formDataProvider.musicPriceList[index]);
+                              formDataProvider.musicTitleList.removeAt(index);
+                              formDataProvider.musicPriceList.removeAt(index);
+                              RDpriceController.clear();
+                              break;
+                          }
+                        } else if (page == 2 && totalBillsElement != 1){
+                          switch (orderIndex){
+                            case 1:
+                              TextEditingController priceController =
+                              TextEditingController(text: formDataProvider.homeBillsPriceList[index]);
+                              formDataProvider.homeBillsTitleList.removeAt(index);
+                              formDataProvider.homeBillsPriceList.removeAt(index);
+                              priceController.clear();
+                              break;
+                            case 2:
+                              TextEditingController NDpriceController =
+                              TextEditingController(text: formDataProvider.internetPriceList[index]);
+                              formDataProvider.internetTitleList.removeAt(index);
+                              formDataProvider.internetPriceList.removeAt(index);
+                              NDpriceController.clear();
+                              break;
+                            case 3:
+                              TextEditingController RDpriceController =
+                              TextEditingController(text: formDataProvider.phonePriceList[index]);
+                              formDataProvider.phoneTitleList.removeAt(index);
+                              formDataProvider.phonePriceList.removeAt(index);
+                              RDpriceController.clear();
+                              break;
+                          }
+                        } else if (page == 3 && totalOthersElement != 1){
+                          switch (orderIndex){
+                            case 1:
+                              TextEditingController priceController =
+                              TextEditingController(text: formDataProvider.rentPriceList[index]);
+                              formDataProvider.rentTitleList.removeAt(index);
+                              formDataProvider.rentPriceList.removeAt(index);
+                              priceController.clear();
+                              break;
+                            case 2:
+                              TextEditingController NDpriceController =
+                              TextEditingController(text: formDataProvider.kitchenPriceList[index]);
+                              formDataProvider.kitchenTitleList.removeAt(index);
+                              formDataProvider.kitchenPriceList.removeAt(index);
+                              NDpriceController.clear();
+                              break;
+                            case 3:
+                              TextEditingController RDpriceController =
+                              TextEditingController(text: formDataProvider.cateringPriceList[index]);
+                              formDataProvider.cateringTitleList.removeAt(index);
+                              formDataProvider.cateringPriceList.removeAt(index);
+                              RDpriceController.clear();
+                              break;
+                            case 4:
+                              TextEditingController THpriceController =
+                              TextEditingController(text: formDataProvider.entertainmentPriceList[index]);
+                              formDataProvider.entertainmentTitleList.removeAt(index);
+                              formDataProvider.entertainmentPriceList.removeAt(index);
+                              THpriceController.clear();
+                              break;
+                            case 5:
+                              TextEditingController otherPriceController =
+                              TextEditingController(text: formDataProvider.otherPriceList[index]);
+                              formDataProvider.otherTitleList.removeAt(index);
+                              formDataProvider.otherPriceList.removeAt(index);
+                              otherPriceController.clear();
+                              break;
+                          }
+                        } else {
+                          // Show a Snackbar
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Delete operation not allowed."),
+                            ),
+                          );
+                        }
+                        Navigator.of(context).pop();
+                      });
+                    },
+                    icon: Icon(Icons.delete_forever)
+                )
+            ],
+          );
+        },
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xfff0f0f1),
@@ -1126,7 +1199,7 @@ class _OutcomePageState extends State<OutcomePage> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("TV", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
+                            Text("TV", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
                             Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                             ListView.builder(
                               physics: NeverScrollableScrollPhysics(),
@@ -1140,14 +1213,26 @@ class _OutcomePageState extends State<OutcomePage> {
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text(
-                                            formDataProvider.tvTitleList[index],
-                                            style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600),
+                                          Flexible(
+                                            flex: 2,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              formDataProvider.tvTitleList[index],
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
                                           ),
-                                          Text(
-                                            formDataProvider.tvPriceList[index],
-                                            style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600),
+                                          Flexible(
+                                            flex: 2,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              textAlign: TextAlign.right,
+                                              formDataProvider.tvPriceList[index],
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
                                           ),
+                                          SizedBox(width: 20),
                                           IconButton(
                                             splashRadius: 0.0001,
                                             padding: EdgeInsets.zero,
@@ -1171,7 +1256,8 @@ class _OutcomePageState extends State<OutcomePage> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("Gaming", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
+                            Text("Gaming", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                             ListView.builder(
                               physics: NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
@@ -1181,18 +1267,29 @@ class _OutcomePageState extends State<OutcomePage> {
                                   return Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text(
-                                            formDataProvider.gamingTitleList[index],
-                                            style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600),
+                                          Flexible(
+                                            flex: 2,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              formDataProvider.gamingTitleList[index],
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
                                           ),
-                                          Text(
-                                            formDataProvider.gamingPriceList[index],
-                                            style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600),
+                                          Flexible(
+                                            flex: 2,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              textAlign: TextAlign.right,
+                                              formDataProvider.gamingPriceList[index],
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
                                           ),
+                                          SizedBox(width: 20),
                                           IconButton(
                                             splashRadius: 0.0001,
                                             padding: EdgeInsets.zero,
@@ -1216,7 +1313,8 @@ class _OutcomePageState extends State<OutcomePage> {
                         Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("Music", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
+                            Text("Music", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                             ListView.builder(
                               physics: NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
@@ -1226,18 +1324,29 @@ class _OutcomePageState extends State<OutcomePage> {
                                   return Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text(
-                                            formDataProvider.musicTitleList[index],
-                                            style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600),
+                                          Flexible(
+                                            flex: 2,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              formDataProvider.musicTitleList[index],
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
                                           ),
-                                          Text(
-                                            formDataProvider.musicPriceList[index],
-                                            style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600),
+                                          Flexible(
+                                            flex: 2,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              textAlign: TextAlign.right,
+                                              formDataProvider.musicPriceList[index],
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
                                           ),
+                                          SizedBox(width: 20),
                                           IconButton(
                                             splashRadius: 0.0001,
                                             padding: EdgeInsets.zero,
@@ -1275,28 +1384,55 @@ class _OutcomePageState extends State<OutcomePage> {
                           ),
                         ),
                         if(isSubsAddActive)
-                          Container(
-                            child:DropdownButton(
-                              value: dropdownvalue,
-                              icon:Icon(Icons.keyboard_arrow_down),
-                              items: items.map((String items) {
-                                return DropdownMenuItem(
-                                  value: items,
-                                  child: Text(items),
-                                );
-                              }).toList(),
-                              onChanged: (String? newValue) {
-                                setState(() {
-                                  dropdownvalue = newValue!;
-                                  isSubsAddActive = true;
-                                  hasSubsCategorySelected = true;
-                                });
-                              },
-                            )
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Container(
+                                child:DropdownButton(
+                                  value: dropdownvaluesubs,
+                                  icon:Icon(Icons.keyboard_arrow_down),
+                                  items: subsItems.map((String items) {
+                                    return DropdownMenuItem(
+                                      value: items,
+                                      child: Text(items),
+                                    );
+                                  }).toList(),
+                                  onChanged: (String? newValue) {
+                                    setState(() {
+                                      dropdownvaluesubs = newValue!;
+                                    });
+                                  },
+                                )
+                              ),
+                              Wrap(
+                                children: [
+                                  if(!hasSubsCategorySelected)
+                                  IconButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        isSubsAddActive = true;
+                                        hasSubsCategorySelected = true;
+                                      });
+                                    },
+                                    icon: Icon(Icons.arrow_downward, size: 26),
+                                  ),
+                                  if(!hasSubsCategorySelected)
+                                  IconButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        isSubsAddActive = false;
+                                        hasSubsCategorySelected = false;
+                                      });
+                                    },
+                                    icon: Icon(Icons.cancel, size: 26),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         if(hasSubsCategorySelected)
                         Container(
-                          padding: EdgeInsets.all(10),
+                          padding: EdgeInsets.only(top:10, bottom:10),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -1326,7 +1462,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                     onPressed: () {
                                       final text = textController.text.trim();
                                       final priceText = platformPriceController.text.trim();
-                                      if (text.isNotEmpty && priceText.isNotEmpty && dropdownvalue == "Film, Dizi ve TV") {
+                                      if (text.isNotEmpty && priceText.isNotEmpty && dropdownvaluesubs == "Film, Dizi ve TV") {
                                         double dprice = double.tryParse(priceText) ?? 0.0;
                                         String price = dprice.toStringAsFixed(2);
                                         setState(() {
@@ -1341,7 +1477,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                           isSubsAddActive = false;
                                           hasSubsCategorySelected = false;
                                         });
-                                      } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvalue == "Oyun") {
+                                      } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvaluesubs == "Oyun") {
                                         double dprice = double.tryParse(priceText) ?? 0.0;
                                         String price = dprice.toStringAsFixed(2);
                                         setState(() {
@@ -1356,7 +1492,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                           isSubsAddActive = false;
                                           hasSubsCategorySelected = false;
                                         });
-                                      } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvalue == "Müzik") {
+                                      } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvaluesubs == "Müzik") {
                                         double dprice = double.tryParse(priceText) ?? 0.0;
                                         String price = dprice.toStringAsFixed(2);
                                         setState(() {
@@ -1380,6 +1516,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                       setState(() {
                                         //isTextFormFieldVisible = false;
                                         isSubsAddActive = false;
+                                        hasSubsCategorySelected = false;
                                         textController.clear();
                                         platformPriceController.clear();
                                       });
@@ -1431,122 +1568,182 @@ class _OutcomePageState extends State<OutcomePage> {
                       ),
                     ),
                     SizedBox(height: 5),
-                    Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
                     ListView(
                       physics: NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
                       children: [
-                        ListView.builder(
-                          physics: NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: formDataProvider.homeBillsTitleList.length + 1, // +1 for the "Abonelik Ekle" row
-                          itemBuilder: (context, index) {
-                            if (index < formDataProvider.homeBillsTitleList.length) {
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        if(formDataProvider.homeBillsTitleList.isNotEmpty)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Home Bills", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                            ListView.builder(
+                              physics: NeverScrollableScrollPhysics(),
+                              shrinkWrap: true,
+                              itemCount: formDataProvider.homeBillsTitleList.length + 1, // +1 for the "Abonelik Ekle" row
+                              itemBuilder: (context, index) {
+                                if (index < formDataProvider.homeBillsTitleList.length) {
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        formDataProvider.homeBillsTitleList[index],
-                                        style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Flexible(
+                                            flex: 2,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              formDataProvider.homeBillsTitleList[index],
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          Flexible(
+                                            flex: 2,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              textAlign: TextAlign.right,
+                                              formDataProvider.homeBillsPriceList[index],
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          SizedBox(width: 20),
+                                          IconButton(
+                                            splashRadius: 0.0001,
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                            icon: Icon(Icons.edit, size: 21),
+                                            onPressed: () {
+                                              _showEditDialog(context, index, 2, 1); // Show the edit dialog
+                                            },
+                                          ),
+                                        ],
                                       ),
-                                      Text(
-                                        formDataProvider.homeBillsPriceList[index],
-                                        style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600),
-                                      ),
-                                      IconButton(
-                                        splashRadius: 0.0001,
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                        icon: Icon(Icons.edit, size: 21),
-                                        onPressed: () {
-                                          _showEditDialog(context, index, 2, 1); // Show the edit dialog
-                                        },
-                                      ),
+                                      Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                                     ],
-                                  ),
-                                  Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                ],
-                              );
-                            }
-                          },
+                                  );
+                                }
+                              },
+                            ),
+                          ],
                         ),
-                        ListView.builder(
-                          physics: NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: formDataProvider.internetTitleList.length + 1, // +1 for the "Abonelik Ekle" row
-                          itemBuilder: (context, index) {
-                            if (index < formDataProvider.internetTitleList.length) {
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        if(formDataProvider.internetTitleList.isNotEmpty)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Internet", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                            ListView.builder(
+                              physics: NeverScrollableScrollPhysics(),
+                              shrinkWrap: true,
+                              itemCount: formDataProvider.internetTitleList.length + 1, // +1 for the "Abonelik Ekle" row
+                              itemBuilder: (context, index) {
+                                if (index < formDataProvider.internetTitleList.length) {
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        formDataProvider.internetTitleList[index],
-                                        style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Flexible(
+                                            flex: 2,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              formDataProvider.internetTitleList[index],
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          Flexible(
+                                            flex: 2,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              textAlign: TextAlign.right,
+                                              formDataProvider.internetPriceList[index],
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          SizedBox(width: 20),
+                                          IconButton(
+                                            splashRadius: 0.0001,
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                            icon: Icon(Icons.edit, size: 21),
+                                            onPressed: () {
+                                              _showEditDialog(context, index, 2, 2); // Show the edit dialog
+                                            },
+                                          ),
+                                        ],
                                       ),
-                                      Text(
-                                        formDataProvider.internetPriceList[index],
-                                        style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600),
-                                      ),
-                                      IconButton(
-                                        splashRadius: 0.0001,
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                        icon: Icon(Icons.edit, size: 21),
-                                        onPressed: () {
-                                          _showEditDialog(context, index, 2, 2); // Show the edit dialog
-                                        },
-                                      ),
+                                      Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                                     ],
-                                  ),
-                                  Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                ],
-                              );
-                            }
-                          },
+                                  );
+                                }
+                              },
+                            ),
+                          ],
                         ),
-                        ListView.builder(
-                          physics: NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: formDataProvider.phoneTitleList.length + 1, // +1 for the "Abonelik Ekle" row
-                          itemBuilder: (context, index) {
-                            if (index < formDataProvider.phoneTitleList.length) {
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        if(formDataProvider.phoneTitleList.isNotEmpty)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Phone", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                            ListView.builder(
+                              physics: NeverScrollableScrollPhysics(),
+                              shrinkWrap: true,
+                              itemCount: formDataProvider.phoneTitleList.length + 1, // +1 for the "Abonelik Ekle" row
+                              itemBuilder: (context, index) {
+                                if (index < formDataProvider.phoneTitleList.length) {
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        formDataProvider.phoneTitleList[index],
-                                        style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Flexible(
+                                            flex: 2,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              formDataProvider.phoneTitleList[index],
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          Flexible(
+                                            flex: 2,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              textAlign: TextAlign.right,
+                                              formDataProvider.phonePriceList[index],
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          SizedBox(width: 20),
+                                          IconButton(
+                                            splashRadius: 0.0001,
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                            icon: Icon(Icons.edit, size: 21),
+                                            onPressed: () {
+                                              _showEditDialog(context, index, 2, 3); // Show the edit dialog
+                                            },
+                                          ),
+                                        ],
                                       ),
-                                      Text(
-                                        formDataProvider.phonePriceList[index],
-                                        style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600),
-                                      ),
-                                      IconButton(
-                                        splashRadius: 0.0001,
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                        icon: Icon(Icons.edit, size: 21),
-                                        onPressed: () {
-                                          _showEditDialog(context, index, 2, 3); // Show the edit dialog
-                                        },
-                                      ),
+                                      Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                                     ],
-                                  ),
-                                  Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                ],
-                              );
-                            }
-                          },
+                                  );
+                                }
+                              },
+                            ),
+                          ],
                         ),
+                        if(!isBillsAddActive)
                         SizedBox(
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1554,13 +1751,160 @@ class _OutcomePageState extends State<OutcomePage> {
                               Text("Fatura Ekle", style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w600)),
                               IconButton(
                                 onPressed: () {
-                                  // Handle the "Abonelik Ekle" button click here
+                                  setState(() {
+                                    isBillsAddActive = true;
+                                  });
                                 },
                                 icon: Icon(Icons.add_circle),
                               ),
                             ],
                           ),
-                        )
+                        ),
+                        if(isBillsAddActive)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Container(
+                                  child:DropdownButton(
+                                    value: dropdownvaluebills,
+                                    icon:Icon(Icons.keyboard_arrow_down),
+                                    items: billsItems.map((String items) {
+                                      return DropdownMenuItem(
+                                        value: items,
+                                        child: Text(items),
+                                      );
+                                    }).toList(),
+                                    onChanged: (String? newValue) {
+                                      setState(() {
+                                        dropdownvaluebills = newValue!;
+                                      });
+                                    },
+                                  )
+                              ),
+                              Wrap(
+                                children: [
+                                  if(!hasBillsCategorySelected)
+                                  IconButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        isBillsAddActive = true;
+                                        hasBillsCategorySelected = true;
+                                      });
+                                    },
+                                    icon: Icon(Icons.arrow_downward, size: 26),
+                                  ),
+                                  if(!hasBillsCategorySelected)
+                                  IconButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        isBillsAddActive = false;
+                                        hasBillsCategorySelected = false;
+                                      });
+                                    },
+                                    icon: Icon(Icons.cancel, size: 26),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        if(hasBillsCategorySelected)
+                          Container(
+                            padding: EdgeInsets.only(top:10, bottom:10),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: textController,
+                                    decoration: InputDecoration(
+                                      border: InputBorder.none,
+                                      hintText: 'ABA',
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 10),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: platformPriceController,
+                                    keyboardType: TextInputType.number, // Show numeric keyboard
+                                    decoration: InputDecoration(
+                                      border: InputBorder.none,
+                                      hintText: 'GAG',
+                                    ),
+                                  ),
+                                ),
+                                Wrap(
+                                  children: [
+                                    IconButton(
+                                      onPressed: () {
+                                        final text = textController.text.trim();
+                                        final priceText = platformPriceController.text.trim();
+                                        if (text.isNotEmpty && priceText.isNotEmpty && dropdownvaluebills == "Ev Faturaları") {
+                                          double dprice = double.tryParse(priceText) ?? 0.0;
+                                          String price = dprice.toStringAsFixed(2);
+                                          setState(() {
+                                            formDataProvider.updateTextValue(text, 3, 1);
+                                            formDataProvider.updateNumberValue(price, 3, 1);
+                                            //isEditingList = false; // Add a corresponding entry for the new item
+                                            textController.clear();
+                                            formDataProvider.notifyListeners();
+                                            platformPriceController.clear();
+                                            formDataProvider.notifyListeners();
+                                            //isTextFormFieldVisible = false;
+                                            isBillsAddActive = false;
+                                            hasBillsCategorySelected = false;
+                                          });
+                                        } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvaluebills == "İnternet") {
+                                          double dprice = double.tryParse(priceText) ?? 0.0;
+                                          String price = dprice.toStringAsFixed(2);
+                                          setState(() {
+                                            formDataProvider.updateTextValue(text, 3, 2);
+                                            formDataProvider.updateNumberValue(price, 3, 2);
+                                            //isEditingList = false; // Add a corresponding entry for the new item
+                                            textController.clear();
+                                            formDataProvider.notifyListeners();
+                                            platformPriceController.clear();
+                                            formDataProvider.notifyListeners();
+                                            //isTextFormFieldVisible = false;
+                                            isBillsAddActive = false;
+                                            hasBillsCategorySelected = false;
+                                          });
+                                        } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvaluebills == "Telefon") {
+                                          double dprice = double.tryParse(priceText) ?? 0.0;
+                                          String price = dprice.toStringAsFixed(2);
+                                          setState(() {
+                                            formDataProvider.updateTextValue(text, 3, 3);
+                                            formDataProvider.updateNumberValue(price, 3, 3);
+                                            //isEditingList = false; // Add a corresponding entry for the new item
+                                            textController.clear();
+                                            formDataProvider.notifyListeners();
+                                            platformPriceController.clear();
+                                            formDataProvider.notifyListeners();
+                                            //isTextFormFieldVisible = false;
+                                            isBillsAddActive = false;
+                                            hasBillsCategorySelected = false;
+                                          });
+                                        }
+                                      },
+                                      icon: Icon(Icons.check_circle, size: 26),
+                                    ),
+                                    IconButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          //isTextFormFieldVisible = false;
+                                          isBillsAddActive = false;
+                                          hasBillsCategorySelected = false;
+                                          textController.clear();
+                                          platformPriceController.clear();
+                                        });
+                                      },
+                                      icon: Icon(Icons.cancel, size: 26),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
                       ],
                     )
                   ],
@@ -1601,210 +1945,487 @@ class _OutcomePageState extends State<OutcomePage> {
                       ),
                     ),
                     SizedBox(height: 5),
-                    Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
                     ListView(
                       shrinkWrap: true,
                       physics: NeverScrollableScrollPhysics(),
                       children: [
-                        ListView.builder(
-                          physics: NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: formDataProvider.rentTitleList.length + 1, // +1 for the "Abonelik Ekle" row
-                          itemBuilder: (context, index) {
-                            if (index < formDataProvider.rentTitleList.length) {
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        if(formDataProvider.rentTitleList.isNotEmpty)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Rent", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                            ListView.builder(
+                              physics: NeverScrollableScrollPhysics(),
+                              shrinkWrap: true,
+                              itemCount: formDataProvider.rentTitleList.length + 1, // +1 for the "Abonelik Ekle" row
+                              itemBuilder: (context, index) {
+                                if (index < formDataProvider.rentTitleList.length) {
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        formDataProvider.rentTitleList[index],
-                                        style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Flexible(
+                                            flex: 2,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              formDataProvider.rentTitleList[index],
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          Flexible(
+                                            flex: 2,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              textAlign: TextAlign.right,
+                                              formDataProvider.rentPriceList[index],
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          SizedBox(width: 20),
+                                          IconButton(
+                                            splashRadius: 0.0001,
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                            icon: Icon(Icons.edit, size: 21),
+                                            onPressed: () {
+                                              _showEditDialog(context, index, 3, 1); // Show the edit dialog
+                                            },
+                                          ),
+                                        ],
                                       ),
-                                      Text(
-                                        formDataProvider.rentPriceList[index],
-                                        style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600),
-                                      ),
-                                      IconButton(
-                                        splashRadius: 0.0001,
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                        icon: Icon(Icons.edit, size: 21),
-                                        onPressed: () {
-                                          _showEditDialog(context, index, 3, 1); // Show the edit dialog
-                                        },
-                                      ),
+                                      Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                                     ],
-                                  ),
-                                  Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                ],
-                              );
-                            }
-                          },
+                                  );
+                                }
+                              },
+                            ),
+                          ],
                         ),
-                        ListView.builder(
-                          physics: NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: formDataProvider.kitchenTitleList.length + 1, // +1 for the "Abonelik Ekle" row
-                          itemBuilder: (context, index) {
-                            if (index < formDataProvider.kitchenTitleList.length) {
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        if(formDataProvider.kitchenTitleList.isNotEmpty)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Kitchen", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                            ListView.builder(
+                              physics: NeverScrollableScrollPhysics(),
+                              shrinkWrap: true,
+                              itemCount: formDataProvider.kitchenTitleList.length + 1, // +1 for the "Abonelik Ekle" row
+                              itemBuilder: (context, index) {
+                                if (index < formDataProvider.kitchenTitleList.length) {
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        formDataProvider.kitchenTitleList[index],
-                                        style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Flexible(
+                                            flex: 2,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              formDataProvider.kitchenTitleList[index],
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          Flexible(
+                                            flex: 2,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              textAlign: TextAlign.right,
+                                              formDataProvider.kitchenPriceList[index],
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          SizedBox(width: 20),
+                                          IconButton(
+                                            splashRadius: 0.0001,
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                            icon: Icon(Icons.edit, size: 21),
+                                            onPressed: () {
+                                              _showEditDialog(context, index, 3, 2); // Show the edit dialog
+                                            },
+                                          ),
+                                        ],
                                       ),
-                                      Text(
-                                        formDataProvider.kitchenPriceList[index],
-                                        style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600),
-                                      ),
-                                      IconButton(
-                                        splashRadius: 0.0001,
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                        icon: Icon(Icons.edit, size: 21),
-                                        onPressed: () {
-                                          _showEditDialog(context, index, 3, 2); // Show the edit dialog
-                                        },
-                                      ),
+                                      Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                                     ],
-                                  ),
-                                  Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                ],
-                              );
-                            }
-                          },
+                                  );
+                                }
+                              },
+                            ),
+                          ],
                         ),
-                        ListView.builder(
-                          physics: NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: formDataProvider.cateringTitleList.length + 1, // +1 for the "Abonelik Ekle" row
-                          itemBuilder: (context, index) {
-                            if (index < formDataProvider.cateringTitleList.length) {
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        if(formDataProvider.cateringTitleList.isNotEmpty)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Catering", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                            ListView.builder(
+                              physics: NeverScrollableScrollPhysics(),
+                              shrinkWrap: true,
+                              itemCount: formDataProvider.cateringTitleList.length + 1, // +1 for the "Abonelik Ekle" row
+                              itemBuilder: (context, index) {
+                                if (index < formDataProvider.cateringTitleList.length) {
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        formDataProvider.cateringTitleList[index],
-                                        style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Flexible(
+                                            flex: 2,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              formDataProvider.cateringTitleList[index],
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          Flexible(
+                                            flex: 2,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              textAlign: TextAlign.right,
+                                              formDataProvider.cateringPriceList[index],
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          SizedBox(width: 20),
+                                          IconButton(
+                                            splashRadius: 0.0001,
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                            icon: Icon(Icons.edit, size: 21),
+                                            onPressed: () {
+                                              _showEditDialog(context, index, 3, 3); // Show the edit dialog
+                                            },
+                                          ),
+                                        ],
                                       ),
-                                      Text(
-                                        formDataProvider.cateringPriceList[index],
-                                        style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600),
-                                      ),
-                                      IconButton(
-                                        splashRadius: 0.0001,
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                        icon: Icon(Icons.edit, size: 21),
-                                        onPressed: () {
-                                          _showEditDialog(context, index, 3, 3); // Show the edit dialog
-                                        },
-                                      ),
+                                      Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                                     ],
-                                  ),
-                                  Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                ],
-                              );
-                            }
-                          },
+                                  );
+                                }
+                              },
+                            ),
+                          ],
                         ),
-                        ListView.builder(
-                          physics: NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: formDataProvider.entertainmentTitleList.length + 1, // +1 for the "Abonelik Ekle" row
-                          itemBuilder: (context, index) {
-                            if (index < formDataProvider.entertainmentTitleList.length) {
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        if(formDataProvider.entertainmentTitleList.isNotEmpty)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Entertainment", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                            ListView.builder(
+                              physics: NeverScrollableScrollPhysics(),
+                              shrinkWrap: true,
+                              itemCount: formDataProvider.entertainmentTitleList.length + 1, // +1 for the "Abonelik Ekle" row
+                              itemBuilder: (context, index) {
+                                if (index < formDataProvider.entertainmentTitleList.length) {
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        formDataProvider.entertainmentTitleList[index],
-                                        style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Flexible(
+                                            flex: 2,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              formDataProvider.entertainmentTitleList[index],
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          Flexible(
+                                            flex: 2,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              textAlign: TextAlign.right,
+                                              formDataProvider.entertainmentPriceList[index],
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          SizedBox(width: 20),
+                                          IconButton(
+                                            splashRadius: 0.0001,
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                            icon: Icon(Icons.edit, size: 21),
+                                            onPressed: () {
+                                              _showEditDialog(context, index, 3, 4); // Show the edit dialog
+                                            },
+                                          ),
+                                        ],
                                       ),
-                                      Text(
-                                        formDataProvider.entertainmentPriceList[index],
-                                        style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600),
-                                      ),
-                                      IconButton(
-                                        splashRadius: 0.0001,
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                        icon: Icon(Icons.edit, size: 21),
-                                        onPressed: () {
-                                          _showEditDialog(context, index, 3, 4); // Show the edit dialog
-                                        },
-                                      ),
+                                      Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                                     ],
-                                  ),
-                                  Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                ],
-                              );
-                            }
-                          },
+                                  );
+                                }
+                              },
+                            ),
+                          ],
                         ),
-                        ListView.builder(
-                          physics: NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: formDataProvider.otherTitleList.length + 1, // +1 for the "Abonelik Ekle" row
-                          itemBuilder: (context, index) {
-                            if (index < formDataProvider.otherTitleList.length) {
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        if(formDataProvider.otherTitleList.isNotEmpty)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Others", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                            ListView.builder(
+                              physics: NeverScrollableScrollPhysics(),
+                              shrinkWrap: true,
+                              itemCount: formDataProvider.otherTitleList.length + 1, // +1 for the "Abonelik Ekle" row
+                              itemBuilder: (context, index) {
+                                if (index < formDataProvider.otherTitleList.length) {
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        formDataProvider.otherTitleList[index],
-                                        style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Flexible(
+                                            flex: 2,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              formDataProvider.otherTitleList[index],
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          Flexible(
+                                            flex: 2,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              textAlign: TextAlign.right,
+                                              formDataProvider.otherPriceList[index],
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          SizedBox(width: 20),
+                                          IconButton(
+                                            splashRadius: 0.0001,
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                            icon: Icon(Icons.edit, size: 21),
+                                            onPressed: () {
+                                              _showEditDialog(context, index, 3, 5); // Show the edit dialog
+                                            },
+                                          ),
+                                        ],
                                       ),
-                                      Text(
-                                        formDataProvider.otherPriceList[index],
-                                        style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600),
-                                      ),
-                                      IconButton(
-                                        splashRadius: 0.0001,
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                        icon: Icon(Icons.edit, size: 21),
-                                        onPressed: () {
-                                          _showEditDialog(context, index, 3, 5); // Show the edit dialog
-                                        },
-                                      ),
+                                      Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                                     ],
-                                  ),
-                                  Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                ],
-                              );
-                            }
-                          },
+                                  );
+                                }
+                              },
+                            ),
+                          ],
                         ),
-                        SizedBox(
-                          child: Row(
+                        if(!isOthersAddActive)
+                          SizedBox(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text("Diğer Gider Ekle", style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w600)),
+                                IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      isOthersAddActive = true;
+                                    });
+                                  },
+                                  icon: Icon(Icons.add_circle),
+                                ),
+                              ],
+                            ),
+                          ),
+                        if(isOthersAddActive)
+                          Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text("Diğer Gider Ekle", style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w600)),
-                              IconButton(
-                                onPressed: () {
-                                  // Handle the "Abonelik Ekle" button click here
-                                },
-                                icon: Icon(Icons.add_circle),
+                              Container(
+                                  child:DropdownButton(
+                                    value: dropdownvalueothers,
+                                    icon:Icon(Icons.keyboard_arrow_down),
+                                    items: othersItems.map((String items) {
+                                      return DropdownMenuItem(
+                                        value: items,
+                                        child: Text(items),
+                                      );
+                                    }).toList(),
+                                    onChanged: (String? newValue) {
+                                      setState(() {
+                                        dropdownvalueothers= newValue!;
+                                      });
+                                    },
+                                  )
+                              ),
+                              Wrap(
+                                children: [
+                                  if(!hasOthersCategorySelected)
+                                  IconButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        isOthersAddActive = true;
+                                        hasOthersCategorySelected = true;
+                                      });
+                                    },
+                                    icon: Icon(Icons.arrow_downward, size: 26),
+                                  ),
+                                  if(!hasOthersCategorySelected)
+                                  IconButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        isOthersAddActive = false;
+                                        hasOthersCategorySelected = false;
+                                      });
+                                    },
+                                    icon: Icon(Icons.cancel, size: 26),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                        )
+                        if(hasOthersCategorySelected)
+                          Container(
+                            padding: EdgeInsets.only(top:10, bottom:10),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: textController,
+                                    decoration: InputDecoration(
+                                      border: InputBorder.none,
+                                      hintText: 'ABA',
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 10),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: platformPriceController,
+                                    keyboardType: TextInputType.number, // Show numeric keyboard
+                                    decoration: InputDecoration(
+                                      border: InputBorder.none,
+                                      hintText: 'GAG',
+                                    ),
+                                  ),
+                                ),
+                                Wrap(
+                                  children: [
+                                    IconButton(
+                                      onPressed: () {
+                                        final text = textController.text.trim();
+                                        final priceText = platformPriceController.text.trim();
+                                        if (text.isNotEmpty && priceText.isNotEmpty && dropdownvalueothers == "Kira") {
+                                          double dprice = double.tryParse(priceText) ?? 0.0;
+                                          String price = dprice.toStringAsFixed(2);
+                                          setState(() {
+                                            formDataProvider.updateTextValue(text, 4, 1);
+                                            formDataProvider.updateNumberValue(price, 4, 1);
+                                            //isEditingList = false; // Add a corresponding entry for the new item
+                                            textController.clear();
+                                            formDataProvider.notifyListeners();
+                                            platformPriceController.clear();
+                                            formDataProvider.notifyListeners();
+                                            //isTextFormFieldVisible = false;
+                                            isOthersAddActive = false;
+                                            hasOthersCategorySelected = false;
+                                          });
+                                        } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvalueothers == "Mutfak") {
+                                          double dprice = double.tryParse(priceText) ?? 0.0;
+                                          String price = dprice.toStringAsFixed(2);
+                                          setState(() {
+                                            formDataProvider.updateTextValue(text, 4, 2);
+                                            formDataProvider.updateNumberValue(price, 4, 2);
+                                            //isEditingList = false; // Add a corresponding entry for the new item
+                                            textController.clear();
+                                            formDataProvider.notifyListeners();
+                                            platformPriceController.clear();
+                                            formDataProvider.notifyListeners();
+                                            //isTextFormFieldVisible = false;
+                                            isOthersAddActive = false;
+                                            hasOthersCategorySelected = false;
+                                          });
+                                        } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvalueothers == "Yeme İçme") {
+                                          double dprice = double.tryParse(priceText) ?? 0.0;
+                                          String price = dprice.toStringAsFixed(2);
+                                          setState(() {
+                                            formDataProvider.updateTextValue(text, 4, 3);
+                                            formDataProvider.updateNumberValue(price, 4, 3);
+                                            //isEditingList = false; // Add a corresponding entry for the new item
+                                            textController.clear();
+                                            formDataProvider.notifyListeners();
+                                            platformPriceController.clear();
+                                            formDataProvider.notifyListeners();
+                                            //isTextFormFieldVisible = false;
+                                            isOthersAddActive = false;
+                                            hasOthersCategorySelected = false;
+                                          });
+                                        } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvalueothers == "Eğlence") {
+                                          double dprice = double.tryParse(priceText) ?? 0.0;
+                                          String price = dprice.toStringAsFixed(2);
+                                          setState(() {
+                                            formDataProvider.updateTextValue(text, 4, 4);
+                                            formDataProvider.updateNumberValue(price, 4, 4);
+                                            //isEditingList = false; // Add a corresponding entry for the new item
+                                            textController.clear();
+                                            formDataProvider.notifyListeners();
+                                            platformPriceController.clear();
+                                            formDataProvider.notifyListeners();
+                                            //isTextFormFieldVisible = false;
+                                            isOthersAddActive = false;
+                                            hasOthersCategorySelected = false;
+                                          });
+                                        } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvalueothers == "Diğer") {
+                                          double dprice = double.tryParse(priceText) ?? 0.0;
+                                          String price = dprice.toStringAsFixed(2);
+                                          setState(() {
+                                            formDataProvider.updateTextValue(text, 4, 5);
+                                            formDataProvider.updateNumberValue(price, 4, 5);
+                                            //isEditingList = false; // Add a corresponding entry for the new item
+                                            textController.clear();
+                                            formDataProvider.notifyListeners();
+                                            platformPriceController.clear();
+                                            formDataProvider.notifyListeners();
+                                            //isTextFormFieldVisible = false;
+                                            isOthersAddActive = false;
+                                            hasOthersCategorySelected = false;
+                                          });
+                                        }
+                                      },
+                                      icon: Icon(Icons.check_circle, size: 26),
+                                    ),
+                                    IconButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          //isTextFormFieldVisible = false;
+                                          isOthersAddActive = false;
+                                          hasOthersCategorySelected = false;
+                                          textController.clear();
+                                          platformPriceController.clear();
+                                        });
+                                      },
+                                      icon: Icon(Icons.cancel, size: 26),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
                       ],
                     )
                   ],
@@ -1883,7 +2504,6 @@ class _OutcomePageState extends State<OutcomePage> {
       ),
     );
   }
-
 }
 
 

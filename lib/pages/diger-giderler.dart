@@ -487,9 +487,9 @@ class _OtherExpensesState extends State<OtherExpenses> {
                         backgroundColor: sumAll!=0.0 ? Colors.black : Colors.grey,
                       ),
                       clipBehavior: Clip.hardEdge,
-                      onPressed: () async {
+                      onPressed: sumAll!=0.0 ? () async {
                         Navigator.pushNamed(context, 'ana-sayfa');
-                      },
+                      } : null,
                       child: const Text('Sonraki', style: TextStyle(fontSize: 18),),
                     ),
                   ),

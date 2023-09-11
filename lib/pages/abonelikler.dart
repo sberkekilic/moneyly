@@ -341,9 +341,9 @@ class _SubscriptionsState extends State<Subscriptions> {
                         backgroundColor: sumAll!=0.0 ? Colors.black : Colors.grey,
                       ),
                       clipBehavior: Clip.hardEdge,
-                      onPressed: () {
+                      onPressed: sumAll!= 0.0 ? () {
                         Navigator.pushNamed(context, 'faturalar');
-                      },
+                      } : null,
                       child: Text('Sonraki', style: GoogleFonts.montserrat(fontSize: 18)),
                     ),
                   ),

@@ -24,6 +24,7 @@ void main() {
         providers: [
           ChangeNotifierProvider(create: (context) => IncomeSelections()),
           ChangeNotifierProvider(create: (context) => FormDataProvider()),
+          ChangeNotifierProvider(create: (context) => InvestmentTypeProvider()),
         ],
         child: MyApp()
     )
