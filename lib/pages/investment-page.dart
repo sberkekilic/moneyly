@@ -9,16 +9,26 @@ import 'package:percent_indicator/percent_indicator.dart';
 import 'package:provider/provider.dart';
 
 class InvestmentTypeProvider extends ChangeNotifier {
-  List<String> storedInvestList = [];
+  List<String> selectedCategories = [];
   List<String> exchangeDepot = [];
+  List<String> cashDepot = [];
+  List<double> realEstateDepot = [];
+  List<String> carDepot = [];
+  List<String> electronicDepot = [];
+  List<String> otherDepot = [];
+  bool hasExchangeGoalSelected = false;
+  bool hasCashGoalSelected = false;
+  bool hasRealEstateGoalSelected = false;
+  bool hasCarGoalSelected = false;
+  bool hasElectronicGoalSelected = false;
+  bool hasOtherGoalSelected = false;
   String _selectedInvestmentType = "";
   String get selectedInvestmentType => _selectedInvestmentType;
 
   void updateSelectedInvestmentType(String value) {
     _selectedInvestmentType = value;
     notifyListeners();
-    storedInvestList.add(value);
-  }
+    }
 }
 
 
@@ -30,14 +40,234 @@ class InvestmentPage extends StatefulWidget {
 }
 
 class _InvestmentPageState extends State<InvestmentPage> {
+  List<String> itemList = ["Döviz", "Nakit", "Gayrimenkül", "Araba", "Elektronik", "Diğer"];
 
+  List<IconData> itemIcons = [
+    Icons.currency_exchange,
+    Icons.money,
+    Icons.real_estate_agent_sharp,
+    Icons.car_rental,
+    Icons.phone_android_sharp,
+    Icons.arrow_drop_down_circle_sharp,
+  ];
+  String selectedInvestmentType = "";
+
+  List<String> selectedItems = [];
   bool isPopupVisible = false;
+  String? ananim;
 
   void togglePopupVisibility(BuildContext context) {
-    print("çalıştım");
+    print("togglePopupVisibility");
     setState(() {
       isPopupVisible = !isPopupVisible;
     });
+  }
+
+  Map<String, double?> categoryValues = {};
+
+  void addCategoryValue(String category, double value) {
+    setState(() {
+      categoryValues[category] = value;
+      ananim = value.toString();
+      print("categoryValues[category] ${categoryValues[category]}");
+    });
+  }
+
+  void removeCategory(String category) {
+    final investDataProvider = Provider.of<InvestmentTypeProvider>(context, listen: false);
+    setState(() {
+      investDataProvider.selectedCategories.remove(category);
+      categoryValues.remove(category);
+    });
+  }
+
+  void selectCategory(String category) {
+    final investDataProvider = Provider.of<InvestmentTypeProvider>(context, listen: false);
+    if (!investDataProvider.selectedCategories.contains(category)) {
+      setState(() {
+        investDataProvider.selectedCategories.add(category);
+      });
+    }
+  }
+  Widget buildCategoryButton(String category) {
+    return ElevatedButton(
+      onPressed: () {
+        selectCategory(category);
+        togglePopupVisibility(context);
+      },
+      child: Text(category),
+    );
+  }
+  Widget buildSelectedCategories() {
+    final investDataProvider = Provider.of<InvestmentTypeProvider>(context, listen: false);
+    return Column(
+      children:
+      investDataProvider.selectedCategories.map((category) {
+        final isCategoryAdded = categoryValues.containsKey(category);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 20),
+            Text(category, style: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.bold)),
+            SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.5),
+                    spreadRadius: 5,
+                    blurRadius: 7,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: isCategoryAdded
+                  ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("0,00 / ${categoryValues[category]}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 19, fontWeight: FontWeight.normal)),
+                  SizedBox(
+                    child: LinearPercentIndicator(
+                      padding: EdgeInsets.only(right: 10),
+                      backgroundColor: Color(0xffc6c6c7),
+                      animation: true,
+                      lineHeight: 10,
+                      animationDuration: 1000,
+                      percent: 0,
+                      trailing: Text("%0", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.normal)),
+                      barRadius: Radius.circular(10),
+                      progressColor: Colors.lightBlue,
+                    ),
+                  ),
+                  ListView.builder(
+                    physics: NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    itemCount: investDataProvider.realEstateDepot.length + 1,
+                    itemBuilder: (context, index) {
+                      if (index < investDataProvider.realEstateDepot.length)
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(investDataProvider.realEstateDepot[index].toString())
+                          ],
+                        );
+                    },
+                  ),
+                  TextButton(
+                      onPressed: () {
+                        setState(() {
+                          if(category == "Gayrimenkül"){
+                            showModalBottomSheet(
+                              context: context,
+                              builder: (context) {
+                                double? investValue;
+                                return Padding(
+                                  padding: EdgeInsets.fromLTRB(20, 20, 20, 50),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'Add a value for $category',
+                                        style: TextStyle(fontSize: 18),
+                                      ),
+                                      SizedBox(height: 10),
+                                      TextFormField(
+                                        keyboardType: TextInputType.number,
+                                        decoration: InputDecoration(
+                                          labelText: 'Enter a number',
+                                        ),
+                                        onChanged: (value) {
+                                          investValue = double.tryParse(value);
+                                        },
+                                      ),
+                                      SizedBox(height: 10),
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            if (investValue != null) {
+                                              investDataProvider.realEstateDepot.add(investValue!);
+                                              Navigator.pop(context); // Close the form
+                                            }
+                                          });
+                                        },
+                                        child: Text('Add'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            );
+                          }
+                        });
+                      },
+                      child: Text("Biriktir")
+                  ),
+                  TextButton(
+                      onPressed: () {
+                        setState(() {
+                          removeCategory(category);
+                        });
+                      },
+                      child: Text("Sil")
+                  )
+                ],
+              )
+                  : ElevatedButton(
+                onPressed: () {
+                  // Open the form to add a value
+                  showModalBottomSheet(
+                    context: context,
+                    builder: (context) {
+                      double? enteredValue;
+                      return Padding(
+                        padding: EdgeInsets.fromLTRB(20,20,20,50),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Add a value for $category',
+                              style: TextStyle(fontSize: 18),
+                            ),
+                            SizedBox(height: 10),
+                            TextFormField(
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                labelText: 'Enter a number',
+                              ),
+                              onChanged: (value) {
+                                enteredValue = double.tryParse(value);
+
+                              },
+                            ),
+                            SizedBox(height: 10),
+                            ElevatedButton(
+                              onPressed: () {
+                                if (enteredValue != null) {
+                                  addCategoryValue(category, enteredValue!);
+                                  Navigator.pop(context); // Close the form
+                                }
+                              },
+                              child: Text('Add'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+                child: Text('Add Value'),
+              ),
+            ),
+          ],
+        );
+      }).toList(),
+    );
   }
 
   @override
@@ -49,16 +279,6 @@ class _InvestmentPageState extends State<InvestmentPage> {
     double savingsValue = incomeValue*0.2;
     String formattedsavingsValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(savingsValue);
 
-    List<String> itemList = ["Döviz", "Nakit", "Gayrimenkül", "Araba", "Elektronik", "Diğer"];
-    List<IconData> itemIcons = [
-      Icons.currency_exchange,
-      Icons.money,
-      Icons.real_estate_agent_sharp,
-      Icons.car_rental,
-      Icons.phone_android_sharp,
-      Icons.arrow_drop_down_circle_sharp,
-    ];
-    String selectedInvestmentType = "";
     return Material(
       child: Stack(
         children: [
@@ -160,60 +380,12 @@ class _InvestmentPageState extends State<InvestmentPage> {
                             ],
                           ),
                         ),
-                        ListView.builder(
+                        ListView(
                           physics: NeverScrollableScrollPhysics(),
                           shrinkWrap: true,
-                          itemCount: investDataProvider.storedInvestList.length,
-                          itemBuilder: (context, index) {
-                            if(investDataProvider._selectedInvestmentType != ""){
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SizedBox(height: 20),
-                                  Text(investDataProvider.storedInvestList[index], style: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.bold)),
-                                  SizedBox(height: 10),
-                                  Container(
-                                    padding: EdgeInsets.all(20),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(10),
-                                      color: Colors.white,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.grey.withOpacity(0.5),
-                                          spreadRadius: 5,
-                                          blurRadius: 7,
-                                          offset: Offset(0, 3),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text("0,00 / $formattedsavingsValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 19, fontWeight: FontWeight.normal)),
-                                        SizedBox(
-                                              child: LinearPercentIndicator(
-                                                padding: EdgeInsets.only(right: 10),
-                                                backgroundColor: Color(0xffc6c6c7),
-                                                animation: true,
-                                                lineHeight: 10,
-                                                animationDuration: 1000,
-                                                percent: 0,
-                                                trailing: Text("%0", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.normal)),
-                                                barRadius: Radius.circular(10),
-                                                progressColor: Colors.lightBlue,
-                                              ),
-                                            ),
-                                        TextButton(onPressed: () {
-                                        },
-                                          child: Text("Biriktir"),
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              );
-                            }
-                          },
+                          children: [
+                            buildSelectedCategories(),
+                          ],
                         ),
                       ],
                     ),
@@ -307,39 +479,11 @@ class _InvestmentPageState extends State<InvestmentPage> {
                     color: Colors.black.withOpacity(0.5), // Darkened background
                     child: Align(
                       alignment: Alignment.bottomCenter,
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: itemList.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          return GestureDetector(
-                            onTap: () {
-                              Provider.of<InvestmentTypeProvider>(context, listen: false)
-                                  .updateSelectedInvestmentType(itemList[index]);
-                              togglePopupVisibility(context);
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(30, 15, 30, 15),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    itemIcons[index], // Use the corresponding icon
-                                    size: 45,
-                                    color: Colors.white, // Icon color
-                                  ),
-                                  SizedBox(width: 15),
-                                  Text(
-                                    itemList[index],
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.normal,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: itemList.map((category) {
+                          return buildCategoryButton(category);
+                        }).toList(),
                       ),
                     ),
                 ),
