@@ -100,10 +100,12 @@ class _InvestmentPageState extends State<InvestmentPage> {
   }
   Widget buildSelectedCategories() {
     final investDataProvider = Provider.of<InvestmentTypeProvider>(context, listen: false);
+    double sum = investDataProvider.realEstateDepot.isNotEmpty ? investDataProvider.realEstateDepot.reduce((a, b) => a + b) : 0.0;
     return Column(
       children:
       investDataProvider.selectedCategories.map((category) {
         final isCategoryAdded = categoryValues.containsKey(category);
+        double? goal = categoryValues[category];
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -126,10 +128,11 @@ class _InvestmentPageState extends State<InvestmentPage> {
                 ],
               ),
               child: isCategoryAdded
-                  ? Column(
+                  ?
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("0,00 / ${categoryValues[category]}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 19, fontWeight: FontWeight.normal)),
+                  Text("$sum / ${categoryValues[category]}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 19, fontWeight: FontWeight.normal)),
                   SizedBox(
                     child: LinearPercentIndicator(
                       padding: EdgeInsets.only(right: 10),
@@ -137,89 +140,93 @@ class _InvestmentPageState extends State<InvestmentPage> {
                       animation: true,
                       lineHeight: 10,
                       animationDuration: 1000,
-                      percent: 0,
-                      trailing: Text("%0", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.normal)),
+                      percent: sum / goal!,
+                      trailing: Text("%${((sum / goal!)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.normal)),
                       barRadius: Radius.circular(10),
                       progressColor: Colors.lightBlue,
                     ),
                   ),
-                  ListView.builder(
-                    physics: NeverScrollableScrollPhysics(),
-                    shrinkWrap: true,
-                    itemCount: investDataProvider.realEstateDepot.length + 1,
-                    itemBuilder: (context, index) {
-                      if (index < investDataProvider.realEstateDepot.length)
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(investDataProvider.realEstateDepot[index].toString())
-                          ],
-                        );
-                    },
-                  ),
-                  TextButton(
-                      onPressed: () {
-                        setState(() {
-                          if(category == "Gayrimenkül"){
-                            showModalBottomSheet(
-                              context: context,
-                              builder: (context) {
-                                double? investValue;
-                                return Padding(
-                                  padding: EdgeInsets.fromLTRB(20, 20, 20, 50),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        'Add a value for $category',
-                                        style: TextStyle(fontSize: 18),
-                                      ),
-                                      SizedBox(height: 10),
-                                      TextFormField(
-                                        keyboardType: TextInputType.number,
-                                        decoration: InputDecoration(
-                                          labelText: 'Enter a number',
-                                        ),
-                                        onChanged: (value) {
-                                          investValue = double.tryParse(value);
-                                        },
-                                      ),
-                                      SizedBox(height: 10),
-                                      ElevatedButton(
-                                        onPressed: () {
-                                          setState(() {
-                                            if (investValue != null) {
-                                              investDataProvider.realEstateDepot.add(investValue!);
-                                              Navigator.pop(context); // Close the form
-                                            }
-                                          });
-                                        },
-                                        child: Text('Add'),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
+                  if(category == "Gayrimenkül")
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ListView.builder(
+                        physics: NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        itemCount: investDataProvider.realEstateDepot.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index < investDataProvider.realEstateDepot.length)
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(investDataProvider.realEstateDepot[index].toString())
+                              ],
                             );
-                          }
-                        });
-                      },
-                      child: Text("Biriktir")
+                        },
+                      ),
+                      TextButton(
+                          onPressed: () {
+                            setState(() {
+                              showModalBottomSheet(
+                                context: context,
+                                builder: (context) {
+                                  double? investValue;
+                                  return Padding(
+                                    padding: EdgeInsets.fromLTRB(20, 20, 20, 50),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          '$category için birikim hedefi',
+                                          style: TextStyle(fontSize: 18),
+                                        ),
+                                        SizedBox(height: 10),
+                                        TextFormField(
+                                          keyboardType: TextInputType.number,
+                                          decoration: InputDecoration(
+                                            labelText: 'Enter a number',
+                                          ),
+                                          onChanged: (value) {
+                                            investValue = double.tryParse(value);
+                                          },
+                                        ),
+                                        SizedBox(height: 10),
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            setState(() {
+                                              if (investValue != null) {
+                                                investDataProvider.realEstateDepot.add(investValue!);
+                                                Navigator.pop(context); // Close the form
+                                              }
+                                            });
+                                          },
+                                          child: Text('Add'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              );
+                            });
+                          },
+                          child: Text("Biriktir")
+                      ),
+                      TextButton(
+                          onPressed: () {
+                            setState(() {
+                              removeCategory(category);
+                              investDataProvider.realEstateDepot = [];
+                            });
+                          },
+                          child: Text("Sil")
+                      )
+                    ],
                   ),
-                  TextButton(
-                      onPressed: () {
-                        setState(() {
-                          removeCategory(category);
-                        });
-                      },
-                      child: Text("Sil")
-                  )
                 ],
               )
                   : ElevatedButton(
                 onPressed: () {
-                  // Open the form to add a value
                   showModalBottomSheet(
                     context: context,
                     builder: (context) {
@@ -241,17 +248,24 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                 labelText: 'Enter a number',
                               ),
                               onChanged: (value) {
-                                enteredValue = double.tryParse(value);
-
+                                setState(() {
+                                  enteredValue = double.parse(value);
+                                  print("1 : $enteredValue");
+                                });
+                                print("3 : $enteredValue");
                               },
                             ),
                             SizedBox(height: 10),
                             ElevatedButton(
                               onPressed: () {
-                                if (enteredValue != null) {
-                                  addCategoryValue(category, enteredValue!);
-                                  Navigator.pop(context); // Close the form
-                                }
+                                print("4 : $enteredValue");
+                                setState(() {
+                                  print("2: $enteredValue");
+                                  if (enteredValue != null) {
+                                    addCategoryValue(category, enteredValue ?? 0);
+                                    Navigator.pop(context); // Close the form
+                                  }
+                                });
                               },
                               child: Text('Add'),
                             ),
