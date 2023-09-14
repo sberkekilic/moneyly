@@ -9,13 +9,14 @@ import 'package:percent_indicator/percent_indicator.dart';
 import 'package:provider/provider.dart';
 
 class InvestmentTypeProvider extends ChangeNotifier {
+  Map<String, double?> categoryValues = {};
   List<String> selectedCategories = [];
-  List<String> exchangeDepot = [];
-  List<String> cashDepot = [];
+  List<double> exchangeDepot = [];
+  List<double> cashDepot = [];
   List<double> realEstateDepot = [];
-  List<String> carDepot = [];
-  List<String> electronicDepot = [];
-  List<String> otherDepot = [];
+  List<double> carDepot = [];
+  List<double> electronicDepot = [];
+  List<double> otherDepot = [];
   bool hasExchangeGoalSelected = false;
   bool hasCashGoalSelected = false;
   bool hasRealEstateGoalSelected = false;
@@ -63,13 +64,12 @@ class _InvestmentPageState extends State<InvestmentPage> {
     });
   }
 
-  Map<String, double?> categoryValues = {};
-
   void addCategoryValue(String category, double value) {
+    final investDataProvider = Provider.of<InvestmentTypeProvider>(context, listen: false);
     setState(() {
-      categoryValues[category] = value;
+      investDataProvider.categoryValues[category] = value;
       ananim = value.toString();
-      print("categoryValues[category] ${categoryValues[category]}");
+      print("categoryValues[category] ${investDataProvider.categoryValues[category]}");
     });
   }
 
@@ -77,7 +77,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
     final investDataProvider = Provider.of<InvestmentTypeProvider>(context, listen: false);
     setState(() {
       investDataProvider.selectedCategories.remove(category);
-      categoryValues.remove(category);
+      investDataProvider.categoryValues.remove(category);
     });
   }
 
@@ -100,12 +100,26 @@ class _InvestmentPageState extends State<InvestmentPage> {
   }
   Widget buildSelectedCategories() {
     final investDataProvider = Provider.of<InvestmentTypeProvider>(context, listen: false);
-    double sum = investDataProvider.realEstateDepot.isNotEmpty ? investDataProvider.realEstateDepot.reduce((a, b) => a + b) : 0.0;
     return Column(
       children:
       investDataProvider.selectedCategories.map((category) {
-        final isCategoryAdded = categoryValues.containsKey(category);
-        double? goal = categoryValues[category];
+        TextEditingController textController = TextEditingController();
+        final isCategoryAdded = investDataProvider.categoryValues.containsKey(category);
+        double? goal = investDataProvider.categoryValues[category];
+        double sum = 0.0;
+        if(category == "Döviz"){
+          sum = investDataProvider.exchangeDepot.isNotEmpty ? investDataProvider.exchangeDepot.reduce((a, b) => a + b) : 0.0;
+        } else if(category == "Nakit"){
+          sum = investDataProvider.cashDepot.isNotEmpty ? investDataProvider.cashDepot.reduce((a, b) => a + b) : 0.0;
+        } else if(category == "Gayrimenkül"){
+          sum = investDataProvider.realEstateDepot.isNotEmpty ? investDataProvider.realEstateDepot.reduce((a, b) => a + b) : 0.0;
+        } else if(category == "Araba"){
+          sum = investDataProvider.carDepot.isNotEmpty ? investDataProvider.carDepot.reduce((a, b) => a + b) : 0.0;
+        } else if(category == "Elektronik"){
+          sum = investDataProvider.electronicDepot.isNotEmpty ? investDataProvider.electronicDepot.reduce((a, b) => a + b) : 0.0;
+        } else if(category == "Diğer"){
+          sum = investDataProvider.otherDepot.isNotEmpty ? investDataProvider.otherDepot.reduce((a, b) => a + b) : 0.0;
+        }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -132,7 +146,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("$sum / ${categoryValues[category]}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 19, fontWeight: FontWeight.normal)),
+                  Text("$sum / ${investDataProvider.categoryValues[category]}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 19, fontWeight: FontWeight.normal)),
                   SizedBox(
                     child: LinearPercentIndicator(
                       padding: EdgeInsets.only(right: 10),
@@ -146,72 +160,699 @@ class _InvestmentPageState extends State<InvestmentPage> {
                       progressColor: Colors.lightBlue,
                     ),
                   ),
-                  if(category == "Gayrimenkül")
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  SizedBox(height: 5),
+                  ListView(
+                    physics: NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
                     children: [
-                      ListView.builder(
-                        physics: NeverScrollableScrollPhysics(),
-                        shrinkWrap: true,
-                        itemCount: investDataProvider.realEstateDepot.length + 1,
-                        itemBuilder: (context, index) {
-                          if (index < investDataProvider.realEstateDepot.length)
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(investDataProvider.realEstateDepot[index].toString())
-                              ],
-                            );
-                        },
-                      ),
-                      TextButton(
-                          onPressed: () {
-                            setState(() {
-                              showModalBottomSheet(
-                                context: context,
-                                builder: (context) {
-                                  double? investValue;
-                                  return Padding(
-                                    padding: EdgeInsets.fromLTRB(20, 20, 20, 50),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          '$category için birikim hedefi',
-                                          style: TextStyle(fontSize: 18),
-                                        ),
-                                        SizedBox(height: 10),
-                                        TextFormField(
-                                          keyboardType: TextInputType.number,
-                                          decoration: InputDecoration(
-                                            labelText: 'Enter a number',
+                      if(category == "Döviz")
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                            ListView.builder(
+                              physics: NeverScrollableScrollPhysics(),
+                              shrinkWrap: true,
+                              itemCount: investDataProvider.exchangeDepot.length + 1,
+                              itemBuilder: (context, index) {
+                                if (index < investDataProvider.exchangeDepot.length)
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Flexible(
+                                            flex: 1,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              investDataProvider.exchangeDepot[index].toString(),
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
                                           ),
-                                          onChanged: (value) {
-                                            investValue = double.tryParse(value);
-                                          },
-                                        ),
-                                        SizedBox(height: 10),
-                                        ElevatedButton(
-                                          onPressed: () {
-                                            setState(() {
-                                              if (investValue != null) {
-                                                investDataProvider.realEstateDepot.add(investValue!);
-                                                Navigator.pop(context); // Close the form
-                                              }
-                                            });
-                                          },
-                                          child: Text('Add'),
-                                        ),
-                                      ],
-                                    ),
+                                          SizedBox(width: 20),
+                                          IconButton(
+                                            splashRadius: 0.0001,
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                            icon: Icon(Icons.edit, size: 21),
+                                            onPressed: () {
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                      Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                    ],
                                   );
-                                },
+                              },
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  builder: (context) {
+                                    double? investValue;
+                                    return Padding(
+                                      padding: EdgeInsets.fromLTRB(20, 20, 20, 50),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            '$category için birikim hedefi',
+                                            style: TextStyle(fontSize: 18),
+                                          ),
+                                          SizedBox(height: 10),
+                                          TextFormField(
+                                            controller: textController, // Assign the TextEditingController
+                                            keyboardType: TextInputType.number,
+                                            decoration: InputDecoration(
+                                              labelText: 'Enter a number',
+                                            ),
+                                          ),
+                                          SizedBox(height: 10),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              setState(() {
+                                                String inputText = textController.text; // Get the input text
+                                                investValue = double.tryParse(inputText);
+                                                if (investValue != null) {
+                                                  investDataProvider.exchangeDepot.add(investValue!);
+                                                  Navigator.pop(context); // Close the form
+                                                }
+                                              });
+                                            },
+                                            child: Text('Add'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                              child: Row(
+                                children: [
+                                  Text(
+                                    "Biriktir",
+                                    style: GoogleFonts.montserrat(fontSize: 20),
+                                  ),
+                                  TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          removeCategory(category);
+                                          investDataProvider.exchangeDepot = [];
+                                        });
+                                      },
+                                      child: Text("Sil", style: GoogleFonts.montserrat(fontSize: 20),)
+                                  )
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      if(category == "Nakit")
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                            ListView.builder(
+                              physics: NeverScrollableScrollPhysics(),
+                              shrinkWrap: true,
+                              itemCount: investDataProvider.cashDepot.length + 1,
+                              itemBuilder: (context, index) {
+                                if (index < investDataProvider.cashDepot.length)
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Flexible(
+                                            flex: 1,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              investDataProvider.cashDepot[index].toString(),
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          SizedBox(width: 20),
+                                          IconButton(
+                                            splashRadius: 0.0001,
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                            icon: Icon(Icons.edit, size: 21),
+                                            onPressed: () {
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                      Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                    ],
+                                  );
+                              },
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  builder: (context) {
+                                    double? investValue;
+                                    return Padding(
+                                      padding: EdgeInsets.fromLTRB(20, 20, 20, 50),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            '$category için birikim hedefi',
+                                            style: TextStyle(fontSize: 18),
+                                          ),
+                                          SizedBox(height: 10),
+                                          TextFormField(
+                                            controller: textController, // Assign the TextEditingController
+                                            keyboardType: TextInputType.number,
+                                            decoration: InputDecoration(
+                                              labelText: 'Enter a number',
+                                            ),
+                                          ),
+                                          SizedBox(height: 10),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              setState(() {
+                                                String inputText = textController.text; // Get the input text
+                                                investValue = double.tryParse(inputText);
+                                                if (investValue != null) {
+                                                  investDataProvider.cashDepot.add(investValue!);
+                                                  Navigator.pop(context); // Close the form
+                                                }
+                                              });
+                                            },
+                                            child: Text('Add'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                              child: Row(
+                                children: [
+                                  Text(
+                                    "Biriktir",
+                                    style: GoogleFonts.montserrat(fontSize: 20),
+                                  ),
+                                  TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          removeCategory(category);
+                                          investDataProvider.cashDepot = [];
+                                        });
+                                      },
+                                      child: Text("Sil", style: GoogleFonts.montserrat(fontSize: 20),)
+                                  )
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      if(category == "Gayrimenkül")
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                            ListView.builder(
+                              physics: NeverScrollableScrollPhysics(),
+                              shrinkWrap: true,
+                              itemCount: investDataProvider.realEstateDepot.length + 1,
+                              itemBuilder: (context, index) {
+                                if (index < investDataProvider.realEstateDepot.length)
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Flexible(
+                                            flex: 1,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              investDataProvider.realEstateDepot[index].toString(),
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          SizedBox(width: 20),
+                                          IconButton(
+                                            splashRadius: 0.0001,
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                            icon: Icon(Icons.edit, size: 21),
+                                            onPressed: () {
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                      Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                    ],
+                                  );
+                              },
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  builder: (context) {
+                                    double? investValue;
+                                    return Padding(
+                                      padding: EdgeInsets.fromLTRB(20, 20, 20, 50),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            '$category için birikim hedefi',
+                                            style: TextStyle(fontSize: 18),
+                                          ),
+                                          SizedBox(height: 10),
+                                          TextFormField(
+                                            controller: textController, // Assign the TextEditingController
+                                            keyboardType: TextInputType.number,
+                                            decoration: InputDecoration(
+                                              labelText: 'Enter a number',
+                                            ),
+                                          ),
+                                          SizedBox(height: 10),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              setState(() {
+                                                String inputText = textController.text; // Get the input text
+                                                investValue = double.tryParse(inputText);
+                                                if (investValue != null) {
+                                                  investDataProvider.realEstateDepot.add(investValue!);
+                                                  Navigator.pop(context); // Close the form
+                                                }
+                                              });
+                                            },
+                                            child: Text('Add'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                              child: Row(
+                                children: [
+                                  Text(
+                                    "Biriktir",
+                                    style: GoogleFonts.montserrat(fontSize: 20),
+                                  ),
+                                  TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          removeCategory(category);
+                                          investDataProvider.realEstateDepot = [];
+                                        });
+                                      },
+                                      child: Text("Sil", style: GoogleFonts.montserrat(fontSize: 20),)
+                                  )
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      if(category == "Araba")
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                            ListView.builder(
+                              physics: NeverScrollableScrollPhysics(),
+                              shrinkWrap: true,
+                              itemCount: investDataProvider.carDepot.length + 1,
+                              itemBuilder: (context, index) {
+                                if (index < investDataProvider.carDepot.length)
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Flexible(
+                                            flex: 1,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              investDataProvider.carDepot[index].toString(),
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          SizedBox(width: 20),
+                                          IconButton(
+                                            splashRadius: 0.0001,
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                            icon: Icon(Icons.edit, size: 21),
+                                            onPressed: () {
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                      Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                    ],
+                                  );
+                              },
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  builder: (context) {
+                                    double? investValue;
+                                    return Padding(
+                                      padding: EdgeInsets.fromLTRB(20, 20, 20, 50),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            '$category için birikim hedefi',
+                                            style: TextStyle(fontSize: 18),
+                                          ),
+                                          SizedBox(height: 10),
+                                          TextFormField(
+                                            controller: textController, // Assign the TextEditingController
+                                            keyboardType: TextInputType.number,
+                                            decoration: InputDecoration(
+                                              labelText: 'Enter a number',
+                                            ),
+                                          ),
+                                          SizedBox(height: 10),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              setState(() {
+                                                String inputText = textController.text; // Get the input text
+                                                investValue = double.tryParse(inputText);
+                                                if (investValue != null) {
+                                                  investDataProvider.carDepot.add(investValue!);
+                                                  Navigator.pop(context); // Close the form
+                                                }
+                                              });
+                                            },
+                                            child: Text('Add'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                              child: Row(
+                                children: [
+                                  Text(
+                                    "Biriktir",
+                                    style: GoogleFonts.montserrat(fontSize: 20),
+                                  ),
+                                  TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          removeCategory(category);
+                                          investDataProvider.carDepot = [];
+                                        });
+                                      },
+                                      child: Text("Sil", style: GoogleFonts.montserrat(fontSize: 20),)
+                                  )
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      if(category == "Elektronik")
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                            ListView.builder(
+                              physics: NeverScrollableScrollPhysics(),
+                              shrinkWrap: true,
+                              itemCount: investDataProvider.electronicDepot.length + 1,
+                              itemBuilder: (context, index) {
+                                if (index < investDataProvider.electronicDepot.length)
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Flexible(
+                                            flex: 1,
+                                            fit: FlexFit.tight,
+                                            child: Text(
+                                              investDataProvider.electronicDepot[index].toString(),
+                                              style: GoogleFonts.montserrat(fontSize: 20),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          SizedBox(width: 20),
+                                          IconButton(
+                                            splashRadius: 0.0001,
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                            icon: Icon(Icons.edit, size: 21),
+                                            onPressed: () {
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                      Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                    ],
+                                  );
+                              },
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  builder: (context) {
+                                    double? investValue;
+                                    return Padding(
+                                      padding: EdgeInsets.fromLTRB(20, 20, 20, 50),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            '$category için birikim hedefi',
+                                            style: TextStyle(fontSize: 18),
+                                          ),
+                                          SizedBox(height: 10),
+                                          TextFormField(
+                                            controller: textController, // Assign the TextEditingController
+                                            keyboardType: TextInputType.number,
+                                            decoration: InputDecoration(
+                                              labelText: 'Enter a number',
+                                            ),
+                                          ),
+                                          SizedBox(height: 10),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              setState(() {
+                                                String inputText = textController.text; // Get the input text
+                                                investValue = double.tryParse(inputText);
+                                                if (investValue != null) {
+                                                  investDataProvider.electronicDepot.add(investValue!);
+                                                  Navigator.pop(context); // Close the form
+                                                }
+                                              });
+                                            },
+                                            child: Text('Add'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                              child: Row(
+                                children: [
+                                  Text(
+                                    "Biriktir",
+                                    style: GoogleFonts.montserrat(fontSize: 20),
+                                  ),
+                                  TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          removeCategory(category);
+                                          investDataProvider.electronicDepot = [];
+                                        });
+                                      },
+                                      child: Text("Sil", style: GoogleFonts.montserrat(fontSize: 20),)
+                                  )
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      if(category == "Diğer")
+                      Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                        ListView.builder(
+                          physics: NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          itemCount: investDataProvider.otherDepot.length + 1,
+                          itemBuilder: (context, index) {
+                            if (index < investDataProvider.otherDepot.length)
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Flexible(
+                                          flex: 1,
+                                          fit: FlexFit.tight,
+                                          child: Text(
+                                              investDataProvider.otherDepot[index].toString(),
+                                            style: GoogleFonts.montserrat(fontSize: 20),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                      ),
+                                      SizedBox(width: 20),
+                                      IconButton(
+                                        splashRadius: 0.0001,
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                        icon: Icon(Icons.edit, size: 21),
+                                        onPressed: () {
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                ],
                               );
-                            });
                           },
-                          child: Text("Biriktir")
-                      ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            showModalBottomSheet(
+                              context: context,
+                              builder: (context) {
+                                double? investValue;
+                                return Padding(
+                                  padding: EdgeInsets.fromLTRB(20, 20, 20, 50),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        '$category için birikim hedefi',
+                                        style: TextStyle(fontSize: 18),
+                                      ),
+                                      SizedBox(height: 10),
+                                      TextFormField(
+                                        controller: textController, // Assign the TextEditingController
+                                        keyboardType: TextInputType.number,
+                                        decoration: InputDecoration(
+                                          labelText: 'Enter a number',
+                                        ),
+                                      ),
+                                      SizedBox(height: 10),
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            String inputText = textController.text; // Get the input text
+                                            investValue = double.tryParse(inputText);
+                                            if (investValue != null) {
+                                              investDataProvider.otherDepot.add(investValue!);
+                                              Navigator.pop(context); // Close the form
+                                            }
+                                          });
+                                        },
+                                        child: Text('Add'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                          child: Row(
+                            children: [
+                              Text(
+                                  "Biriktir",
+                                style: GoogleFonts.montserrat(fontSize: 20),
+                              ),
+                              TextButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      removeCategory(category);
+                                      investDataProvider.otherDepot = [];
+                                    });
+                                  },
+                                  child: Text("Sil", style: GoogleFonts.montserrat(fontSize: 20),)
+                              )
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    ],
+                  ),
+                ],
+              )
+                  : Column(
+                    children: [
+                      ElevatedButton(
+                onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        builder: (context) {
+                          double? enteredValue;
+                          return Padding(
+                            padding: EdgeInsets.fromLTRB(20,20,20,50),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Add a value for $category',
+                                  style: TextStyle(fontSize: 18),
+                                ),
+                                SizedBox(height: 10),
+                                TextFormField(
+                                  controller: textController,
+                                  keyboardType: TextInputType.number,
+                                  decoration: InputDecoration(
+                                    labelText: 'Enter a number',
+                                  ),
+                                ),
+                                SizedBox(height: 10),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      String inputText = textController.text;
+                                      enteredValue = double.parse(inputText);
+                                      if (enteredValue != null) {
+                                        addCategoryValue(category, enteredValue ?? 0);
+                                        Navigator.pop(context); // Close the form
+                                      }
+                                    });
+                                  },
+                                  child: Text('Add'),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                },
+                child: Text('Add Value'),
+              ),
                       TextButton(
                           onPressed: () {
                             setState(() {
@@ -223,60 +864,6 @@ class _InvestmentPageState extends State<InvestmentPage> {
                       )
                     ],
                   ),
-                ],
-              )
-                  : ElevatedButton(
-                onPressed: () {
-                  showModalBottomSheet(
-                    context: context,
-                    builder: (context) {
-                      double? enteredValue;
-                      return Padding(
-                        padding: EdgeInsets.fromLTRB(20,20,20,50),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Add a value for $category',
-                              style: TextStyle(fontSize: 18),
-                            ),
-                            SizedBox(height: 10),
-                            TextFormField(
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                labelText: 'Enter a number',
-                              ),
-                              onChanged: (value) {
-                                setState(() {
-                                  enteredValue = double.parse(value);
-                                  print("1 : $enteredValue");
-                                });
-                                print("3 : $enteredValue");
-                              },
-                            ),
-                            SizedBox(height: 10),
-                            ElevatedButton(
-                              onPressed: () {
-                                print("4 : $enteredValue");
-                                setState(() {
-                                  print("2: $enteredValue");
-                                  if (enteredValue != null) {
-                                    addCategoryValue(category, enteredValue ?? 0);
-                                    Navigator.pop(context); // Close the form
-                                  }
-                                });
-                              },
-                              child: Text('Add'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                },
-                child: Text('Add Value'),
-              ),
             ),
           ],
         );
