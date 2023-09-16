@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
 import 'package:flutter_inset_box_shadow/flutter_inset_box_shadow.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:moneyly/pages/selection.dart';
@@ -17,6 +18,9 @@ class InvestmentTypeProvider extends ChangeNotifier {
   List<double> carDepot = [];
   List<double> electronicDepot = [];
   List<double> otherDepot = [];
+  double totalInvestValue = 0.0;
+  double sumInvestValue = 0.0;
+  List<double> sumList = [];
   bool hasExchangeGoalSelected = false;
   bool hasCashGoalSelected = false;
   bool hasRealEstateGoalSelected = false;
@@ -43,13 +47,13 @@ class InvestmentPage extends StatefulWidget {
 class _InvestmentPageState extends State<InvestmentPage> {
   List<String> itemList = ["Döviz", "Nakit", "Gayrimenkül", "Araba", "Elektronik", "Diğer"];
 
-  List<IconData> itemIcons = [
-    Icons.currency_exchange,
-    Icons.money,
-    Icons.real_estate_agent_sharp,
-    Icons.car_rental,
-    Icons.phone_android_sharp,
-    Icons.arrow_drop_down_circle_sharp,
+  List<String> itemIcons = [
+    'assets/currency.svg',
+    'assets/cash.svg',
+    'assets/real-estate.svg',
+    'assets/car.svg',
+    'assets/electronic.svg',
+    'assets/chevron-down.svg',
   ];
   String selectedInvestmentType = "";
 
@@ -64,21 +68,34 @@ class _InvestmentPageState extends State<InvestmentPage> {
     });
   }
 
-  void addCategoryValue(String category, double value) {
+  void addCategoryValue(String category, double value, double sum) {
     final investDataProvider = Provider.of<InvestmentTypeProvider>(context, listen: false);
     setState(() {
       investDataProvider.categoryValues[category] = value;
+      investDataProvider.totalInvestValue += value;
       ananim = value.toString();
       print("categoryValues[category] ${investDataProvider.categoryValues[category]}");
     });
   }
 
-  void removeCategory(String category) {
+  void removeCategory(String category, double value, double sum) {
     final investDataProvider = Provider.of<InvestmentTypeProvider>(context, listen: false);
     setState(() {
+      print("sumInvestValue 1: before removeCategory ${investDataProvider.sumInvestValue}");
+      investDataProvider.totalInvestValue -= value;
+      investDataProvider.sumInvestValue -= sum;
+      print("sumInvestValue 2: after removeCategory ${investDataProvider.sumInvestValue}");
       investDataProvider.selectedCategories.remove(category);
       investDataProvider.categoryValues.remove(category);
     });
+  }
+
+  void removeValues(List<double> a, List<double> b) {
+    for (var value in b) {
+      if (a.contains(value)) {
+        a.remove(value);
+      }
+    }
   }
 
   void selectCategory(String category) {
@@ -89,15 +106,240 @@ class _InvestmentPageState extends State<InvestmentPage> {
       });
     }
   }
-  Widget buildCategoryButton(String category) {
-    return ElevatedButton(
-      onPressed: () {
+  Widget buildCategoryButton(String category, List<String> itemIcons) {
+    int index = itemList.indexOf(category);
+    String iconAsset = itemIcons[index];
+
+    return GestureDetector(
+      onTap: () {
         selectCategory(category);
         togglePopupVisibility(context);
       },
-      child: Text(category),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(30, 15, 30, 15),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Row(
+            children: [
+              Center(
+                child: ClipOval(
+                  child: Container(
+                    color: Colors.white,
+                    child: Center(
+                      child: SvgPicture.asset(
+                        iconAsset,
+                        width: 34,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: 15),
+              Text(
+                category,
+                style: GoogleFonts.montserrat(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
+
+  void showEditDialog(String category, int categoryIndex, int index){
+
+    final investDataProvider = Provider.of<InvestmentTypeProvider>(context, listen: false);
+    TextEditingController selectedEditController = TextEditingController();
+
+    switch (categoryIndex){
+      case 1:
+        TextEditingController editController = TextEditingController(text: investDataProvider.exchangeDepot[index].toString());
+        selectedEditController = editController;
+        break;
+      case 2:
+        TextEditingController editController = TextEditingController(text: investDataProvider.cashDepot[index].toString());
+        selectedEditController = editController;
+        break;
+      case 3:
+        TextEditingController editController = TextEditingController(text: investDataProvider.realEstateDepot[index].toString());
+        selectedEditController = editController;
+        break;
+      case 4:
+        TextEditingController editController = TextEditingController(text: investDataProvider.carDepot[index].toString());
+        selectedEditController = editController;
+        break;
+      case 5:
+        TextEditingController editController = TextEditingController(text: investDataProvider.electronicDepot[index].toString());
+        selectedEditController = editController;
+        break;
+      case 6:
+        TextEditingController editController = TextEditingController(text: investDataProvider.otherDepot[index].toString());
+        selectedEditController = editController;
+        break;
+    }
+
+    showDialog(context: context, builder: (BuildContext context) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10)
+        ),
+        title: Text('Edit $category',style: TextStyle(fontSize: 20)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Align(child: Text("Invest Amount", style: TextStyle(fontSize: 18),), alignment: Alignment.centerLeft,),
+            SizedBox(height: 10),
+            TextFormField(
+              controller: selectedEditController,
+              decoration: InputDecoration(
+                isDense: true,
+                focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(width: 3, color: Colors.black)
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
+                ),
+                contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
+              ),
+              style: TextStyle(fontSize: 20),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              icon: Icon(Icons.cancel)
+          ),
+          IconButton(
+              onPressed: () {
+                setState(() {
+                  switch (categoryIndex){
+                    case 1:
+                      int indexToChange = investDataProvider.sumList.indexOf(investDataProvider.exchangeDepot[index]);
+                      if(indexToChange != -1){
+                        investDataProvider.sumList[indexToChange] = double.parse(selectedEditController.text);
+                      }
+                      investDataProvider.exchangeDepot[index] = double.parse(selectedEditController.text);
+                      investDataProvider.sumInvestValue = investDataProvider.sumList.isNotEmpty ? investDataProvider.sumList.reduce((a, b) => a + b) : 0.0;
+                      break;
+                    case 2:
+                      int indexToChange = investDataProvider.sumList.indexOf(investDataProvider.cashDepot[index]);
+                      if(indexToChange != -1){
+                        investDataProvider.sumList[indexToChange] = double.parse(selectedEditController.text);
+                      }
+                      investDataProvider.cashDepot[index] = double.parse(selectedEditController.text);
+                      investDataProvider.sumInvestValue = investDataProvider.sumList.isNotEmpty ? investDataProvider.sumList.reduce((a, b) => a + b) : 0.0;
+                      break;
+                    case 3:
+                      int indexToChange = investDataProvider.sumList.indexOf(investDataProvider.realEstateDepot[index]);
+                      if(indexToChange != -1){
+                        investDataProvider.sumList[indexToChange] = double.parse(selectedEditController.text);
+                      }
+                      investDataProvider.realEstateDepot[index] = double.parse(selectedEditController.text);
+                      investDataProvider.sumInvestValue = investDataProvider.sumList.isNotEmpty ? investDataProvider.sumList.reduce((a, b) => a + b) : 0.0;
+                      break;
+                    case 4:
+                      int indexToChange = investDataProvider.sumList.indexOf(investDataProvider.carDepot[index]);
+                      if(indexToChange != -1){
+                        investDataProvider.sumList[indexToChange] = double.parse(selectedEditController.text);
+                      }
+                      investDataProvider.carDepot[index] = double.parse(selectedEditController.text);
+                      investDataProvider.sumInvestValue = investDataProvider.sumList.isNotEmpty ? investDataProvider.sumList.reduce((a, b) => a + b) : 0.0;
+                      break;
+                    case 5:
+                      int indexToChange = investDataProvider.sumList.indexOf(investDataProvider.electronicDepot[index]);
+                      if(indexToChange != -1){
+                        investDataProvider.sumList[indexToChange] = double.parse(selectedEditController.text);
+                      }
+                      investDataProvider.electronicDepot[index] = double.parse(selectedEditController.text);
+                      investDataProvider.sumInvestValue = investDataProvider.sumList.isNotEmpty ? investDataProvider.sumList.reduce((a, b) => a + b) : 0.0;
+                      break;
+                    case 6:
+                      int indexToChange = investDataProvider.sumList.indexOf(investDataProvider.otherDepot[index]);
+                      if(indexToChange != -1){
+                        investDataProvider.sumList[indexToChange] = double.parse(selectedEditController.text);
+                      }
+                      investDataProvider.otherDepot[index] = double.parse(selectedEditController.text);
+                      investDataProvider.sumInvestValue = investDataProvider.sumList.isNotEmpty ? investDataProvider.sumList.reduce((a, b) => a + b) : 0.0;
+                      break;
+                  }
+                });
+                Navigator.pop(context);
+              },
+              icon: Icon(Icons.save)
+          ),
+          IconButton(
+              onPressed: () {
+                setState(() {
+                  switch (categoryIndex){
+                    case 1:
+                      int indexToDelete = investDataProvider.sumList.indexOf(investDataProvider.exchangeDepot[index]);
+                      if (indexToDelete != -1) {
+                        investDataProvider.sumList.removeAt(indexToDelete);
+                      }
+                      investDataProvider.exchangeDepot.removeAt(index);
+                      investDataProvider.sumInvestValue = investDataProvider.sumList.isNotEmpty ? investDataProvider.sumList.reduce((a, b) => a + b) : 0.0;
+                      break;
+                    case 2:
+                      int indexToDelete = investDataProvider.sumList.indexOf(investDataProvider.cashDepot[index]);
+                      if (indexToDelete != -1) {
+                        investDataProvider.sumList.removeAt(indexToDelete);
+                      }
+                      investDataProvider.cashDepot.removeAt(index);
+                      investDataProvider.sumInvestValue = investDataProvider.sumList.isNotEmpty ? investDataProvider.sumList.reduce((a, b) => a + b) : 0.0;
+                      break;
+                    case 3:
+                      int indexToDelete = investDataProvider.sumList.indexOf(investDataProvider.realEstateDepot[index]);
+                      if (indexToDelete != -1) {
+                        investDataProvider.sumList.removeAt(indexToDelete);
+                      }
+                      investDataProvider.realEstateDepot.removeAt(index);
+                      investDataProvider.sumInvestValue = investDataProvider.sumList.isNotEmpty ? investDataProvider.sumList.reduce((a, b) => a + b) : 0.0;
+                      break;
+                    case 4:
+                      int indexToDelete = investDataProvider.sumList.indexOf(investDataProvider.carDepot[index]);
+                      if (indexToDelete != -1) {
+                        investDataProvider.sumList.removeAt(indexToDelete);
+                      }
+                      investDataProvider.carDepot.removeAt(index);
+                      investDataProvider.sumInvestValue = investDataProvider.sumList.isNotEmpty ? investDataProvider.sumList.reduce((a, b) => a + b) : 0.0;
+                      break;
+                    case 5:
+                      int indexToDelete = investDataProvider.sumList.indexOf(investDataProvider.electronicDepot[index]);
+                      if (indexToDelete != -1) {
+                        investDataProvider.sumList.removeAt(indexToDelete);
+                      }
+                      investDataProvider.electronicDepot.removeAt(index);
+                      investDataProvider.sumInvestValue = investDataProvider.sumList.isNotEmpty ? investDataProvider.sumList.reduce((a, b) => a + b) : 0.0;
+                      break;
+                    case 6:
+                      int indexToDelete = investDataProvider.sumList.indexOf(investDataProvider.otherDepot[index]);
+                      if (indexToDelete != -1) {
+                        investDataProvider.sumList.removeAt(indexToDelete);
+                      }
+                      investDataProvider.otherDepot.removeAt(index);
+                      investDataProvider.sumInvestValue = investDataProvider.sumList.isNotEmpty ? investDataProvider.sumList.reduce((a, b) => a + b) : 0.0;
+                      break;
+                  }
+                  Navigator.of(context).pop();
+                });
+          },
+              icon: Icon(Icons.delete_forever)
+          )
+        ],
+      );
+    },
+    );
+  }
+
   Widget buildSelectedCategories() {
     final investDataProvider = Provider.of<InvestmentTypeProvider>(context, listen: false);
     return Column(
@@ -120,6 +362,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
         } else if(category == "Diğer"){
           sum = investDataProvider.otherDepot.isNotEmpty ? investDataProvider.otherDepot.reduce((a, b) => a + b) : 0.0;
         }
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -198,6 +441,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                             icon: Icon(Icons.edit, size: 21),
                                             onPressed: () {
+                                              showEditDialog(category, 1, index);
                                             },
                                           ),
                                         ],
@@ -239,6 +483,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                                 investValue = double.tryParse(inputText);
                                                 if (investValue != null) {
                                                   investDataProvider.exchangeDepot.add(investValue!);
+                                                  investDataProvider.sumList.add(investValue!);
+                                                  investDataProvider.sumInvestValue = investDataProvider.sumList.isNotEmpty ? investDataProvider.sumList.reduce((a, b) => a + b) : 0.0;
                                                   Navigator.pop(context); // Close the form
                                                 }
                                               });
@@ -257,14 +503,15 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                     "Biriktir",
                                     style: GoogleFonts.montserrat(fontSize: 20),
                                   ),
-                                  TextButton(
+                                  IconButton(
                                       onPressed: () {
                                         setState(() {
-                                          removeCategory(category);
+                                          removeCategory(category, goal, sum);
+                                          removeValues(investDataProvider.sumList, investDataProvider.exchangeDepot);
                                           investDataProvider.exchangeDepot = [];
                                         });
                                       },
-                                      child: Text("Sil", style: GoogleFonts.montserrat(fontSize: 20),)
+                                      icon: Icon(Icons.remove_circle_outline)
                                   )
                                 ],
                               ),
@@ -304,6 +551,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                             icon: Icon(Icons.edit, size: 21),
                                             onPressed: () {
+                                              showEditDialog(category, 2, index);
                                             },
                                           ),
                                         ],
@@ -345,6 +593,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                                 investValue = double.tryParse(inputText);
                                                 if (investValue != null) {
                                                   investDataProvider.cashDepot.add(investValue!);
+                                                  investDataProvider.sumList.add(investValue!);
+                                                  investDataProvider.sumInvestValue = investDataProvider.sumList.isNotEmpty ? investDataProvider.sumList.reduce((a, b) => a + b) : 0.0;
                                                   Navigator.pop(context); // Close the form
                                                 }
                                               });
@@ -366,7 +616,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                   TextButton(
                                       onPressed: () {
                                         setState(() {
-                                          removeCategory(category);
+                                          removeCategory(category, goal, sum);
+                                          removeValues(investDataProvider.sumList, investDataProvider.cashDepot);
                                           investDataProvider.cashDepot = [];
                                         });
                                       },
@@ -410,6 +661,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                             icon: Icon(Icons.edit, size: 21),
                                             onPressed: () {
+                                              showEditDialog(category, 3, index);
                                             },
                                           ),
                                         ],
@@ -451,6 +703,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                                 investValue = double.tryParse(inputText);
                                                 if (investValue != null) {
                                                   investDataProvider.realEstateDepot.add(investValue!);
+                                                  investDataProvider.sumList.add(investValue!);
+                                                  investDataProvider.sumInvestValue = investDataProvider.sumList.isNotEmpty ? investDataProvider.sumList.reduce((a, b) => a + b) : 0.0;
                                                   Navigator.pop(context); // Close the form
                                                 }
                                               });
@@ -472,7 +726,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                   TextButton(
                                       onPressed: () {
                                         setState(() {
-                                          removeCategory(category);
+                                          removeCategory(category, goal, sum);
+                                          removeValues(investDataProvider.sumList, investDataProvider.realEstateDepot);
                                           investDataProvider.realEstateDepot = [];
                                         });
                                       },
@@ -516,6 +771,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                             icon: Icon(Icons.edit, size: 21),
                                             onPressed: () {
+                                              showEditDialog(category, 4, index);
                                             },
                                           ),
                                         ],
@@ -557,6 +813,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                                 investValue = double.tryParse(inputText);
                                                 if (investValue != null) {
                                                   investDataProvider.carDepot.add(investValue!);
+                                                  investDataProvider.sumList.add(investValue!);
+                                                  investDataProvider.sumInvestValue = investDataProvider.sumList.isNotEmpty ? investDataProvider.sumList.reduce((a, b) => a + b) : 0.0;
                                                   Navigator.pop(context); // Close the form
                                                 }
                                               });
@@ -578,7 +836,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                   TextButton(
                                       onPressed: () {
                                         setState(() {
-                                          removeCategory(category);
+                                          removeCategory(category, goal, sum);
+                                          removeValues(investDataProvider.sumList, investDataProvider.carDepot);
                                           investDataProvider.carDepot = [];
                                         });
                                       },
@@ -622,6 +881,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                             icon: Icon(Icons.edit, size: 21),
                                             onPressed: () {
+                                              showEditDialog(category, 5, index);
                                             },
                                           ),
                                         ],
@@ -663,6 +923,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                                 investValue = double.tryParse(inputText);
                                                 if (investValue != null) {
                                                   investDataProvider.electronicDepot.add(investValue!);
+                                                  investDataProvider.sumList.add(investValue!);
+                                                  investDataProvider.sumInvestValue = investDataProvider.sumList.isNotEmpty ? investDataProvider.sumList.reduce((a, b) => a + b) : 0.0;
                                                   Navigator.pop(context); // Close the form
                                                 }
                                               });
@@ -684,7 +946,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                   TextButton(
                                       onPressed: () {
                                         setState(() {
-                                          removeCategory(category);
+                                          removeCategory(category, goal, sum);
+                                          removeValues(investDataProvider.sumList, investDataProvider.electronicDepot);
                                           investDataProvider.electronicDepot = [];
                                         });
                                       },
@@ -728,6 +991,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                         constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                         icon: Icon(Icons.edit, size: 21),
                                         onPressed: () {
+                                          showEditDialog(category, 6, index);
                                         },
                                       ),
                                     ],
@@ -769,6 +1033,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                             investValue = double.tryParse(inputText);
                                             if (investValue != null) {
                                               investDataProvider.otherDepot.add(investValue!);
+                                              investDataProvider.sumList.add(investValue!);
+                                              investDataProvider.sumInvestValue = investDataProvider.sumList.isNotEmpty ? investDataProvider.sumList.reduce((a, b) => a + b) : 0.0;
                                               Navigator.pop(context); // Close the form
                                             }
                                           });
@@ -790,7 +1056,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
                               TextButton(
                                   onPressed: () {
                                     setState(() {
-                                      removeCategory(category);
+                                      removeCategory(category, goal, sum);
+                                      removeValues(investDataProvider.sumList, investDataProvider.otherDepot);
                                       investDataProvider.otherDepot = [];
                                     });
                                   },
@@ -806,62 +1073,76 @@ class _InvestmentPageState extends State<InvestmentPage> {
                 ],
               )
                   : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      ElevatedButton(
-                onPressed: () {
-                      showModalBottomSheet(
-                        context: context,
-                        builder: (context) {
-                          double? enteredValue;
-                          return Padding(
-                            padding: EdgeInsets.fromLTRB(20,20,20,50),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  'Add a value for $category',
-                                  style: TextStyle(fontSize: 18),
-                                ),
-                                SizedBox(height: 10),
-                                TextFormField(
-                                  controller: textController,
-                                  keyboardType: TextInputType.number,
-                                  decoration: InputDecoration(
-                                    labelText: 'Enter a number',
-                                  ),
-                                ),
-                                SizedBox(height: 10),
-                                ElevatedButton(
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Hedef Ekle',
+                            style: GoogleFonts.montserrat(color: Colors.black, fontSize: 20, fontWeight: FontWeight.w500),
+                          ),
+                          Row(
+                            children: [
+                              IconButton(
+                                  onPressed: () {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      builder: (context) {
+                                        double? enteredValue;
+                                        return Padding(
+                                          padding: EdgeInsets.fromLTRB(20,20,20,50),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                'Add a value for $category',
+                                                style: TextStyle(fontSize: 18),
+                                              ),
+                                              SizedBox(height: 10),
+                                              TextFormField(
+                                                controller: textController,
+                                                keyboardType: TextInputType.number,
+                                                decoration: InputDecoration(
+                                                  labelText: 'Enter a number',
+                                                ),
+                                              ),
+                                              SizedBox(height: 10),
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  setState(() {
+                                                    String inputText = textController.text;
+                                                    enteredValue = double.parse(inputText);
+                                                    if (enteredValue != null) {
+                                                      addCategoryValue(category, enteredValue ?? 0, sum ?? 0);
+                                                      Navigator.pop(context); // Close the form
+                                                    }
+                                                  });
+                                                },
+                                                child: Text('Add'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
+                                  icon: Icon(Icons.add_circle_outline)
+                              ),
+                              IconButton(
                                   onPressed: () {
                                     setState(() {
-                                      String inputText = textController.text;
-                                      enteredValue = double.parse(inputText);
-                                      if (enteredValue != null) {
-                                        addCategoryValue(category, enteredValue ?? 0);
-                                        Navigator.pop(context); // Close the form
-                                      }
+                                      removeCategory(category, 0, 0);
+                                      investDataProvider.realEstateDepot = [];
                                     });
                                   },
-                                  child: Text('Add'),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      );
-                },
-                child: Text('Add Value'),
-              ),
-                      TextButton(
-                          onPressed: () {
-                            setState(() {
-                              removeCategory(category);
-                              investDataProvider.realEstateDepot = [];
-                            });
-                          },
-                          child: Text("Sil")
-                      )
+                                  icon: Icon(Icons.remove_circle_outline)
+                              )
+                            ],
+                          )
+                        ],
+                      ),
                     ],
                   ),
             ),
@@ -877,8 +1158,12 @@ class _InvestmentPageState extends State<InvestmentPage> {
     final page1 = Provider.of<IncomeSelections>(context, listen: false);
     final investDataProvider = Provider.of<InvestmentTypeProvider>(context, listen: false);
     double incomeValue = NumberFormat.decimalPattern('tr_TR').parse(page1.incomeValue) as double;
-    double savingsValue = incomeValue*0.2;
+    print("sumInvestValue 5: before sumOfSavingValue ${investDataProvider.sumInvestValue}");
+    double sumOfSavingValue = investDataProvider.sumInvestValue;
+    print("sumInvestValue 6: after sumOfSavingValue ${investDataProvider.sumInvestValue}");
+    double savingsValue = investDataProvider.totalInvestValue;
     String formattedsavingsValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(savingsValue);
+    String formattedSumOfSavingValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfSavingValue);
 
     return Material(
       child: Stack(
@@ -947,7 +1232,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                             children: [
                               Text("Birikim Hedefi", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 19, fontWeight: FontWeight.normal)),
                               SizedBox(height: 10),
-                              Text("0,00 / $formattedsavingsValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 19, fontWeight: FontWeight.normal)),
+                              Text("$formattedSumOfSavingValue / $formattedsavingsValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 19, fontWeight: FontWeight.normal)),
                               SizedBox(
                                 child: LinearPercentIndicator(
                                   padding: EdgeInsets.only(right: 10),
@@ -1076,16 +1361,16 @@ class _InvestmentPageState extends State<InvestmentPage> {
               child: Visibility(
                 visible: isPopupVisible,
                   child: Container(
-                    padding: EdgeInsets.only(bottom: 10),
+                    padding: EdgeInsets.only(top: 320),
                     color: Colors.black.withOpacity(0.5), // Darkened background
                     child: Align(
-                      alignment: Alignment.bottomCenter,
+                      alignment: Alignment.bottomLeft,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: itemList.map((category) {
-                          return buildCategoryButton(category);
+                          return buildCategoryButton(category, itemIcons);
                         }).toList(),
-                      ),
+                      )
                     ),
                 ),
                 ),
