@@ -29,13 +29,7 @@ class InvestmentTypeProvider extends ChangeNotifier {
   bool hasOtherGoalSelected = false;
   String _selectedInvestmentType = "";
   String get selectedInvestmentType => _selectedInvestmentType;
-
-  void updateSelectedInvestmentType(String value) {
-    _selectedInvestmentType = value;
-    notifyListeners();
-    }
 }
-
 
 class InvestmentPage extends StatefulWidget {
   const InvestmentPage({Key? key}) : super(key: key);
@@ -106,6 +100,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
       });
     }
   }
+
   Widget buildCategoryButton(String category, List<String> itemIcons) {
     int index = itemList.indexOf(category);
     String iconAsset = itemIcons[index];
@@ -1159,11 +1154,13 @@ class _InvestmentPageState extends State<InvestmentPage> {
     final investDataProvider = Provider.of<InvestmentTypeProvider>(context, listen: false);
     double incomeValue = NumberFormat.decimalPattern('tr_TR').parse(page1.incomeValue) as double;
     print("sumInvestValue 5: before sumOfSavingValue ${investDataProvider.sumInvestValue}");
-    double sumOfSavingValue = investDataProvider.sumInvestValue;
+    double sumOfSavingValue = investDataProvider.sumInvestValue.isNaN ? 0.0 : investDataProvider.sumInvestValue;
     print("sumInvestValue 6: after sumOfSavingValue ${investDataProvider.sumInvestValue}");
-    double savingsValue = investDataProvider.totalInvestValue;
+    double savingsValue = investDataProvider.totalInvestValue.isNaN ? 0.0 : investDataProvider.totalInvestValue;
+    double result = (savingsValue == 0.0) ? 0.0 : sumOfSavingValue / savingsValue;
     String formattedsavingsValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(savingsValue);
     String formattedSumOfSavingValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfSavingValue);
+
 
     return Material(
       child: Stack(
@@ -1240,8 +1237,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                   animation: true,
                                   lineHeight: 10,
                                   animationDuration: 1000,
-                                  percent: 0,
-                                  trailing: Text("%0", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.normal)),
+                                  percent: result,
+                                  trailing: Text("%${((result)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.normal)),
                                   barRadius: Radius.circular(10),
                                   progressColor: Colors.lightBlue,
                                 ),
@@ -1314,7 +1311,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                             Navigator.pushNamed(context, 'investment-page');
                             break;
                           case 4:
-                            Navigator.pushNamed(context, 'page5');
+                            Navigator.pushNamed(context, 'wishes-page');
                             break;
                         }
                       },

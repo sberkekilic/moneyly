@@ -2472,7 +2472,7 @@ class _OutcomePageState extends State<OutcomePage> {
                   Navigator.pushNamed(context, 'investment-page');
                   break;
                 case 4:
-                  Navigator.pushNamed(context, 'page5');
+                  Navigator.pushNamed(context, 'wishes-page');
                   break;
               }
             },
