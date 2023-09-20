@@ -11,6 +11,8 @@ import 'package:provider/provider.dart';
 class BankData {
   int id;
   String bankName;
+  String selectedTab;
+  String selectedSymbol;
   double percent;
   double sum;
   bool isEditing;
@@ -19,10 +21,12 @@ class BankData {
   BankData({
     required this.id,
     required this.bankName,
+    required this.selectedTab,
+    required this.selectedSymbol,
     required this.percent,
     required this.sum,
     this.isEditing = false,
-    this.isAddButtonActive = false
+    this.isAddButtonActive = false,
   });
 }
 
@@ -33,8 +37,8 @@ class BankTypeProvider extends ChangeNotifier {
   int _nextId = 1;
 
 
-  void addBankData(String bankName, double percent, double sum, String currency) {
-    BankData bankData = BankData(id: _nextId++, bankName: bankName, percent: percent, sum: sum);
+  void addBankData(String bankName, double percent, double sum, String currency, String selectedSymbol) {
+    BankData bankData = BankData(id: _nextId++, bankName: bankName, percent: percent, sum: sum, selectedTab: currency, selectedSymbol: selectedSymbol);
     bankDataList.add(bankData);
     final sumMap = <int, Map<String, List<double>>>{
       bankData.id: {
@@ -56,7 +60,7 @@ class BankTypeProvider extends ChangeNotifier {
   }
 
 
-  void updateBankData(int id, String bankName, double percent, double sum, String currency) {
+  void updateBankData(int id, String bankName, double percent, double sum, String currency, String selectedSymbol) {
     final index = bankDataList.indexWhere((bank) => bank.id == id);
     if (!sumMap.containsKey(id)) {
       sumMap[id] = {currency: []};
@@ -64,36 +68,23 @@ class BankTypeProvider extends ChangeNotifier {
     final sumValues = sumMap[id]?[currency] ?? [];
     if (index != -1) {
       if (bankDataList[index].bankName != bankName){
-        print("KOD 3");
         double totalSum = sum;
-        BankData bankData = BankData(id: id, bankName: bankName, percent: percent, sum: totalSum);
+        BankData bankData = BankData(id: id, bankName: bankName, percent: percent, sum: totalSum, selectedTab: currency, selectedSymbol: selectedSymbol);
         bankDataList[index] = bankData;
         notifyListeners();
       } else {
-        print("KOD 4");
         sumValues.add(sum);
         print("KOD 4 SUMVALUES $sumValues");
         sumMap[id]?[currency] = sumValues;
         double totalSum = calculateSum(id);
         print("KOD 4 totalSum $totalSum");
-        BankData bankData = BankData(id: id, bankName: bankName, percent: percent, sum: totalSum);
+        BankData bankData = BankData(id: id, bankName: bankName, percent: percent, sum: totalSum, selectedTab: currency, selectedSymbol: selectedSymbol);
         bankDataList[index] = bankData;
         notifyListeners();
       }
       print("SUMMAP: ${sumMap}");
       print("bankDataList[index] sum: ${bankDataList[index].id} ${bankDataList[index].bankName} ${bankDataList[index].sum}");
     }
-  }
-
-  void deleteBankData(Map<int, Map<String, List<double>>> sumMap, int id) {
-    final values = sumMap[id];
-    if (values != null) {
-      values.clear();
-    }
-    bankDataList.removeWhere((bank) => bank.id == id);
-    _nextId = bankDataList.isNotEmpty ? bankDataList.map((bank) => bank.id).reduce(max) + 1 : 1;
-    notifyListeners();
-    print("deleteBankData : ${bankDataList}");
   }
 
   double calculateSum(int id) {
@@ -112,6 +103,50 @@ class BankTypeProvider extends ChangeNotifier {
     }
   }
 
+  double calculateSumForCurrency(int id, String currency) {
+    if (sumMap.containsKey(id)) {
+      double totalSum = 0.0;
+
+      sumMap[id]?.forEach((key, values) {
+        if (key == currency) {
+          for (var value in values) {
+            totalSum += value;
+          }
+        }
+      });
+
+      return totalSum;
+    } else {
+      return 0.0; // Handle the case when the sumMap entry does not exist
+    }
+  }
+
+  double calculateTotalSumForCurrency(String currency) {
+    double totalSum = 0.0;
+
+    sumMap.forEach((id, currencyMap) {
+      if (currencyMap.containsKey(currency)) {
+        final values = currencyMap[currency]!;
+        for (var value in values) {
+          totalSum += value;
+        }
+      }
+    });
+
+    return totalSum;
+  }
+
+  void deleteBankData(Map<int, Map<String, List<double>>> sumMap, int id) {
+    final values = sumMap[id];
+    if (values != null) {
+      values.clear();
+    }
+    bankDataList.removeWhere((bank) => bank.id == id);
+    _nextId = bankDataList.isNotEmpty ? bankDataList.map((bank) => bank.id).reduce(max) + 1 : 1;
+    notifyListeners();
+    print("deleteBankData : ${bankDataList}");
+  }
+
   List<double> getSumList(int id, String currency) {
     // Get the list of doubles for the bank with the given ID.
     final sumValues = sumMap[id]?[currency] ?? [];
@@ -124,23 +159,27 @@ class BankTypeProvider extends ChangeNotifier {
     return Map<int, Map<String, List<double>>>.from(sumMap);
   }
 
-  void deleteValueById(Map<int, Map<String, List<double>>> sumMap, int id, int index, String bankName, double percent, String currency) {
+  void deleteValueById(Map<int, Map<String, List<double>>> sumMap, int id, int index, String bankName, double percent, String currency, String selectedSymbol) {
     final idPosition = bankDataList.indexWhere((bank) => bank.id == id);
     final values = sumMap[id]?[currency] ?? [];
     if (values != null && index < values.length) {
       values.removeAt(index);
-      double totalSum = 0.0;
-      for (double value in values) {
-        totalSum += value;
+      if (values.isEmpty){
+        sumMap[id]?.remove(currency);
+      } else {
+        double totalSum = 0.0;
+        for (double value in values) {
+          totalSum += value;
+        }
+        sumMap[id]?[currency] = values;
+        BankData bankData = BankData(id: id, bankName: bankName, percent: percent, sum: totalSum, selectedTab: currency, selectedSymbol: selectedSymbol);
+        bankDataList[idPosition] = bankData;
       }
-      sumMap[id]?[currency] = values;
-      BankData bankData = BankData(id: id, bankName: bankName, percent: percent, sum: totalSum);
-      bankDataList[idPosition] = bankData;
       notifyListeners();
     }
     Iterable<MapEntry<int, Map<String, List<double>>>> entries = sumMap.entries;
     for (final entry in entries) {
-      print('(${entry.key}, ${entry.value['category1']})');
+      print('(${entry.key}, ${entry.value[currency]})');
     }
   }
 
@@ -168,6 +207,9 @@ class _WishesPageState extends State<WishesPage> {
     'Hisse',
     'Diğer'
   ];
+  String selectedTab = "Türk Lirası";
+  String selectedSymbol = "";
+
 
   @override
   void dispose() {
@@ -178,12 +220,28 @@ class _WishesPageState extends State<WishesPage> {
   Widget buildBankCategories(BuildContext context, BankData bankData) {
     final bankDataProvider = Provider.of<BankTypeProvider>(context, listen: false);
     final TextEditingController nameController = TextEditingController();
+    final sumForCurrency = bankDataProvider.calculateSumForCurrency(bankData.id, selectedTab) ;
+    double totalCurrencySum = bankDataProvider.calculateTotalSumForCurrency(selectedTab);
+    final division = (totalCurrencySum != 0.0 && !totalCurrencySum.isNaN) ? (sumForCurrency / totalCurrencySum) : 0.0;
     TextEditingController? assetController;
     if (bankData.id < bankDataProvider.assetControllers.length) {
       assetController = bankDataProvider.assetControllers[bankData.id];
     } else {
       assetController = TextEditingController();
       bankDataProvider.assetControllers.add(assetController);
+    }
+    if(bankData.selectedTab == currencyList[0]){
+      selectedSymbol = "₺";
+    } else if (bankData.selectedTab == currencyList[1]){
+      selectedSymbol = '\$';
+    } else if (bankData.selectedTab == currencyList[2]){
+      selectedSymbol = "€";
+    } else if (bankData.selectedTab == currencyList[3]){
+      selectedSymbol = "g";
+    } else if (bankData.selectedTab == currencyList[4]){
+      selectedSymbol = "₺";
+    } else if (bankData.selectedTab == currencyList[5]){
+      selectedSymbol = "?";
     }
     nameController.text = bankData.bankName;
 
@@ -243,7 +301,7 @@ class _WishesPageState extends State<WishesPage> {
                       // Save changes when editing is complete
                       String newName = nameController.text;
                       if(bankData.bankName != newName){
-                        bankDataProvider.updateBankData(bankData.id, newName, bankData.percent, bankData.sum, dropDownValue);
+                        bankDataProvider.updateBankData(bankData.id, newName, bankData.percent, bankData.sum, dropDownValue, bankData.selectedSymbol);
                       }
                       setState(() {
                         bankData.isEditing = false; // Exit editing mode
@@ -263,7 +321,7 @@ class _WishesPageState extends State<WishesPage> {
               ),
               SizedBox(height: 10),
               Text(
-                bankData.sum.toString(),
+                "${sumForCurrency.toString()}$selectedSymbol",
                 style: GoogleFonts.montserrat(
                     color: Colors.black,
                     fontSize: 19,
@@ -276,9 +334,9 @@ class _WishesPageState extends State<WishesPage> {
                   animation: true,
                   lineHeight: 10,
                   animationDuration: 1000,
-                  percent: bankData.percent / 100, // Use the bank's percent value
+                  percent: division,
                   trailing: Text(
-                    "${bankData.percent}%", // Show the bank's percent value
+                    "%${((division)*100).toStringAsFixed(0)}",
                     style: GoogleFonts.montserrat(
                         color: Colors.black,
                         fontSize: 16,
@@ -289,319 +347,106 @@ class _WishesPageState extends State<WishesPage> {
                 ),
               ),
               SizedBox(height: 5),
-              ListView(
-                physics: NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                children: [
-                  if(bankDataProvider.sumMap[bankData.id]?[currencyList[0]] != null)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              DefaultTabController(
+                length: currencyList.length,
+                initialIndex: currencyList.indexOf(bankData.selectedTab),
+                child: Column(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      child: TabBar(
+                        isScrollable: true, // Set this to true if you have many currencies
+                        indicator: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: Color(0xffc6c6c7),
+                        ),
+                        labelColor: Colors.blue, // Color for the selected tab text
+                        unselectedLabelColor: Colors.grey, // Color for unselected tab text
+                        tabs: currencyList.map((currency) {
+                          return Tab(
+                            child: Container(
+                              padding: EdgeInsets.all(8.0), // Adjust padding as needed
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle, // Circular background for each tab
+                              ),
+                              child: Text(
+                                currency,
+                                style: GoogleFonts.montserrat(fontSize: 14, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        onTap: (value) {
+                          setState(() {
+                            bankData.selectedTab = currencyList[value]; // Set dropDownValue to the selected currency
+                            bankData.selectedSymbol = getSelectedSymbol(bankData.selectedTab);
+                          });
+                        },
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    ListView(
+                      physics: NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
                       children: [
-                        Text(currencyList[0], style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                        Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                        ListView.builder(
-                          physics: NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: bankDataProvider.sumMap[bankData.id]?[currencyList[0]]?.length ?? 0 + 1,
-                          itemBuilder: (context, index) {
-                            if (index < bankDataProvider.sumMap[bankData.id]![currencyList[0]]!.length && bankDataProvider.sumMap[bankData.id]![currencyList[0]]![index] != 0.0) {
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Flexible(
-                                        flex: 1,
-                                        fit: FlexFit.tight,
-                                        child: Text(
-                                          bankDataProvider.sumMap[bankData.id]![currencyList[0]]![index].toString(),
-                                          style: GoogleFonts.montserrat(fontSize: 20),
-                                          overflow: TextOverflow.ellipsis,
+                        if(bankDataProvider.sumMap[bankData.id]?[bankData.selectedTab] != null)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(bankData.selectedTab, style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                              Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                              ListView.builder(
+                                physics: NeverScrollableScrollPhysics(),
+                                shrinkWrap: true,
+                                itemCount: bankDataProvider.sumMap[bankData.id]?[bankData.selectedTab]?.length ?? 0 + 1,
+                                itemBuilder: (context, index) {
+                                  if (index < bankDataProvider.sumMap[bankData.id]![bankData.selectedTab]!.length && bankDataProvider.sumMap[bankData.id]![bankData.selectedTab]![index] != 0.0) {
+                                    return Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Flexible(
+                                              flex: 1,
+                                              fit: FlexFit.tight,
+                                              child: Text(
+                                                bankDataProvider.sumMap[bankData.id]![bankData.selectedTab]![index].toString(),
+                                                style: GoogleFonts.montserrat(fontSize: 20),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            SizedBox(width: 20),
+                                            IconButton(
+                                              splashRadius: 0.0001,
+                                              padding: EdgeInsets.zero,
+                                              constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                              icon: Icon(Icons.delete, size: 21),
+                                              onPressed: () {
+                                                setState(() {
+                                                  bankDataProvider.notifyListeners();
+                                                  bankDataProvider.deleteValueById(bankDataProvider.sumMap, bankData.id, index, bankData.bankName, bankData.percent, dropDownValue, bankData.selectedSymbol);
+                                                  bankDataProvider.notifyListeners();
+                                                });
+                                              },
+                                            ),
+                                          ],
                                         ),
-                                      ),
-                                      SizedBox(width: 20),
-                                      IconButton(
-                                        splashRadius: 0.0001,
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                        icon: Icon(Icons.delete, size: 21),
-                                        onPressed: () {
-                                          setState(() {
-                                            bankDataProvider.notifyListeners();
-                                            bankDataProvider.deleteValueById(bankDataProvider.sumMap, bankData.id, index, bankData.bankName, bankData.percent, currencyList[0]);
-                                            bankDataProvider.notifyListeners();
-                                          });
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                  Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                ],
-                              );
-                            }
-                            return SizedBox.shrink();
-                          },
-                        )
+                                        Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                      ],
+                                    );
+                                  }
+                                  return SizedBox.shrink();
+                                },
+                              )
+                            ],
+                          ),
                       ],
                     ),
-                  if(bankDataProvider.sumMap[bankData.id]?[currencyList[1]] != null)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(currencyList[1], style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                        Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                        ListView.builder(
-                          physics: NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: bankDataProvider.sumMap[bankData.id]?[currencyList[1]]?.length ?? 0 + 1,
-                          itemBuilder: (context, index) {
-                            if (index < bankDataProvider.sumMap[bankData.id]![currencyList[1]]!.length && bankDataProvider.sumMap[bankData.id]![currencyList[1]]![index] != 0.0) {
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Flexible(
-                                        flex: 1,
-                                        fit: FlexFit.tight,
-                                        child: Text(
-                                          bankDataProvider.sumMap[bankData.id]![currencyList[1]]![index].toString(),
-                                          style: GoogleFonts.montserrat(fontSize: 20),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      SizedBox(width: 20),
-                                      IconButton(
-                                        splashRadius: 0.0001,
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                        icon: Icon(Icons.delete, size: 21),
-                                        onPressed: () {
-                                          setState(() {
-                                            bankDataProvider.notifyListeners();
-                                            bankDataProvider.deleteValueById(bankDataProvider.sumMap, bankData.id, index, bankData.bankName, bankData.percent, currencyList[1]);
-                                            bankDataProvider.notifyListeners();
-                                          });
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                  Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                ],
-                              );
-                            }
-                            return SizedBox.shrink();
-                          },
-                        )
-                      ],
-                    ),
-                  if(bankDataProvider.sumMap[bankData.id]?[currencyList[2]] != null)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                        ListView.builder(
-                          physics: NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: bankDataProvider.sumMap[bankData.id]?[dropDownValue]?.length ?? 0 + 1,
-                          itemBuilder: (context, index) {
-                            if (index < bankDataProvider.sumMap[bankData.id]![dropDownValue]!.length && bankDataProvider.sumMap[bankData.id]![dropDownValue]![index] != 0.0) {
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Flexible(
-                                        flex: 1,
-                                        fit: FlexFit.tight,
-                                        child: Text(
-                                          bankDataProvider.sumMap[bankData.id]![dropDownValue]![index].toString(),
-                                          style: GoogleFonts.montserrat(fontSize: 20),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      SizedBox(width: 20),
-                                      IconButton(
-                                        splashRadius: 0.0001,
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                        icon: Icon(Icons.delete, size: 21),
-                                        onPressed: () {
-                                          setState(() {
-                                            bankDataProvider.notifyListeners();
-                                            bankDataProvider.deleteValueById(bankDataProvider.sumMap, bankData.id, index, bankData.bankName, bankData.percent, dropDownValue);
-                                            bankDataProvider.notifyListeners();
-                                          });
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                  Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                ],
-                              );
-                            }
-                            return SizedBox.shrink();
-                          },
-                        )
-                      ],
-                    ),
-                  if(bankDataProvider.sumMap[bankData.id]?[currencyList[3]] != null)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                        ListView.builder(
-                          physics: NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: bankDataProvider.sumMap[bankData.id]?[dropDownValue]?.length ?? 0 + 1,
-                          itemBuilder: (context, index) {
-                            if (index < bankDataProvider.sumMap[bankData.id]![dropDownValue]!.length && bankDataProvider.sumMap[bankData.id]![dropDownValue]![index] != 0.0) {
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Flexible(
-                                        flex: 1,
-                                        fit: FlexFit.tight,
-                                        child: Text(
-                                          bankDataProvider.sumMap[bankData.id]![dropDownValue]![index].toString(),
-                                          style: GoogleFonts.montserrat(fontSize: 20),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      SizedBox(width: 20),
-                                      IconButton(
-                                        splashRadius: 0.0001,
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                        icon: Icon(Icons.delete, size: 21),
-                                        onPressed: () {
-                                          setState(() {
-                                            bankDataProvider.notifyListeners();
-                                            bankDataProvider.deleteValueById(bankDataProvider.sumMap, bankData.id, index, bankData.bankName, bankData.percent, dropDownValue);
-                                            bankDataProvider.notifyListeners();
-                                          });
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                  Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                ],
-                              );
-                            }
-                            return SizedBox.shrink();
-                          },
-                        )
-                      ],
-                    ),
-                  if(bankDataProvider.sumMap[bankData.id]?[currencyList[4]] != null)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                        ListView.builder(
-                          physics: NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: bankDataProvider.sumMap[bankData.id]?[dropDownValue]?.length ?? 0 + 1,
-                          itemBuilder: (context, index) {
-                            if (index < bankDataProvider.sumMap[bankData.id]![dropDownValue]!.length && bankDataProvider.sumMap[bankData.id]![dropDownValue]![index] != 0.0) {
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Flexible(
-                                        flex: 1,
-                                        fit: FlexFit.tight,
-                                        child: Text(
-                                          bankDataProvider.sumMap[bankData.id]![dropDownValue]![index].toString(),
-                                          style: GoogleFonts.montserrat(fontSize: 20),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      SizedBox(width: 20),
-                                      IconButton(
-                                        splashRadius: 0.0001,
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                        icon: Icon(Icons.delete, size: 21),
-                                        onPressed: () {
-                                          setState(() {
-                                            bankDataProvider.notifyListeners();
-                                            bankDataProvider.deleteValueById(bankDataProvider.sumMap, bankData.id, index, bankData.bankName, bankData.percent, dropDownValue);
-                                            bankDataProvider.notifyListeners();
-                                          });
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                  Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                ],
-                              );
-                            }
-                            return SizedBox.shrink();
-                          },
-                        )
-                      ],
-                    ),
-                  if(bankDataProvider.sumMap[bankData.id]?[currencyList[5]] != null)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                        ListView.builder(
-                          physics: NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: bankDataProvider.sumMap[bankData.id]?[dropDownValue]?.length ?? 0 + 1,
-                          itemBuilder: (context, index) {
-                            if (index < bankDataProvider.sumMap[bankData.id]![dropDownValue]!.length && bankDataProvider.sumMap[bankData.id]![dropDownValue]![index] != 0.0) {
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Flexible(
-                                        flex: 1,
-                                        fit: FlexFit.tight,
-                                        child: Text(
-                                          bankDataProvider.sumMap[bankData.id]![dropDownValue]![index].toString(),
-                                          style: GoogleFonts.montserrat(fontSize: 20),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      SizedBox(width: 20),
-                                      IconButton(
-                                        splashRadius: 0.0001,
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                        icon: Icon(Icons.delete, size: 21),
-                                        onPressed: () {
-                                          setState(() {
-                                            bankDataProvider.notifyListeners();
-                                            bankDataProvider.deleteValueById(bankDataProvider.sumMap, bankData.id, index, bankData.bankName, bankData.percent, dropDownValue);
-                                            bankDataProvider.notifyListeners();
-                                          });
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                  Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                ],
-                              );
-                            }
-                            return SizedBox.shrink();
-                          },
-                        )
-                      ],
-                    ),
-                ],
+                  ],
+                ),
               ),
               if(!bankData.isAddButtonActive)
               Row(
@@ -704,7 +549,7 @@ class _WishesPageState extends State<WishesPage> {
                                   if (text.isNotEmpty && text != "0") {
                                     BankData updatedBankData = bankDataProvider.bankDataList.firstWhere((bank) => bank.id == bankData.id);
                                     bankDataProvider.notifyListeners();
-                                    bankDataProvider.updateBankData(bankData.id, newName, bankData.percent, price, dropDownValue);
+                                    bankDataProvider.updateBankData(bankData.id, newName, bankData.percent, price, dropDownValue , bankData.selectedSymbol);
                                     bankDataProvider.notifyListeners();
                                     assetController?.clear();
                                     bankData.isAddButtonActive = false;
@@ -734,6 +579,8 @@ class _WishesPageState extends State<WishesPage> {
   Widget build(BuildContext context) {
     return Consumer<BankTypeProvider>(
       builder: (context, provider, _) {
+        final bankDataProvider = Provider.of<BankTypeProvider>(context, listen: false);
+        double totalCurrencySum = bankDataProvider.calculateTotalSumForCurrency(selectedTab);
         return Scaffold(
           appBar: AppBar(
             backgroundColor: Color(0xfff0f0f1),
@@ -803,7 +650,7 @@ class _WishesPageState extends State<WishesPage> {
                                 fontSize: 19,
                                 fontWeight: FontWeight.normal)),
                         SizedBox(height: 10),
-                        Text("---",
+                        Text("${totalCurrencySum.toString()}$selectedSymbol",
                             style: GoogleFonts.montserrat(
                                 color: Colors.black,
                                 fontSize: 19,
@@ -824,7 +671,7 @@ class _WishesPageState extends State<WishesPage> {
                                   final bankName = "Bank Name ${provider.bankDataList.length + 1}";
                                   const initialPercent = 0.0;
                                   print("TEK ADDBANKDATA ÇALIŞTI");
-                                  provider.addBankData(bankName, initialPercent, 0.0, dropDownValue);
+                                  provider.addBankData(bankName, initialPercent, 0.0, dropDownValue, "");
                                 },
                                 icon: Icon(Icons.add_circle),
                               ),
@@ -919,4 +766,24 @@ class _WishesPageState extends State<WishesPage> {
       },
     );
   }
+
+  String getSelectedSymbol(String currency) {
+    switch (currency) {
+      case 'Türk Lirası':
+        return '₺';
+      case 'Dolar':
+        return '\$';
+      case 'Euro':
+        return '€';
+      case 'Altın':
+        return 'g';
+      case 'Hisse':
+        return '₺'; // Change this to the desired symbol for Hisse
+      case 'Diğer':
+        return '?';
+      default:
+        return ''; // Handle other cases as needed
+    }
+  }
+
 }
