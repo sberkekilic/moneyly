@@ -33,6 +33,7 @@ class BankData {
 class BankTypeProvider extends ChangeNotifier {
   List<BankData> bankDataList = [];
   List<TextEditingController> assetControllers = [];
+  List<String> selectedTabList = [];
   Map<int, Map<String, List<double>>> sumMap = {};
   int _nextId = 1;
 
@@ -40,6 +41,7 @@ class BankTypeProvider extends ChangeNotifier {
   void addBankData(String bankName, double percent, double sum, String currency, String selectedSymbol) {
     BankData bankData = BankData(id: _nextId++, bankName: bankName, percent: percent, sum: sum, selectedTab: currency, selectedSymbol: selectedSymbol);
     bankDataList.add(bankData);
+    selectedTabList.add(currency);
     final sumMap = <int, Map<String, List<double>>>{
       bankData.id: {
         currency: [],
@@ -142,6 +144,7 @@ class BankTypeProvider extends ChangeNotifier {
       values.clear();
     }
     bankDataList.removeWhere((bank) => bank.id == id);
+    selectedTabList.removeAt(id-1);
     _nextId = bankDataList.isNotEmpty ? bankDataList.map((bank) => bank.id).reduce(max) + 1 : 1;
     notifyListeners();
     print("deleteBankData : ${bankDataList}");
@@ -219,9 +222,15 @@ class _WishesPageState extends State<WishesPage> {
 
   Widget buildBankCategories(BuildContext context, BankData bankData) {
     final bankDataProvider = Provider.of<BankTypeProvider>(context, listen: false);
+    final newSelectedTab;
+    if (bankDataProvider.selectedTabList.isEmpty){
+      newSelectedTab = "Türk Lirası";
+    } else {
+      newSelectedTab = bankDataProvider.selectedTabList[bankData.id-1];
+    }
     final TextEditingController nameController = TextEditingController();
-    final sumForCurrency = bankDataProvider.calculateSumForCurrency(bankData.id, selectedTab) ;
-    double totalCurrencySum = bankDataProvider.calculateTotalSumForCurrency(selectedTab);
+    final sumForCurrency = bankDataProvider.calculateSumForCurrency(bankData.id, newSelectedTab) ;
+    double totalCurrencySum = bankDataProvider.calculateTotalSumForCurrency(newSelectedTab);
     final division = (totalCurrencySum != 0.0 && !totalCurrencySum.isNaN) ? (sumForCurrency / totalCurrencySum) : 0.0;
     TextEditingController? assetController;
     if (bankData.id < bankDataProvider.assetControllers.length) {
@@ -230,17 +239,17 @@ class _WishesPageState extends State<WishesPage> {
       assetController = TextEditingController();
       bankDataProvider.assetControllers.add(assetController);
     }
-    if(bankData.selectedTab == currencyList[0]){
+    if(newSelectedTab == currencyList[0]){
       selectedSymbol = "₺";
-    } else if (bankData.selectedTab == currencyList[1]){
+    } else if (newSelectedTab == currencyList[1]){
       selectedSymbol = '\$';
-    } else if (bankData.selectedTab == currencyList[2]){
+    } else if (newSelectedTab == currencyList[2]){
       selectedSymbol = "€";
-    } else if (bankData.selectedTab == currencyList[3]){
+    } else if (newSelectedTab == currencyList[3]){
       selectedSymbol = "g";
-    } else if (bankData.selectedTab == currencyList[4]){
+    } else if (newSelectedTab == currencyList[4]){
       selectedSymbol = "₺";
-    } else if (bankData.selectedTab == currencyList[5]){
+    } else if (newSelectedTab == currencyList[5]){
       selectedSymbol = "?";
     }
     nameController.text = bankData.bankName;
@@ -349,7 +358,6 @@ class _WishesPageState extends State<WishesPage> {
               SizedBox(height: 5),
               DefaultTabController(
                 length: currencyList.length,
-                initialIndex: currencyList.indexOf(bankData.selectedTab),
                 child: Column(
                   children: [
                     Container(
@@ -380,8 +388,10 @@ class _WishesPageState extends State<WishesPage> {
                         }).toList(),
                         onTap: (value) {
                           setState(() {
-                            bankData.selectedTab = currencyList[value]; // Set dropDownValue to the selected currency
+                            selectedTab = currencyList[value]; // Set dropDownValue to the selected currency
+                            bankDataProvider.selectedTabList[bankData.id-1] = currencyList[value];
                             bankData.selectedSymbol = getSelectedSymbol(bankData.selectedTab);
+                            print("selectedTabList : ${bankDataProvider.selectedTabList}");
                           });
                         },
                       ),
@@ -391,18 +401,18 @@ class _WishesPageState extends State<WishesPage> {
                       physics: NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
                       children: [
-                        if(bankDataProvider.sumMap[bankData.id]?[bankData.selectedTab] != null)
+                        if(bankDataProvider.sumMap[bankData.id]?[newSelectedTab] != null)
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(bankData.selectedTab, style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                              Text(newSelectedTab, style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
                               Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                               ListView.builder(
                                 physics: NeverScrollableScrollPhysics(),
                                 shrinkWrap: true,
-                                itemCount: bankDataProvider.sumMap[bankData.id]?[bankData.selectedTab]?.length ?? 0 + 1,
+                                itemCount: bankDataProvider.sumMap[bankData.id]?[newSelectedTab]?.length ?? 0 + 1,
                                 itemBuilder: (context, index) {
-                                  if (index < bankDataProvider.sumMap[bankData.id]![bankData.selectedTab]!.length && bankDataProvider.sumMap[bankData.id]![bankData.selectedTab]![index] != 0.0) {
+                                  if (index < bankDataProvider.sumMap[bankData.id]![newSelectedTab]!.length && bankDataProvider.sumMap[bankData.id]![newSelectedTab]![index] != 0.0) {
                                     return Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -413,7 +423,7 @@ class _WishesPageState extends State<WishesPage> {
                                               flex: 1,
                                               fit: FlexFit.tight,
                                               child: Text(
-                                                bankDataProvider.sumMap[bankData.id]![bankData.selectedTab]![index].toString(),
+                                                bankDataProvider.sumMap[bankData.id]![newSelectedTab]![index].toString(),
                                                 style: GoogleFonts.montserrat(fontSize: 20),
                                                 overflow: TextOverflow.ellipsis,
                                               ),
@@ -427,7 +437,7 @@ class _WishesPageState extends State<WishesPage> {
                                               onPressed: () {
                                                 setState(() {
                                                   bankDataProvider.notifyListeners();
-                                                  bankDataProvider.deleteValueById(bankDataProvider.sumMap, bankData.id, index, bankData.bankName, bankData.percent, dropDownValue, bankData.selectedSymbol);
+                                                  bankDataProvider.deleteValueById(bankDataProvider.sumMap, bankData.id, index, bankData.bankName, bankData.percent, newSelectedTab, bankData.selectedSymbol);
                                                   bankDataProvider.notifyListeners();
                                                 });
                                               },
@@ -553,13 +563,12 @@ class _WishesPageState extends State<WishesPage> {
                                     bankDataProvider.notifyListeners();
                                     assetController?.clear();
                                     bankData.isAddButtonActive = false;
-                                    print("updatedBankData.sum:${updatedBankData.sum}");
                                   } else {
                                     assetController?.clear();
                                     bankData.isAddButtonActive = false;
                                   }
                                 });
-
+                                print("bankData.selectedTab:${bankData.selectedTab}, dropDownValue $dropDownValue");
                               },
                               icon: Icon(Icons.check_circle, size: 26),
                           )
@@ -580,7 +589,7 @@ class _WishesPageState extends State<WishesPage> {
     return Consumer<BankTypeProvider>(
       builder: (context, provider, _) {
         final bankDataProvider = Provider.of<BankTypeProvider>(context, listen: false);
-        double totalCurrencySum = bankDataProvider.calculateTotalSumForCurrency(selectedTab);
+        double totalCurrencySum = bankDataProvider.calculateTotalSumForCurrency("Türk Lirası");
         return Scaffold(
           appBar: AppBar(
             backgroundColor: Color(0xfff0f0f1),
@@ -650,7 +659,7 @@ class _WishesPageState extends State<WishesPage> {
                                 fontSize: 19,
                                 fontWeight: FontWeight.normal)),
                         SizedBox(height: 10),
-                        Text("${totalCurrencySum.toString()}$selectedSymbol",
+                        Text("${totalCurrencySum.toString()}₺",
                             style: GoogleFonts.montserrat(
                                 color: Colors.black,
                                 fontSize: 19,
