@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import 'selection.dart';
 
@@ -10,13 +13,6 @@ class AddIncome extends StatefulWidget {
 
   @override
   State<AddIncome> createState() => _AddIncomeState();
-}
-
-enum SelectedOption {
-  None,
-  Is,
-  Burs,
-  Emekli,
 }
 
 class _AddIncomeState extends State<AddIncome> {
@@ -46,11 +42,12 @@ class _AddIncomeState extends State<AddIncome> {
     });
   }
 
-  void goToNextPage() {
+  Future<void> goToNextPage() async {
     final selections = Provider.of<IncomeSelections>(context, listen: false);
     selections.setIncomeValue(incomeController.text);
     selections.setSelectedOption(selectedOption);
     Navigator.pushNamed(context, 'abonelikler');
+    //await printSharedPreferencesToFile();
   }
 
   void handleButtonPress(String value) {
@@ -135,10 +132,29 @@ class _AddIncomeState extends State<AddIncome> {
   @override
   void initState() {
     super.initState();
-    if (Provider.of<IncomeSelections>(context, listen: false).incomeValue.isNotEmpty){
-      selectedOption = Provider.of<IncomeSelections>(context, listen: false).selectedOption;
-      incomeController.text = Provider.of<IncomeSelections>(context, listen: false).incomeValue;
-    }
+    _loadSelectedOption();
+  }
+
+  void _loadSelectedOption() async {
+    final prefs = await SharedPreferences.getInstance();
+    final index = prefs.getInt('selected_option') ?? SelectedOption.None.index;
+    final loadedIncomeValue = prefs.getString('income_value') ?? '0';
+    setState(() {
+      selectedOption = SelectedOption.values[index];
+      selectedTitle = labelForOption(selectedOption);
+      if (loadedIncomeValue.isNotEmpty) {
+        incomeController.text = loadedIncomeValue;
+      }
+    });
+  }
+
+  void _onOptionButtonPressed(SelectedOption option) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('selected_option', option.index);
+    setState(() {
+      selectedOption = option;
+      selectedTitle = labelForOption(option);
+    });
   }
 
   @override
@@ -514,7 +530,6 @@ class _AddIncomeState extends State<AddIncome> {
                                 ],
                               ),
                             ),
-
                           ],
                         ),
                       ),
@@ -530,12 +545,14 @@ class _AddIncomeState extends State<AddIncome> {
   }
 
   Widget selectableContainer(SelectedOption option, String label, IconData iconData) {
+    final myProvider = Provider.of<IncomeSelections>(context);
     bool isSelected = selectedOption == option;
-    selectedTitle = "$label gelirinizi yazın";
 
     return GestureDetector(
       onTap: () {
         setState(() {
+          myProvider.setSelectedOption(option);
+          _onOptionButtonPressed(option);
           selectedOption = option;
         });
       },
@@ -635,3 +652,17 @@ class _AddIncomeState extends State<AddIncome> {
     );
   }
 }
+
+String labelForOption(SelectedOption option) {
+  switch (option) {
+    case SelectedOption.Is:
+      return 'İş gelirinizi yazın';
+    case SelectedOption.Burs:
+      return 'Burs gelirinizi yazın';
+    case SelectedOption.Emekli:
+      return 'Emekli gelirinizi yazın';
+    default:
+      return '';
+  }
+}
+

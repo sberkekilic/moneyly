@@ -144,7 +144,7 @@ class BankTypeProvider extends ChangeNotifier {
       values.clear();
     }
     bankDataList.removeWhere((bank) => bank.id == id);
-    selectedTabList.removeAt(id-1);
+    selectedTabList.removeAt(selectedTabList.length-1);
     _nextId = bankDataList.isNotEmpty ? bankDataList.map((bank) => bank.id).reduce(max) + 1 : 1;
     notifyListeners();
     print("deleteBankData : ${bankDataList}");
@@ -213,6 +213,8 @@ class _WishesPageState extends State<WishesPage> {
   String selectedTab = "Türk Lirası";
   String selectedSymbol = "";
 
+  int idForBuild = 0;
+
 
   @override
   void dispose() {
@@ -226,7 +228,9 @@ class _WishesPageState extends State<WishesPage> {
     if (bankDataProvider.selectedTabList.isEmpty){
       newSelectedTab = "Türk Lirası";
     } else {
-      newSelectedTab = bankDataProvider.selectedTabList[bankData.id-1];
+      newSelectedTab = bankDataProvider.selectedTabList[(bankDataProvider.selectedTabList.length)-1];
+      print("bankData.id : ${bankData.id}");
+      print("bankDataProvider.selectedTabList : ${bankDataProvider.selectedTabList}");
     }
     final TextEditingController nameController = TextEditingController();
     final sumForCurrency = bankDataProvider.calculateSumForCurrency(bankData.id, newSelectedTab) ;
@@ -388,7 +392,6 @@ class _WishesPageState extends State<WishesPage> {
                         }).toList(),
                         onTap: (value) {
                           setState(() {
-                            selectedTab = currencyList[value]; // Set dropDownValue to the selected currency
                             bankDataProvider.selectedTabList[bankData.id-1] = currencyList[value];
                             bankData.selectedSymbol = getSelectedSymbol(bankData.selectedTab);
                             print("selectedTabList : ${bankDataProvider.selectedTabList}");
@@ -708,9 +711,9 @@ class _WishesPageState extends State<WishesPage> {
             decoration: BoxDecoration(
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  spreadRadius: 2,
-                  blurRadius: 4,
+                  color: Colors.black.withOpacity(0.5),
+                  spreadRadius: 5,
+                  blurRadius: 5,
                   offset: Offset(0, 3),
                 ),
               ],

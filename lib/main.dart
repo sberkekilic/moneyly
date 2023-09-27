@@ -15,6 +15,7 @@ import 'package:moneyly/pages/page5.dart';
 import 'package:moneyly/pages/wishes-page.dart';
 import 'package:provider/provider.dart';
 
+import 'deneme.dart';
 import 'pages/selection.dart';
 
 void main() {
@@ -24,6 +25,7 @@ void main() {
         providers: [
           ChangeNotifierProvider(create: (context) => IncomeSelections()),
           ChangeNotifierProvider(create: (context) => FormDataProvider()),
+          ChangeNotifierProvider(create: (context) => FormDataProvider2()),
           ChangeNotifierProvider(create: (context) => InvestmentTypeProvider()),
           ChangeNotifierProvider(create: (context) => BankTypeProvider()),
         ],

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import '../form-data-provider.dart';
-import 'diger-giderler.dart';
-import 'selection.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../deneme.dart';
 
 class Bills extends StatefulWidget {
   const Bills({Key? key}) : super(key: key);
@@ -15,6 +13,28 @@ class Bills extends StatefulWidget {
 }
 
 class _BillsState extends State<Bills> {
+  List<String> sharedPreferencesData = [];
+  List<String> desiredKeys = ['homeBillsTitleList2', 'homeBillsPriceList2', 'hasHomeSelected2', 'sumOfHome2', 'internetTitleList2', 'internetPriceList2', 'hasInternetSelected2', 'sumOfInternet2', 'phoneTitleList2', 'phonePriceList2', 'hasPhoneSelected2', 'sumOfPhone2'];
+  bool hasHomeSelected = false;
+  bool hasInternetSelected = false;
+  bool hasPhoneSelected = false;
+
+  List<String> homeBillsTitleList = [];
+  List<String> internetTitleList = [];
+  List<String> phoneTitleList = [];
+
+  List<String> homeBillsPriceList = [];
+  List<String> internetPriceList = [];
+  List<String> phonePriceList = [];
+
+  double sumOfHomeBills = 0.0;
+  double sumOfInternet = 0.0;
+  double sumOfPhone = 0.0;
+
+  String convertSum = "";
+  String convertSum2 = "";
+  String convertSum3 = "";
+
   List<TextEditingController> editTextControllers = [];
   List<TextEditingController> NDeditTextControllers = [];
   List<TextEditingController> RDeditTextControllers = [];
@@ -43,75 +63,64 @@ class _BillsState extends State<Bills> {
   bool isAddButtonActiveND = false;
   bool isAddButtonActiveRD = false;
 
-  bool isHomeBillsContainerTouched = false;
-  bool isInternetContainerTouched = false;
-  bool isPhoneContainerTouched = false;
-
-  void handleHomeBillsContainer() {
+  Future<void> handleHomeBillsContainer() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasHomeSelected2', true);
+    await prefs.setBool('hasInternetSelected2', false);
+    await prefs.setBool('hasPhoneSelected2', false);
     setState(() {
-      isHomeBillsContainerTouched = true;
-      isInternetContainerTouched = false;
-      isPhoneContainerTouched = false;
+      hasHomeSelected = true;
+      hasInternetSelected = false;
+      hasPhoneSelected = false;
       isTextFormFieldVisible = false;
       isTextFormFieldVisibleND =false;
       isTextFormFieldVisibleRD = false;
       isEditingList = false;
-      print("isEditingList: $isEditingList");
-      print("isEditingListND: $isEditingList");
-      print("isEditingListRD: $isEditingList");
-      print("isTextFormFieldVisible: $isTextFormFieldVisible");
-      print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-      print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
+      _load();
     });
   }
-  void handleInternetContainerTouch() {
+  Future<void> handleInternetContainerTouch() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasHomeSelected2', false);
+    await prefs.setBool('hasInternetSelected2', true);
+    await prefs.setBool('hasPhoneSelected2', false);
     setState(() {
-      isHomeBillsContainerTouched = false;
-      isInternetContainerTouched = true;
-      isPhoneContainerTouched = false;
+      hasHomeSelected = false;
+      hasInternetSelected = true;
+      hasPhoneSelected = false;
       isTextFormFieldVisible = false;
       isTextFormFieldVisibleND =false;
       isTextFormFieldVisibleRD = false;
       isEditingListND = false;
-      print("isEditingList: $isEditingList");
-      print("isEditingListND: $isEditingList");
-      print("isEditingListRD: $isEditingList");
-      print("isTextFormFieldVisible: $isTextFormFieldVisible");
-      print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-      print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
+      _load();
     });
   }
-  void handlePhoneContainerTouch() {
+  Future<void> handlePhoneContainerTouch() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasHomeSelected2', false);
+    await prefs.setBool('hasInternetSelected2', false);
+    await prefs.setBool('hasPhoneSelected2', true);
     setState(() {
-      isHomeBillsContainerTouched = false;
-      isInternetContainerTouched = false;
-      isPhoneContainerTouched = true;
+      hasHomeSelected = false;
+      hasInternetSelected = false;
+      hasPhoneSelected = true;
       isTextFormFieldVisible = false;
       isTextFormFieldVisibleND =false;
       isTextFormFieldVisibleRD = false;
       isEditingListRD = false;
-      print("isEditingList: $isEditingList");
-      print("isEditingListND: $isEditingList");
-      print("isEditingListRD: $isEditingList");
-      print("isTextFormFieldVisible: $isTextFormFieldVisible");
-      print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-      print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
+      _load();
     });
   }
 
   void goToPreviousPage() {
     Navigator.pop(context);
   }
-
   void goToNextPage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => OtherExpenses()),
-    );
+    Navigator.pushNamed(context, 'diger-giderler');
   }
 
   void _showEditDialog(BuildContext context, int index, int orderIndex) {
-    final formDataProvider = Provider.of<FormDataProvider>(context, listen: false);
+    final formDataProvider2 = Provider.of<FormDataProvider2>(context, listen: false);
 
     TextEditingController selectedEditController = TextEditingController();
     TextEditingController selectedPriceController = TextEditingController();
@@ -119,25 +128,25 @@ class _BillsState extends State<Bills> {
     switch (orderIndex) {
       case 1:
         TextEditingController editController =
-        TextEditingController(text: formDataProvider.homeBillsTitleList[index]);
+        TextEditingController(text: homeBillsTitleList[index]);
         TextEditingController priceController =
-        TextEditingController(text: formDataProvider.homeBillsPriceList[index]);
+        TextEditingController(text: homeBillsPriceList[index]);
         selectedEditController = editController;
         selectedPriceController = priceController;
         break;
       case 2:
         TextEditingController NDeditController =
-        TextEditingController(text: formDataProvider.internetTitleList[index]);
+        TextEditingController(text: internetTitleList[index]);
         TextEditingController NDpriceController =
-        TextEditingController(text: formDataProvider.internetPriceList[index]);
+        TextEditingController(text: internetPriceList[index]);
         selectedEditController = NDeditController;
         selectedPriceController = NDpriceController;
         break;
       case 3:
         TextEditingController RDeditController =
-        TextEditingController(text: formDataProvider.phoneTitleList[index]);
+        TextEditingController(text: phoneTitleList[index]);
         TextEditingController RDpriceController =
-        TextEditingController(text: formDataProvider.phonePriceList[index]);
+        TextEditingController(text: phonePriceList[index]);
         selectedEditController = RDeditController;
         selectedPriceController = RDpriceController;
         break;
@@ -206,19 +215,29 @@ class _BillsState extends State<Bills> {
                 setState(() {
                   switch (orderIndex){
                     case 1:
-                      formDataProvider.homeBillsTitleList[index] = selectedEditController.text;
-                      formDataProvider.homeBillsPriceList[index] = selectedPriceController.text;
+                      homeBillsTitleList[index] = selectedEditController.text;
+                      homeBillsPriceList[index] = selectedPriceController.text;
+                      formDataProvider2.setHomeTitleValue(selectedEditController.text, homeBillsTitleList);
+                      formDataProvider2.setHomePriceValue(selectedPriceController.text, homeBillsPriceList);
+                      formDataProvider2.calculateSumOfHome(homeBillsPriceList);
                       break;
                     case 2:
-                      formDataProvider.internetTitleList[index] = selectedEditController.text;
-                      formDataProvider.internetPriceList[index] = selectedPriceController.text;
+                      internetTitleList[index] = selectedEditController.text;
+                      internetPriceList[index] = selectedPriceController.text;
+                      formDataProvider2.setInternetTitleValue(selectedEditController.text, internetTitleList);
+                      formDataProvider2.setInternetPriceValue(selectedPriceController.text, internetPriceList);
+                      formDataProvider2.calculateSumOfInternet(internetPriceList);
                       break;
                     case 3:
-                      formDataProvider.phoneTitleList[index] = selectedEditController.text;
-                      formDataProvider.phonePriceList[index] = selectedPriceController.text;
+                      phoneTitleList[index] = selectedEditController.text;
+                      phonePriceList[index] = selectedPriceController.text;
+                      formDataProvider2.setPhoneTitleValue(selectedEditController.text, phoneTitleList);
+                      formDataProvider2.setPhonePriceValue(selectedPriceController.text, phonePriceList);
+                      formDataProvider2.calculateSumOfPhone(phonePriceList);
                       break;
                   }
                 });
+                _load();
                 Navigator.of(context).pop();
               },
 
@@ -229,33 +248,34 @@ class _BillsState extends State<Bills> {
                   setState(() {
                     switch (orderIndex){
                       case 1:
-                        TextEditingController priceController =
-                        TextEditingController(text: formDataProvider.homeBillsPriceList[index]);
-                        formDataProvider.homeBillsTitleList.removeAt(index);
-                        formDataProvider.homeBillsPriceList.removeAt(index);
-                        priceController.clear();
+                        homeBillsTitleList.removeAt(index);
+                        homeBillsPriceList.removeAt(index);
+                        formDataProvider2.removeHomeTitleValue(homeBillsTitleList);
+                        formDataProvider2.removeHomePriceValue(homeBillsPriceList);
+                        formDataProvider2.calculateSumOfHome(homeBillsPriceList);
                         isEditingList = false;
                         isAddButtonActive = false;
                         break;
                       case 2:
-                        TextEditingController NDpriceController =
-                        TextEditingController(text: formDataProvider.internetPriceList[index]);
-                        formDataProvider.internetTitleList.removeAt(index);
-                        formDataProvider.internetPriceList.removeAt(index);
-                        NDpriceController.clear();
+                        internetTitleList.removeAt(index);
+                        internetPriceList.removeAt(index);
+                        formDataProvider2.removeInternetTitleValue(internetTitleList);
+                        formDataProvider2.removeInternetPriceValue(internetPriceList);
+                        formDataProvider2.calculateSumOfInternet(internetPriceList);
                         isEditingListND = false;
                         isAddButtonActiveND = false;
                         break;
                       case 3:
-                        TextEditingController RDpriceController =
-                        TextEditingController(text: formDataProvider.phonePriceList[index]);
-                        formDataProvider.phoneTitleList.removeAt(index);
-                        formDataProvider.phonePriceList.removeAt(index);
-                        RDpriceController.clear();
+                        phoneTitleList.removeAt(index);
+                        phonePriceList.removeAt(index);
+                        formDataProvider2.removePhoneTitleValue(phoneTitleList);
+                        formDataProvider2.removePhonePriceValue(phoneTitleList);
+                        formDataProvider2.calculateSumOfPhone(phonePriceList);
                         isEditingListRD = false;
                         isAddButtonActiveRD = false;
                         break;
                     }
+                    _load();
                     Navigator.of(context).pop();
                   });
                 },
@@ -269,43 +289,66 @@ class _BillsState extends State<Bills> {
   @override
   void initState() {
     super.initState();
-    if(Provider.of<FormDataProvider>(context, listen: false).homeBillsTitleList.isNotEmpty) {
-      isHomeBillsContainerTouched = true;
+    _load();
+  }
+
+  Future<void> loadSharedPreferencesData(List<String> desiredKeys) async {
+    final prefs = await SharedPreferences.getInstance();
+    sharedPreferencesData = [];
+
+    for (var key in desiredKeys) {
+      final value = prefs.get(key);
+      if (value != null) {
+        sharedPreferencesData.add('$key: $value');
+      }
     }
-    if(Provider.of<FormDataProvider>(context, listen: false).internetTitleList.isNotEmpty) {
-      isInternetContainerTouched = true;
-    }
-    if(Provider.of<FormDataProvider>(context, listen: false).phoneTitleList.isNotEmpty) {
-      isPhoneContainerTouched = true;
-    }
+
+    setState(() {
+    }); // Trigger a rebuild of the widget to display the data
+  }
+
+  void _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final ab1 = prefs.getBool('hasHomeSelected2') ?? false;
+    final ab2 = prefs.getBool('hasInternetSelected2') ?? false;
+    final ab3 = prefs.getBool('hasPhoneSelected2') ?? false;
+    final bb1 = prefs.getStringList('homeBillsTitleList2') ?? [];
+    final bb2 = prefs.getStringList('internetTitleList2') ?? [];
+    final bb3 = prefs.getStringList('phoneTitleList2') ?? [];
+    final cb1 = prefs.getStringList('homeBillsPriceList2') ?? [];
+    final cb2 = prefs.getStringList('internetPriceList2') ?? [];
+    final cb3 = prefs.getStringList('phonePriceList2') ?? [];
+    final db1 = prefs.getDouble('sumOfHome2') ?? 0.0;
+    final db2 = prefs.getDouble('sumOfInternet2') ?? 0.0;
+    final db3 = prefs.getDouble('sumOfPhone2') ?? 0.0;
+    setState(() {
+      hasHomeSelected = ab1;
+      hasInternetSelected = ab2;
+      hasPhoneSelected = ab3;
+      homeBillsTitleList = bb1;
+      internetTitleList = bb2;
+      phoneTitleList = bb3;
+      homeBillsPriceList = cb1;
+      internetPriceList = cb2;
+      phonePriceList = cb3;
+      sumOfHomeBills = db1;
+      sumOfInternet = db2;
+      sumOfPhone = db3;
+      loadSharedPreferencesData(desiredKeys);
+    });
+    convertSum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfHomeBills);
+    convertSum2 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfInternet);
+    convertSum3 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfPhone);
   }
 
   @override
   Widget build(BuildContext context) {
-    final formDataProvider = Provider.of<FormDataProvider>(context, listen: false);
+    final formDataProvider2 = Provider.of<FormDataProvider2>(context, listen: false);
     double screenWidth = MediaQuery.of(context).size.width;
-    double sum = 0.0;
-    for(String price in formDataProvider.homeBillsPriceList){
-      sum += double.parse(price);
-    }
-    double suminternet = 0.0;
-    for(String price in formDataProvider.internetPriceList){
-      suminternet += double.parse(price);
-    }
-    double sumphone = 0.0;
-    for(String price in formDataProvider.phonePriceList){
-      sumphone += double.parse(price);
-    }
-    String convertSum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum);
-    formDataProvider.sumOfHomeBills = convertSum;
-    String convertSum2 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(suminternet);
-    formDataProvider.sumOfInternet = convertSum2;
-    String convertSum3 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumphone);
-    formDataProvider.sumOfPhone = convertSum3;
     double sumAll = 0.0;
-    sumAll += sum;
-    sumAll += suminternet;
-    sumAll += sumphone;
+    sumAll += sumOfHomeBills;
+    sumAll += sumOfInternet;
+    sumAll += sumOfPhone;
     return Scaffold(
       appBar: AppBar(
           backgroundColor: Color(0xfff0f0f1),
@@ -358,8 +401,8 @@ class _BillsState extends State<Bills> {
                         backgroundColor: sumAll!=0.0 ? Colors.black : Colors.grey,
                       ),
                       clipBehavior: Clip.hardEdge,
-                      onPressed: sumAll!=0.0 ? () async {
-                        Navigator.pushNamed(context, 'diger-giderler');
+                      onPressed: sumAll!=0.0 ? () {
+                        goToNextPage();
                       } : null,
                       child: Text('Sonraki', style: GoogleFonts.montserrat(fontSize: 18),),
                     ),
@@ -538,12 +581,21 @@ class _BillsState extends State<Bills> {
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
-                                        color: isHomeBillsContainerTouched ? Colors.black : Colors.black.withOpacity(0.5),
-                                        width: isHomeBillsContainerTouched ? 4 : 2,
+                                        color: hasHomeSelected ? Colors.black : Colors.black.withOpacity(0.5),
+                                        width: hasHomeSelected ? 4 : 2,
                                       ),
                                     ),
                                     child: InkWell(
-                                      onTap: isAddButtonActive ? null : handleHomeBillsContainer,
+                                      onTap: () {
+                                        if(isAddButtonActive==false){
+                                          handleHomeBillsContainer();
+                                          isAddButtonActiveND = false;
+                                          isAddButtonActiveRD = false;
+                                        } else {
+                                          isAddButtonActiveND = false;
+                                          isAddButtonActiveRD = false;
+                                        }
+                                      },
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
@@ -551,13 +603,15 @@ class _BillsState extends State<Bills> {
                                               padding: EdgeInsets.all(10),
                                               child: Text("Ev Faturaları",style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold),)
                                           ),
-                                          if (formDataProvider.homeBillsTitleList.isNotEmpty && formDataProvider.homeBillsPriceList.isNotEmpty)
+                                          if (homeBillsTitleList.isNotEmpty && homeBillsPriceList.isNotEmpty)
                                             Container(
                                               child:
                                               ListView.builder(
                                                 shrinkWrap: true,
-                                                itemCount: formDataProvider.homeBillsTitleList.length,
+                                                itemCount: homeBillsTitleList.length,
                                                 itemBuilder: (BuildContext context, int i) {
+                                                  double sum2 = double.parse(homeBillsPriceList[i]);
+                                                  String convertSumo = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum2);
                                                   return Container(
                                                     padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
                                                     child: Row(
@@ -566,7 +620,7 @@ class _BillsState extends State<Bills> {
                                                           flex: 2,
                                                           fit: FlexFit.tight,
                                                           child: Text(
-                                                            formDataProvider.homeBillsTitleList[i],
+                                                            homeBillsTitleList[i],
                                                             style: GoogleFonts.montserrat(fontSize: 20),
                                                             overflow: TextOverflow.ellipsis,
                                                           ),
@@ -576,7 +630,7 @@ class _BillsState extends State<Bills> {
                                                           fit: FlexFit.tight,
                                                           child: Text(
                                                             textAlign: TextAlign.right,
-                                                            formDataProvider.homeBillsPriceList[i].toString(),
+                                                            convertSumo,
                                                             style: GoogleFonts.montserrat(fontSize: 20),
                                                             overflow: TextOverflow.ellipsis,
                                                           ),
@@ -597,7 +651,7 @@ class _BillsState extends State<Bills> {
                                                 },
                                               ),
                                             ),
-                                          if (isTextFormFieldVisible && isHomeBillsContainerTouched)
+                                          if (isTextFormFieldVisible && hasHomeSelected)
                                             Container(
                                               padding: EdgeInsets.all(10),
                                               child: Row(
@@ -633,25 +687,17 @@ class _BillsState extends State<Bills> {
                                                             double dprice = double.tryParse(priceText) ?? 0.0;
                                                             String price = dprice.toStringAsFixed(2);
                                                             setState(() {
-                                                              formDataProvider.updateTextValue(text, 3, 1);
-                                                              formDataProvider.updateNumberValue(price, 3, 1);
+                                                              homeBillsTitleList.add(text);
+                                                              homeBillsPriceList.add(price);
+                                                              formDataProvider2.setHomeTitleValue(text, homeBillsTitleList);
+                                                              formDataProvider2.setHomePriceValue(price, homeBillsPriceList);
+                                                              formDataProvider2.calculateSumOfHome(homeBillsPriceList);
                                                               isEditingList = false; // Add a corresponding entry for the new item
                                                               textController.clear();
-                                                              formDataProvider.notifyListeners();
                                                               platformPriceController.clear();
-                                                              formDataProvider.notifyListeners();
                                                               isTextFormFieldVisible = false;
                                                               isAddButtonActive = false;
-                                                              //***********************//
-                                                              formDataProvider.homeBillsTitleList.forEach((item) {
-                                                                print("ekle ikonu item: $item");
-                                                              });
-                                                              //***********************//
-                                                              //***********************//
-                                                              formDataProvider.homeBillsPriceList.forEach((item) {
-                                                                print("ekle ikonu price: $item");
-                                                              });
-                                                              //***********************//
+                                                              _load();
                                                             });
                                                           }
                                                         },
@@ -682,21 +728,21 @@ class _BillsState extends State<Bills> {
                                                   InkWell(
                                                     onTap: () {
                                                       setState(() {
-                                                        isHomeBillsContainerTouched = true;
-                                                        isInternetContainerTouched = false;
-                                                        isPhoneContainerTouched = false;
+                                                        hasHomeSelected = true;
+                                                        hasInternetSelected = false;
+                                                        hasPhoneSelected = false;
                                                         isAddButtonActive = true;
                                                         isTextFormFieldVisible = true;
                                                         isTextFormFieldVisibleND =false;
                                                         isTextFormFieldVisibleRD = false;
                                                         platformPriceController.clear();
-                                                        if (formDataProvider.homeBillsTitleList.isEmpty){
+                                                        if (homeBillsTitleList.isEmpty){
                                                           print("homeBillsTitleList is empty!");
                                                         }
-                                                        formDataProvider.homeBillsTitleList.forEach((element) {
+                                                        homeBillsTitleList.forEach((element) {
                                                           print('itemList: $element');
                                                         });
-                                                        formDataProvider.homeBillsPriceList.forEach((element) {
+                                                        homeBillsPriceList.forEach((element) {
                                                           print('pricesList: $element');
                                                         });
                                                         //print("isEditingList: $isEditingList");
@@ -712,7 +758,7 @@ class _BillsState extends State<Bills> {
                                                   if (convertSum != "0,00")
                                                     Padding(
                                                       padding: const EdgeInsets.only(right: 43),
-                                                      child: Text("Toplam: ${convertSum}", style: GoogleFonts.montserrat(fontSize: 20),),
+                                                      child: Text("Toplam: $convertSum", style: GoogleFonts.montserrat(fontSize: 20),),
                                                     ),
                                                 ],
                                               ),
@@ -727,12 +773,21 @@ class _BillsState extends State<Bills> {
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
-                                        color: isInternetContainerTouched ? Colors.black : Colors.black.withOpacity(0.5),
-                                        width: isInternetContainerTouched ? 4 : 2,
+                                        color: hasInternetSelected ? Colors.black : Colors.black.withOpacity(0.5),
+                                        width: hasInternetSelected ? 4 : 2,
                                       ),
                                     ),
                                     child: InkWell(
-                                      onTap: isAddButtonActiveND ? null :handleInternetContainerTouch,
+                                      onTap: () {
+                                        if(isAddButtonActive==false){
+                                          handleInternetContainerTouch();
+                                          isAddButtonActiveND = false;
+                                          isAddButtonActiveRD = false;
+                                        } else {
+                                          isAddButtonActiveND = false;
+                                          isAddButtonActiveRD = false;
+                                        }
+                                      },
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
@@ -740,12 +795,12 @@ class _BillsState extends State<Bills> {
                                               padding: EdgeInsets.all(10),
                                               child: Text("İnternet",style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold),)
                                           ),
-                                          if (formDataProvider.internetTitleList.isNotEmpty && formDataProvider.internetPriceList.isNotEmpty)
+                                          if (internetTitleList.isNotEmpty && internetPriceList.isNotEmpty)
                                             Container(
                                               child:
                                               ListView.builder(
                                                 shrinkWrap: true,
-                                                itemCount: formDataProvider.internetTitleList.length,
+                                                itemCount: internetTitleList.length,
                                                 itemBuilder: (BuildContext context, int i) {
                                                   return Container(
                                                     padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
@@ -755,7 +810,7 @@ class _BillsState extends State<Bills> {
                                                           flex: 2,
                                                           fit: FlexFit.tight,
                                                           child: Text(
-                                                            formDataProvider.internetTitleList[i],
+                                                            internetTitleList[i],
                                                             style: GoogleFonts.montserrat(fontSize: 20),
                                                             overflow: TextOverflow.ellipsis,
                                                           ),
@@ -765,7 +820,7 @@ class _BillsState extends State<Bills> {
                                                           fit: FlexFit.tight,
                                                           child: Text(
                                                             textAlign: TextAlign.right,
-                                                            formDataProvider.internetPriceList[i].toString(),
+                                                            internetPriceList[i].toString(),
                                                             style: GoogleFonts.montserrat(fontSize: 20),
                                                             overflow: TextOverflow.ellipsis,
                                                           ),
@@ -786,7 +841,7 @@ class _BillsState extends State<Bills> {
                                                 },
                                               ),
                                             ),
-                                          if (isTextFormFieldVisibleND && isInternetContainerTouched)
+                                          if (isTextFormFieldVisibleND && hasInternetSelected)
                                             Container(
                                               padding: EdgeInsets.all(10),
                                               child: Row(
@@ -822,25 +877,17 @@ class _BillsState extends State<Bills> {
                                                             double dprice = double.tryParse(priceText) ?? 0.0;
                                                             String price = dprice.toStringAsFixed(2);
                                                             setState(() {
-                                                              formDataProvider.updateTextValue(text, 3, 2);
-                                                              formDataProvider.updateNumberValue(price, 3, 2);
+                                                              internetTitleList.add(text);
+                                                              internetPriceList.add(price);
+                                                              formDataProvider2.setInternetTitleValue(text, internetTitleList);
+                                                              formDataProvider2.setInternetPriceValue(price, internetPriceList);
+                                                              formDataProvider2.calculateSumOfInternet(internetPriceList);
                                                               isEditingListND = false; // Add a corresponding entry for the new item
                                                               NDtextController.clear();
-                                                              formDataProvider.notifyListeners();
                                                               NDplatformPriceController.clear();
-                                                              formDataProvider.notifyListeners();
                                                               isTextFormFieldVisibleND = false;
                                                               isAddButtonActiveND = false;
-                                                              //***********************//
-                                                              formDataProvider.homeBillsTitleList.forEach((item) {
-                                                                print("ekle ikonu item: $item");
-                                                              });
-                                                              //***********************//
-                                                              //***********************//
-                                                              formDataProvider.homeBillsPriceList.forEach((item) {
-                                                                print("ekle ikonu price: $item");
-                                                              });
-                                                              //***********************//
+                                                              _load();
                                                             });
                                                           }
                                                         },
@@ -871,29 +918,14 @@ class _BillsState extends State<Bills> {
                                                   InkWell(
                                                     onTap: () {
                                                       setState(() {
-                                                        isHomeBillsContainerTouched = false;
-                                                        isInternetContainerTouched = true;
-                                                        isPhoneContainerTouched = false;
+                                                        hasHomeSelected = false;
+                                                        hasInternetSelected = true;
+                                                        hasPhoneSelected = false;
                                                         isAddButtonActiveND = true;
                                                         isTextFormFieldVisible = false;
                                                         isTextFormFieldVisibleND =true;
                                                         isTextFormFieldVisibleRD = false;
                                                         NDplatformPriceController.clear();
-                                                        if (formDataProvider.internetTitleList.isEmpty){
-                                                          print("homeBillsTitleList is empty!");
-                                                        }
-                                                        formDataProvider.internetTitleList.forEach((element) {
-                                                          print('itemList: $element');
-                                                        });
-                                                        formDataProvider.internetPriceList.forEach((element) {
-                                                          print('pricesList: $element');
-                                                        });
-                                                        //print("isEditingList: $isEditingList");
-                                                        //print("isEditingListND: $isEditingList");
-                                                        //print("isEditingListRD: $isEditingList");
-                                                        //print("isTextFormFieldVisible: $isTextFormFieldVisible");
-                                                        //print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-                                                        //print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
                                                       });
                                                     },
                                                     child: Icon(Icons.add_circle, size: 26),
@@ -901,7 +933,7 @@ class _BillsState extends State<Bills> {
                                                   if (convertSum2 != "0,00")
                                                     Padding(
                                                       padding: const EdgeInsets.only(right: 43),
-                                                      child: Text("Toplam: ${convertSum2}", style: GoogleFonts.montserrat(fontSize: 20),),
+                                                      child: Text("Toplam: $convertSum2", style: GoogleFonts.montserrat(fontSize: 20),),
                                                     ),
                                                 ],
                                               ),
@@ -916,12 +948,21 @@ class _BillsState extends State<Bills> {
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
-                                        color: isPhoneContainerTouched ? Colors.black : Colors.black.withOpacity(0.5),
-                                        width: isPhoneContainerTouched ? 4 : 2,
+                                        color: hasPhoneSelected ? Colors.black : Colors.black.withOpacity(0.5),
+                                        width: hasPhoneSelected ? 4 : 2,
                                       ),
                                     ),
                                     child: InkWell(
-                                      onTap: isAddButtonActiveRD ? null :handlePhoneContainerTouch,
+                                      onTap: () {
+                                        if(isAddButtonActive==false){
+                                          handlePhoneContainerTouch();
+                                          isAddButtonActiveND = false;
+                                          isAddButtonActiveRD = false;
+                                        } else {
+                                          isAddButtonActiveND = false;
+                                          isAddButtonActiveRD = false;
+                                        }
+                                      },
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
@@ -929,12 +970,12 @@ class _BillsState extends State<Bills> {
                                               padding: EdgeInsets.all(10),
                                               child: Text("Telefon",style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold),)
                                           ),
-                                          if (formDataProvider.phoneTitleList.isNotEmpty && formDataProvider.phonePriceList.isNotEmpty)
+                                          if (phoneTitleList.isNotEmpty && phonePriceList.isNotEmpty)
                                             Container(
                                               child:
                                               ListView.builder(
                                                 shrinkWrap: true,
-                                                itemCount: formDataProvider.phoneTitleList.length,
+                                                itemCount: phoneTitleList.length,
                                                 itemBuilder: (BuildContext context, int i) {
                                                   return Container(
                                                     padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
@@ -944,7 +985,7 @@ class _BillsState extends State<Bills> {
                                                           flex: 2,
                                                           fit: FlexFit.tight,
                                                           child: Text(
-                                                            formDataProvider.phoneTitleList[i],
+                                                            phoneTitleList[i],
                                                             style: GoogleFonts.montserrat(fontSize: 20),
                                                             overflow: TextOverflow.ellipsis,
                                                           ),
@@ -954,7 +995,7 @@ class _BillsState extends State<Bills> {
                                                           fit: FlexFit.tight,
                                                           child: Text(
                                                             textAlign: TextAlign.right,
-                                                            formDataProvider.phonePriceList[i].toString(),
+                                                            phonePriceList[i].toString(),
                                                             style: GoogleFonts.montserrat(fontSize: 20),
                                                             overflow: TextOverflow.ellipsis,
                                                           ),
@@ -975,7 +1016,7 @@ class _BillsState extends State<Bills> {
                                                 },
                                               ),
                                             ),
-                                          if (isTextFormFieldVisibleRD && isPhoneContainerTouched)
+                                          if (isTextFormFieldVisibleRD && hasPhoneSelected)
                                             Container(
                                               padding: EdgeInsets.all(10),
                                               child: Row(
@@ -1011,25 +1052,17 @@ class _BillsState extends State<Bills> {
                                                             double dprice = double.tryParse(priceText) ?? 0.0;
                                                             String price = dprice.toStringAsFixed(2);
                                                             setState(() {
-                                                              formDataProvider.updateTextValue(text, 3, 3);
-                                                              formDataProvider.updateNumberValue(price, 3, 3);
+                                                              phoneTitleList.add(text);
+                                                              phonePriceList.add(price);
+                                                              formDataProvider2.setPhoneTitleValue(text, phoneTitleList);
+                                                              formDataProvider2.setPhonePriceValue(price, phonePriceList);
+                                                              formDataProvider2.calculateSumOfPhone(phonePriceList);
                                                               isEditingListRD = false; // Add a corresponding entry for the new item
                                                               RDtextController.clear();
-                                                              formDataProvider.notifyListeners();
                                                               RDplatformPriceController.clear();
-                                                              formDataProvider.notifyListeners();
                                                               isTextFormFieldVisibleRD = false;
                                                               isAddButtonActiveRD = false;
-                                                              //***********************//
-                                                              formDataProvider.phoneTitleList.forEach((item) {
-                                                                print("ekle ikonu item: $item");
-                                                              });
-                                                              //***********************//
-                                                              //***********************//
-                                                              formDataProvider.phonePriceList.forEach((item) {
-                                                                print("ekle ikonu price: $item");
-                                                              });
-                                                              //***********************//
+                                                              _load();
                                                             });
                                                           }
                                                         },
@@ -1060,21 +1093,21 @@ class _BillsState extends State<Bills> {
                                                   InkWell(
                                                     onTap: () {
                                                       setState(() {
-                                                        isHomeBillsContainerTouched = false;
-                                                        isInternetContainerTouched = false;
-                                                        isPhoneContainerTouched = true;
+                                                        hasHomeSelected = false;
+                                                        hasInternetSelected = false;
+                                                        hasPhoneSelected = true;
                                                         isAddButtonActiveRD = true;
                                                         isTextFormFieldVisible = false;
                                                         isTextFormFieldVisibleND =false;
                                                         isTextFormFieldVisibleRD = true;
                                                         RDplatformPriceController.clear();
-                                                        if (formDataProvider.phoneTitleList.isEmpty){
+                                                        if (phoneTitleList.isEmpty){
                                                           print("homeBillsTitleList is empty!");
                                                         }
-                                                        formDataProvider.phoneTitleList.forEach((element) {
+                                                        phoneTitleList.forEach((element) {
                                                           print('itemList: $element');
                                                         });
-                                                        formDataProvider.phonePriceList.forEach((element) {
+                                                        phonePriceList.forEach((element) {
                                                           print('pricesList: $element');
                                                         });
                                                         //print("isEditingList: $isEditingList");
@@ -1090,7 +1123,7 @@ class _BillsState extends State<Bills> {
                                                   if (convertSum3 != "0,00")
                                                     Padding(
                                                       padding: const EdgeInsets.only(right: 43),
-                                                      child: Text("Toplam: ${convertSum3}", style: GoogleFonts.montserrat(fontSize: 20),),
+                                                      child: Text("Toplam: $convertSum3", style: GoogleFonts.montserrat(fontSize: 20),),
                                                     ),
                                                 ],
                                               ),
@@ -1098,6 +1131,16 @@ class _BillsState extends State<Bills> {
                                         ],
                                       ),
                                     ),
+                                  ),
+                                  ListView.builder(
+                                    itemCount: sharedPreferencesData.length,
+                                    itemBuilder: (context, index) {
+                                      return ListTile(
+                                        title: Text(sharedPreferencesData[index]),
+                                      );
+                                    },
+                                    shrinkWrap: true,
+                                    physics: const NeverScrollableScrollPhysics(),
                                   ),
                                 ],
                               ),

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:moneyly/form-data-provider.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../deneme.dart';
 import 'faturalar.dart';
 
 class OtherExpenses extends StatefulWidget {
@@ -13,6 +15,39 @@ class OtherExpenses extends StatefulWidget {
 }
 
 class _OtherExpensesState extends State<OtherExpenses> {
+  List<String> sharedPreferencesData = [];
+  List<String> desiredKeys = [
+    'rentTitleList2', 'rentPriceList2', 'hasRentSelected2', 'sumOfRent2',
+    'kitchenTitleList2', 'kitchenPriceList2', 'hasKitchenSelected2', 'sumOfKitchen2',
+    'cateringTitleList2', 'cateringPriceList2', 'hasCateringSelected2', 'sumOfCatering2',
+    'entertainmentTitleList2', 'entertainmentPriceList2', 'hasEntertainmentSelected2', 'sumOfEnt2',
+    'otherTitleList2', 'otherPriceList2', 'hasOtherSelected2', 'sumOfOther2'
+  ];
+  bool hasRentSelected = false;
+  bool hasKitchenSelected = false;
+  bool hasCateringSelected = false;
+  bool hasEntertainmentSelected = false;
+  bool hasOtherSelected = false;
+  List<String> rentTitleList = [];
+  List<String> kitchenTitleList = [];
+  List<String> cateringTitleList = [];
+  List<String> entertainmentTitleList = [];
+  List<String> otherTitleList = [];
+  List<String> rentPriceList = [];
+  List<String> kitchenPriceList = [];
+  List<String> cateringPriceList = [];
+  List<String> entertainmentPriceList = [];
+  List<String> otherPriceList = [];
+  double sumOfRent = 0.0;
+  double sumOfKitchen = 0.0;
+  double sumOfCatering = 0.0;
+  double sumOfEnt = 0.0;
+  double sumOfOther = 0.0;
+  String convertSum = "";
+  String convertSum2 = "";
+  String convertSum3 = "";
+  String convertSum4 = "";
+  String convertSum5 = "";
 
   List<TextEditingController> editTextControllers = [];
   List<TextEditingController> NDeditTextControllers = [];
@@ -56,129 +91,126 @@ class _OtherExpensesState extends State<OtherExpenses> {
   bool isAddButtonActiveTH = false;
   bool isAddButtonActiveOther = false;
 
-  bool isRentContainerTouched = false;
-  bool isKitchenContainerTouched = false;
-  bool isCateringContainerTouched = false;
-  bool isEntContainerTouched = false;
-  bool isOtherContainerTouched = false;
-
-  void handleRentContainerTouch() {
+  Future<void> handleRentContainerTouch() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasRentSelected2', true);
+    await prefs.setBool('hasKitchenSelected2', false);
+    await prefs.setBool('hasCateringSelected2', false);
+    await prefs.setBool('hasEntertainmentSelected2', false);
+    await prefs.setBool('hasOtherSelected2', false);
     setState(() {
-      isRentContainerTouched = true;
-      isKitchenContainerTouched = false;
-      isCateringContainerTouched = false;
-      isEntContainerTouched = false;
-      isOtherContainerTouched = false;
+      hasRentSelected = true;
+      hasKitchenSelected = false;
+      hasCateringSelected = false;
+      hasEntertainmentSelected = false;
+      hasOtherSelected = false;
       isTextFormFieldVisible = false;
       isTextFormFieldVisibleND =false;
       isTextFormFieldVisibleRD = false;
       isTextFormFieldVisibleTH = false;
       isTextFormFieldVisibleOther = false;
       isEditingList = false;
-      print("isEditingList: $isEditingList");
-      print("isEditingListND: $isEditingList");
-      print("isEditingListRD: $isEditingList");
-      print("isTextFormFieldVisible: $isTextFormFieldVisible");
-      print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-      print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
+      _load();
     });
   }
-  void handleKitchenContainerTouch() {
+  Future<void> handleKitchenContainerTouch() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasRentSelected2', false);
+    await prefs.setBool('hasKitchenSelected2', true);
+    await prefs.setBool('hasCateringSelected2', false);
+    await prefs.setBool('hasEntertainmentSelected2', false);
+    await prefs.setBool('hasOtherSelected2', false);
     setState(() {
-      isRentContainerTouched = false;
-      isKitchenContainerTouched = true;
-      isCateringContainerTouched = false;
-      isEntContainerTouched = false;
-      isOtherContainerTouched = false;
+      hasRentSelected = false;
+      hasKitchenSelected = true;
+      hasCateringSelected = false;
+      hasEntertainmentSelected = false;
+      hasOtherSelected = false;
       isTextFormFieldVisible = false;
       isTextFormFieldVisibleND =false;
       isTextFormFieldVisibleRD = false;
       isTextFormFieldVisibleTH = false;
       isTextFormFieldVisibleOther = false;
       isEditingListND = false;
-      print("isEditingList: $isEditingList");
-      print("isEditingListND: $isEditingList");
-      print("isEditingListRD: $isEditingList");
-      print("isTextFormFieldVisible: $isTextFormFieldVisible");
-      print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-      print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
+      _load();
     });
   }
-  void handleCateringContainerTouch() {
+  Future<void> handleCateringContainerTouch() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasRentSelected2', false);
+    await prefs.setBool('hasKitchenSelected2', false);
+    await prefs.setBool('hasCateringSelected2', true);
+    await prefs.setBool('hasEntertainmentSelected2', false);
+    await prefs.setBool('hasOtherSelected2', false);
     setState(() {
-      isRentContainerTouched = false;
-      isKitchenContainerTouched = false;
-      isCateringContainerTouched = true;
-      isEntContainerTouched = false;
-      isOtherContainerTouched = false;
+      hasRentSelected = false;
+      hasKitchenSelected = false;
+      hasCateringSelected = true;
+      hasEntertainmentSelected = false;
+      hasOtherSelected = false;
       isTextFormFieldVisible = false;
       isTextFormFieldVisibleND =false;
       isTextFormFieldVisibleRD = false;
       isTextFormFieldVisibleTH = false;
       isTextFormFieldVisibleOther = false;
       isEditingListRD = false;
-      print("isEditingList: $isEditingList");
-      print("isEditingListND: $isEditingList");
-      print("isEditingListRD: $isEditingList");
-      print("isTextFormFieldVisible: $isTextFormFieldVisible");
-      print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-      print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
+      _load();
     });
   }
-  void handleEntContainerTouch() {
+  Future<void> handleEntContainerTouch() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasRentSelected2', false);
+    await prefs.setBool('hasKitchenSelected2', false);
+    await prefs.setBool('hasCateringSelected2', false);
+    await prefs.setBool('hasEntertainmentSelected2', true);
+    await prefs.setBool('hasOtherSelected2', false);
     setState(() {
-      isRentContainerTouched = false;
-      isKitchenContainerTouched = false;
-      isCateringContainerTouched = false;
-      isEntContainerTouched = true;
-      isOtherContainerTouched = false;
+      hasRentSelected = false;
+      hasKitchenSelected = false;
+      hasCateringSelected = false;
+      hasEntertainmentSelected = true;
+      hasOtherSelected = false;
       isTextFormFieldVisible = false;
       isTextFormFieldVisibleND =false;
       isTextFormFieldVisibleRD = false;
       isTextFormFieldVisibleTH = true;
       isTextFormFieldVisibleOther = false;
       isEditingListTH = false;
-      print("isEditingList: $isEditingList");
-      print("isEditingListND: $isEditingList");
-      print("isEditingListRD: $isEditingList");
-      print("isTextFormFieldVisible: $isTextFormFieldVisible");
-      print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-      print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
+      _load();
     });
   }
-  void handleOtherContainerTouch() {
+  Future<void> handleOtherContainerTouch() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasRentSelected2', false);
+    await prefs.setBool('hasKitchenSelected2', false);
+    await prefs.setBool('hasCateringSelected2', false);
+    await prefs.setBool('hasEntertainmentSelected2', false);
+    await prefs.setBool('hasOtherSelected2', true);
     setState(() {
-      isRentContainerTouched = false;
-      isKitchenContainerTouched = false;
-      isCateringContainerTouched = false;
-      isEntContainerTouched = false;
-      isOtherContainerTouched = true;
+      hasRentSelected = false;
+      hasKitchenSelected = false;
+      hasCateringSelected = false;
+      hasEntertainmentSelected = false;
+      hasOtherSelected = true;
       isTextFormFieldVisible = false;
       isTextFormFieldVisibleND =false;
       isTextFormFieldVisibleRD = false;
       isTextFormFieldVisibleTH = false;
       isTextFormFieldVisibleOther = true;
       isEditingListOther = false;
-      print("isEditingList: $isEditingList");
-      print("isEditingListND: $isEditingList");
-      print("isEditingListRD: $isEditingList");
-      print("isTextFormFieldVisible: $isTextFormFieldVisible");
-      print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-      print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
+      _load();
     });
   }
 
   void goToPreviousPage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => Bills()),
-    );
+    Navigator.pop(context);
   }
   void goToNextPage() {
+    Navigator.pushNamed(context, 'ana-sayfa');
   }
 
   void _showEditDialog(BuildContext context, int index, int orderIndex) {
-    final formDataProvider = Provider.of<FormDataProvider>(context, listen: false);
+    final formDataProvider2 = Provider.of<FormDataProvider2>(context, listen: false);
 
     TextEditingController selectedEditController = TextEditingController();
     TextEditingController selectedPriceController = TextEditingController();
@@ -186,41 +218,41 @@ class _OtherExpensesState extends State<OtherExpenses> {
     switch (orderIndex) {
       case 1:
         TextEditingController editController =
-        TextEditingController(text: formDataProvider.rentTitleList[index]);
+        TextEditingController(text: rentTitleList[index]);
         TextEditingController priceController =
-        TextEditingController(text: formDataProvider.rentPriceList[index]);
+        TextEditingController(text: rentPriceList[index]);
         selectedEditController = editController;
         selectedPriceController = priceController;
         break;
       case 2:
         TextEditingController NDeditController =
-        TextEditingController(text: formDataProvider.kitchenTitleList[index]);
+        TextEditingController(text: kitchenTitleList[index]);
         TextEditingController NDpriceController =
-        TextEditingController(text: formDataProvider.kitchenPriceList[index]);
+        TextEditingController(text: kitchenPriceList[index]);
         selectedEditController = NDeditController;
         selectedPriceController = NDpriceController;
         break;
       case 3:
         TextEditingController RDeditController =
-        TextEditingController(text: formDataProvider.cateringTitleList[index]);
+        TextEditingController(text: cateringTitleList[index]);
         TextEditingController RDpriceController =
-        TextEditingController(text: formDataProvider.cateringPriceList[index]);
+        TextEditingController(text: cateringPriceList[index]);
         selectedEditController = RDeditController;
         selectedPriceController = RDpriceController;
         break;
       case 4:
         TextEditingController THeditController =
-        TextEditingController(text: formDataProvider.entertainmentTitleList[index]);
+        TextEditingController(text: entertainmentTitleList[index]);
         TextEditingController THpriceController =
-        TextEditingController(text: formDataProvider.entertainmentPriceList[index]);
+        TextEditingController(text: entertainmentPriceList[index]);
         selectedEditController = THeditController;
         selectedPriceController = THpriceController;
         break;
       case 5:
         TextEditingController otherEditController =
-        TextEditingController(text: formDataProvider.otherTitleList[index]);
+        TextEditingController(text: otherTitleList[index]);
         TextEditingController otherPriceController =
-        TextEditingController(text: formDataProvider.otherPriceList[index]);
+        TextEditingController(text: otherPriceList[index]);
         selectedEditController = otherEditController;
         selectedPriceController = otherPriceController;
         break;
@@ -289,27 +321,43 @@ class _OtherExpensesState extends State<OtherExpenses> {
                 setState(() {
                   switch (orderIndex){
                     case 1:
-                      formDataProvider.rentTitleList[index] = selectedEditController.text;
-                      formDataProvider.rentPriceList[index] = selectedPriceController.text;
+                      rentTitleList[index] = selectedEditController.text;
+                      rentPriceList[index] = selectedPriceController.text;
+                      formDataProvider2.setRentTitleValue(selectedEditController.text, rentTitleList);
+                      formDataProvider2.setRentPriceValue(selectedPriceController.text, rentPriceList);
+                      formDataProvider2.calculateSumOfRent(rentPriceList);
                       break;
                     case 2:
-                      formDataProvider.kitchenTitleList[index] = selectedEditController.text;
-                      formDataProvider.kitchenPriceList[index] = selectedPriceController.text;
+                      kitchenTitleList[index] = selectedEditController.text;
+                      kitchenPriceList[index] = selectedPriceController.text;
+                      formDataProvider2.setKitchenTitleValue(selectedEditController.text, kitchenTitleList);
+                      formDataProvider2.setKitchenPriceValue(selectedPriceController.text, kitchenPriceList);
+                      formDataProvider2.calculateSumOfKitchen(kitchenPriceList);
                       break;
                     case 3:
-                      formDataProvider.cateringTitleList[index] = selectedEditController.text;
-                      formDataProvider.cateringPriceList[index] = selectedPriceController.text;
+                      cateringTitleList[index] = selectedEditController.text;
+                      cateringPriceList[index] = selectedPriceController.text;
+                      formDataProvider2.setCateringTitleValue(selectedEditController.text, cateringTitleList);
+                      formDataProvider2.setCateringPriceValue(selectedPriceController.text, cateringPriceList);
+                      formDataProvider2.calculateSumOfCatering(cateringPriceList);
                       break;
                     case 4:
-                      formDataProvider.entertainmentTitleList[index] = selectedEditController.text;
-                      formDataProvider.entertainmentPriceList[index] = selectedPriceController.text;
+                      entertainmentTitleList[index] = selectedEditController.text;
+                      entertainmentPriceList[index] = selectedPriceController.text;
+                      formDataProvider2.setEntertainmentTitleValue(selectedEditController.text, entertainmentTitleList);
+                      formDataProvider2.setEntertainmentPriceValue(selectedPriceController.text, entertainmentPriceList);
+                      formDataProvider2.calculateSumOfEnt(entertainmentPriceList);
                       break;
                     case 5:
-                      formDataProvider.otherTitleList[index] = selectedEditController.text;
-                      formDataProvider.otherPriceList[index] = selectedPriceController.text;
+                      otherTitleList[index] = selectedEditController.text;
+                      otherPriceList[index] = selectedPriceController.text;
+                      formDataProvider2.setOtherTitleValue(selectedEditController.text, otherTitleList);
+                      formDataProvider2.setOtherPriceValue(selectedPriceController.text, otherPriceList);
+                      formDataProvider2.calculateSumOfOther(otherPriceList);
                       break;
                   }
                 });
+                _load();
                 Navigator.of(context).pop();
               },
 
@@ -320,51 +368,52 @@ class _OtherExpensesState extends State<OtherExpenses> {
                   setState(() {
                     switch (orderIndex){
                       case 1:
-                        TextEditingController priceController =
-                        TextEditingController(text: formDataProvider.rentPriceList[index]);
-                        formDataProvider.rentTitleList.removeAt(index);
-                        formDataProvider.rentPriceList.removeAt(index);
-                        priceController.clear();
+                        rentTitleList.removeAt(index);
+                        rentPriceList.removeAt(index);
+                        formDataProvider2.removeRentTitleValue(rentTitleList);
+                        formDataProvider2.removeRentPriceValue(rentPriceList);
+                        formDataProvider2.calculateSumOfRent(rentPriceList);
                         isEditingList = false;
                         isAddButtonActive = false;
                         break;
                       case 2:
-                        TextEditingController NDpriceController =
-                        TextEditingController(text: formDataProvider.kitchenPriceList[index]);
-                        formDataProvider.kitchenTitleList.removeAt(index);
-                        formDataProvider.kitchenPriceList.removeAt(index);
-                        NDpriceController.clear();
+                        kitchenTitleList.removeAt(index);
+                        kitchenPriceList.removeAt(index);
+                        formDataProvider2.removeKitchenTitleValue(kitchenTitleList);
+                        formDataProvider2.removeKitchenPriceValue(kitchenPriceList);
+                        formDataProvider2.calculateSumOfKitchen(kitchenPriceList);
                         isEditingListND = false;
                         isAddButtonActiveND = false;
                         break;
                       case 3:
-                        TextEditingController RDpriceController =
-                        TextEditingController(text: formDataProvider.cateringPriceList[index]);
-                        formDataProvider.cateringTitleList.removeAt(index);
-                        formDataProvider.cateringPriceList.removeAt(index);
-                        RDpriceController.clear();
+                        cateringTitleList.removeAt(index);
+                        cateringPriceList.removeAt(index);
+                        formDataProvider2.removeCateringTitleValue(cateringTitleList);
+                        formDataProvider2.removeCateringPriceValue(cateringPriceList);
+                        formDataProvider2.calculateSumOfCatering(cateringPriceList);
                         isEditingListRD = false;
                         isAddButtonActiveRD = false;
                         break;
                       case 4:
-                        TextEditingController THpriceController =
-                        TextEditingController(text: formDataProvider.entertainmentPriceList[index]);
-                        formDataProvider.entertainmentTitleList.removeAt(index);
-                        formDataProvider.entertainmentPriceList.removeAt(index);
-                        THpriceController.clear();
+                        entertainmentTitleList.removeAt(index);
+                        entertainmentPriceList.removeAt(index);
+                        formDataProvider2.removeEntertainmentTitleValue(entertainmentTitleList);
+                        formDataProvider2.removeEntertainmentPriceValue(entertainmentPriceList);
+                        formDataProvider2.calculateSumOfEnt(entertainmentPriceList);
                         isEditingListTH = false;
                         isAddButtonActiveTH = false;
                         break;
                       case 5:
-                        TextEditingController otherPriceController =
-                        TextEditingController(text: formDataProvider.otherPriceList[index]);
-                        formDataProvider.otherTitleList.removeAt(index);
-                        formDataProvider.otherPriceList.removeAt(index);
-                        otherPriceController.clear();
+                        otherTitleList.removeAt(index);
+                        otherPriceList.removeAt(index);
+                        formDataProvider2.removeOtherTitleValue(otherTitleList);
+                        formDataProvider2.removeOtherPriceValue(otherPriceList);
+                        formDataProvider2.calculateSumOfOther(otherPriceList);
                         isEditingListOther = false;
                         isAddButtonActiveOther = false;
                         break;
                     }
+                    _load();
                     Navigator.of(context).pop();
                   });
                 },
@@ -378,63 +427,87 @@ class _OtherExpensesState extends State<OtherExpenses> {
   @override
   void initState() {
     super.initState();
-    if(Provider.of<FormDataProvider>(context, listen: false).rentTitleList.isNotEmpty){
-       isRentContainerTouched = true;
+    _load();
+  }
+
+  Future<void> loadSharedPreferencesData(List<String> desiredKeys) async {
+    final prefs = await SharedPreferences.getInstance();
+    sharedPreferencesData = [];
+
+    for (var key in desiredKeys) {
+      final value = prefs.get(key);
+      if (value != null) {
+        sharedPreferencesData.add('$key: $value');
+      }
     }
-    if(Provider.of<FormDataProvider>(context, listen: false).kitchenTitleList.isNotEmpty){
-    isKitchenContainerTouched = true;
-    }
-    if(Provider.of<FormDataProvider>(context, listen: false).cateringTitleList.isNotEmpty){
-    isCateringContainerTouched = true;
-    }
-    if(Provider.of<FormDataProvider>(context, listen: false).entertainmentTitleList.isNotEmpty){
-    isEntContainerTouched = true;
-    }
-    if(Provider.of<FormDataProvider>(context, listen: false).otherTitleList.isNotEmpty){
-    isOtherContainerTouched = true;
-    }
+
+    setState(() {
+    }); // Trigger a rebuild of the widget to display the data
+  }
+
+  void _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final ab1 = prefs.getBool('hasRentSelected2') ?? false;
+    final ab2 = prefs.getBool('hasKitchenSelected2') ?? false;
+    final ab3 = prefs.getBool('hasCateringSelected2') ?? false;
+    final ab4 = prefs.getBool('hasEntertainmentSelected2') ?? false;
+    final ab5 = prefs.getBool('hasOtherSelected2') ?? false;
+    final bb1 = prefs.getStringList('rentTitleList2') ?? [];
+    final bb2 = prefs.getStringList('kitchenTitleList2') ?? [];
+    final bb3 = prefs.getStringList('cateringTitleList2') ?? [];
+    final bb4 = prefs.getStringList('entertainmentTitleList2') ?? [];
+    final bb5 = prefs.getStringList('otherTitleList2') ?? [];
+    final cb1 = prefs.getStringList('rentPriceList2') ?? [];
+    final cb2 = prefs.getStringList('kitchenPriceList2') ?? [];
+    final cb3 = prefs.getStringList('cateringPriceList2') ?? [];
+    final cb4 = prefs.getStringList('entertainmentPriceList2') ?? [];
+    final cb5 = prefs.getStringList('otherPriceList2') ?? [];
+    final db1 = prefs.getDouble('sumOfRent2') ?? 0.0;
+    final db2 = prefs.getDouble('sumOfKitchen2') ?? 0.0;
+    final db3 = prefs.getDouble('sumOfCatering2') ?? 0.0;
+    final db4 = prefs.getDouble('sumOfEnt2') ?? 0.0;
+    final db5 = prefs.getDouble('sumOfOther2') ?? 0.0;
+    setState(() {
+      hasRentSelected = ab1;
+      hasKitchenSelected = ab2;
+      hasCateringSelected = ab3;
+      hasEntertainmentSelected = ab4;
+      hasOtherSelected = ab5;
+      rentTitleList = bb1;
+      kitchenTitleList = bb2;
+      cateringTitleList = bb3;
+      entertainmentTitleList = bb4;
+      otherTitleList = bb5;
+      rentPriceList = cb1;
+      kitchenPriceList = cb2;
+      cateringPriceList = cb3;
+      entertainmentPriceList = cb4;
+      otherPriceList = cb5;
+      sumOfRent = db1;
+      sumOfKitchen = db2;
+      sumOfCatering = db3;
+      sumOfEnt = db4;
+      sumOfOther = db5;
+      loadSharedPreferencesData(desiredKeys);
+    });
+    convertSum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfRent);
+    convertSum2 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfKitchen);
+    convertSum3 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfCatering);
+    convertSum4 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfEnt);
+    convertSum5 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfOther);
   }
 
   @override
   Widget build(BuildContext context) {
-    final formDataProvider = Provider.of<FormDataProvider>(context, listen: false);
+    final formDataProvider2 = Provider.of<FormDataProvider2>(context, listen: false);
     double screenWidth = MediaQuery.of(context).size.width;
-    double sum = 0.0;
-    for(String price in formDataProvider.rentPriceList){
-      sum += double.parse(price);
-    }
-    double sumkitchen = 0.0;
-    for(String price in formDataProvider.kitchenPriceList){
-      sumkitchen += double.parse(price);
-    }
-    double sumcatering = 0.0;
-    for(String price in formDataProvider.cateringPriceList){
-      sumcatering += double.parse(price);
-    }
-    double sument = 0.0;
-    for(String price in formDataProvider.entertainmentPriceList){
-      sument += double.parse(price);
-    }
-    double sumother = 0.0;
-    for(String price in formDataProvider.otherPriceList){
-      sumother += double.parse(price);
-    }
-    String convertSum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum);
-    formDataProvider.sumOfRent = convertSum;
-    String convertSum2 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumkitchen);
-    formDataProvider.sumOfKitchen = convertSum2;
-    String convertSum3 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumcatering);
-    formDataProvider.sumOfCatering = convertSum3;
-    String convertSum4 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sument);
-    formDataProvider.sumOfEntertainment = convertSum4;
-    String convertSum5 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumother);
-    formDataProvider.sumOfOther = convertSum5;
     double sumAll = 0.0;
-    sumAll += sum;
-    sumAll += sumkitchen;
-    sumAll += sumcatering;
-    sumAll += sument;
-    sumAll += sumother;
+    sumAll += sumOfRent;
+    sumAll += sumOfKitchen;
+    sumAll += sumOfCatering;
+    sumAll += sumOfEnt;
+    sumAll += sumOfOther;
+
     return Scaffold(
       appBar: AppBar(
           backgroundColor: Color(0xfff0f0f1),
@@ -488,7 +561,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                       ),
                       clipBehavior: Clip.hardEdge,
                       onPressed: sumAll!=0.0 ? () async {
-                        Navigator.pushNamed(context, 'ana-sayfa');
+                        goToNextPage();
                       } : null,
                       child: const Text('Sonraki', style: TextStyle(fontSize: 18),),
                     ),
@@ -666,8 +739,8 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
-                                        color: isRentContainerTouched ? Colors.black : Colors.black.withOpacity(0.5),
-                                        width: isRentContainerTouched ? 4 : 2,
+                                        color: hasRentSelected ? Colors.black : Colors.black.withOpacity(0.5),
+                                        width: hasRentSelected ? 4 : 2,
                                       ),
                                     ),
                                     child: InkWell(
@@ -679,14 +752,14 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                               padding: EdgeInsets.all(10),
                                               child: Text("Kira",style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),)
                                           ),
-                                          if (formDataProvider.rentTitleList.isNotEmpty && formDataProvider.rentPriceList.isNotEmpty)
+                                          if (rentTitleList.isNotEmpty && rentPriceList.isNotEmpty)
                                             Container(
                                               child:
                                               ListView.builder(
                                                 shrinkWrap: true,
-                                                itemCount: formDataProvider.rentTitleList.length,
+                                                itemCount: rentTitleList.length,
                                                 itemBuilder: (BuildContext context, int i) {
-                                                  double sum2 = double.parse(formDataProvider.rentPriceList[i]);
+                                                  double sum2 = double.parse(rentPriceList[i]);
                                                   String convertSumo = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum2);
                                                   return Container(
                                                     padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
@@ -696,7 +769,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                           flex: 2,
                                                           fit: FlexFit.tight,
                                                           child: Text(
-                                                            formDataProvider.rentTitleList[i],
+                                                            rentTitleList[i],
                                                             style: TextStyle(fontSize: 20),
                                                             overflow: TextOverflow.ellipsis,
                                                           ),
@@ -727,7 +800,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                 },
                                               ),
                                             ),
-                                          if (isTextFormFieldVisible && isRentContainerTouched)
+                                          if (isTextFormFieldVisible && hasRentSelected)
                                             Container(
                                               padding: EdgeInsets.all(10),
                                               child: Row(
@@ -763,25 +836,17 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                             double dprice = double.tryParse(priceText) ?? 0.0;
                                                             String price = dprice.toStringAsFixed(2);
                                                             setState(() {
-                                                              formDataProvider.updateTextValue(text, 4, 1);
-                                                              formDataProvider.updateNumberValue(price, 4, 1);
+                                                              rentTitleList.add(text);
+                                                              rentPriceList.add(price);
+                                                              formDataProvider2.setRentTitleValue(text, rentTitleList);
+                                                              formDataProvider2.setRentPriceValue(price, rentPriceList);
+                                                              formDataProvider2.calculateSumOfRent(rentPriceList);
                                                               isEditingList = false; // Add a corresponding entry for the new item
                                                               textController.clear();
-                                                              formDataProvider.notifyListeners();
                                                               platformPriceController.clear();
-                                                              formDataProvider.notifyListeners();
                                                               isTextFormFieldVisible = false;
                                                               isAddButtonActive = false;
-                                                              //***********************//
-                                                              formDataProvider.rentTitleList.forEach((item) {
-                                                                print("ekle ikonu item: $item");
-                                                              });
-                                                              //***********************//
-                                                              //***********************//
-                                                              formDataProvider.rentPriceList.forEach((item) {
-                                                                print("ekle ikonu price: $item");
-                                                              });
-                                                              //***********************//
+                                                              _load();
                                                             });
                                                           }
                                                         },
@@ -812,11 +877,11 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                   InkWell(
                                                     onTap: () {
                                                       setState(() {
-                                                        isRentContainerTouched = true;
-                                                        isKitchenContainerTouched = false;
-                                                        isCateringContainerTouched = false;
-                                                        isEntContainerTouched = false;
-                                                        isOtherContainerTouched = false;
+                                                        hasRentSelected = true;
+                                                        hasKitchenSelected = false;
+                                                        hasCateringSelected = false;
+                                                        hasEntertainmentSelected = false;
+                                                        hasOtherSelected = false;
                                                         isAddButtonActive = true;
                                                         isTextFormFieldVisible = true;
                                                         isTextFormFieldVisibleND =false;
@@ -824,18 +889,6 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                         isTextFormFieldVisibleTH = false;
                                                         isTextFormFieldVisibleOther = false;
                                                         platformPriceController.clear();
-                                                        formDataProvider.rentTitleList.forEach((element) {
-                                                          print('itemList: $element');
-                                                        });
-                                                        formDataProvider.rentPriceList.forEach((element) {
-                                                          print('pricesList: $element');
-                                                        });
-                                                        //print("isEditingList: $isEditingList");
-                                                        //print("isEditingListND: $isEditingList");
-                                                        //print("isEditingListRD: $isEditingList");
-                                                        //print("isTextFormFieldVisible: $isTextFormFieldVisible");
-                                                        //print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-                                                        //print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
                                                       });
                                                     },
                                                     child: Icon(Icons.add_circle, size: 26),
@@ -858,8 +911,8 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
-                                        color: isKitchenContainerTouched ? Colors.black : Colors.black.withOpacity(0.5),
-                                        width: isKitchenContainerTouched ? 4 : 2,
+                                        color: hasKitchenSelected ? Colors.black : Colors.black.withOpacity(0.5),
+                                        width: hasKitchenSelected ? 4 : 2,
                                       ),
                                     ),
                                     child: InkWell(
@@ -871,14 +924,14 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                               padding: EdgeInsets.all(10),
                                               child: Text("Mutfak",style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),)
                                           ),
-                                          if (formDataProvider.kitchenTitleList.isNotEmpty && formDataProvider.kitchenPriceList.isNotEmpty)
+                                          if (kitchenTitleList.isNotEmpty && kitchenPriceList.isNotEmpty)
                                             Container(
                                               child:
                                               ListView.builder(
                                                 shrinkWrap: true,
-                                                itemCount: formDataProvider.kitchenTitleList.length,
+                                                itemCount: kitchenTitleList.length,
                                                 itemBuilder: (BuildContext context, int i) {
-                                                  double sum2 = double.parse(formDataProvider.kitchenPriceList[i]);
+                                                  double sum2 = double.parse(kitchenPriceList[i]);
                                                   String convertSumo = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum2);
                                                   return Container(
                                                     padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
@@ -888,7 +941,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                           flex: 2,
                                                           fit: FlexFit.tight,
                                                           child: Text(
-                                                            formDataProvider.kitchenTitleList[i],
+                                                            kitchenTitleList[i],
                                                             style: TextStyle(fontSize: 20),
                                                             overflow: TextOverflow.ellipsis,
                                                           ),
@@ -919,7 +972,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                 },
                                               ),
                                             ),
-                                          if (isTextFormFieldVisibleND && isKitchenContainerTouched)
+                                          if (isTextFormFieldVisibleND && hasKitchenSelected)
                                             Container(
                                               padding: EdgeInsets.all(10),
                                               child: Row(
@@ -955,25 +1008,17 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                             double dprice = double.tryParse(priceText) ?? 0.0;
                                                             String price = dprice.toStringAsFixed(2);
                                                             setState(() {
-                                                              formDataProvider.updateTextValue(text, 4, 2);
-                                                              formDataProvider.updateNumberValue(price, 4, 2);
+                                                              kitchenTitleList.add(text);
+                                                              kitchenPriceList.add(price);
+                                                              formDataProvider2.setKitchenTitleValue(text, kitchenTitleList);
+                                                              formDataProvider2.setKitchenPriceValue(price, kitchenPriceList);
+                                                              formDataProvider2.calculateSumOfKitchen(kitchenPriceList);
                                                               isEditingListND = false; // Add a corresponding entry for the new item
                                                               NDtextController.clear();
-                                                              formDataProvider.notifyListeners();
                                                               NDplatformPriceController.clear();
-                                                              formDataProvider.notifyListeners();
                                                               isTextFormFieldVisibleND = false;
                                                               isAddButtonActiveND = false;
-                                                              //***********************//
-                                                              formDataProvider.kitchenTitleList.forEach((item) {
-                                                                print("ekle ikonu item: $item");
-                                                              });
-                                                              //***********************//
-                                                              //***********************//
-                                                              formDataProvider.kitchenPriceList.forEach((item) {
-                                                                print("ekle ikonu price: $item");
-                                                              });
-                                                              //***********************//
+                                                              _load();
                                                             });
                                                           }
                                                         },
@@ -1004,11 +1049,11 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                   InkWell(
                                                     onTap: () {
                                                       setState(() {
-                                                        isRentContainerTouched = false;
-                                                        isKitchenContainerTouched = true;
-                                                        isCateringContainerTouched = false;
-                                                        isEntContainerTouched = false;
-                                                        isOtherContainerTouched = false;
+                                                        hasRentSelected = false;
+                                                        hasKitchenSelected = true;
+                                                        hasCateringSelected = false;
+                                                        hasEntertainmentSelected = false;
+                                                        hasOtherSelected = false;
                                                         isAddButtonActiveND = true;
                                                         isTextFormFieldVisible = false;
                                                         isTextFormFieldVisibleND =true;
@@ -1016,18 +1061,6 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                         isTextFormFieldVisibleTH = false;
                                                         isTextFormFieldVisibleOther = false;
                                                         NDplatformPriceController.clear();
-                                                        formDataProvider.kitchenTitleList.forEach((element) {
-                                                          print('itemList: $element');
-                                                        });
-                                                        formDataProvider.kitchenPriceList.forEach((element) {
-                                                          print('pricesList: $element');
-                                                        });
-                                                        //print("isEditingList: $isEditingList");
-                                                        //print("isEditingListND: $isEditingList");
-                                                        //print("isEditingListRD: $isEditingList");
-                                                        //print("isTextFormFieldVisible: $isTextFormFieldVisible");
-                                                        //print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-                                                        //print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
                                                       });
                                                     },
                                                     child: Icon(Icons.add_circle, size: 26),
@@ -1050,8 +1083,8 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
-                                        color: isCateringContainerTouched ? Colors.black : Colors.black.withOpacity(0.5),
-                                        width: isCateringContainerTouched ? 4 : 2,
+                                        color: hasCateringSelected ? Colors.black : Colors.black.withOpacity(0.5),
+                                        width: hasCateringSelected ? 4 : 2,
                                       ),
                                     ),
                                     child: InkWell(
@@ -1063,14 +1096,14 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                               padding: EdgeInsets.all(10),
                                               child: Text("Yeme İçme",style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),)
                                           ),
-                                          if (formDataProvider.cateringTitleList.isNotEmpty && formDataProvider.cateringPriceList.isNotEmpty)
+                                          if (cateringTitleList.isNotEmpty && cateringPriceList.isNotEmpty)
                                             Container(
                                               child:
                                               ListView.builder(
                                                 shrinkWrap: true,
-                                                itemCount: formDataProvider.cateringTitleList.length,
+                                                itemCount: cateringTitleList.length,
                                                 itemBuilder: (BuildContext context, int i) {
-                                                  double sum2 = double.parse(formDataProvider.cateringPriceList[i]);
+                                                  double sum2 = double.parse(cateringPriceList[i]);
                                                   String convertSumo = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum2);
                                                   return Container(
                                                     padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
@@ -1080,7 +1113,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                           flex: 2,
                                                           fit: FlexFit.tight,
                                                           child: Text(
-                                                            formDataProvider.cateringTitleList[i],
+                                                            cateringTitleList[i],
                                                             style: TextStyle(fontSize: 20),
                                                             overflow: TextOverflow.ellipsis,
                                                           ),
@@ -1111,7 +1144,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                 },
                                               ),
                                             ),
-                                          if (isTextFormFieldVisibleRD && isCateringContainerTouched)
+                                          if (isTextFormFieldVisibleRD && hasCateringSelected)
                                             Container(
                                               padding: EdgeInsets.all(10),
                                               child: Row(
@@ -1147,25 +1180,17 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                             double dprice = double.tryParse(priceText) ?? 0.0;
                                                             String price = dprice.toStringAsFixed(2);
                                                             setState(() {
-                                                              formDataProvider.updateTextValue(text, 4, 3);
-                                                              formDataProvider.updateNumberValue(price, 4, 3);
+                                                              cateringTitleList.add(text);
+                                                              cateringPriceList.add(price);
+                                                              formDataProvider2.setCateringTitleValue(text, cateringTitleList);
+                                                              formDataProvider2.setCateringPriceValue(price, cateringPriceList);
+                                                              formDataProvider2.calculateSumOfCatering(cateringPriceList);
                                                               isEditingListRD = false; // Add a corresponding entry for the new item
                                                               RDtextController.clear();
-                                                              formDataProvider.notifyListeners();
                                                               RDplatformPriceController.clear();
-                                                              formDataProvider.notifyListeners();
                                                               isTextFormFieldVisibleRD = false;
                                                               isAddButtonActiveRD = false;
-                                                              //***********************//
-                                                              formDataProvider.cateringTitleList.forEach((item) {
-                                                                print("ekle ikonu item: $item");
-                                                              });
-                                                              //***********************//
-                                                              //***********************//
-                                                              formDataProvider.cateringPriceList.forEach((item) {
-                                                                print("ekle ikonu price: $item");
-                                                              });
-                                                              //***********************//
+                                                              _load();
                                                             });
                                                           }
                                                         },
@@ -1196,11 +1221,11 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                   InkWell(
                                                     onTap: () {
                                                       setState(() {
-                                                        isRentContainerTouched = false;
-                                                        isKitchenContainerTouched = false;
-                                                        isCateringContainerTouched = true;
-                                                        isEntContainerTouched = false;
-                                                        isOtherContainerTouched = false;
+                                                        hasRentSelected = false;
+                                                        hasKitchenSelected = false;
+                                                        hasCateringSelected = true;
+                                                        hasEntertainmentSelected = false;
+                                                        hasOtherSelected = false;
                                                         isAddButtonActiveRD = true;
                                                         isTextFormFieldVisible = false;
                                                         isTextFormFieldVisibleND =false;
@@ -1208,18 +1233,6 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                         isTextFormFieldVisibleTH = false;
                                                         isTextFormFieldVisibleOther = false;
                                                         RDplatformPriceController.clear();
-                                                        formDataProvider.cateringTitleList.forEach((element) {
-                                                          print('itemList: $element');
-                                                        });
-                                                        formDataProvider.cateringPriceList.forEach((element) {
-                                                          print('pricesList: $element');
-                                                        });
-                                                        //print("isEditingList: $isEditingList");
-                                                        //print("isEditingListND: $isEditingList");
-                                                        //print("isEditingListRD: $isEditingList");
-                                                        //print("isTextFormFieldVisible: $isTextFormFieldVisible");
-                                                        //print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-                                                        //print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
                                                       });
                                                     },
                                                     child: Icon(Icons.add_circle, size: 26),
@@ -1242,8 +1255,8 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
-                                        color: isEntContainerTouched ? Colors.black : Colors.black.withOpacity(0.5),
-                                        width: isEntContainerTouched ? 4 : 2,
+                                        color: hasEntertainmentSelected ? Colors.black : Colors.black.withOpacity(0.5),
+                                        width: hasEntertainmentSelected ? 4 : 2,
                                       ),
                                     ),
                                     child: InkWell(
@@ -1255,14 +1268,14 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                               padding: EdgeInsets.all(10),
                                               child: Text("Eğlence",style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),)
                                           ),
-                                          if (formDataProvider.entertainmentTitleList.isNotEmpty && formDataProvider.entertainmentPriceList.isNotEmpty)
+                                          if (entertainmentTitleList.isNotEmpty && entertainmentPriceList.isNotEmpty)
                                             Container(
                                               child:
                                               ListView.builder(
                                                 shrinkWrap: true,
-                                                itemCount: formDataProvider.entertainmentTitleList.length,
+                                                itemCount: entertainmentTitleList.length,
                                                 itemBuilder: (BuildContext context, int i) {
-                                                  double sum2 = double.parse(formDataProvider.entertainmentPriceList[i]);
+                                                  double sum2 = double.parse(entertainmentPriceList[i]);
                                                   String convertSumo = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum2);
                                                   return Container(
                                                     padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
@@ -1272,7 +1285,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                           flex: 2,
                                                           fit: FlexFit.tight,
                                                           child: Text(
-                                                            formDataProvider.entertainmentTitleList[i],
+                                                            entertainmentTitleList[i],
                                                             style: TextStyle(fontSize: 20),
                                                             overflow: TextOverflow.ellipsis,
                                                           ),
@@ -1303,7 +1316,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                 },
                                               ),
                                             ),
-                                          if (isTextFormFieldVisibleTH && isEntContainerTouched)
+                                          if (isTextFormFieldVisibleTH && hasEntertainmentSelected)
                                             Container(
                                               padding: EdgeInsets.all(10),
                                               child: Row(
@@ -1339,25 +1352,17 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                             double dprice = double.tryParse(priceText) ?? 0.0;
                                                             String price = dprice.toStringAsFixed(2);
                                                             setState(() {
-                                                              formDataProvider.updateTextValue(text, 4, 4);
-                                                              formDataProvider.updateNumberValue(price, 4, 4);
+                                                              entertainmentTitleList.add(text);
+                                                              entertainmentPriceList.add(price);
+                                                              formDataProvider2.setEntertainmentTitleValue(text, entertainmentTitleList);
+                                                              formDataProvider2.setEntertainmentPriceValue(price, entertainmentPriceList);
+                                                              formDataProvider2.calculateSumOfEnt(entertainmentPriceList);
                                                               isEditingListTH = false; // Add a corresponding entry for the new item
                                                               THtextController.clear();
-                                                              formDataProvider.notifyListeners();
                                                               THplatformPriceController.clear();
-                                                              formDataProvider.notifyListeners();
                                                               isTextFormFieldVisibleTH = false;
                                                               isAddButtonActiveTH = false;
-                                                              //***********************//
-                                                              formDataProvider.entertainmentTitleList.forEach((item) {
-                                                                print("ekle ikonu item: $item");
-                                                              });
-                                                              //***********************//
-                                                              //***********************//
-                                                              formDataProvider.entertainmentPriceList.forEach((item) {
-                                                                print("ekle ikonu price: $item");
-                                                              });
-                                                              //***********************//
+                                                              _load();
                                                             });
                                                           }
                                                         },
@@ -1388,11 +1393,11 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                   InkWell(
                                                     onTap: () {
                                                       setState(() {
-                                                        isRentContainerTouched = false;
-                                                        isKitchenContainerTouched = false;
-                                                        isCateringContainerTouched = false;
-                                                        isEntContainerTouched = true;
-                                                        isOtherContainerTouched = false;
+                                                        hasRentSelected = false;
+                                                        hasKitchenSelected = false;
+                                                        hasCateringSelected = false;
+                                                        hasEntertainmentSelected = true;
+                                                        hasOtherSelected = false;
                                                         isAddButtonActiveTH = true;
                                                         isTextFormFieldVisible = false;
                                                         isTextFormFieldVisibleND =false;
@@ -1400,18 +1405,6 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                         isTextFormFieldVisibleTH = true;
                                                         isTextFormFieldVisibleOther = false;
                                                         THplatformPriceController.clear();
-                                                        formDataProvider.entertainmentTitleList.forEach((element) {
-                                                          print('itemList: $element');
-                                                        });
-                                                        formDataProvider.entertainmentPriceList.forEach((element) {
-                                                          print('pricesList: $element');
-                                                        });
-                                                        //print("isEditingList: $isEditingList");
-                                                        //print("isEditingListND: $isEditingList");
-                                                        //print("isEditingListRD: $isEditingList");
-                                                        //print("isTextFormFieldVisible: $isTextFormFieldVisible");
-                                                        //print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-                                                        //print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
                                                       });
                                                     },
                                                     child: Icon(Icons.add_circle, size: 26),
@@ -1432,8 +1425,8 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                   DottedBorder(
                                     borderType: BorderType.RRect,
                                     radius: Radius.circular(10),
-                                    color: isOtherContainerTouched ? Colors.black : Colors.black.withOpacity(0.5),
-                                    strokeWidth: isOtherContainerTouched ? 4 : 2,
+                                    color: hasOtherSelected ? Colors.black : Colors.black.withOpacity(0.5),
+                                    strokeWidth: hasOtherSelected ? 4 : 2,
                                     dashPattern: [6,3],
                                     child: Container(
                                       width: double.infinity,
@@ -1446,14 +1439,14 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                 padding: EdgeInsets.all(10),
                                                 child: Text("Diğer",style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),)
                                             ),
-                                            if (formDataProvider.otherTitleList.isNotEmpty && formDataProvider.otherPriceList.isNotEmpty)
+                                            if (otherTitleList.isNotEmpty && otherPriceList.isNotEmpty)
                                               Container(
                                                 child:
                                                 ListView.builder(
                                                   shrinkWrap: true,
-                                                  itemCount: formDataProvider.otherTitleList.length,
+                                                  itemCount: otherTitleList.length,
                                                   itemBuilder: (BuildContext context, int i) {
-                                                    double sum2 = double.parse(formDataProvider.otherPriceList[i]);
+                                                    double sum2 = double.parse(otherPriceList[i]);
                                                     String convertSumo = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum2);
                                                     return Container(
                                                       padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
@@ -1463,7 +1456,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                             flex: 2,
                                                             fit: FlexFit.tight,
                                                             child: Text(
-                                                              formDataProvider.otherTitleList[i],
+                                                              otherTitleList[i],
                                                               style: TextStyle(fontSize: 20),
                                                               overflow: TextOverflow.ellipsis,
                                                             ),
@@ -1494,7 +1487,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                   },
                                                 ),
                                               ),
-                                            if (isTextFormFieldVisibleOther && isOtherContainerTouched)
+                                            if (isTextFormFieldVisibleOther && hasOtherSelected)
                                               Container(
                                                 padding: EdgeInsets.all(10),
                                                 child: Row(
@@ -1530,25 +1523,17 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                               double dprice = double.tryParse(priceText) ?? 0.0;
                                                               String price = dprice.toStringAsFixed(2);
                                                               setState(() {
-                                                                formDataProvider.updateTextValue(text, 4, 5);
-                                                                formDataProvider.updateNumberValue(price, 4, 5);
+                                                                otherTitleList.add(text);
+                                                                otherPriceList.add(price);
+                                                                formDataProvider2.setOtherTitleValue(text, otherTitleList);
+                                                                formDataProvider2.setOtherPriceValue(price, otherPriceList);
+                                                                formDataProvider2.calculateSumOfOther(otherPriceList);
                                                                 isEditingListOther = false; // Add a corresponding entry for the new item
                                                                 otherTextController.clear();
-                                                                formDataProvider.notifyListeners();
                                                                 otherPlatformPriceController.clear();
-                                                                formDataProvider.notifyListeners();
                                                                 isTextFormFieldVisibleOther = false;
                                                                 isAddButtonActiveOther = false;
-                                                                //***********************//
-                                                                formDataProvider.otherTitleList.forEach((item) {
-                                                                  print("ekle ikonu item: $item");
-                                                                });
-                                                                //***********************//
-                                                                //***********************//
-                                                                formDataProvider.otherPriceList.forEach((item) {
-                                                                  print("ekle ikonu price: $item");
-                                                                });
-                                                                //***********************//
+                                                                _load();
                                                               });
                                                             }
                                                           },
@@ -1579,11 +1564,11 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                     InkWell(
                                                       onTap: () {
                                                         setState(() {
-                                                          isRentContainerTouched = false;
-                                                          isKitchenContainerTouched = false;
-                                                          isCateringContainerTouched = false;
-                                                          isEntContainerTouched = false;
-                                                          isOtherContainerTouched = true;
+                                                          hasRentSelected = false;
+                                                          hasKitchenSelected = false;
+                                                          hasCateringSelected = false;
+                                                          hasEntertainmentSelected = false;
+                                                          hasOtherSelected = true;
                                                           isAddButtonActiveOther = true;
                                                           isTextFormFieldVisible = false;
                                                           isTextFormFieldVisibleND =false;
@@ -1591,18 +1576,6 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                           isTextFormFieldVisibleTH = false;
                                                           isTextFormFieldVisibleOther = true;
                                                           otherPlatformPriceController.clear();
-                                                          formDataProvider.otherTitleList.forEach((element) {
-                                                            print('itemList: $element');
-                                                          });
-                                                          formDataProvider.otherPriceList.forEach((element) {
-                                                            print('pricesList: $element');
-                                                          });
-                                                          //print("isEditingList: $isEditingList");
-                                                          //print("isEditingListND: $isEditingList");
-                                                          //print("isEditingListRD: $isEditingList");
-                                                          //print("isTextFormFieldVisible: $isTextFormFieldVisible");
-                                                          //print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-                                                          //print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
                                                         });
                                                       },
                                                       child: Icon(Icons.add_circle, size: 26),
@@ -1619,6 +1592,16 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                         ),
                                       ),
                                     ),
+                                  ),
+                                  ListView.builder(
+                                    itemCount: sharedPreferencesData.length,
+                                    itemBuilder: (context, index) {
+                                      return ListTile(
+                                        title: Text(sharedPreferencesData[index]),
+                                      );
+                                    },
+                                    shrinkWrap: true,
+                                    physics: const NeverScrollableScrollPhysics(),
                                   ),
                                 ],
                               ),

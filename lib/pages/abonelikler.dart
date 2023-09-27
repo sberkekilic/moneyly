@@ -1,11 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import 'package:provider/provider.dart';
-import '../form-data-provider.dart';
-import 'faturalar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../deneme.dart';
 
 class Subscriptions extends StatefulWidget {
   const Subscriptions({Key? key}) : super(key: key);
@@ -13,6 +14,23 @@ class Subscriptions extends StatefulWidget {
   State<Subscriptions> createState() => _SubscriptionsState();
 }
 class _SubscriptionsState extends State<Subscriptions> {
+  List<String> sharedPreferencesData = [];
+  List<String> desiredKeys = ['tvTitleList2', 'tvPriceList2', 'hasTVSelected2', 'sumOfTV2', 'gameTitleList2', 'gamePriceList2', 'hasGameSelected2', 'sumOfGame2', 'musicTitleList2', 'musicPriceList2', 'hasMusicSelected2', 'sumOfMusic2'];
+  bool hasTVSelected = false;
+  bool hasGameSelected = false;
+  bool hasMusicSelected = false;
+  List<String> tvTitleList = [];
+  List<String> gameTitleList = [];
+  List<String> musicTitleList = [];
+  List<String> tvPriceList = [];
+  List<String> gamePriceList = [];
+  List<String> musicPriceList = [];
+  double sumOfTV = 0.0;
+  double sumOfGame = 0.0;
+  double sumOfMusic = 0.0;
+  String convertSum = "";
+  String convertSum2 = "";
+  String convertSum3 = "";
 
   List<TextEditingController> editTextControllers = [];
   List<TextEditingController> NDeditTextControllers = [];
@@ -42,58 +60,86 @@ class _SubscriptionsState extends State<Subscriptions> {
   bool isAddButtonActiveND = false;
   bool isAddButtonActiveRD = false;
 
-  bool isTVContainerTouched = false;
-  bool isOyunContainerTouched = false;
-  bool isMuzikContainerTouched = false;
-
-  void handleTVContainerTouch() {
+  Future<void> handleTVContainerTouch() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasTVSelected2', true);
+    await prefs.setBool('hasGameSelected2', false);
+    await prefs.setBool('hasMusicSelected2', false);
     setState(() {
-      isTVContainerTouched = true;
-      isOyunContainerTouched = false;
-      isMuzikContainerTouched = false;
+      hasTVSelected = true;
+      hasGameSelected = false;
+      hasMusicSelected = false;
       isTextFormFieldVisible = false;
       isTextFormFieldVisibleND =false;
       isTextFormFieldVisibleRD = false;
       isEditingList = false;
+      _load();
     });
   }
-  void handleOyunContainerTouch() {
+  Future<void> handleOyunContainerTouch() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasTVSelected2', false);
+    await prefs.setBool('hasGameSelected2', true);
+    await prefs.setBool('hasMusicSelected2', false);
     setState(() {
-      isTVContainerTouched = false;
-      isOyunContainerTouched = true;
-      isMuzikContainerTouched = false;
+      hasTVSelected = false;
+      hasGameSelected = true;
+      hasMusicSelected = false;
       isTextFormFieldVisible = false;
       isTextFormFieldVisibleND =false;
       isTextFormFieldVisibleRD = false;
       isEditingListND = false;
+      _load();
     });
   }
-  void handleMuzikContainerTouch() {
+  Future<void> handleMuzikContainerTouch() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasTVSelected2', false);
+    await prefs.setBool('hasGameSelected2', false);
+    await prefs.setBool('hasMusicSelected2', true);
     setState(() {
-      isTVContainerTouched = false;
-      isOyunContainerTouched = false;
-      isMuzikContainerTouched = true;
+      hasTVSelected = false;
+      hasGameSelected = false;
+      hasMusicSelected = true;
       isTextFormFieldVisible = false;
       isTextFormFieldVisibleND =false;
       isTextFormFieldVisibleRD = false;
       isEditingListRD = false;
+      _load();
     });
   }
 
   void goToPreviousPage() {
     Navigator.pop(context);
   }
-  void goToNextPage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => Bills(),
-      ),
-    );
+  Future<void> goToNextPage() async {
+    exportSharedPreferencesDataToTxt();
+    Navigator.pushNamed(context, 'faturalar');
+  }
+  Future<void> exportSharedPreferencesDataToTxt() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // Create a StringBuffer to store the data
+    final buffer = StringBuffer();
+
+    // Iterate through your SharedPreferences keys and add them to the buffer
+    for (var key in prefs.getKeys()) {
+      final value = prefs.get(key);
+      buffer.write('$key: $value\n');
+    }
+
+    // Define the file path where you want to save the text file
+    final filePath = '/data/user/0/com.example.moneyly/app_flutter/preferences.txt';
+
+    // Write the data to the file
+    final file = File(filePath);
+    await file.writeAsString(buffer.toString());
+
+    // Optionally, display a message indicating the export is complete
   }
 
   void _showEditDialog(BuildContext context, int index, int orderIndex) {
-    final formDataProvider = Provider.of<FormDataProvider>(context, listen: false);
+    final formDataProvider2 = Provider.of<FormDataProvider2>(context, listen: false);
 
     TextEditingController selectedEditController = TextEditingController();
     TextEditingController selectedPriceController = TextEditingController();
@@ -101,25 +147,25 @@ class _SubscriptionsState extends State<Subscriptions> {
     switch (orderIndex) {
       case 1:
         TextEditingController editController =
-        TextEditingController(text: formDataProvider.tvTitleList[index]);
+        TextEditingController(text: tvTitleList[index]);
         TextEditingController priceController =
-        TextEditingController(text: formDataProvider.tvPriceList[index]);
+        TextEditingController(text: tvPriceList[index]);
         selectedEditController = editController;
         selectedPriceController = priceController;
         break;
       case 2:
         TextEditingController NDeditController =
-        TextEditingController(text: formDataProvider.gamingTitleList[index]);
+        TextEditingController(text: gameTitleList[index]);
         TextEditingController NDpriceController =
-        TextEditingController(text: formDataProvider.gamingPriceList[index]);
+        TextEditingController(text: gamePriceList[index]);
         selectedEditController = NDeditController;
         selectedPriceController = NDpriceController;
         break;
       case 3:
         TextEditingController RDeditController =
-        TextEditingController(text: formDataProvider.musicTitleList[index]);
+        TextEditingController(text: musicTitleList[index]);
         TextEditingController RDpriceController =
-        TextEditingController(text: formDataProvider.musicPriceList[index]);
+        TextEditingController(text: musicPriceList[index]);
         selectedEditController = RDeditController;
         selectedPriceController = RDpriceController;
         break;
@@ -136,40 +182,40 @@ class _SubscriptionsState extends State<Subscriptions> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Align(child: Text("Item", style: GoogleFonts.montserrat(fontSize: 18),), alignment: Alignment.centerLeft,),
-              SizedBox(height: 10),
+              Align(alignment: Alignment.centerLeft,child: Text("Item", style: GoogleFonts.montserrat(fontSize: 18),),),
+              const SizedBox(height: 10),
               TextFormField(
                 controller: selectedEditController,
                 decoration: InputDecoration(
                     isDense: true,
                     focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(width: 3, color: Colors.black)
+        borderSide: const BorderSide(width: 3, color: Colors.black)
         ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
+                    borderSide: const BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
                   ),
-                  contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
+                  contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
                 ),
                 style: GoogleFonts.montserrat(fontSize: 20),
               ),
-              SizedBox(height: 10),
-              Align(child: Text("Price",style: GoogleFonts.montserrat(fontSize: 18)), alignment: Alignment.centerLeft),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
+              Align(alignment: Alignment.centerLeft, child: Text("Price",style: GoogleFonts.montserrat(fontSize: 18))),
+              const SizedBox(height: 10),
               TextFormField(
                 controller: selectedPriceController,
                 decoration: InputDecoration(
                   isDense: true,
                   focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(width: 3, color: Colors.black)
+                      borderSide: const BorderSide(width: 3, color: Colors.black)
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
+                    borderSide: const BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
                   ),
-                  contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
+                  contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
                 ),
                 style: GoogleFonts.montserrat(fontSize: 20),
                 keyboardType: TextInputType.number,
@@ -181,67 +227,78 @@ class _SubscriptionsState extends State<Subscriptions> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
                 setState(() {
                   switch (orderIndex){
                     case 1:
-                      formDataProvider.tvTitleList[index] = selectedEditController.text;
-                      formDataProvider.tvPriceList[index] = selectedPriceController.text;
+                      tvTitleList[index] = selectedEditController.text;
+                      tvPriceList[index] = selectedPriceController.text;
+                      formDataProvider2.setTVTitleValue(selectedEditController.text, tvTitleList);
+                      formDataProvider2.setTVPriceValue(selectedPriceController.text, tvPriceList);
+                      formDataProvider2.calculateSumOfTV(tvPriceList);
                       break;
                     case 2:
-                      formDataProvider.gamingTitleList[index] = selectedEditController.text;
-                      formDataProvider.gamingPriceList[index] = selectedPriceController.text;
+                      gameTitleList[index] = selectedEditController.text;
+                      gamePriceList[index] = selectedPriceController.text;
+                      formDataProvider2.setGameTitleValue(selectedEditController.text, gameTitleList);
+                      formDataProvider2.setGamePriceValue(selectedPriceController.text, gamePriceList);
+                      formDataProvider2.calculateSumOfGame(gamePriceList);
                       break;
                     case 3:
-                      formDataProvider.musicTitleList[index] = selectedEditController.text;
-                      formDataProvider.musicPriceList[index] = selectedPriceController.text;
+                      musicTitleList[index] = selectedEditController.text;
+                      musicPriceList[index] = selectedPriceController.text;
+                      formDataProvider2.setMusicTitleValue(selectedEditController.text, musicTitleList);
+                      formDataProvider2.setMusicPriceValue(selectedPriceController.text, musicPriceList);
+                      formDataProvider2.calculateSumOfMusic(musicPriceList);
                       break;
                   }
                 });
+                _load();
                 Navigator.of(context).pop();
               },
 
-              child: Text('Save'),
+              child: const Text('Save'),
             ),
             TextButton(
                 onPressed: () {
                   setState(() {
                     switch (orderIndex){
                       case 1:
-                        TextEditingController priceController =
-                        TextEditingController(text: formDataProvider.tvPriceList[index]);
-                        formDataProvider.tvTitleList.removeAt(index);
-                        formDataProvider.tvPriceList.removeAt(index);
-                        priceController.clear();
+                        tvTitleList.removeAt(index);
+                        tvPriceList.removeAt(index);
+                        formDataProvider2.removeTVTitleValue(tvTitleList);
+                        formDataProvider2.removeTVPriceValue(tvPriceList);
+                        formDataProvider2.calculateSumOfTV(tvPriceList);
                         isEditingList = false;
                         isAddButtonActive = false;
                         break;
                       case 2:
-                        TextEditingController NDpriceController =
-                        TextEditingController(text: formDataProvider.gamingPriceList[index]);
-                        formDataProvider.gamingTitleList.removeAt(index);
-                        formDataProvider.gamingPriceList.removeAt(index);
-                        NDpriceController.clear();
+                        gameTitleList.removeAt(index);
+                        gamePriceList.removeAt(index);
+                        formDataProvider2.removeGameTitleValue(gameTitleList);
+                        formDataProvider2.removeGamePriceValue(gamePriceList);
+                        formDataProvider2.calculateSumOfGame(gamePriceList);
                         isEditingListND = false;
                         isAddButtonActiveND = false;
                         break;
                       case 3:
-                        TextEditingController RDpriceController =
-                        TextEditingController(text: formDataProvider.musicPriceList[index]);
-                        formDataProvider.musicTitleList.removeAt(index);
-                        formDataProvider.musicPriceList.removeAt(index);
-                        RDpriceController.clear();
+                        musicTitleList.removeAt(index);
+                        musicPriceList.removeAt(index);
+                        formDataProvider2.removeMusicTitleValue(musicTitleList);
+                        formDataProvider2.removeMusicPriceValue(musicPriceList);
+                        formDataProvider2.calculateSumOfMusic(musicPriceList);
                         isEditingListRD = false;
                         isAddButtonActiveRD = false;
                         break;
                     }
+                    _load();
                     Navigator.of(context).pop();
                   });
                 },
-                child: Text("Remove"))
+                child: const Text("Remove"))
           ],
         );
       },
@@ -251,47 +308,71 @@ class _SubscriptionsState extends State<Subscriptions> {
   @override
   void initState() {
     super.initState();
-    if(Provider.of<FormDataProvider>(context, listen: false).tvTitleList.isNotEmpty){
-      isTVContainerTouched = true;
+    _load();
+  }
+
+  Future<void> loadSharedPreferencesData(List<String> desiredKeys) async {
+    final prefs = await SharedPreferences.getInstance();
+    sharedPreferencesData = [];
+
+    for (var key in desiredKeys) {
+      final value = prefs.get(key);
+      if (value != null) {
+        sharedPreferencesData.add('$key: $value');
+      }
     }
-    if(Provider.of<FormDataProvider>(context, listen: false).gamingTitleList.isNotEmpty){
-      isOyunContainerTouched = true;
-    }
-    if(Provider.of<FormDataProvider>(context, listen: false).tvTitleList.isNotEmpty){
-      isMuzikContainerTouched = true;
-    }
+
+    setState(() {
+    }); // Trigger a rebuild of the widget to display the data
+  }
+
+  
+  void _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final ab1 = prefs.getBool('hasTVSelected2') ?? false;
+    final ab2 = prefs.getBool('hasGameSelected2') ?? false;
+    final ab3 = prefs.getBool('hasMusicSelected2') ?? false;
+    final bb1 = prefs.getStringList('tvTitleList2') ?? [];
+    final bb2 = prefs.getStringList('gameTitleList2') ?? [];
+    final bb3 = prefs.getStringList('musicTitleList2') ?? [];
+    final cb1 = prefs.getStringList('tvPriceList2') ?? [];
+    final cb2 = prefs.getStringList('gamePriceList2') ?? [];
+    final cb3 = prefs.getStringList('musicPriceList2') ?? [];
+    final db1 = prefs.getDouble('sumOfTV2') ?? 0.0;
+    final db2 = prefs.getDouble('sumOfGame2') ?? 0.0;
+    final db3 = prefs.getDouble('sumOfMusic2') ?? 0.0;
+    setState(() {
+      hasTVSelected = ab1;
+      hasGameSelected = ab2;
+      hasMusicSelected = ab3;
+      tvTitleList = bb1;
+      gameTitleList = bb2;
+      musicTitleList = bb3;
+      tvPriceList = cb1;
+      gamePriceList = cb2;
+      musicPriceList = cb3;
+      sumOfTV = db1;
+      sumOfGame = db2;
+      sumOfMusic = db3;
+      loadSharedPreferencesData(desiredKeys);
+    });
+    convertSum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfTV);
+    convertSum2 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfGame);
+    convertSum3 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfMusic);
   }
 
   @override
   Widget build(BuildContext context) {
-    final formDataProvider = Provider.of<FormDataProvider>(context, listen: false);
+    final formDataProvider2 = Provider.of<FormDataProvider2>(context, listen: false);
     double screenWidth = MediaQuery.of(context).size.width;
-    double sum = 0.0;
-    for(String price in formDataProvider.tvPriceList){
-      sum += double.parse(price);
-    }
-    double sumoyun = 0.0;
-    for(String price in formDataProvider.gamingPriceList){
-      sumoyun += double.parse(price);
-    }
-    double summuzik = 0.0;
-    for(String price in formDataProvider.musicPriceList){
-      summuzik += double.parse(price);
-    }
-    String convertSum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum);
-    formDataProvider.sumOfTV = convertSum;
-    String convertSum2 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumoyun);
-    formDataProvider.sumOfGaming = convertSum2;
-    String convertSum3 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(summuzik);
-    formDataProvider.sumOfMusic = convertSum3;
     double sumAll = 0.0;
-    sumAll += sum;
-    sumAll += sumoyun;
-    sumAll += summuzik;
+    sumAll += sumOfTV;
+    sumAll += sumOfGame;
+    sumAll += sumOfMusic;
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xfff0f0f1),
+        backgroundColor: const Color(0xfff0f0f1),
         elevation: 0,
         toolbarHeight: 70,
         automaticallyImplyLeading: false,
@@ -306,13 +387,13 @@ class _SubscriptionsState extends State<Subscriptions> {
                   onPressed: () {
                     Navigator.pushNamed(context, 'gelir-ekle');
                   },
-                  icon: Icon(Icons.arrow_back, color: Colors.black), // Replace with the desired left icon
+                  icon: const Icon(Icons.arrow_back, color: Colors.black), // Replace with the desired left icon
                 ),
                 IconButton(
                   onPressed: () {
                     Navigator.pushNamed(context, '/');
                   },
-                  icon: Icon(Icons.clear, color: Colors.black), // Replace with the desired right icon
+                  icon: const Icon(Icons.clear, color: Colors.black), // Replace with the desired right icon
                 ),
               ],
             ),
@@ -329,7 +410,7 @@ class _SubscriptionsState extends State<Subscriptions> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SizedBox(width: 20),
+                const SizedBox(width: 20),
                 Expanded(
                   child: Container(
                     height: 50,
@@ -342,13 +423,13 @@ class _SubscriptionsState extends State<Subscriptions> {
                       ),
                       clipBehavior: Clip.hardEdge,
                       onPressed: sumAll!= 0.0 ? () {
-                        Navigator.pushNamed(context, 'faturalar');
+                        goToNextPage();
                       } : null,
                       child: Text('Sonraki', style: GoogleFonts.montserrat(fontSize: 18)),
                     ),
                   ),
                 ),
-                SizedBox(width: 20),
+                const SizedBox(width: 20),
               ],
             ),
           ),
@@ -360,11 +441,11 @@ class _SubscriptionsState extends State<Subscriptions> {
             left: 0,
             right: 0,
             child: Container(
-              color: Color(0xfff0f0f1),
-              padding: EdgeInsets.only(left: 20, right: 20),
+              color: const Color(0xfff0f0f1),
+              padding: const EdgeInsets.only(left: 20, right: 20),
               child: Column(
                 children: [
-                  Container(
+                  SizedBox(
                     height: 60,
                     child: ListView(
                       scrollDirection: Axis.horizontal,
@@ -375,45 +456,45 @@ class _SubscriptionsState extends State<Subscriptions> {
                           },
                           splashColor: Colors.grey,
                           borderRadius: BorderRadius.circular(10),
-                          child: Container(
+                          child: SizedBox(
                             height: 50,
                             width: (screenWidth-60) / 3,
                             child: Column(
                               children: [
-                                Align(child: Text("Gelir", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 15)), alignment: Alignment.center),
-                                SizedBox(height: 10),
+                                Align(alignment: Alignment.center, child: Text("Gelir", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 15))),
+                                const SizedBox(height: 10),
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(10),
                                   child: Container(
                                     height: 8,
                                       width: (screenWidth-60) / 3,
-                                    color: Color(0xff1ab738)
+                                    color: const Color(0xff1ab738)
                                   ),
                                 )
                               ],
                             ),
                           ),
                         ),
-                        SizedBox(width: 10),
+                        const SizedBox(width: 10),
                         InkWell(
                           onTap: (){
                             Navigator.pushNamed(context, 'abonelikler');
                           },
                           splashColor: Colors.grey,
                           borderRadius: BorderRadius.circular(10),
-                          child: Container(
+                          child: SizedBox(
                             height: 50,
                             width: (screenWidth-60) / 3,
                             child: Column(
                               children: [
-                                Align(child: Text("Abonelikler", style: GoogleFonts.montserrat(color: Color(0xff1ab738), fontWeight: FontWeight.bold, fontSize: 15)), alignment: Alignment.center),
-                                SizedBox(height: 10),
+                                Align(alignment: Alignment.center, child: Text("Abonelikler", style: GoogleFonts.montserrat(color: const Color(0xff1ab738), fontWeight: FontWeight.bold, fontSize: 15))),
+                                const SizedBox(height: 10),
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(10),
                                   child: Container(
                                     height: 8,
                                     width: (screenWidth-60) / 3,
-                                    color: Color(
+                                    color: const Color(
                                         0xff1ab738),
                                   ),
                                 )
@@ -421,23 +502,23 @@ class _SubscriptionsState extends State<Subscriptions> {
                             ),
                           ),
                         ),
-                        SizedBox(width: 10),
+                        const SizedBox(width: 10),
                         InkWell(
                           splashColor: Colors.grey,
                           borderRadius: BorderRadius.circular(10),
-                          child: Container(
+                          child: SizedBox(
                             height: 50,
                             width: (screenWidth-60) / 3,
                             child: Column(
                               children: [
-                                Align(child: Text("Faturalar", style: GoogleFonts.montserrat(color: Color(0xffc6c6c7), fontSize: 15)), alignment: Alignment.center),
-                                SizedBox(height: 10),
+                                Align(alignment: Alignment.center, child: Text("Faturalar", style: GoogleFonts.montserrat(color: const Color(0xffc6c6c7), fontSize: 15))),
+                                const SizedBox(height: 10),
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(10),
                                   child: Container(
                                     height: 8,
                                     width: (screenWidth-60) / 3,
-                                    color: Color(
+                                    color: const Color(
                                         0xffc6c6c7),
                                   ),
                                 )
@@ -445,24 +526,24 @@ class _SubscriptionsState extends State<Subscriptions> {
                             ),
                           ),
                         ),
-                        SizedBox(width: 10),
+                        const SizedBox(width: 10),
                         InkWell(
                           splashColor: Colors.grey,
                           borderRadius: BorderRadius.circular(10),
-                          child: Container(
+                          child: SizedBox(
                             height: 50,
                             width: ((screenWidth-60) / 3) + 10,
                             child: Column(
                               children: [
-                                Align(child: Text("Diğer Giderler", style: GoogleFonts.montserrat(color: Color(
-                                    0xffc6c6c7), fontSize: 15)), alignment: Alignment.center),
-                                SizedBox(height: 10),
+                                Align(alignment: Alignment.center, child: Text("Diğer Giderler", style: GoogleFonts.montserrat(color: const Color(
+                                    0xffc6c6c7), fontSize: 15))),
+                                const SizedBox(height: 10),
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(10),
                                   child: Container(
                                     height: 8,
                                     width: ((screenWidth-60) / 3) + 10,
-                                    color: Color(
+                                    color: const Color(
                                         0xffc6c6c7),
                                   ),
                                 )
@@ -484,18 +565,18 @@ class _SubscriptionsState extends State<Subscriptions> {
             bottom: 0,
             child: Container(
               decoration: BoxDecoration(
-                  borderRadius: BorderRadius.only(topLeft: Radius.circular(15), topRight: Radius.circular(15)),
+                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(15), topRight: Radius.circular(15)),
                   boxShadow: [
                     BoxShadow(
                         color: Colors.black.withOpacity(0.3),
                         spreadRadius: 2,
                         blurRadius: 10,
-                        offset: Offset(0, 4)
+                        offset: const Offset(0, 4)
                     )
                   ]
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.only(topLeft: Radius.circular(15), topRight: Radius.circular(15)),
+                borderRadius: const BorderRadius.only(topLeft: Radius.circular(15), topRight: Radius.circular(15)),
                 child:  Container(
                   color: Colors.white,
                   child: SingleChildScrollView(
@@ -515,19 +596,17 @@ class _SubscriptionsState extends State<Subscriptions> {
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
-                                        color: isTVContainerTouched ? Colors.black : Colors.black.withOpacity(0.5),
-                                        width: isTVContainerTouched ? 4 : 2,
+                                        color: hasTVSelected ? Colors.black : Colors.black.withOpacity(0.5),
+                                        width: hasTVSelected ? 4 : 2,
                                       ),
                                     ),
                                     child: InkWell(
                                       onTap: () {
                                         if(isAddButtonActive==false){
-                                          print("if 1");
                                           handleTVContainerTouch();
                                           isAddButtonActiveND = false;
                                           isAddButtonActiveRD = false;
                                         } else {
-                                          print("else 1");
                                           isAddButtonActiveND = false;
                                           isAddButtonActiveRD = false;
                                         }
@@ -536,78 +615,75 @@ class _SubscriptionsState extends State<Subscriptions> {
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Padding(
-                                              padding: EdgeInsets.all(10),
+                                              padding: const EdgeInsets.all(10),
                                               child: Text("Film, Dizi ve TV",style: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.bold),)
                                           ),
-                                          if (formDataProvider.tvTitleList.isNotEmpty && formDataProvider.tvPriceList.isNotEmpty)
-                                            Container(
-                                              child:
-                                              ListView.builder(
-                                                shrinkWrap: true,
-                                                itemCount: formDataProvider.tvTitleList.length,
-                                                itemBuilder: (BuildContext context, int i) {
-                                                  double sum2 = double.parse(formDataProvider.tvPriceList[i]);
-                                                  String convertSumo = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum2);
-                                                  return Container(
-                                                      padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
-                                                      child: Row(
-                                                        children: [
-                                                          Flexible(
-                                                            flex: 2,
-                                                            fit: FlexFit.tight,
-                                                            child: Text(
-                                                              formDataProvider.tvTitleList[i],
-                                                              style: GoogleFonts.montserrat(fontSize: 20),
-                                                              overflow: TextOverflow.ellipsis,
-                                                            ),
+                                          if (tvTitleList.isNotEmpty && tvPriceList.isNotEmpty)
+                                            ListView.builder(
+                                              shrinkWrap: true,
+                                              itemCount: tvTitleList.length,
+                                              itemBuilder: (BuildContext context, int i) {
+                                                double sum2 = double.parse(tvPriceList[i]);
+                                                String convertSumo = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum2);
+                                                return Container(
+                                                    padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+                                                    child: Row(
+                                                      children: [
+                                                        Flexible(
+                                                          flex: 2,
+                                                          fit: FlexFit.tight,
+                                                          child: Text(
+                                                            tvTitleList[i],
+                                                            style: GoogleFonts.montserrat(fontSize: 20),
+                                                            overflow: TextOverflow.ellipsis,
                                                           ),
-                                                          Flexible(
-                                                            flex: 2,
-                                                            fit: FlexFit.tight,
-                                                            child: Text(
-                                                                  textAlign: TextAlign.right,
-                                                                  convertSumo,
-                                                                  style: GoogleFonts.montserrat(fontSize: 20),
-                                                                  overflow: TextOverflow.ellipsis,
-                                                                ),
-                                                          ),
-                                                         SizedBox(width: 20),
-                                                         IconButton(
-                                                                splashRadius: 0.0001,
-                                                                padding: EdgeInsets.zero,
-                                                                constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                                                icon: Icon(Icons.edit, size: 21),
-                                                                onPressed: () {
-                                                                  _showEditDialog(context, i, 1); // Show the edit dialog
-                                                                },
+                                                        ),
+                                                        Flexible(
+                                                          flex: 2,
+                                                          fit: FlexFit.tight,
+                                                          child: Text(
+                                                                textAlign: TextAlign.right,
+                                                                convertSumo,
+                                                                style: GoogleFonts.montserrat(fontSize: 20),
+                                                                overflow: TextOverflow.ellipsis,
                                                               ),
-                                                        ],
-                                                      ),
-                                                  );
-                                                },
-                                              ),
+                                                        ),
+                                                       const SizedBox(width: 20),
+                                                       IconButton(
+                                                              splashRadius: 0.0001,
+                                                              padding: EdgeInsets.zero,
+                                                              constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                                              icon: const Icon(Icons.edit, size: 21),
+                                                              onPressed: () {
+                                                                _showEditDialog(context, i, 1); // Show the edit dialog
+                                                              },
+                                                            ),
+                                                      ],
+                                                    ),
+                                                );
+                                              },
                                             ),
-                                          if (isTextFormFieldVisible && isTVContainerTouched)
+                                          if (isTextFormFieldVisible && hasTVSelected)
                                             Container(
-                                              padding: EdgeInsets.all(10),
+                                              padding: const EdgeInsets.all(10),
                                               child: Row(
                                                 crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
                                                   Expanded(
                                                     child: TextFormField(
                                                       controller: textController,
-                                                      decoration: InputDecoration(
+                                                      decoration: const InputDecoration(
                                                         border: InputBorder.none,
                                                         hintText: 'ABA',
                                                       ),
                                                     ),
                                                   ),
-                                                  SizedBox(width: 10),
+                                                  const SizedBox(width: 10),
                                                   Expanded(
                                                     child: TextFormField(
                                                       controller: platformPriceController,
                                                       keyboardType: TextInputType.number, // Show numeric keyboard
-                                                      decoration: InputDecoration(
+                                                      decoration: const InputDecoration(
                                                         border: InputBorder.none,
                                                         hintText: 'GAG',
                                                       ),
@@ -623,29 +699,21 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                             double dprice = double.tryParse(priceText) ?? 0.0;
                                                             String price = dprice.toStringAsFixed(2);
                                                             setState(() {
-                                                              formDataProvider.updateTextValue(text, 2, 1);
-                                                              formDataProvider.updateNumberValue(price, 2, 1);
+                                                              tvTitleList.add(text);
+                                                              tvPriceList.add(price);
+                                                              formDataProvider2.setTVTitleValue(text, tvTitleList);
+                                                              formDataProvider2.setTVPriceValue(price, tvPriceList);
+                                                              formDataProvider2.calculateSumOfTV(tvPriceList);
                                                               isEditingList = false; // Add a corresponding entry for the new item
                                                               textController.clear();
-                                                              formDataProvider.notifyListeners();
                                                               platformPriceController.clear();
-                                                              formDataProvider.notifyListeners();
                                                               isTextFormFieldVisible = false;
                                                               isAddButtonActive = false;
-                                                              //***********************//
-                                                              formDataProvider.tvTitleList.forEach((item) {
-                                                                print("ekle ikonu item: $item");
-                                                              });
-                                                              //***********************//
-                                                              //***********************//
-                                                              formDataProvider.tvPriceList.forEach((item) {
-                                                                print("ekle ikonu price: $item");
-                                                              });
-                                                              //***********************//
+                                                              _load();
                                                             });
                                                           }
                                                         },
-                                                        icon: Icon(Icons.check_circle, size: 26),
+                                                        icon: const Icon(Icons.check_circle, size: 26),
                                                       ),
                                                       IconButton(
                                                         onPressed: () {
@@ -656,7 +724,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                             platformPriceController.clear();
                                                           });
                                                         },
-                                                        icon: Icon(Icons.cancel, size: 26),
+                                                        icon: const Icon(Icons.cancel, size: 26),
                                                       ),
                                                     ],
                                                   ),
@@ -665,16 +733,16 @@ class _SubscriptionsState extends State<Subscriptions> {
                                             ),
                                           if (!isEditingList && !isTextFormFieldVisible)
                                             Container(
-                                              padding: EdgeInsets.all(10),
+                                              padding: const EdgeInsets.all(10),
                                               child: Row(
                                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                 children: [
                                                   InkWell(
                                                     onTap: () {
                                                       setState(() {
-                                                        isTVContainerTouched = true;
-                                                        isOyunContainerTouched = false;
-                                                        isMuzikContainerTouched = false;
+                                                        hasTVSelected = true;
+                                                        hasGameSelected = false;
+                                                        hasMusicSelected = false;
                                                         isAddButtonActive = true;
                                                         isTextFormFieldVisible = true;
                                                         isTextFormFieldVisibleND =false;
@@ -682,12 +750,12 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                         platformPriceController.clear();
                                                       });
                                                     },
-                                                    child: Icon(Icons.add_circle, size: 26),
+                                                    child: const Icon(Icons.add_circle, size: 26),
                                                   ),
                                                   if (convertSum != "0,00")
                                                   Padding(
                                                     padding: const EdgeInsets.only(right: 43),
-                                                    child: Text("Toplam: ${convertSum}", style: GoogleFonts.montserrat(fontSize: 20),),
+                                                    child: Text("Toplam: $convertSum", style: GoogleFonts.montserrat(fontSize: 20),),
                                                   ),
                                                 ],
                                               ),
@@ -696,25 +764,23 @@ class _SubscriptionsState extends State<Subscriptions> {
                                       ),
                                     ),
                                   ),
-                                  SizedBox(height: 20),
+                                  const SizedBox(height: 20),
                                   Container(
                                     width: double.infinity,
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
-                                        color: isOyunContainerTouched ? Colors.black : Colors.black.withOpacity(0.5),
-                                        width: isOyunContainerTouched ? 4 : 2,
+                                        color: hasGameSelected ? Colors.black : Colors.black.withOpacity(0.5),
+                                        width: hasGameSelected ? 4 : 2,
                                       ),
                                     ),
                                     child: InkWell(
                                       onTap: () {
                                         if(isAddButtonActiveND==false){
-                                          print("if 2");
                                           handleOyunContainerTouch();
                                           isAddButtonActive = false;
                                           isAddButtonActiveRD = false;
                                         } else {
-                                          print("else 2");
                                           isAddButtonActive = false;
                                           isAddButtonActiveRD = false;
                                         }
@@ -723,78 +789,75 @@ class _SubscriptionsState extends State<Subscriptions> {
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Padding(
-                                              padding: EdgeInsets.all(10),
+                                              padding: const EdgeInsets.all(10),
                                               child: Text("Oyun",style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold),)
                                           ),
-                                          if (formDataProvider.gamingTitleList.isNotEmpty && formDataProvider.gamingPriceList.isNotEmpty)
-                                            Container(
-                                              child:
-                                              ListView.builder(
-                                                shrinkWrap: true,
-                                                itemCount: formDataProvider.gamingTitleList.length,
-                                                itemBuilder: (BuildContext context, int i) {
-                                                  double sum3 = double.parse(formDataProvider.gamingPriceList[i]);
-                                                  String convertSuma = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum3);
-                                                  return Container(
-                                                    padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
-                                                    child: Row(
-                                                      children: [
-                                                        Flexible(
-                                                          flex: 2,
-                                                          fit: FlexFit.tight,
-                                                          child: Text(
-                                                            formDataProvider.gamingTitleList[i],
-                                                            style: GoogleFonts.montserrat(fontSize: 20),
-                                                            overflow: TextOverflow.ellipsis,
-                                                          ),
+                                          if (gameTitleList.isNotEmpty && gamePriceList.isNotEmpty)
+                                            ListView.builder(
+                                              shrinkWrap: true,
+                                              itemCount: gameTitleList.length,
+                                              itemBuilder: (BuildContext context, int i) {
+                                                double sum3 = double.parse(gamePriceList[i]);
+                                                String convertSuma = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum3);
+                                                return Container(
+                                                  padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+                                                  child: Row(
+                                                    children: [
+                                                      Flexible(
+                                                        flex: 2,
+                                                        fit: FlexFit.tight,
+                                                        child: Text(
+                                                          gameTitleList[i],
+                                                          style: GoogleFonts.montserrat(fontSize: 20),
+                                                          overflow: TextOverflow.ellipsis,
                                                         ),
-                                                        Flexible(
-                                                          flex: 2,
-                                                          fit: FlexFit.tight,
-                                                          child: Text(
-                                                            textAlign: TextAlign.right,
-                                                            convertSuma,
-                                                            style: GoogleFonts.montserrat(fontSize: 20),
-                                                            overflow: TextOverflow.ellipsis,
-                                                          ),
+                                                      ),
+                                                      Flexible(
+                                                        flex: 2,
+                                                        fit: FlexFit.tight,
+                                                        child: Text(
+                                                          textAlign: TextAlign.right,
+                                                          convertSuma,
+                                                          style: GoogleFonts.montserrat(fontSize: 20),
+                                                          overflow: TextOverflow.ellipsis,
                                                         ),
-                                                        SizedBox(width: 20),
-                                                        IconButton(
-                                                          splashRadius: 0.0001,
-                                                          padding: EdgeInsets.zero,
-                                                          constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                                          icon: Icon(Icons.edit, size: 21),
-                                                          onPressed: () {
-                                                            _showEditDialog(context, i, 2); // Show the edit dialog
-                                                          },
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  );
-                                                },
-                                              ),
+                                                      ),
+                                                      const SizedBox(width: 20),
+                                                      IconButton(
+                                                        splashRadius: 0.0001,
+                                                        padding: EdgeInsets.zero,
+                                                        constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                                        icon: const Icon(Icons.edit, size: 21),
+                                                        onPressed: () {
+                                                          _showEditDialog(context, i, 2); // Show the edit dialog
+                                                        },
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
                                             ),
-                                          if (isTextFormFieldVisibleND && isOyunContainerTouched)
+                                          if (isTextFormFieldVisibleND && hasGameSelected)
                                             Container(
-                                              padding: EdgeInsets.all(10),
+                                              padding: const EdgeInsets.all(10),
                                               child: Row(
                                                 crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
                                                   Expanded(
                                                     child: TextFormField(
                                                       controller: NDtextController,
-                                                      decoration: InputDecoration(
+                                                      decoration: const InputDecoration(
                                                         border: InputBorder.none,
                                                         hintText: 'ABA',
                                                       ),
                                                     ),
                                                   ),
-                                                  SizedBox(width: 10),
+                                                  const SizedBox(width: 10),
                                                   Expanded(
                                                     child: TextFormField(
                                                       controller: NDplatformPriceController,
                                                       keyboardType: TextInputType.number, // Show numeric keyboard
-                                                      decoration: InputDecoration(
+                                                      decoration: const InputDecoration(
                                                         border: InputBorder.none,
                                                         hintText: 'GAG',
                                                       ),
@@ -810,29 +873,21 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                             double dprice = double.tryParse(priceText) ?? 0.0;
                                                             String price = dprice.toStringAsFixed(2);
                                                             setState(() {
-                                                              formDataProvider.updateTextValue(text, 2, 2);
-                                                              formDataProvider.updateNumberValue(price, 2, 2);
+                                                              gameTitleList.add(text);
+                                                              gamePriceList.add(price);
+                                                              formDataProvider2.setGameTitleValue(text, gameTitleList);
+                                                              formDataProvider2.setGamePriceValue(price, gamePriceList);
+                                                              formDataProvider2.calculateSumOfGame(gamePriceList);
                                                               isEditingListND = false; // Add a corresponding entry for the new item
                                                               NDtextController.clear();
-                                                              formDataProvider.notifyListeners();
                                                               NDplatformPriceController.clear();
-                                                              formDataProvider.notifyListeners();
                                                               isTextFormFieldVisibleND = false;
                                                               isAddButtonActiveND = false;
-                                                              //***********************//
-                                                              formDataProvider.gamingTitleList.forEach((item) {
-                                                                print("ekle ikonu item: $item");
-                                                              });
-                                                              //***********************//
-                                                              //***********************//
-                                                              formDataProvider.tvPriceList.forEach((item) {
-                                                                print("ekle ikonu price: $item");
-                                                              });
-                                                              //***********************//
+                                                              _load();
                                                             });
                                                           }
                                                         },
-                                                        icon: Icon(Icons.check_circle, size: 26),
+                                                        icon: const Icon(Icons.check_circle, size: 26),
                                                       ),
                                                       IconButton(
                                                         onPressed: () {
@@ -843,7 +898,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                             NDplatformPriceController.clear();
                                                           });
                                                         },
-                                                        icon: Icon(Icons.cancel, size: 26),
+                                                        icon: const Icon(Icons.cancel, size: 26),
                                                       ),
                                                     ],
                                                   ),
@@ -852,41 +907,29 @@ class _SubscriptionsState extends State<Subscriptions> {
                                             ),
                                           if (!isEditingListND && !isTextFormFieldVisibleND)
                                             Container(
-                                              padding: EdgeInsets.all(10),
+                                              padding: const EdgeInsets.all(10),
                                               child: Row(
                                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                 children: [
                                                   InkWell(
                                                     onTap: () {
                                                       setState(() {
-                                                        isTVContainerTouched = false;
-                                                        isOyunContainerTouched = true;
-                                                        isMuzikContainerTouched = false;
+                                                        hasTVSelected = false;
+                                                        hasGameSelected = true;
+                                                        hasMusicSelected = false;
                                                         isAddButtonActiveND = true;
                                                         isTextFormFieldVisible = false;
                                                         isTextFormFieldVisibleND =true;
                                                         isTextFormFieldVisibleRD = false;
                                                         NDplatformPriceController.clear();
-                                                        formDataProvider.gamingTitleList.forEach((element) {
-                                                          print('itemList: $element');
-                                                        });
-                                                        formDataProvider.gamingPriceList.forEach((element) {
-                                                          print('pricesList: $element');
-                                                        });
-                                                        //print("isEditingList: $isEditingList");
-                                                        //print("isEditingListND: $isEditingList");
-                                                        //print("isEditingListRD: $isEditingList");
-                                                        //print("isTextFormFieldVisible: $isTextFormFieldVisible");
-                                                        //print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-                                                        //print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
                                                       });
                                                     },
-                                                    child: Icon(Icons.add_circle, size: 26),
+                                                    child: const Icon(Icons.add_circle, size: 26),
                                                   ),
                                                   if (convertSum2 != "0,00")
                                                     Padding(
                                                       padding: const EdgeInsets.only(right: 43),
-                                                      child: Text("Toplam: ${convertSum2}", style: GoogleFonts.montserrat(fontSize: 20),),
+                                                      child: Text("Toplam: $convertSum2", style: GoogleFonts.montserrat(fontSize: 20),),
                                                     ),
                                                 ],
                                               ),
@@ -895,25 +938,23 @@ class _SubscriptionsState extends State<Subscriptions> {
                                       ),
                                     ),
                                   ),
-                                  SizedBox(height: 20),
+                                  const SizedBox(height: 20),
                                   Container(
                                     width: double.infinity,
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
-                                        color: isMuzikContainerTouched ? Colors.black : Colors.black.withOpacity(0.5),
-                                        width: isMuzikContainerTouched ? 4 : 2,
+                                        color: hasMusicSelected ? Colors.black : Colors.black.withOpacity(0.5),
+                                        width: hasMusicSelected ? 4 : 2,
                                       ),
                                     ),
                                     child: InkWell(
                                       onTap: () {
                                         if(isAddButtonActiveRD==false){
-                                          print("if 3");
                                           handleMuzikContainerTouch();
                                           isAddButtonActive = false;
                                           isAddButtonActiveND = false;
                                         } else {
-                                          print("else 3");
                                           isAddButtonActive = false;
                                           isAddButtonActiveND = false;
                                         }
@@ -922,78 +963,75 @@ class _SubscriptionsState extends State<Subscriptions> {
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Padding(
-                                              padding: EdgeInsets.all(10),
+                                              padding: const EdgeInsets.all(10),
                                               child: Text("Müzik",style: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.bold),)
                                           ),
-                                          if (formDataProvider.musicTitleList.isNotEmpty && formDataProvider.musicPriceList.isNotEmpty)
-                                            Container(
-                                              child:
-                                              ListView.builder(
-                                                shrinkWrap: true,
-                                                itemCount: formDataProvider.musicTitleList.length,
-                                                itemBuilder: (BuildContext context, int i) {
-                                                  double sum2 = double.parse(formDataProvider.musicPriceList[i]);
-                                                  String convertSumo = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum2);
-                                                  return Container(
-                                                    padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
-                                                    child: Row(
-                                                      children: [
-                                                        Flexible(
-                                                          flex: 2,
-                                                          fit: FlexFit.tight,
-                                                          child: Text(
-                                                            formDataProvider.musicTitleList[i],
-                                                            style: GoogleFonts.montserrat(fontSize: 20),
-                                                            overflow: TextOverflow.ellipsis,
-                                                          ),
+                                          if (musicTitleList.isNotEmpty && musicPriceList.isNotEmpty)
+                                            ListView.builder(
+                                              shrinkWrap: true,
+                                              itemCount: musicTitleList.length,
+                                              itemBuilder: (BuildContext context, int i) {
+                                                double sum2 = double.parse(musicPriceList[i]);
+                                                String convertSumo = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum2);
+                                                return Container(
+                                                  padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+                                                  child: Row(
+                                                    children: [
+                                                      Flexible(
+                                                        flex: 2,
+                                                        fit: FlexFit.tight,
+                                                        child: Text(
+                                                          musicTitleList[i],
+                                                          style: GoogleFonts.montserrat(fontSize: 20),
+                                                          overflow: TextOverflow.ellipsis,
                                                         ),
-                                                        Flexible(
-                                                          flex: 2,
-                                                          fit: FlexFit.tight,
-                                                          child: Text(
-                                                            textAlign: TextAlign.right,
-                                                            convertSumo,
-                                                            style: GoogleFonts.montserrat(fontSize: 20),
-                                                            overflow: TextOverflow.ellipsis,
-                                                          ),
+                                                      ),
+                                                      Flexible(
+                                                        flex: 2,
+                                                        fit: FlexFit.tight,
+                                                        child: Text(
+                                                          textAlign: TextAlign.right,
+                                                          convertSumo,
+                                                          style: GoogleFonts.montserrat(fontSize: 20),
+                                                          overflow: TextOverflow.ellipsis,
                                                         ),
-                                                        SizedBox(width: 20),
-                                                        IconButton(
-                                                          splashRadius: 0.0001,
-                                                          padding: EdgeInsets.zero,
-                                                          constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                                          icon: Icon(Icons.edit, size: 21),
-                                                          onPressed: () {
-                                                            _showEditDialog(context, i, 3); // Show the edit dialog
-                                                          },
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  );
-                                                },
-                                              ),
+                                                      ),
+                                                      const SizedBox(width: 20),
+                                                      IconButton(
+                                                        splashRadius: 0.0001,
+                                                        padding: EdgeInsets.zero,
+                                                        constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                                        icon: const Icon(Icons.edit, size: 21),
+                                                        onPressed: () {
+                                                          _showEditDialog(context, i, 3); // Show the edit dialog
+                                                        },
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
                                             ),
-                                          if (isTextFormFieldVisibleRD && isMuzikContainerTouched)
+                                          if (isTextFormFieldVisibleRD && hasMusicSelected)
                                             Container(
-                                              padding: EdgeInsets.all(10),
+                                              padding: const EdgeInsets.all(10),
                                               child: Row(
                                                 crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
                                                   Expanded(
                                                     child: TextFormField(
                                                       controller: RDtextController,
-                                                      decoration: InputDecoration(
+                                                      decoration: const InputDecoration(
                                                         border: InputBorder.none,
                                                         hintText: 'ABA',
                                                       ),
                                                     ),
                                                   ),
-                                                  SizedBox(width: 10),
+                                                  const SizedBox(width: 10),
                                                   Expanded(
                                                     child: TextFormField(
                                                       controller: RDplatformPriceController,
                                                       keyboardType: TextInputType.number, // Show numeric keyboard
-                                                      decoration: InputDecoration(
+                                                      decoration: const InputDecoration(
                                                         border: InputBorder.none,
                                                         hintText: 'GAG',
                                                       ),
@@ -1009,29 +1047,21 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                             double dprice = double.tryParse(priceText) ?? 0.0;
                                                             String price = dprice.toStringAsFixed(2);
                                                             setState(() {
-                                                              formDataProvider.updateTextValue(text, 2, 3);
-                                                              formDataProvider.updateNumberValue(price, 2, 3);
+                                                              musicTitleList.add(text);
+                                                              musicPriceList.add(price);
+                                                              formDataProvider2.setMusicTitleValue(text, musicTitleList);
+                                                              formDataProvider2.setMusicPriceValue(price, musicPriceList);
+                                                              formDataProvider2.calculateSumOfMusic(musicPriceList);
                                                               isEditingListRD = false; // Add a corresponding entry for the new item
                                                               RDtextController.clear();
-                                                              formDataProvider.notifyListeners();
                                                               RDplatformPriceController.clear();
-                                                              formDataProvider.notifyListeners();
                                                               isTextFormFieldVisibleRD = false;
                                                               isAddButtonActiveRD = false;
-                                                              //***********************//
-                                                              formDataProvider.tvTitleList.forEach((item) {
-                                                                print("ekle ikonu item: $item");
-                                                              });
-                                                              //***********************//
-                                                              //***********************//
-                                                              formDataProvider.tvPriceList.forEach((item) {
-                                                                print("ekle ikonu price: $item");
-                                                              });
-                                                              //***********************//
+                                                              _load();
                                                             });
                                                           }
                                                         },
-                                                        icon: Icon(Icons.check_circle, size: 26),
+                                                        icon: const Icon(Icons.check_circle, size: 26),
                                                       ),
                                                       IconButton(
                                                         onPressed: () {
@@ -1042,7 +1072,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                             RDplatformPriceController.clear();
                                                           });
                                                         },
-                                                        icon: Icon(Icons.cancel, size: 26),
+                                                        icon: const Icon(Icons.cancel, size: 26),
                                                       ),
                                                     ],
                                                   ),
@@ -1051,41 +1081,29 @@ class _SubscriptionsState extends State<Subscriptions> {
                                             ),
                                           if (!isEditingListRD && !isTextFormFieldVisibleRD)
                                             Container(
-                                              padding: EdgeInsets.all(10),
+                                              padding: const EdgeInsets.all(10),
                                               child: Row(
                                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                 children: [
                                                   InkWell(
                                                     onTap: () {
                                                       setState(() {
-                                                        isTVContainerTouched = false;
-                                                        isOyunContainerTouched = false;
-                                                        isMuzikContainerTouched = true;
+                                                        hasTVSelected = false;
+                                                        hasGameSelected = false;
+                                                        hasMusicSelected = true;
                                                         isAddButtonActiveRD = true;
                                                         isTextFormFieldVisible = false;
                                                         isTextFormFieldVisibleND =false;
                                                         isTextFormFieldVisibleRD = true;
                                                         RDplatformPriceController.clear();
-                                                        formDataProvider.musicTitleList.forEach((element) {
-                                                          print('itemList: $element');
-                                                        });
-                                                        formDataProvider.musicPriceList.forEach((element) {
-                                                          print('pricesList: $element');
-                                                        });
-                                                        //print("isEditingList: $isEditingList");
-                                                        //print("isEditingListND: $isEditingList");
-                                                        //print("isEditingListRD: $isEditingList");
-                                                        //print("isTextFormFieldVisible: $isTextFormFieldVisible");
-                                                        //print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-                                                        //print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
                                                       });
                                                     },
-                                                    child: Icon(Icons.add_circle, size: 26),
+                                                    child: const Icon(Icons.add_circle, size: 26),
                                                   ),
                                                   if (convertSum3 != "0,00")
                                                     Padding(
                                                       padding: const EdgeInsets.only(right: 43),
-                                                      child: Text("Toplam: ${convertSum3}", style: GoogleFonts.montserrat(fontSize: 20),),
+                                                      child: Text("Toplam: $convertSum3", style: GoogleFonts.montserrat(fontSize: 20),),
                                                     ),
                                                 ],
                                               ),
@@ -1094,6 +1112,16 @@ class _SubscriptionsState extends State<Subscriptions> {
                                       ),
                                     ),
                                   ),
+                                  ListView.builder(
+                                      itemCount: sharedPreferencesData.length,
+                                      itemBuilder: (context, index) {
+                                        return ListTile(
+                                          title: Text(sharedPreferencesData[index]),
+                                        );
+                                      },
+                                      shrinkWrap: true,
+                                      physics: const NeverScrollableScrollPhysics(),
+                                    ),
                                 ],
                               ),
                             ),

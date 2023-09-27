@@ -306,9 +306,9 @@ class _IncomePageState extends State<IncomePage> {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              spreadRadius: 2,
-              blurRadius: 4,
+              color: Colors.black.withOpacity(0.5),
+              spreadRadius: 5,
+              blurRadius: 5,
               offset: Offset(0, 3),
             ),
           ],
