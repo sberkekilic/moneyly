@@ -341,6 +341,11 @@ class _BillsState extends State<Bills> {
     convertSum3 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfPhone);
   }
 
+  Future<void> setSumAll(double value) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setDouble('sumOfBills2', value);
+  }
+
   @override
   Widget build(BuildContext context) {
     final formDataProvider2 = Provider.of<FormDataProvider2>(context, listen: false);
@@ -349,6 +354,7 @@ class _BillsState extends State<Bills> {
     sumAll += sumOfHomeBills;
     sumAll += sumOfInternet;
     sumAll += sumOfPhone;
+    setSumAll(sumAll);
     return Scaffold(
       appBar: AppBar(
           backgroundColor: Color(0xfff0f0f1),

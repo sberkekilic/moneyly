@@ -361,6 +361,11 @@ class _SubscriptionsState extends State<Subscriptions> {
     convertSum3 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfMusic);
   }
 
+  Future<void> setSumAll(double value) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setDouble('sumOfSubs2', value);
+  }
+
   @override
   Widget build(BuildContext context) {
     final formDataProvider2 = Provider.of<FormDataProvider2>(context, listen: false);
@@ -369,6 +374,7 @@ class _SubscriptionsState extends State<Subscriptions> {
     sumAll += sumOfTV;
     sumAll += sumOfGame;
     sumAll += sumOfMusic;
+    setSumAll(sumAll);
 
     return Scaffold(
       appBar: AppBar(

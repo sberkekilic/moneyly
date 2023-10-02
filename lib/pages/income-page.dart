@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:moneyly/form-data-provider.dart';
-import 'package:moneyly/pages/gelir-ekle.dart';
 import 'package:moneyly/pages/selection.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class IncomePage extends StatefulWidget {
   const IncomePage({Key? key}) : super(key: key);
@@ -15,27 +14,50 @@ class IncomePage extends StatefulWidget {
 }
 
 class _IncomePageState extends State<IncomePage> {
+  String selectedTitle = '';
+  double incomeValue = 0.0;
+  double savingsValue = 0.0;
+  double wishesValue = 0.0;
+  double needsValue = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  String labelForOption(SelectedOption option) {
+    switch (option) {
+      case SelectedOption.Is:
+        return 'İş';
+      case SelectedOption.Burs:
+        return 'Burs';
+      case SelectedOption.Emekli:
+        return 'Emekli';
+      default:
+        return '';
+    }
+  }
+
+  void _load() async{
+    final prefs = await SharedPreferences.getInstance();
+    final ab1 = prefs.getInt('selected_option') ?? SelectedOption.None.index;
+    final ab2 = prefs.getString('income_value') ?? '0';
+    setState(() {
+      selectedTitle = labelForOption(SelectedOption.values[ab1]);
+      incomeValue = double.parse(ab2);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-
-    final page1 = Provider.of<IncomeSelections>(context, listen: false);
-    String incomeType = "";
-    if (page1.selectedOption == SelectedOption.Is){
-      incomeType = "İş";
-    } else if (page1.selectedOption == SelectedOption.Burs){
-      incomeType = "Burs";
-    } else if (page1.selectedOption == SelectedOption.Emekli){
-      incomeType = "Emekli";
-    }
-    double incomeValue = NumberFormat.decimalPattern('tr_TR').parse(page1.incomeValue) as double;
-    double savingsValue = incomeValue*0.2;
-    double wishesValue = incomeValue*0.3;
-    double needsValue = incomeValue*0.5;
+    savingsValue = incomeValue * 0.2;
+    wishesValue = incomeValue  * 0.3;
+    needsValue = incomeValue * 0.5;
     String formattedIncomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(incomeValue);
-    String formattedsavingsValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(savingsValue);
-    String formattedwishesValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(wishesValue);
-    String formattedneedsValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(needsValue);
-
+    String formattedSavingsValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(savingsValue);
+    String formattedWishesValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(wishesValue);
+    String formattedNeedsValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(needsValue);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xfff0f0f1),
@@ -95,7 +117,7 @@ class _IncomePageState extends State<IncomePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("${incomeType} Geliri", style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold)),
+                    Text("$selectedTitle Geliri", style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold)),
                     SizedBox(height: 10),
                     Text(formattedIncomeValue, style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold)),
                     SizedBox(
@@ -153,7 +175,7 @@ class _IncomePageState extends State<IncomePage> {
                   children: [
                     Text("Birikim Hedefi", style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold)),
                     SizedBox(height: 10),
-                    Text("0,00 / ${formattedsavingsValue}", style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold)),
+                    Text("0,00 / ${formattedSavingsValue}", style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold)),
                     SizedBox(
                       child: LinearPercentIndicator(
                         padding: EdgeInsets.only(right: 10),
@@ -208,7 +230,7 @@ class _IncomePageState extends State<IncomePage> {
                   children: [
                     Text("İstekler Hedefi", style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold)),
                     SizedBox(height: 10),
-                    Text("0,00 / ${formattedwishesValue}", style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold)),
+                    Text("0,00 / ${formattedWishesValue}", style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold)),
                     SizedBox(
                       child: LinearPercentIndicator(
                         padding: EdgeInsets.only(right: 10),
@@ -264,7 +286,7 @@ class _IncomePageState extends State<IncomePage> {
                   children: [
                     Text("İhtiyaçlar Hedefi", style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold)),
                     SizedBox(height: 10),
-                    Text("0,00 / ${formattedneedsValue}", style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold)),
+                    Text("0,00 / ${formattedNeedsValue}", style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold)),
                     SizedBox(
                       child: LinearPercentIndicator(
                         padding: EdgeInsets.only(right: 10),

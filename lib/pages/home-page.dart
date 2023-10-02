@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:moneyly/pages/gelir-ekle.dart';
+import 'package:moneyly/pages/selection.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:step_progress_indicator/step_progress_indicator.dart';
@@ -19,9 +21,15 @@ class _HomePageState extends State<HomePage> {
     'selected_option', 'income_value', 'sumOfTV2', 'sumOfGame2',
     'sumOfMusic2', 'sumOfHome2', 'sumOfInternet2', 'sumOfPhone2',
     'sumOfRent2', 'sumOfKitchen2', 'sumOfCatering2', 'sumOfEnt2',
-    'sumOfOther2',
+    'sumOfOther2'
   ];
-  String incomeValue = "";
+  List<String> actualDesiredKeys = [
+    'selected_option', 'income_value', 'sumOfSubs2', 'sumOfBills2', 'sumOfOthers2'
+  ];
+  double incomeValue = 0.0;
+  double savingsValue = 0.0;
+  double wishesValue = 0.0;
+  double needsValue = 0.0;
   String sumOfTV = "0.0";
   String sumOfGame = "0.0";
   String sumOfMusic = "0.0";
@@ -33,6 +41,7 @@ class _HomePageState extends State<HomePage> {
   String sumOfCatering = "0.0";
   String sumOfEnt = "0.0";
   String sumOfOther = "0.0";
+  String selectedTitle = '';
 
   @override
   void initState() {
@@ -43,21 +52,40 @@ class _HomePageState extends State<HomePage> {
   Future<void> loadSharedPreferencesData(List<String> desiredKeys) async {
     final prefs = await SharedPreferences.getInstance();
     sharedPreferencesData = [];
+    bool allKeysHaveValues = true; // Assume all keys have values initially
 
     for (var key in desiredKeys) {
       final value = prefs.get(key);
       if (value != null) {
         sharedPreferencesData.add('$key: $value');
+      } else {
+        allKeysHaveValues = false; // If any key is empty, set the flag to false
       }
     }
 
     setState(() {
     }); // Trigger a rebuild of the widget to display the data
-  }
 
+    if (allKeysHaveValues) {
+      print("ANAN!");
+    }
+    print("sharedPreferencesData: $sharedPreferencesData");
+  }
+  String labelForOption(SelectedOption option) {
+    switch (option) {
+      case SelectedOption.Is:
+        return 'İş';
+      case SelectedOption.Burs:
+        return 'Burs';
+      case SelectedOption.Emekli:
+        return 'Emekli';
+      default:
+        return '';
+    }
+  }
   void _load() async {
     final prefs = await SharedPreferences.getInstance();
-    final ab1 = prefs.getInt('selected_option') ?? 0;
+    final ab1 = prefs.getInt('selected_option') ?? SelectedOption.None.index;
     final ab2 = prefs.getString('income_value') ?? '0';
     final ab3 = prefs.getDouble('sumOfTV2') ?? 0.0;
     final ab4 = prefs.getDouble('sumOfGame2') ?? 0.0;
@@ -71,7 +99,8 @@ class _HomePageState extends State<HomePage> {
     final ab12 = prefs.getDouble('sumOfEnt2') ?? 0.0;
     final ab13 = prefs.getDouble('sumOfOther2') ?? 0.0;
     setState(() {
-      incomeValue = ab2;
+      selectedTitle = labelForOption(SelectedOption.values[ab1]);
+      incomeValue = double.parse(ab2);
       sumOfTV = ab3.toString();
       sumOfGame = ab4.toString();
       sumOfMusic = ab5.toString();
@@ -83,22 +112,21 @@ class _HomePageState extends State<HomePage> {
       sumOfCatering = ab11.toString();
       sumOfEnt = ab12.toString();
       sumOfOther = ab13.toString();
-      loadSharedPreferencesData(desiredKeys);
+      loadSharedPreferencesData(actualDesiredKeys);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-
-    double savingsValue = double.parse(incomeValue) * 0.2;
-    double wishesValue = double.parse(incomeValue) * 0.3;
-    double needsValue = double.parse(incomeValue) * 0.5;
+    savingsValue = incomeValue * 0.2;
+    wishesValue = incomeValue  * 0.3;
+    needsValue = incomeValue * 0.5;
     double sumOfSubs = double.parse(sumOfTV)+double.parse(sumOfGame)+double.parse(sumOfMusic);
     double sumOfBills = double.parse(sumOfHome)+double.parse(sumOfInternet)+double.parse(sumOfPhone);
     double sumOfOthers = double.parse(sumOfRent)+double.parse(sumOfKitchen)+double.parse(sumOfCatering)+double.parse(sumOfEnt)+double.parse(sumOfOther);
     double outcomeValue = sumOfSubs+sumOfBills+sumOfOthers;
-    double netProfit = double.parse(incomeValue) - outcomeValue;
-    String formattedIncomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(double.parse(incomeValue));
+    double netProfit = incomeValue - outcomeValue;
+    String formattedIncomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(incomeValue);
     String formattedOutcomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(outcomeValue);
     String formattedProfitValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(netProfit);
     String formattedSumOfSubs = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfSubs);
@@ -108,21 +136,30 @@ class _HomePageState extends State<HomePage> {
     String formattedWishesValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(wishesValue);
     String formattedNeedsValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(needsValue);
 
-    int incomeYuzdesi = double.parse(incomeValue) ~/ 100;
-    int netProfitYuzdesi = netProfit.toInt() ~/ 100;
-    int bolum = (netProfit.toInt() * 100) ~/ double.parse(incomeValue); // Calculate as an integer
-    if (netProfit.toInt() % double.parse(incomeValue) != 0) {
-      double bolumDouble = netProfit / double.parse(incomeValue); // Calculate as a double
+    int incomeYuzdesi = (incomeValue * 100).toInt();
+    int netProfitYuzdesi = (netProfit * 100).toInt();
+    int bolum;
+
+    if (incomeValue != 0.0) {
+      double bolumDouble = netProfit / incomeValue;
       print("$bolumDouble $netProfit bolumDouble IF");
-      bolum = (bolumDouble * 100).toInt(); // Convert the double to an integer
-      netProfit = double.parse(incomeValue) * bolumDouble;
+
+      if (bolumDouble.isFinite) {
+        bolum = (bolumDouble * 100).toInt();
+        netProfit = incomeValue * bolumDouble;
+      } else {
+        // Handle the case where bolumDouble is Infinity or NaN
+        bolum = 0; // or any other appropriate value
+      }
+    } else {
+      bolum = 0; // Handle the case where incomeValue is 0
     }
+
     String formattedBolum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(bolum);
     incomeYuzdesi = incomeYuzdesi*10;
     print("$netProfitYuzdesi netProfitYuzdesi SON");
     print("${bolum} bolum SON"); // Print as an integer
     print("$incomeYuzdesi incomeYuzdesi SON");
-
 
     return Scaffold(
       appBar: AppBar(
@@ -383,7 +420,7 @@ class _HomePageState extends State<HomePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("incomeType Geliri", style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold)),
+                    Text("$selectedTitle Geliri", style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold)),
                     SizedBox(height: 10),
                     Text(formattedIncomeValue, style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600)),
                     SizedBox(

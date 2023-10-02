@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:moneyly/form-data-provider.dart';
-import 'package:moneyly/pages/gelir-ekle.dart';
 import 'package:moneyly/pages/selection.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OutcomePage extends StatefulWidget {
   const OutcomePage({Key? key}) : super(key: key);
@@ -51,102 +50,155 @@ class _OutcomePageState extends State<OutcomePage> {
     'Diğer'
   ];
 
+
+  List<String> tvTitleList = [];
+  List<String> gameTitleList = [];
+  List<String> musicTitleList = [];
+  List<String> tvPriceList = [];
+  List<String> gamePriceList = [];
+  List<String> musicPriceList = [];
+
+  List<String> homeBillsTitleList = [];
+  List<String> internetTitleList = [];
+  List<String> phoneTitleList = [];
+  List<String> homeBillsPriceList = [];
+  List<String> internetPriceList = [];
+  List<String> phonePriceList = [];
+
+  List<String> rentTitleList = [];
+  List<String> kitchenTitleList = [];
+  List<String> cateringTitleList = [];
+  List<String> entertainmentTitleList = [];
+  List<String> otherTitleList = [];
+  List<String> rentPriceList = [];
+  List<String> kitchenPriceList = [];
+  List<String> cateringPriceList = [];
+  List<String> entertainmentPriceList = [];
+  List<String> otherPriceList = [];
+
+  double incomeValue = 0.0;
+  double savingsValue = 0.0;
+  double wishesValue = 0.0;
+  double needsValue = 0.0;
+  double sumOfSubs = 0.0;
+  double sumOfBills = 0.0;
+  double sumOfOthers = 0.0;
+  String sumOfTV = "0.0";
+  String sumOfGame = "0.0";
+  String sumOfMusic = "0.0";
+  String sumOfHome = "0.0";
+  String sumOfInternet = "0.0";
+  String sumOfPhone = "0.0";
+  String sumOfRent = "0.0";
+  String sumOfKitchen = "0.0";
+  String sumOfCatering = "0.0";
+  String sumOfEnt = "0.0";
+  String sumOfOther = "0.0";
+  String selectedTitle = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  String labelForOption(SelectedOption option) {
+    switch (option) {
+      case SelectedOption.Is:
+        return 'İş';
+      case SelectedOption.Burs:
+        return 'Burs';
+      case SelectedOption.Emekli:
+        return 'Emekli';
+      default:
+        return '';
+    }
+  }
+
+  void _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final ab1 = prefs.getInt('selected_option') ?? SelectedOption.None.index;
+    final ab2 = prefs.getString('income_value') ?? '0';
+    final ab3 = prefs.getDouble('sumOfTV2') ?? 0.0;
+    final ab4 = prefs.getDouble('sumOfGame2') ?? 0.0;
+    final ab5 = prefs.getDouble('sumOfMusic2') ?? 0.0;
+    final ab6 = prefs.getDouble('sumOfHome2') ?? 0.0;
+    final ab7 = prefs.getDouble('sumOfInternet2') ?? 0.0;
+    final ab8 = prefs.getDouble('sumOfPhone2') ?? 0.0;
+    final ab9 = prefs.getDouble('sumOfRent2') ?? 0.0;
+    final ab10 = prefs.getDouble('sumOfKitchen2') ?? 0.0;
+    final ab11 = prefs.getDouble('sumOfCatering2') ?? 0.0;
+    final ab12 = prefs.getDouble('sumOfEnt2') ?? 0.0;
+    final ab13 = prefs.getDouble('sumOfOther2') ?? 0.0;
+    final ab14 = prefs.getDouble('sumOfSubs2') ?? 0.0;
+    final ab15 = prefs.getDouble('sumOfBills2') ?? 0.0;
+    final ab16 = prefs.getDouble('sumOfOthers2') ?? 0.0;
+    final ab17 = prefs.getStringList('tvTitleList2') ?? [];
+    final ab18 = prefs.getStringList('gameTitleList2') ?? [];
+    final ab19 = prefs.getStringList('musicTitleList2') ?? [];
+    final ab20 = prefs.getStringList('homeBillsTitleList2') ?? [];
+    final ab21 = prefs.getStringList('internetTitleList2') ?? [];
+    final ab22 = prefs.getStringList('phoneTitleList2') ?? [];
+    final ab23 = prefs.getStringList('rentTitleList2') ?? [];
+    final ab24 = prefs.getStringList('kitchenTitleList2') ?? [];
+    final ab25 = prefs.getStringList('cateringTitleList2') ?? [];
+    final ab26 = prefs.getStringList('entertainmentTitleList2') ?? [];
+    final ab27 = prefs.getStringList('otherTitleList2') ?? [];
+    final ab28 = prefs.getStringList('tvPriceList2') ?? [];
+    final ab29 = prefs.getStringList('gamePriceList2') ?? [];
+    final ab30 = prefs.getStringList('musicPriceList2') ?? [];
+    final ab31 = prefs.getStringList('homeBillsPriceList2') ?? [];
+    final ab32 = prefs.getStringList('internetPriceList2') ?? [];
+    final ab33 = prefs.getStringList('phonePriceList2') ?? [];
+    final ab34 = prefs.getStringList('rentPriceList2') ?? [];
+    final ab35 = prefs.getStringList('kitchenPriceList2') ?? [];
+    final ab36 = prefs.getStringList('cateringPriceList2') ?? [];
+    final ab37 = prefs.getStringList('entertainmentPriceList2') ?? [];
+    final ab38 = prefs.getStringList('otherPriceList2') ?? [];
+    setState(() {
+      selectedTitle = labelForOption(SelectedOption.values[ab1]);
+      incomeValue = double.parse(ab2);
+      sumOfTV = ab3.toString();
+      sumOfGame = ab4.toString();
+      sumOfMusic = ab5.toString();
+      sumOfHome = ab6.toString();
+      sumOfInternet = ab7.toString();
+      sumOfPhone = ab8.toString();
+      sumOfRent = ab9.toString();
+      sumOfKitchen = ab10.toString();
+      sumOfCatering = ab11.toString();
+      sumOfEnt = ab12.toString();
+      sumOfOther = ab13.toString();
+      sumOfSubs = ab14;
+      sumOfBills = ab15;
+      sumOfOthers = ab16;
+      tvTitleList = ab17;
+      gameTitleList = ab18;
+      musicTitleList = ab19;
+      homeBillsTitleList = ab20;
+      internetTitleList = ab21;
+      phoneTitleList = ab22;
+      rentTitleList = ab23;
+      kitchenTitleList = ab24;
+      cateringTitleList = ab25;
+      entertainmentTitleList = ab26;
+      otherTitleList = ab27;
+      tvPriceList = ab28;
+      gamePriceList = ab29;
+      musicPriceList = ab30;
+      homeBillsPriceList = ab31;
+      internetPriceList = ab32;
+      phonePriceList = ab33;
+      rentPriceList = ab34;
+      kitchenPriceList = ab35;
+      cateringPriceList = ab36;
+      entertainmentPriceList = ab37;
+      otherPriceList = ab38;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final page1 = Provider.of<IncomeSelections>(context, listen: false);
-    String incomeType = "";
-    if (page1.selectedOption == SelectedOption.Is){
-      incomeType = "İş";
-    } else if (page1.selectedOption == SelectedOption.Burs){
-      incomeType = "Burs";
-    } else if (page1.selectedOption == SelectedOption.Emekli){
-      incomeType = "Emekli";
-    }
-    final formDataProvider = Provider.of<FormDataProvider>(context, listen: false);
-    double sum = 0.0;
-    for(String price in formDataProvider.tvPriceList){
-      sum += double.parse(price);
-    }
-    double sumoyun = 0.0;
-    for(String price in formDataProvider.gamingPriceList){
-      sumoyun += double.parse(price);
-    }
-    double summuzik = 0.0;
-    for(String price in formDataProvider.musicPriceList){
-      summuzik += double.parse(price);
-    }
-    double sumhome = 0.0;
-    for(String price in formDataProvider.homeBillsPriceList){
-      sumhome += double.parse(price);
-    }
-    double suminternet = 0.0;
-    for(String price in formDataProvider.internetPriceList){
-      suminternet += double.parse(price);
-    }
-    double sumphone = 0.0;
-    for(String price in formDataProvider.phonePriceList){
-      sumphone += double.parse(price);
-    }
-    double sumrent = 0.0;
-    for(String price in formDataProvider.rentPriceList){
-      sumrent += double.parse(price);
-    }
-    double sumkitchen = 0.0;
-    for(String price in formDataProvider.kitchenPriceList){
-      sumkitchen += double.parse(price);
-    }
-    double sumcatering = 0.0;
-    for(String price in formDataProvider.cateringPriceList){
-      sumcatering += double.parse(price);
-    }
-    double sument = 0.0;
-    for(String price in formDataProvider.entertainmentPriceList){
-      sument += double.parse(price);
-    }
-    double sumother = 0.0;
-    for(String price in formDataProvider.otherPriceList){
-      sumother += double.parse(price);
-    }
-    String convertSum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum);
-    formDataProvider.sumOfTV = convertSum;
-    String convertSum2 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumoyun);
-    formDataProvider.sumOfGaming = convertSum2;
-    String convertSum3 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(summuzik);
-    formDataProvider.sumOfMusic = convertSum3;
-    String convertSum21 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumhome);
-    formDataProvider.sumOfHomeBills = convertSum21;
-    String convertSum22 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(suminternet);
-    formDataProvider.sumOfInternet = convertSum22;
-    String convertSum23 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumphone);
-    formDataProvider.sumOfPhone = convertSum23;
-    String convertSum31 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumrent);
-    formDataProvider.sumOfRent = convertSum31;
-    String convertSum32 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumkitchen);
-    formDataProvider.sumOfKitchen = convertSum32;
-    String convertSum33 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumcatering);
-    formDataProvider.sumOfCatering = convertSum33;
-    String convertSum34 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sument);
-    formDataProvider.sumOfEntertainment = convertSum34;
-    String convertSum35 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumother);
-    formDataProvider.sumOfOther = convertSum35;
-    double incomeValue = NumberFormat.decimalPattern('tr_TR').parse(page1.incomeValue) as double;
-    double sumOfTV = NumberFormat.decimalPattern('tr_TR').parse(formDataProvider.sumOfTV) as double;
-    double sumOfGaming = NumberFormat.decimalPattern('tr_TR').parse(formDataProvider.sumOfGaming) as double;
-    double sumOfMusic = NumberFormat.decimalPattern('tr_TR').parse(formDataProvider.sumOfMusic) as double;
-    double sumOfHomeBills = NumberFormat.decimalPattern('tr_TR').parse(formDataProvider.sumOfHomeBills) as double;
-    double sumOfInternet = NumberFormat.decimalPattern('tr_TR').parse(formDataProvider.sumOfInternet) as double;
-    double sumOfPhone = NumberFormat.decimalPattern('tr_TR').parse(formDataProvider.sumOfPhone) as double;
-    double sumOfRent = NumberFormat.decimalPattern('tr_TR').parse(formDataProvider.sumOfRent) as double;
-    double sumOfKitchen = NumberFormat.decimalPattern('tr_TR').parse(formDataProvider.sumOfKitchen) as double;
-    double sumOfCatering = NumberFormat.decimalPattern('tr_TR').parse(formDataProvider.sumOfCatering) as double;
-    double sumOfEnt= NumberFormat.decimalPattern('tr_TR').parse(formDataProvider.sumOfEntertainment) as double;
-    double sumOfOther = NumberFormat.decimalPattern('tr_TR').parse(formDataProvider.sumOfOther) as double;
-    double savingsValue = incomeValue*0.2;
-    double wishesValue = incomeValue*0.3;
-    double needsValue = incomeValue*0.5;
-    double sumOfSubs = sumOfTV+sumOfGaming+sumOfMusic;
-    double sumOfBills = sumOfHomeBills+sumOfInternet+sumOfPhone;
-    double sumOfOthers = sumOfRent+sumOfKitchen+sumOfCatering+sumOfEnt+sumOfOther;
     double outcomeValue = sumOfSubs+sumOfBills+sumOfOthers;
     double subsPercent = sumOfSubs/outcomeValue;
     double billsPercent = sumOfBills/outcomeValue;
@@ -184,9 +236,9 @@ class _OutcomePageState extends State<OutcomePage> {
     Color mediumColor = Color(0xFFFFA500);
     Color biggestColor = Color(0xFFFF8C00);
 
-    int totalSubsElement = formDataProvider.tvTitleList.length + formDataProvider.gamingTitleList.length + formDataProvider.musicTitleList.length;
-    int totalBillsElement = formDataProvider.homeBillsTitleList.length + formDataProvider.internetTitleList.length + formDataProvider.phoneTitleList.length;
-    int totalOthersElement = formDataProvider.rentTitleList.length + formDataProvider.kitchenTitleList.length + formDataProvider.cateringTitleList.length + formDataProvider.entertainmentTitleList.length + formDataProvider.otherTitleList.length;
+    int totalSubsElement = tvTitleList.length + gameTitleList.length + musicTitleList.length;
+    int totalBillsElement = homeBillsTitleList.length + internetTitleList.length + phoneTitleList.length;
+    int totalOthersElement = rentTitleList.length + kitchenTitleList.length + cateringTitleList.length + entertainmentTitleList.length + otherTitleList.length;
 
     void _showEditDialog(BuildContext context, int index, int page, int orderIndex) {
       String caterogyName = "";
@@ -241,25 +293,25 @@ class _OutcomePageState extends State<OutcomePage> {
         switch (orderIndex) {
           case 1:
             TextEditingController editController =
-            TextEditingController(text: formDataProvider.tvTitleList[index]);
+            TextEditingController(text: tvTitleList[index]);
             TextEditingController priceController =
-            TextEditingController(text: formDataProvider.tvPriceList[index]);
+            TextEditingController(text: tvPriceList[index]);
             selectedEditController = editController;
             selectedPriceController = priceController;
             break;
           case 2:
             TextEditingController NDeditController =
-            TextEditingController(text: formDataProvider.gamingTitleList[index]);
+            TextEditingController(text: gameTitleList[index]);
             TextEditingController NDpriceController =
-            TextEditingController(text: formDataProvider.gamingPriceList[index]);
+            TextEditingController(text: gamePriceList[index]);
             selectedEditController = NDeditController;
             selectedPriceController = NDpriceController;
             break;
           case 3:
             TextEditingController RDeditController =
-            TextEditingController(text: formDataProvider.musicTitleList[index]);
+            TextEditingController(text: musicTitleList[index]);
             TextEditingController RDpriceController =
-            TextEditingController(text: formDataProvider.musicPriceList[index]);
+            TextEditingController(text: musicPriceList[index]);
             selectedEditController = RDeditController;
             selectedPriceController = RDpriceController;
             break;
@@ -268,25 +320,25 @@ class _OutcomePageState extends State<OutcomePage> {
         switch (orderIndex) {
           case 1:
             TextEditingController editController =
-            TextEditingController(text: formDataProvider.homeBillsTitleList[index]);
+            TextEditingController(text: homeBillsTitleList[index]);
             TextEditingController priceController =
-            TextEditingController(text: formDataProvider.homeBillsPriceList[index]);
+            TextEditingController(text: homeBillsPriceList[index]);
             selectedEditController = editController;
             selectedPriceController = priceController;
             break;
           case 2:
             TextEditingController NDeditController =
-            TextEditingController(text: formDataProvider.internetTitleList[index]);
+            TextEditingController(text: internetTitleList[index]);
             TextEditingController NDpriceController =
-            TextEditingController(text: formDataProvider.internetPriceList[index]);
+            TextEditingController(text: internetPriceList[index]);
             selectedEditController = NDeditController;
             selectedPriceController = NDpriceController;
             break;
           case 3:
             TextEditingController RDeditController =
-            TextEditingController(text: formDataProvider.phoneTitleList[index]);
+            TextEditingController(text: phoneTitleList[index]);
             TextEditingController RDpriceController =
-            TextEditingController(text: formDataProvider.phonePriceList[index]);
+            TextEditingController(text: phonePriceList[index]);
             selectedEditController = RDeditController;
             selectedPriceController = RDpriceController;
             break;
@@ -295,41 +347,41 @@ class _OutcomePageState extends State<OutcomePage> {
         switch (orderIndex) {
           case 1:
             TextEditingController editController =
-            TextEditingController(text: formDataProvider.rentTitleList[index]);
+            TextEditingController(text: rentTitleList[index]);
             TextEditingController priceController =
-            TextEditingController(text: formDataProvider.rentPriceList[index]);
+            TextEditingController(text: rentPriceList[index]);
             selectedEditController = editController;
             selectedPriceController = priceController;
             break;
           case 2:
             TextEditingController NDeditController =
-            TextEditingController(text: formDataProvider.kitchenTitleList[index]);
+            TextEditingController(text: kitchenTitleList[index]);
             TextEditingController NDpriceController =
-            TextEditingController(text: formDataProvider.kitchenPriceList[index]);
+            TextEditingController(text: kitchenPriceList[index]);
             selectedEditController = NDeditController;
             selectedPriceController = NDpriceController;
             break;
           case 3:
             TextEditingController RDeditController =
-            TextEditingController(text: formDataProvider.cateringTitleList[index]);
+            TextEditingController(text: cateringTitleList[index]);
             TextEditingController RDpriceController =
-            TextEditingController(text: formDataProvider.cateringPriceList[index]);
+            TextEditingController(text: cateringPriceList[index]);
             selectedEditController = RDeditController;
             selectedPriceController = RDpriceController;
             break;
           case 4:
             TextEditingController THeditController =
-            TextEditingController(text: formDataProvider.entertainmentTitleList[index]);
+            TextEditingController(text: entertainmentTitleList[index]);
             TextEditingController THpriceController =
-            TextEditingController(text: formDataProvider.entertainmentPriceList[index]);
+            TextEditingController(text: entertainmentPriceList[index]);
             selectedEditController = THeditController;
             selectedPriceController = THpriceController;
             break;
           case 5:
             TextEditingController otherEditController =
-            TextEditingController(text: formDataProvider.otherTitleList[index]);
+            TextEditingController(text: otherTitleList[index]);
             TextEditingController otherPriceController =
-            TextEditingController(text: formDataProvider.otherPriceList[index]);
+            TextEditingController(text: otherPriceList[index]);
             selectedEditController = otherEditController;
             selectedPriceController = otherPriceController;
             break;
@@ -400,54 +452,54 @@ class _OutcomePageState extends State<OutcomePage> {
                       if(page == 1){
                         switch (orderIndex){
                           case 1:
-                            formDataProvider.tvTitleList[index] = selectedEditController.text;
-                            formDataProvider.tvPriceList[index] = selectedPriceController.text;
+                            tvTitleList[index] = selectedEditController.text;
+                            tvPriceList[index] = selectedPriceController.text;
                             break;
                           case 2:
-                            formDataProvider.gamingTitleList[index] = selectedEditController.text;
-                            formDataProvider.gamingPriceList[index] = selectedPriceController.text;
+                            gameTitleList[index] = selectedEditController.text;
+                            gamePriceList[index] = selectedPriceController.text;
                             break;
                           case 3:
-                            formDataProvider.musicTitleList[index] = selectedEditController.text;
-                            formDataProvider.musicPriceList[index] = selectedPriceController.text;
+                            musicTitleList[index] = selectedEditController.text;
+                            musicPriceList[index] = selectedPriceController.text;
                             break;
                         }
                       } else if (page == 2){
                         switch (orderIndex){
                           case 1:
-                            formDataProvider.homeBillsTitleList[index] = selectedEditController.text;
-                            formDataProvider.homeBillsPriceList[index] = selectedPriceController.text;
+                            homeBillsTitleList[index] = selectedEditController.text;
+                            homeBillsPriceList[index] = selectedPriceController.text;
                             break;
                           case 2:
-                            formDataProvider.internetTitleList[index] = selectedEditController.text;
-                            formDataProvider.internetPriceList[index] = selectedPriceController.text;
+                            internetTitleList[index] = selectedEditController.text;
+                            internetPriceList[index] = selectedPriceController.text;
                             break;
                           case 3:
-                            formDataProvider.phoneTitleList[index] = selectedEditController.text;
-                            formDataProvider.phonePriceList[index] = selectedPriceController.text;
+                            phoneTitleList[index] = selectedEditController.text;
+                            phonePriceList[index] = selectedPriceController.text;
                             break;
                         }
                       } else if (page == 3){
                         switch (orderIndex){
                           case 1:
-                            formDataProvider.rentTitleList[index] = selectedEditController.text;
-                            formDataProvider.rentPriceList[index] = selectedPriceController.text;
+                            rentTitleList[index] = selectedEditController.text;
+                            rentPriceList[index] = selectedPriceController.text;
                             break;
                           case 2:
-                            formDataProvider.kitchenTitleList[index] = selectedEditController.text;
-                            formDataProvider.kitchenPriceList[index] = selectedPriceController.text;
+                            kitchenTitleList[index] = selectedEditController.text;
+                            kitchenPriceList[index] = selectedPriceController.text;
                             break;
                           case 3:
-                            formDataProvider.cateringTitleList[index] = selectedEditController.text;
-                            formDataProvider.cateringPriceList[index] = selectedPriceController.text;
+                            cateringTitleList[index] = selectedEditController.text;
+                            cateringPriceList[index] = selectedPriceController.text;
                             break;
                           case 4:
-                            formDataProvider.entertainmentTitleList[index] = selectedEditController.text;
-                            formDataProvider.entertainmentPriceList[index] = selectedPriceController.text;
+                            entertainmentTitleList[index] = selectedEditController.text;
+                            entertainmentPriceList[index] = selectedPriceController.text;
                             break;
                           case 5:
-                            formDataProvider.otherTitleList[index] = selectedEditController.text;
-                            formDataProvider.otherPriceList[index] = selectedPriceController.text;
+                            otherTitleList[index] = selectedEditController.text;
+                            otherPriceList[index] = selectedPriceController.text;
                             break;
                         }
                       }
@@ -463,23 +515,23 @@ class _OutcomePageState extends State<OutcomePage> {
                           switch (orderIndex){
                             case 1:
                               TextEditingController priceController =
-                              TextEditingController(text: formDataProvider.tvPriceList[index]);
-                              formDataProvider.tvTitleList.removeAt(index);
-                              formDataProvider.tvPriceList.removeAt(index);
+                              TextEditingController(text: tvPriceList[index]);
+                              tvTitleList.removeAt(index);
+                              tvPriceList.removeAt(index);
                               priceController.clear();
                               break;
                             case 2:
                               TextEditingController NDpriceController =
-                              TextEditingController(text: formDataProvider.gamingPriceList[index]);
-                              formDataProvider.gamingTitleList.removeAt(index);
-                              formDataProvider.gamingPriceList.removeAt(index);
+                              TextEditingController(text: gamePriceList[index]);
+                              gameTitleList.removeAt(index);
+                              gamePriceList.removeAt(index);
                               NDpriceController.clear();
                               break;
                             case 3:
                               TextEditingController RDpriceController =
-                              TextEditingController(text: formDataProvider.musicPriceList[index]);
-                              formDataProvider.musicTitleList.removeAt(index);
-                              formDataProvider.musicPriceList.removeAt(index);
+                              TextEditingController(text: musicPriceList[index]);
+                              musicTitleList.removeAt(index);
+                              musicPriceList.removeAt(index);
                               RDpriceController.clear();
                               break;
                           }
@@ -487,23 +539,23 @@ class _OutcomePageState extends State<OutcomePage> {
                           switch (orderIndex){
                             case 1:
                               TextEditingController priceController =
-                              TextEditingController(text: formDataProvider.homeBillsPriceList[index]);
-                              formDataProvider.homeBillsTitleList.removeAt(index);
-                              formDataProvider.homeBillsPriceList.removeAt(index);
+                              TextEditingController(text: homeBillsPriceList[index]);
+                              homeBillsTitleList.removeAt(index);
+                              homeBillsPriceList.removeAt(index);
                               priceController.clear();
                               break;
                             case 2:
                               TextEditingController NDpriceController =
-                              TextEditingController(text: formDataProvider.internetPriceList[index]);
-                              formDataProvider.internetTitleList.removeAt(index);
-                              formDataProvider.internetPriceList.removeAt(index);
+                              TextEditingController(text: internetPriceList[index]);
+                              internetTitleList.removeAt(index);
+                              internetPriceList.removeAt(index);
                               NDpriceController.clear();
                               break;
                             case 3:
                               TextEditingController RDpriceController =
-                              TextEditingController(text: formDataProvider.phonePriceList[index]);
-                              formDataProvider.phoneTitleList.removeAt(index);
-                              formDataProvider.phonePriceList.removeAt(index);
+                              TextEditingController(text: phonePriceList[index]);
+                              phoneTitleList.removeAt(index);
+                              phonePriceList.removeAt(index);
                               RDpriceController.clear();
                               break;
                           }
@@ -511,37 +563,37 @@ class _OutcomePageState extends State<OutcomePage> {
                           switch (orderIndex){
                             case 1:
                               TextEditingController priceController =
-                              TextEditingController(text: formDataProvider.rentPriceList[index]);
-                              formDataProvider.rentTitleList.removeAt(index);
-                              formDataProvider.rentPriceList.removeAt(index);
+                              TextEditingController(text: rentPriceList[index]);
+                              rentTitleList.removeAt(index);
+                              rentPriceList.removeAt(index);
                               priceController.clear();
                               break;
                             case 2:
                               TextEditingController NDpriceController =
-                              TextEditingController(text: formDataProvider.kitchenPriceList[index]);
-                              formDataProvider.kitchenTitleList.removeAt(index);
-                              formDataProvider.kitchenPriceList.removeAt(index);
+                              TextEditingController(text: kitchenPriceList[index]);
+                              kitchenTitleList.removeAt(index);
+                              kitchenPriceList.removeAt(index);
                               NDpriceController.clear();
                               break;
                             case 3:
                               TextEditingController RDpriceController =
-                              TextEditingController(text: formDataProvider.cateringPriceList[index]);
-                              formDataProvider.cateringTitleList.removeAt(index);
-                              formDataProvider.cateringPriceList.removeAt(index);
+                              TextEditingController(text: cateringPriceList[index]);
+                              cateringTitleList.removeAt(index);
+                              cateringPriceList.removeAt(index);
                               RDpriceController.clear();
                               break;
                             case 4:
                               TextEditingController THpriceController =
-                              TextEditingController(text: formDataProvider.entertainmentPriceList[index]);
-                              formDataProvider.entertainmentTitleList.removeAt(index);
-                              formDataProvider.entertainmentPriceList.removeAt(index);
+                              TextEditingController(text: entertainmentPriceList[index]);
+                              entertainmentTitleList.removeAt(index);
+                              entertainmentPriceList.removeAt(index);
                               THpriceController.clear();
                               break;
                             case 5:
                               TextEditingController otherPriceController =
-                              TextEditingController(text: formDataProvider.otherPriceList[index]);
-                              formDataProvider.otherTitleList.removeAt(index);
-                              formDataProvider.otherPriceList.removeAt(index);
+                              TextEditingController(text: otherPriceList[index]);
+                              otherTitleList.removeAt(index);
+                              otherPriceList.removeAt(index);
                               otherPriceController.clear();
                               break;
                           }
@@ -1195,7 +1247,7 @@ class _OutcomePageState extends State<OutcomePage> {
                       physics: NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
                       children: [
-                        if(formDataProvider.tvTitleList.isNotEmpty)
+                        if(tvTitleList.isNotEmpty)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -1204,9 +1256,9 @@ class _OutcomePageState extends State<OutcomePage> {
                             ListView.builder(
                               physics: NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
-                              itemCount: formDataProvider.tvTitleList.length + 1, // +1 for the "Abonelik Ekle" row
+                              itemCount: tvTitleList.length + 1, // +1 for the "Abonelik Ekle" row
                               itemBuilder: (context, index) {
-                                if (index < formDataProvider.tvTitleList.length) {
+                                if (index < tvTitleList.length) {
                                   return Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -1217,7 +1269,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             flex: 2,
                                             fit: FlexFit.tight,
                                             child: Text(
-                                              formDataProvider.tvTitleList[index],
+                                              tvTitleList[index],
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -1227,7 +1279,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             fit: FlexFit.tight,
                                             child: Text(
                                               textAlign: TextAlign.right,
-                                              formDataProvider.tvPriceList[index],
+                                              tvPriceList[index],
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -1252,7 +1304,7 @@ class _OutcomePageState extends State<OutcomePage> {
                             ),
                           ],
                         ),
-                        if(formDataProvider.gamingTitleList.isNotEmpty)
+                        if(gameTitleList.isNotEmpty)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -1261,9 +1313,9 @@ class _OutcomePageState extends State<OutcomePage> {
                             ListView.builder(
                               physics: NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
-                              itemCount: formDataProvider.gamingTitleList.length + 1, // +1 for the "Abonelik Ekle" row
+                              itemCount: gameTitleList.length + 1, // +1 for the "Abonelik Ekle" row
                               itemBuilder: (context, index) {
-                                if (index < formDataProvider.gamingTitleList.length) {
+                                if (index < gameTitleList.length) {
                                   return Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -1274,7 +1326,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             flex: 2,
                                             fit: FlexFit.tight,
                                             child: Text(
-                                              formDataProvider.gamingTitleList[index],
+                                              gameTitleList[index],
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -1284,7 +1336,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             fit: FlexFit.tight,
                                             child: Text(
                                               textAlign: TextAlign.right,
-                                              formDataProvider.gamingPriceList[index],
+                                              gamePriceList[index],
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -1309,7 +1361,7 @@ class _OutcomePageState extends State<OutcomePage> {
                             ),
                           ],
                         ),
-                        if(formDataProvider.musicTitleList.isNotEmpty)
+                        if(musicTitleList.isNotEmpty)
                         Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -1318,9 +1370,9 @@ class _OutcomePageState extends State<OutcomePage> {
                             ListView.builder(
                               physics: NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
-                              itemCount: formDataProvider.musicTitleList.length + 1, // +1 for the "Abonelik Ekle" row
+                              itemCount: musicTitleList.length + 1, // +1 for the "Abonelik Ekle" row
                               itemBuilder: (context, index) {
-                                if (index < formDataProvider.musicTitleList.length) {
+                                if (index < musicTitleList.length) {
                                   return Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -1331,7 +1383,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             flex: 2,
                                             fit: FlexFit.tight,
                                             child: Text(
-                                              formDataProvider.musicTitleList[index],
+                                              musicTitleList[index],
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -1341,7 +1393,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             fit: FlexFit.tight,
                                             child: Text(
                                               textAlign: TextAlign.right,
-                                              formDataProvider.musicPriceList[index],
+                                              musicPriceList[index],
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -1466,13 +1518,9 @@ class _OutcomePageState extends State<OutcomePage> {
                                         double dprice = double.tryParse(priceText) ?? 0.0;
                                         String price = dprice.toStringAsFixed(2);
                                         setState(() {
-                                          formDataProvider.updateTextValue(text, 2, 1);
-                                          formDataProvider.updateNumberValue(price, 2, 1);
                                           //isEditingList = false; // Add a corresponding entry for the new item
                                           textController.clear();
-                                          formDataProvider.notifyListeners();
                                           platformPriceController.clear();
-                                          formDataProvider.notifyListeners();
                                           //isTextFormFieldVisible = false;
                                           isSubsAddActive = false;
                                           hasSubsCategorySelected = false;
@@ -1481,13 +1529,9 @@ class _OutcomePageState extends State<OutcomePage> {
                                         double dprice = double.tryParse(priceText) ?? 0.0;
                                         String price = dprice.toStringAsFixed(2);
                                         setState(() {
-                                          formDataProvider.updateTextValue(text, 2, 2);
-                                          formDataProvider.updateNumberValue(price, 2, 2);
                                           //isEditingList = false; // Add a corresponding entry for the new item
                                           textController.clear();
-                                          formDataProvider.notifyListeners();
                                           platformPriceController.clear();
-                                          formDataProvider.notifyListeners();
                                           //isTextFormFieldVisible = false;
                                           isSubsAddActive = false;
                                           hasSubsCategorySelected = false;
@@ -1496,13 +1540,9 @@ class _OutcomePageState extends State<OutcomePage> {
                                         double dprice = double.tryParse(priceText) ?? 0.0;
                                         String price = dprice.toStringAsFixed(2);
                                         setState(() {
-                                          formDataProvider.updateTextValue(text, 2, 3);
-                                          formDataProvider.updateNumberValue(price, 2, 3);
                                           //isEditingList = false; // Add a corresponding entry for the new item
                                           textController.clear();
-                                          formDataProvider.notifyListeners();
                                           platformPriceController.clear();
-                                          formDataProvider.notifyListeners();
                                           //isTextFormFieldVisible = false;
                                           isSubsAddActive = false;
                                           hasSubsCategorySelected = false;
@@ -1572,7 +1612,7 @@ class _OutcomePageState extends State<OutcomePage> {
                       physics: NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
                       children: [
-                        if(formDataProvider.homeBillsTitleList.isNotEmpty)
+                        if(homeBillsTitleList.isNotEmpty)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -1581,9 +1621,9 @@ class _OutcomePageState extends State<OutcomePage> {
                             ListView.builder(
                               physics: NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
-                              itemCount: formDataProvider.homeBillsTitleList.length + 1, // +1 for the "Abonelik Ekle" row
+                              itemCount: homeBillsTitleList.length + 1, // +1 for the "Abonelik Ekle" row
                               itemBuilder: (context, index) {
-                                if (index < formDataProvider.homeBillsTitleList.length) {
+                                if (index < homeBillsTitleList.length) {
                                   return Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -1594,7 +1634,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             flex: 2,
                                             fit: FlexFit.tight,
                                             child: Text(
-                                              formDataProvider.homeBillsTitleList[index],
+                                              homeBillsTitleList[index],
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -1604,7 +1644,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             fit: FlexFit.tight,
                                             child: Text(
                                               textAlign: TextAlign.right,
-                                              formDataProvider.homeBillsPriceList[index],
+                                              homeBillsPriceList[index],
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -1629,7 +1669,7 @@ class _OutcomePageState extends State<OutcomePage> {
                             ),
                           ],
                         ),
-                        if(formDataProvider.internetTitleList.isNotEmpty)
+                        if(internetTitleList.isNotEmpty)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -1638,9 +1678,9 @@ class _OutcomePageState extends State<OutcomePage> {
                             ListView.builder(
                               physics: NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
-                              itemCount: formDataProvider.internetTitleList.length + 1, // +1 for the "Abonelik Ekle" row
+                              itemCount: internetTitleList.length + 1, // +1 for the "Abonelik Ekle" row
                               itemBuilder: (context, index) {
-                                if (index < formDataProvider.internetTitleList.length) {
+                                if (index < internetTitleList.length) {
                                   return Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -1651,7 +1691,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             flex: 2,
                                             fit: FlexFit.tight,
                                             child: Text(
-                                              formDataProvider.internetTitleList[index],
+                                              internetTitleList[index],
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -1661,7 +1701,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             fit: FlexFit.tight,
                                             child: Text(
                                               textAlign: TextAlign.right,
-                                              formDataProvider.internetPriceList[index],
+                                              internetPriceList[index],
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -1686,7 +1726,7 @@ class _OutcomePageState extends State<OutcomePage> {
                             ),
                           ],
                         ),
-                        if(formDataProvider.phoneTitleList.isNotEmpty)
+                        if(phoneTitleList.isNotEmpty)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -1695,9 +1735,9 @@ class _OutcomePageState extends State<OutcomePage> {
                             ListView.builder(
                               physics: NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
-                              itemCount: formDataProvider.phoneTitleList.length + 1, // +1 for the "Abonelik Ekle" row
+                              itemCount: phoneTitleList.length + 1, // +1 for the "Abonelik Ekle" row
                               itemBuilder: (context, index) {
-                                if (index < formDataProvider.phoneTitleList.length) {
+                                if (index < phoneTitleList.length) {
                                   return Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -1708,7 +1748,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             flex: 2,
                                             fit: FlexFit.tight,
                                             child: Text(
-                                              formDataProvider.phoneTitleList[index],
+                                              phoneTitleList[index],
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -1718,7 +1758,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             fit: FlexFit.tight,
                                             child: Text(
                                               textAlign: TextAlign.right,
-                                              formDataProvider.phonePriceList[index],
+                                              phonePriceList[index],
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -1843,13 +1883,9 @@ class _OutcomePageState extends State<OutcomePage> {
                                           double dprice = double.tryParse(priceText) ?? 0.0;
                                           String price = dprice.toStringAsFixed(2);
                                           setState(() {
-                                            formDataProvider.updateTextValue(text, 3, 1);
-                                            formDataProvider.updateNumberValue(price, 3, 1);
                                             //isEditingList = false; // Add a corresponding entry for the new item
                                             textController.clear();
-                                            formDataProvider.notifyListeners();
                                             platformPriceController.clear();
-                                            formDataProvider.notifyListeners();
                                             //isTextFormFieldVisible = false;
                                             isBillsAddActive = false;
                                             hasBillsCategorySelected = false;
@@ -1858,13 +1894,9 @@ class _OutcomePageState extends State<OutcomePage> {
                                           double dprice = double.tryParse(priceText) ?? 0.0;
                                           String price = dprice.toStringAsFixed(2);
                                           setState(() {
-                                            formDataProvider.updateTextValue(text, 3, 2);
-                                            formDataProvider.updateNumberValue(price, 3, 2);
                                             //isEditingList = false; // Add a corresponding entry for the new item
                                             textController.clear();
-                                            formDataProvider.notifyListeners();
                                             platformPriceController.clear();
-                                            formDataProvider.notifyListeners();
                                             //isTextFormFieldVisible = false;
                                             isBillsAddActive = false;
                                             hasBillsCategorySelected = false;
@@ -1873,13 +1905,9 @@ class _OutcomePageState extends State<OutcomePage> {
                                           double dprice = double.tryParse(priceText) ?? 0.0;
                                           String price = dprice.toStringAsFixed(2);
                                           setState(() {
-                                            formDataProvider.updateTextValue(text, 3, 3);
-                                            formDataProvider.updateNumberValue(price, 3, 3);
                                             //isEditingList = false; // Add a corresponding entry for the new item
                                             textController.clear();
-                                            formDataProvider.notifyListeners();
                                             platformPriceController.clear();
-                                            formDataProvider.notifyListeners();
                                             //isTextFormFieldVisible = false;
                                             isBillsAddActive = false;
                                             hasBillsCategorySelected = false;
@@ -1949,7 +1977,7 @@ class _OutcomePageState extends State<OutcomePage> {
                       shrinkWrap: true,
                       physics: NeverScrollableScrollPhysics(),
                       children: [
-                        if(formDataProvider.rentTitleList.isNotEmpty)
+                        if(rentTitleList.isNotEmpty)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -1958,9 +1986,9 @@ class _OutcomePageState extends State<OutcomePage> {
                             ListView.builder(
                               physics: NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
-                              itemCount: formDataProvider.rentTitleList.length + 1, // +1 for the "Abonelik Ekle" row
+                              itemCount: rentTitleList.length + 1, // +1 for the "Abonelik Ekle" row
                               itemBuilder: (context, index) {
-                                if (index < formDataProvider.rentTitleList.length) {
+                                if (index < rentTitleList.length) {
                                   return Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -1971,7 +1999,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             flex: 2,
                                             fit: FlexFit.tight,
                                             child: Text(
-                                              formDataProvider.rentTitleList[index],
+                                              rentTitleList[index],
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -1981,7 +2009,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             fit: FlexFit.tight,
                                             child: Text(
                                               textAlign: TextAlign.right,
-                                              formDataProvider.rentPriceList[index],
+                                              rentPriceList[index],
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -2006,7 +2034,7 @@ class _OutcomePageState extends State<OutcomePage> {
                             ),
                           ],
                         ),
-                        if(formDataProvider.kitchenTitleList.isNotEmpty)
+                        if(kitchenTitleList.isNotEmpty)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -2015,9 +2043,9 @@ class _OutcomePageState extends State<OutcomePage> {
                             ListView.builder(
                               physics: NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
-                              itemCount: formDataProvider.kitchenTitleList.length + 1, // +1 for the "Abonelik Ekle" row
+                              itemCount: kitchenTitleList.length + 1, // +1 for the "Abonelik Ekle" row
                               itemBuilder: (context, index) {
-                                if (index < formDataProvider.kitchenTitleList.length) {
+                                if (index < kitchenTitleList.length) {
                                   return Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -2028,7 +2056,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             flex: 2,
                                             fit: FlexFit.tight,
                                             child: Text(
-                                              formDataProvider.kitchenTitleList[index],
+                                              kitchenTitleList[index],
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -2038,7 +2066,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             fit: FlexFit.tight,
                                             child: Text(
                                               textAlign: TextAlign.right,
-                                              formDataProvider.kitchenPriceList[index],
+                                              kitchenPriceList[index],
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -2063,7 +2091,7 @@ class _OutcomePageState extends State<OutcomePage> {
                             ),
                           ],
                         ),
-                        if(formDataProvider.cateringTitleList.isNotEmpty)
+                        if(cateringTitleList.isNotEmpty)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -2072,9 +2100,9 @@ class _OutcomePageState extends State<OutcomePage> {
                             ListView.builder(
                               physics: NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
-                              itemCount: formDataProvider.cateringTitleList.length + 1, // +1 for the "Abonelik Ekle" row
+                              itemCount: cateringTitleList.length + 1, // +1 for the "Abonelik Ekle" row
                               itemBuilder: (context, index) {
-                                if (index < formDataProvider.cateringTitleList.length) {
+                                if (index < cateringTitleList.length) {
                                   return Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -2085,7 +2113,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             flex: 2,
                                             fit: FlexFit.tight,
                                             child: Text(
-                                              formDataProvider.cateringTitleList[index],
+                                              cateringTitleList[index],
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -2095,7 +2123,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             fit: FlexFit.tight,
                                             child: Text(
                                               textAlign: TextAlign.right,
-                                              formDataProvider.cateringPriceList[index],
+                                              cateringPriceList[index],
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -2120,7 +2148,7 @@ class _OutcomePageState extends State<OutcomePage> {
                             ),
                           ],
                         ),
-                        if(formDataProvider.entertainmentTitleList.isNotEmpty)
+                        if(entertainmentTitleList.isNotEmpty)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -2129,9 +2157,9 @@ class _OutcomePageState extends State<OutcomePage> {
                             ListView.builder(
                               physics: NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
-                              itemCount: formDataProvider.entertainmentTitleList.length + 1, // +1 for the "Abonelik Ekle" row
+                              itemCount: entertainmentTitleList.length + 1, // +1 for the "Abonelik Ekle" row
                               itemBuilder: (context, index) {
-                                if (index < formDataProvider.entertainmentTitleList.length) {
+                                if (index < entertainmentTitleList.length) {
                                   return Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -2142,7 +2170,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             flex: 2,
                                             fit: FlexFit.tight,
                                             child: Text(
-                                              formDataProvider.entertainmentTitleList[index],
+                                              entertainmentTitleList[index],
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -2152,7 +2180,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             fit: FlexFit.tight,
                                             child: Text(
                                               textAlign: TextAlign.right,
-                                              formDataProvider.entertainmentPriceList[index],
+                                              entertainmentPriceList[index],
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -2177,7 +2205,7 @@ class _OutcomePageState extends State<OutcomePage> {
                             ),
                           ],
                         ),
-                        if(formDataProvider.otherTitleList.isNotEmpty)
+                        if(otherTitleList.isNotEmpty)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -2186,9 +2214,9 @@ class _OutcomePageState extends State<OutcomePage> {
                             ListView.builder(
                               physics: NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
-                              itemCount: formDataProvider.otherTitleList.length + 1, // +1 for the "Abonelik Ekle" row
+                              itemCount: otherTitleList.length + 1, // +1 for the "Abonelik Ekle" row
                               itemBuilder: (context, index) {
-                                if (index < formDataProvider.otherTitleList.length) {
+                                if (index < otherTitleList.length) {
                                   return Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -2199,7 +2227,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             flex: 2,
                                             fit: FlexFit.tight,
                                             child: Text(
-                                              formDataProvider.otherTitleList[index],
+                                              otherTitleList[index],
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -2209,7 +2237,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             fit: FlexFit.tight,
                                             child: Text(
                                               textAlign: TextAlign.right,
-                                              formDataProvider.otherPriceList[index],
+                                              otherPriceList[index],
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -2334,13 +2362,9 @@ class _OutcomePageState extends State<OutcomePage> {
                                           double dprice = double.tryParse(priceText) ?? 0.0;
                                           String price = dprice.toStringAsFixed(2);
                                           setState(() {
-                                            formDataProvider.updateTextValue(text, 4, 1);
-                                            formDataProvider.updateNumberValue(price, 4, 1);
                                             //isEditingList = false; // Add a corresponding entry for the new item
                                             textController.clear();
-                                            formDataProvider.notifyListeners();
                                             platformPriceController.clear();
-                                            formDataProvider.notifyListeners();
                                             //isTextFormFieldVisible = false;
                                             isOthersAddActive = false;
                                             hasOthersCategorySelected = false;
@@ -2349,13 +2373,9 @@ class _OutcomePageState extends State<OutcomePage> {
                                           double dprice = double.tryParse(priceText) ?? 0.0;
                                           String price = dprice.toStringAsFixed(2);
                                           setState(() {
-                                            formDataProvider.updateTextValue(text, 4, 2);
-                                            formDataProvider.updateNumberValue(price, 4, 2);
                                             //isEditingList = false; // Add a corresponding entry for the new item
                                             textController.clear();
-                                            formDataProvider.notifyListeners();
                                             platformPriceController.clear();
-                                            formDataProvider.notifyListeners();
                                             //isTextFormFieldVisible = false;
                                             isOthersAddActive = false;
                                             hasOthersCategorySelected = false;
@@ -2364,13 +2384,9 @@ class _OutcomePageState extends State<OutcomePage> {
                                           double dprice = double.tryParse(priceText) ?? 0.0;
                                           String price = dprice.toStringAsFixed(2);
                                           setState(() {
-                                            formDataProvider.updateTextValue(text, 4, 3);
-                                            formDataProvider.updateNumberValue(price, 4, 3);
                                             //isEditingList = false; // Add a corresponding entry for the new item
                                             textController.clear();
-                                            formDataProvider.notifyListeners();
                                             platformPriceController.clear();
-                                            formDataProvider.notifyListeners();
                                             //isTextFormFieldVisible = false;
                                             isOthersAddActive = false;
                                             hasOthersCategorySelected = false;
@@ -2379,13 +2395,9 @@ class _OutcomePageState extends State<OutcomePage> {
                                           double dprice = double.tryParse(priceText) ?? 0.0;
                                           String price = dprice.toStringAsFixed(2);
                                           setState(() {
-                                            formDataProvider.updateTextValue(text, 4, 4);
-                                            formDataProvider.updateNumberValue(price, 4, 4);
                                             //isEditingList = false; // Add a corresponding entry for the new item
                                             textController.clear();
-                                            formDataProvider.notifyListeners();
                                             platformPriceController.clear();
-                                            formDataProvider.notifyListeners();
                                             //isTextFormFieldVisible = false;
                                             isOthersAddActive = false;
                                             hasOthersCategorySelected = false;
@@ -2394,13 +2406,9 @@ class _OutcomePageState extends State<OutcomePage> {
                                           double dprice = double.tryParse(priceText) ?? 0.0;
                                           String price = dprice.toStringAsFixed(2);
                                           setState(() {
-                                            formDataProvider.updateTextValue(text, 4, 5);
-                                            formDataProvider.updateNumberValue(price, 4, 5);
                                             //isEditingList = false; // Add a corresponding entry for the new item
                                             textController.clear();
-                                            formDataProvider.notifyListeners();
                                             platformPriceController.clear();
-                                            formDataProvider.notifyListeners();
                                             //isTextFormFieldVisible = false;
                                             isOthersAddActive = false;
                                             hasOthersCategorySelected = false;

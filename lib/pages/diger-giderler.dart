@@ -497,6 +497,11 @@ class _OtherExpensesState extends State<OtherExpenses> {
     convertSum5 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfOther);
   }
 
+  Future<void> setSumAll(double value) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setDouble('sumOfOthers2', value);
+  }
+
   @override
   Widget build(BuildContext context) {
     final formDataProvider2 = Provider.of<FormDataProvider2>(context, listen: false);
@@ -507,6 +512,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
     sumAll += sumOfCatering;
     sumAll += sumOfEnt;
     sumAll += sumOfOther;
+    setSumAll(sumAll);
 
     return Scaffold(
       appBar: AppBar(
