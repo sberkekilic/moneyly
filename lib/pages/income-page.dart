@@ -45,7 +45,7 @@ class _IncomePageState extends State<IncomePage> {
     final ab2 = prefs.getString('income_value') ?? '0';
     setState(() {
       selectedTitle = labelForOption(SelectedOption.values[ab1]);
-      incomeValue = double.parse(ab2);
+      incomeValue = NumberFormat.decimalPattern('tr_TR').parse(ab2) as double;
     });
   }
 

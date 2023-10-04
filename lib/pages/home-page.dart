@@ -100,7 +100,7 @@ class _HomePageState extends State<HomePage> {
     final ab13 = prefs.getDouble('sumOfOther2') ?? 0.0;
     setState(() {
       selectedTitle = labelForOption(SelectedOption.values[ab1]);
-      incomeValue = double.parse(ab2);
+      incomeValue = NumberFormat.decimalPattern('tr_TR').parse(ab2) as double;
       sumOfTV = ab3.toString();
       sumOfGame = ab4.toString();
       sumOfMusic = ab5.toString();

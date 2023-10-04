@@ -1,3 +1,5 @@
+// ignore_for_file: unused_import, avoid_unnecessary_containers
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -5,6 +7,8 @@ import 'package:moneyly/pages/selection.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../deneme.dart';
 
 class OutcomePage extends StatefulWidget {
   const OutcomePage({Key? key}) : super(key: key);
@@ -83,18 +87,21 @@ class _OutcomePageState extends State<OutcomePage> {
   double sumOfSubs = 0.0;
   double sumOfBills = 0.0;
   double sumOfOthers = 0.0;
-  String sumOfTV = "0.0";
-  String sumOfGame = "0.0";
-  String sumOfMusic = "0.0";
-  String sumOfHome = "0.0";
-  String sumOfInternet = "0.0";
-  String sumOfPhone = "0.0";
-  String sumOfRent = "0.0";
-  String sumOfKitchen = "0.0";
-  String sumOfCatering = "0.0";
-  String sumOfEnt = "0.0";
-  String sumOfOther = "0.0";
+  double sumOfTV = 0.0;
+  double sumOfGame = 0.0;
+  double sumOfMusic = 0.0;
+  double sumOfHome = 0.0;
+  double sumOfInternet = 0.0;
+  double sumOfPhone = 0.0;
+  double sumOfRent = 0.0;
+  double sumOfKitchen = 0.0;
+  double sumOfCatering = 0.0;
+  double sumOfEnt = 0.0;
+  double sumOfOther = 0.0;
   String selectedTitle = '';
+  String convertSum = "";
+  String convertSum2 = "";
+  String convertSum3 = "";
 
   @override
   void initState() {
@@ -158,17 +165,17 @@ class _OutcomePageState extends State<OutcomePage> {
     setState(() {
       selectedTitle = labelForOption(SelectedOption.values[ab1]);
       incomeValue = double.parse(ab2);
-      sumOfTV = ab3.toString();
-      sumOfGame = ab4.toString();
-      sumOfMusic = ab5.toString();
-      sumOfHome = ab6.toString();
-      sumOfInternet = ab7.toString();
-      sumOfPhone = ab8.toString();
-      sumOfRent = ab9.toString();
-      sumOfKitchen = ab10.toString();
-      sumOfCatering = ab11.toString();
-      sumOfEnt = ab12.toString();
-      sumOfOther = ab13.toString();
+      sumOfTV = ab3;
+      sumOfGame = ab4;
+      sumOfMusic = ab5;
+      sumOfHome = ab6;
+      sumOfInternet = ab7;
+      sumOfPhone = ab8;
+      sumOfRent = ab9;
+      sumOfKitchen = ab10;
+      sumOfCatering = ab11;
+      sumOfEnt = ab12;
+      sumOfOther = ab13;
       sumOfSubs = ab14;
       sumOfBills = ab15;
       sumOfOthers = ab16;
@@ -195,10 +202,19 @@ class _OutcomePageState extends State<OutcomePage> {
       entertainmentPriceList = ab37;
       otherPriceList = ab38;
     });
+    convertSum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfTV);
+    convertSum2 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfGame);
+    convertSum3 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfMusic);
+  }
+
+  Future<void> setSumAll(double value) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setDouble('sumOfSubs2', value);
   }
 
   @override
   Widget build(BuildContext context) {
+    final formDataProvider2 = Provider.of<FormDataProvider2>(context, listen: false);
     double outcomeValue = sumOfSubs+sumOfBills+sumOfOthers;
     double subsPercent = sumOfSubs/outcomeValue;
     double billsPercent = sumOfBills/outcomeValue;
@@ -223,6 +239,10 @@ class _OutcomePageState extends State<OutcomePage> {
     print("Original List: $percentages");
     percentages[0] = 1.0;
     print("Modified List: $percentages");
+    sumOfSubs = sumOfTV + sumOfGame + sumOfMusic;
+    sumOfBills = sumOfHome + sumOfInternet + sumOfPhone;
+    sumOfOthers = sumOfRent + sumOfKitchen + sumOfCatering + sumOfEnt + sumOfOther;
+    outcomeValue = sumOfSubs + sumOfBills + sumOfOthers;
     String formattedIncomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(incomeValue);
     String formattedOutcomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(outcomeValue);
     String formattedsavingsValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(savingsValue);
@@ -395,46 +415,46 @@ class _OutcomePageState extends State<OutcomePage> {
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10)
             ),
-            title: Text('Edit $caterogyName',style: TextStyle(fontSize: 20)),
+            title: Text('Edit $caterogyName',style: const TextStyle(fontSize: 20)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Align(child: Text("Item", style: TextStyle(fontSize: 18),), alignment: Alignment.centerLeft,),
-                SizedBox(height: 10),
+                const Align(child: Text("Item", style: TextStyle(fontSize: 18),), alignment: Alignment.centerLeft,),
+                const SizedBox(height: 10),
                 TextFormField(
                   controller: selectedEditController,
                   decoration: InputDecoration(
                     isDense: true,
                     focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(width: 3, color: Colors.black)
+                        borderSide: const BorderSide(width: 3, color: Colors.black)
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
+                      borderSide: const BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
                     ),
-                    contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
+                    contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
                   ),
-                  style: TextStyle(fontSize: 20),
+                  style: const TextStyle(fontSize: 20),
                 ),
-                SizedBox(height: 10),
-                Align(child: Text("Price",style: TextStyle(fontSize: 18)), alignment: Alignment.centerLeft),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
+                const Align(child: Text("Price",style: TextStyle(fontSize: 18)), alignment: Alignment.centerLeft),
+                const SizedBox(height: 10),
                 TextFormField(
                   controller: selectedPriceController,
                   decoration: InputDecoration(
                     isDense: true,
                     focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(width: 3, color: Colors.black)
+                        borderSide: const BorderSide(width: 3, color: Colors.black)
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
+                      borderSide: const BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
                     ),
-                    contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
+                    contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
                   ),
-                  style: TextStyle(fontSize: 20),
+                  style: const TextStyle(fontSize: 20),
                   keyboardType: TextInputType.number,
                 ),
               ],
@@ -444,171 +464,241 @@ class _OutcomePageState extends State<OutcomePage> {
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  icon: Icon(Icons.cancel)
+                  icon: const Icon(Icons.cancel)
               ),
               IconButton(
-                  onPressed: () {
+                  onPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
                     setState(() {
                       if(page == 1){
                         switch (orderIndex){
                           case 1:
+                            final priceText = selectedPriceController.text.trim();
+                            double dprice = double.tryParse(priceText) ?? 0.0;
+                            String price = dprice.toStringAsFixed(2);
                             tvTitleList[index] = selectedEditController.text;
                             tvPriceList[index] = selectedPriceController.text;
+                            formDataProvider2.setTVTitleValue(selectedEditController.text, tvTitleList);
+                            formDataProvider2.setTVPriceValue(price, tvPriceList);
+                            formDataProvider2.calculateSumOfTV(tvPriceList);
                             break;
                           case 2:
+                            final priceText = selectedPriceController.text.trim();
+                            double dprice = double.tryParse(priceText) ?? 0.0;
+                            String price = dprice.toStringAsFixed(2);
                             gameTitleList[index] = selectedEditController.text;
                             gamePriceList[index] = selectedPriceController.text;
+                            formDataProvider2.setGameTitleValue(selectedEditController.text, gameTitleList);
+                            formDataProvider2.setGamePriceValue(price, gamePriceList);
+                            formDataProvider2.calculateSumOfGame(gamePriceList);
                             break;
                           case 3:
+                            final priceText = selectedPriceController.text.trim();
+                            double dprice = double.tryParse(priceText) ?? 0.0;
+                            String price = dprice.toStringAsFixed(2);
                             musicTitleList[index] = selectedEditController.text;
                             musicPriceList[index] = selectedPriceController.text;
+                            formDataProvider2.setMusicTitleValue(selectedEditController.text, musicTitleList);
+                            formDataProvider2.setMusicPriceValue(price, musicPriceList);
+                            formDataProvider2.calculateSumOfMusic(musicPriceList);
                             break;
                         }
                       } else if (page == 2){
                         switch (orderIndex){
                           case 1:
+                            final priceText = selectedPriceController.text.trim();
+                            double dprice = double.tryParse(priceText) ?? 0.0;
+                            String price = dprice.toStringAsFixed(2);
                             homeBillsTitleList[index] = selectedEditController.text;
                             homeBillsPriceList[index] = selectedPriceController.text;
+                            formDataProvider2.setHomeTitleValue(selectedEditController.text, homeBillsTitleList);
+                            formDataProvider2.setHomePriceValue(price, homeBillsPriceList);
+                            formDataProvider2.calculateSumOfHome(homeBillsPriceList);
                             break;
                           case 2:
+                            final priceText = selectedPriceController.text.trim();
+                            double dprice = double.tryParse(priceText) ?? 0.0;
+                            String price = dprice.toStringAsFixed(2);
                             internetTitleList[index] = selectedEditController.text;
                             internetPriceList[index] = selectedPriceController.text;
+                            formDataProvider2.setInternetTitleValue(selectedEditController.text, internetTitleList);
+                            formDataProvider2.setInternetPriceValue(price, internetPriceList);
+                            formDataProvider2.calculateSumOfInternet(internetPriceList);
                             break;
                           case 3:
+                            final priceText = selectedPriceController.text.trim();
+                            double dprice = double.tryParse(priceText) ?? 0.0;
+                            String price = dprice.toStringAsFixed(2);
                             phoneTitleList[index] = selectedEditController.text;
                             phonePriceList[index] = selectedPriceController.text;
+                            formDataProvider2.setPhoneTitleValue(selectedEditController.text, phoneTitleList);
+                            formDataProvider2.setPhonePriceValue(price, phonePriceList);
+                            formDataProvider2.calculateSumOfPhone(phonePriceList);
                             break;
                         }
                       } else if (page == 3){
                         switch (orderIndex){
                           case 1:
+                            final priceText = selectedPriceController.text.trim();
+                            double dprice = double.tryParse(priceText) ?? 0.0;
+                            String price = dprice.toStringAsFixed(2);
                             rentTitleList[index] = selectedEditController.text;
                             rentPriceList[index] = selectedPriceController.text;
+                            formDataProvider2.setRentTitleValue(selectedEditController.text, rentTitleList);
+                            formDataProvider2.setRentPriceValue(price, rentPriceList);
+                            formDataProvider2.calculateSumOfRent(rentPriceList);
                             break;
                           case 2:
+                            final priceText = selectedPriceController.text.trim();
+                            double dprice = double.tryParse(priceText) ?? 0.0;
+                            String price = dprice.toStringAsFixed(2);
                             kitchenTitleList[index] = selectedEditController.text;
                             kitchenPriceList[index] = selectedPriceController.text;
+                            formDataProvider2.setKitchenTitleValue(selectedEditController.text, kitchenTitleList);
+                            formDataProvider2.setKitchenPriceValue(price, kitchenPriceList);
+                            formDataProvider2.calculateSumOfKitchen(kitchenPriceList);
                             break;
                           case 3:
+                            final priceText = selectedPriceController.text.trim();
+                            double dprice = double.tryParse(priceText) ?? 0.0;
+                            String price = dprice.toStringAsFixed(2);
                             cateringTitleList[index] = selectedEditController.text;
                             cateringPriceList[index] = selectedPriceController.text;
+                            formDataProvider2.setCateringTitleValue(selectedEditController.text, cateringTitleList);
+                            formDataProvider2.setCateringPriceValue(price, cateringPriceList);
+                            formDataProvider2.calculateSumOfCatering(cateringPriceList);
                             break;
                           case 4:
+                            final priceText = selectedPriceController.text.trim();
+                            double dprice = double.tryParse(priceText) ?? 0.0;
+                            String price = dprice.toStringAsFixed(2);
                             entertainmentTitleList[index] = selectedEditController.text;
                             entertainmentPriceList[index] = selectedPriceController.text;
+                            formDataProvider2.setEntertainmentTitleValue(selectedEditController.text, entertainmentTitleList);
+                            formDataProvider2.setEntertainmentPriceValue(price, entertainmentPriceList);
+                            formDataProvider2.calculateSumOfEnt(entertainmentPriceList);
                             break;
                           case 5:
+                            final priceText = selectedPriceController.text.trim();
+                            double dprice = double.tryParse(priceText) ?? 0.0;
+                            String price = dprice.toStringAsFixed(2);
                             otherTitleList[index] = selectedEditController.text;
                             otherPriceList[index] = selectedPriceController.text;
+                            formDataProvider2.setOtherTitleValue(selectedEditController.text, otherTitleList);
+                            formDataProvider2.setOtherPriceValue(price, otherPriceList);
+                            formDataProvider2.calculateSumOfOther(otherPriceList);
                             break;
                         }
                       }
                     });
+                    _load();
                     Navigator.pop(context);
                   },
-                  icon: Icon(Icons.save)
+                  icon: const Icon(Icons.save)
               ),
                 IconButton(
-                    onPressed: () {
+                    onPressed: () async {
+                      final prefs = await SharedPreferences.getInstance();
                       setState(() {
                         if(page == 1 && totalSubsElement != 1){
                           switch (orderIndex){
                             case 1:
-                              TextEditingController priceController =
-                              TextEditingController(text: tvPriceList[index]);
                               tvTitleList.removeAt(index);
                               tvPriceList.removeAt(index);
-                              priceController.clear();
+                              formDataProvider2.removeTVTitleValue(tvTitleList);
+                              formDataProvider2.removeTVPriceValue(tvPriceList);
+                              formDataProvider2.calculateSumOfTV(tvPriceList);
                               break;
                             case 2:
-                              TextEditingController NDpriceController =
-                              TextEditingController(text: gamePriceList[index]);
                               gameTitleList.removeAt(index);
                               gamePriceList.removeAt(index);
-                              NDpriceController.clear();
+                              formDataProvider2.removeGameTitleValue(gameTitleList);
+                              formDataProvider2.removeGamePriceValue(gamePriceList);
+                              formDataProvider2.calculateSumOfGame(gamePriceList);
                               break;
                             case 3:
-                              TextEditingController RDpriceController =
-                              TextEditingController(text: musicPriceList[index]);
                               musicTitleList.removeAt(index);
                               musicPriceList.removeAt(index);
-                              RDpriceController.clear();
+                              formDataProvider2.removeMusicTitleValue(musicTitleList);
+                              formDataProvider2.removeMusicPriceValue(musicPriceList);
+                              formDataProvider2.calculateSumOfMusic(musicPriceList);
                               break;
                           }
                         } else if (page == 2 && totalBillsElement != 1){
                           switch (orderIndex){
                             case 1:
-                              TextEditingController priceController =
-                              TextEditingController(text: homeBillsPriceList[index]);
                               homeBillsTitleList.removeAt(index);
                               homeBillsPriceList.removeAt(index);
-                              priceController.clear();
+                              formDataProvider2.removeHomeTitleValue(homeBillsTitleList);
+                              formDataProvider2.removeHomePriceValue(homeBillsPriceList);
+                              formDataProvider2.calculateSumOfHome(homeBillsPriceList);
                               break;
                             case 2:
-                              TextEditingController NDpriceController =
-                              TextEditingController(text: internetPriceList[index]);
                               internetTitleList.removeAt(index);
                               internetPriceList.removeAt(index);
-                              NDpriceController.clear();
+                              formDataProvider2.removeInternetTitleValue(internetTitleList);
+                              formDataProvider2.removeInternetPriceValue(internetPriceList);
+                              formDataProvider2.calculateSumOfInternet(internetPriceList);
                               break;
                             case 3:
-                              TextEditingController RDpriceController =
-                              TextEditingController(text: phonePriceList[index]);
                               phoneTitleList.removeAt(index);
                               phonePriceList.removeAt(index);
-                              RDpriceController.clear();
+                              formDataProvider2.removePhoneTitleValue(phoneTitleList);
+                              formDataProvider2.removePhonePriceValue(phoneTitleList);
+                              formDataProvider2.calculateSumOfPhone(phonePriceList);
                               break;
                           }
                         } else if (page == 3 && totalOthersElement != 1){
                           switch (orderIndex){
                             case 1:
-                              TextEditingController priceController =
-                              TextEditingController(text: rentPriceList[index]);
                               rentTitleList.removeAt(index);
                               rentPriceList.removeAt(index);
-                              priceController.clear();
+                              formDataProvider2.removeRentTitleValue(rentTitleList);
+                              formDataProvider2.removeRentPriceValue(rentPriceList);
+                              formDataProvider2.calculateSumOfRent(rentPriceList);
                               break;
                             case 2:
-                              TextEditingController NDpriceController =
-                              TextEditingController(text: kitchenPriceList[index]);
                               kitchenTitleList.removeAt(index);
                               kitchenPriceList.removeAt(index);
-                              NDpriceController.clear();
+                              formDataProvider2.removeKitchenTitleValue(kitchenTitleList);
+                              formDataProvider2.removeKitchenPriceValue(kitchenPriceList);
+                              formDataProvider2.calculateSumOfKitchen(kitchenPriceList);
                               break;
                             case 3:
-                              TextEditingController RDpriceController =
-                              TextEditingController(text: cateringPriceList[index]);
                               cateringTitleList.removeAt(index);
                               cateringPriceList.removeAt(index);
-                              RDpriceController.clear();
+                              formDataProvider2.removeCateringTitleValue(cateringTitleList);
+                              formDataProvider2.removeCateringPriceValue(cateringPriceList);
+                              formDataProvider2.calculateSumOfCatering(cateringPriceList);
                               break;
                             case 4:
-                              TextEditingController THpriceController =
-                              TextEditingController(text: entertainmentPriceList[index]);
                               entertainmentTitleList.removeAt(index);
                               entertainmentPriceList.removeAt(index);
-                              THpriceController.clear();
+                              formDataProvider2.removeEntertainmentTitleValue(entertainmentTitleList);
+                              formDataProvider2.removeEntertainmentPriceValue(entertainmentPriceList);
+                              formDataProvider2.calculateSumOfEnt(entertainmentPriceList);
                               break;
                             case 5:
-                              TextEditingController otherPriceController =
-                              TextEditingController(text: otherPriceList[index]);
                               otherTitleList.removeAt(index);
                               otherPriceList.removeAt(index);
-                              otherPriceController.clear();
+                              formDataProvider2.removeOtherTitleValue(otherTitleList);
+                              formDataProvider2.removeOtherPriceValue(otherPriceList);
+                              formDataProvider2.calculateSumOfOther(otherPriceList);
                               break;
                           }
                         } else {
                           // Show a Snackbar
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
+                            const SnackBar(
                               content: Text("Delete operation not allowed."),
                             ),
                           );
                         }
+                        _load();
                         Navigator.of(context).pop();
                       });
                     },
-                    icon: Icon(Icons.delete_forever)
+                    icon: const Icon(Icons.delete_forever)
                 )
             ],
           );
@@ -617,7 +707,7 @@ class _OutcomePageState extends State<OutcomePage> {
     }
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xfff0f0f1),
+        backgroundColor: const Color(0xfff0f0f1),
         elevation: 0,
         toolbarHeight: 70,
         automaticallyImplyLeading: false,
@@ -629,16 +719,18 @@ class _OutcomePageState extends State<OutcomePage> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 IconButton(
-                  onPressed: () {
-
+                  onPressed: () async {
+                    SharedPreferences prefs = await SharedPreferences.getInstance();
+                    await prefs.clear();
+                    Navigator.pushNamed(context, '/');
                   },
-                  icon: Icon(Icons.settings, color: Colors.black), // Replace with the desired left icon
+                  icon: const Icon(Icons.settings, color: Colors.black), // Replace with the desired left icon
                 ),
                 IconButton(
                   onPressed: () {
 
                   },
-                  icon: Icon(Icons.person, color: Colors.black), // Replace with the desired right icon
+                  icon: const Icon(Icons.person, color: Colors.black), // Replace with the desired right icon
                 ),
               ],
             ),
@@ -651,14 +743,14 @@ class _OutcomePageState extends State<OutcomePage> {
       ),
       body: SingleChildScrollView(
         child: Container(
-          padding: EdgeInsets.fromLTRB(20,0,20,20),
+          padding: const EdgeInsets.fromLTRB(20,0,20,20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text("Giderler Detayı", style: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.bold)),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Container(
-                padding: EdgeInsets.all(20),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   color: Colors.white,
@@ -667,7 +759,7 @@ class _OutcomePageState extends State<OutcomePage> {
                       color: Colors.grey.withOpacity(0.5),
                       spreadRadius: 5,
                       blurRadius: 7,
-                      offset: Offset(0, 3),
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
@@ -675,65 +767,63 @@ class _OutcomePageState extends State<OutcomePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text("Tüm Giderler", style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     Text(formattedOutcomeValue, style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.w600)),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     Stack(
                       children: [
                         LinearPercentIndicator(
                           padding: EdgeInsets.zero,
                           percent: percentages[0],
                           backgroundColor: Colors.transparent,
-                          progressColor: Color(0xFFFF8C00),
+                          progressColor: const Color(0xFFFF8C00),
                           lineHeight: 10,
-                          barRadius: Radius.circular(10),
+                          barRadius: const Radius.circular(10),
                         ),
                         LinearPercentIndicator(
                           padding: EdgeInsets.zero,
                           percent: percentages[1]+percentages[2],
-                          progressColor: Color(0xFFFFA500),
+                          progressColor: const Color(0xFFFFA500),
                           backgroundColor: Colors.transparent,
                           lineHeight: 10,
-                          barRadius: Radius.circular(10),
+                          barRadius: const Radius.circular(10),
                         ),
                         LinearPercentIndicator(
                           padding: EdgeInsets.zero,
                           percent: percentages[2],
-                          progressColor: Color(0xFFFFD700),
+                          progressColor: const Color(0xFFFFD700),
                           backgroundColor: Colors.transparent,
                           lineHeight: 10,
-                          barRadius: Radius.circular(10),
+                          barRadius: const Radius.circular(10),
                         )
                       ],
                     ),
-                    SizedBox(height: 10),
-                    Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
+                    const SizedBox(height: 10),
+                    const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
                     if (largestVariable == "subsPercent" && mediumVariable == "billsPercent")
                       Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          child: Row(
-                            children: [
-                              CircularPercentIndicator(
-                                radius: 30,
-                                lineWidth: 7.0,
-                                percent: sumOfOthers/outcomeValue,
-                                center: new Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
-                                progressColor: smallestColor,
-                              ),
-                              SizedBox(width: 10),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text("Diğer Giderler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                  Text("${formattedSumOfOthers} / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
-                                ],
-                              )
-                            ],
-                          ),
+                        Row(
+                          children: [
+                            CircularPercentIndicator(
+                              radius: 30,
+                              lineWidth: 7.0,
+                              percent: sumOfOthers/outcomeValue,
+                              center: Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
+                              progressColor: smallestColor,
+                            ),
+                            const SizedBox(width: 10),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Diğer Giderler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
+                                Text("$formattedSumOfOthers / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                              ],
+                            )
+                          ],
                         ),
-                        Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
+                        const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
                         Container(
                           child: Row(
                             children: [
@@ -741,21 +831,21 @@ class _OutcomePageState extends State<OutcomePage> {
                                 radius: 30,
                                 lineWidth: 7.0,
                                 percent: sumOfBills/outcomeValue,
-                                center: new Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
+                                center: Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
                                 progressColor: mediumColor,
                               ),
-                              SizedBox(width: 10),
+                              const SizedBox(width: 10),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text("Faturalar", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                  Text("${formattedSumOfBills} / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                                  Text("$formattedSumOfBills / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
                                 ],
                               )
                             ],
                           ),
                         ),
-                        Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
+                        const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
                         Container(
                           child: Row(
                             children: [
@@ -766,12 +856,12 @@ class _OutcomePageState extends State<OutcomePage> {
                                 center: Text("%${((sumOfSubs/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
                                 progressColor: biggestColor,
                               ),
-                              SizedBox(width: 10),
+                              const SizedBox(width: 10),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text("Abonelikler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                  Text("${formattedSumOfSubs} / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                                  Text("$formattedSumOfSubs / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
                                 ],
                               )
                             ],
@@ -790,21 +880,21 @@ class _OutcomePageState extends State<OutcomePage> {
                                   radius: 30,
                                   lineWidth: 7.0,
                                   percent: sumOfBills/outcomeValue,
-                                  center: new Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
+                                  center: Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
                                   progressColor: smallestColor,
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(width: 10),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text("Faturalar", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("${formattedSumOfBills} / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                                    Text("$formattedSumOfBills / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
                                   ],
                                 )
                               ],
                             ),
                           ),
-                          Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
+                          const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
                           Container(
                             child: Row(
                               children: [
@@ -812,21 +902,21 @@ class _OutcomePageState extends State<OutcomePage> {
                                   radius: 30,
                                   lineWidth: 7.0,
                                   percent: sumOfOthers/outcomeValue,
-                                  center: new Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
+                                  center: Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
                                   progressColor: mediumColor,
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(width: 10),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text("Diğer Giderler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("${formattedSumOfOthers} / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                                    Text("$formattedSumOfOthers / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
                                   ],
                                 )
                               ],
                             ),
                           ),
-                          Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
+                          const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
                           Container(
                             child: Row(
                               children: [
@@ -837,12 +927,12 @@ class _OutcomePageState extends State<OutcomePage> {
                                   center: Text("%${((sumOfSubs/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
                                   progressColor: biggestColor,
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(width: 10),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text("Abonelikler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("${formattedSumOfSubs} / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                                    Text("$formattedSumOfSubs / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
                                   ],
                                 )
                               ],
@@ -861,21 +951,21 @@ class _OutcomePageState extends State<OutcomePage> {
                                   radius: 30,
                                   lineWidth: 7.0,
                                   percent: sumOfOthers/outcomeValue,
-                                  center: new Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
+                                  center: Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
                                   progressColor: smallestColor,
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(width: 10),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text("Diğer Giderler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("${formattedSumOfOthers} / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                                    Text("$formattedSumOfOthers / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
                                   ],
                                 )
                               ],
                             ),
                           ),
-                          Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
+                          const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
                           Container(
                             child: Row(
                               children: [
@@ -886,18 +976,18 @@ class _OutcomePageState extends State<OutcomePage> {
                                   center: Text("%${((sumOfSubs/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
                                   progressColor: mediumColor,
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(width: 10),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text("Abonelikler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("${formattedSumOfSubs} / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                                    Text("$formattedSumOfSubs / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
                                   ],
                                 )
                               ],
                             ),
                           ),
-                          Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
+                          const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
                           Container(
                             child: Row(
                               children: [
@@ -905,15 +995,15 @@ class _OutcomePageState extends State<OutcomePage> {
                                   radius: 30,
                                   lineWidth: 7.0,
                                   percent: sumOfBills/outcomeValue,
-                                  center: new Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
+                                  center: Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
                                   progressColor: biggestColor,
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(width: 10),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text("Faturalar", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("${formattedSumOfBills} / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                                    Text("$formattedSumOfBills / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
                                   ],
                                 )
                               ],
@@ -935,18 +1025,18 @@ class _OutcomePageState extends State<OutcomePage> {
                                   center: Text("%${((sumOfSubs/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
                                   progressColor: smallestColor,
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(width: 10),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text("Abonelikler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("${formattedSumOfSubs} / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                                    Text("$formattedSumOfSubs / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
                                   ],
                                 )
                               ],
                             ),
                           ),
-                          Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
+                          const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
                           Container(
                             child: Row(
                               children: [
@@ -954,21 +1044,21 @@ class _OutcomePageState extends State<OutcomePage> {
                                   radius: 30,
                                   lineWidth: 7.0,
                                   percent: sumOfOthers/outcomeValue,
-                                  center: new Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
+                                  center: Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
                                   progressColor: mediumColor,
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(width: 10),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text("Diğer Giderler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("${formattedSumOfOthers} / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                                    Text("$formattedSumOfOthers / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
                                   ],
                                 )
                               ],
                             ),
                           ),
-                          Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
+                          const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
                           Container(
                             child: Row(
                               children: [
@@ -976,15 +1066,15 @@ class _OutcomePageState extends State<OutcomePage> {
                                   radius: 30,
                                   lineWidth: 7.0,
                                   percent: sumOfBills/outcomeValue,
-                                  center: new Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
+                                  center: Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
                                   progressColor: biggestColor,
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(width: 10),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text("Faturalar", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("${formattedSumOfBills} / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                                    Text("$formattedSumOfBills / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
                                   ],
                                 )
                               ],
@@ -1003,21 +1093,21 @@ class _OutcomePageState extends State<OutcomePage> {
                                   radius: 30,
                                   lineWidth: 7.0,
                                   percent: sumOfBills/outcomeValue,
-                                  center: new Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
+                                  center: Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
                                   progressColor: smallestColor,
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(width: 10),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text("Faturalar", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("${formattedSumOfBills} / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                                    Text("$formattedSumOfBills / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
                                   ],
                                 )
                               ],
                             ),
                           ),
-                          Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
+                          const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
                           Container(
                             child: Row(
                               children: [
@@ -1028,18 +1118,18 @@ class _OutcomePageState extends State<OutcomePage> {
                                   center: Text("%${((sumOfSubs/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
                                   progressColor: mediumColor,
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(width: 10),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text("Abonelikler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("${formattedSumOfSubs} / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                                    Text("$formattedSumOfSubs / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
                                   ],
                                 )
                               ],
                             ),
                           ),
-                          Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
+                          const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
                           Container(
                             child: Row(
                               children: [
@@ -1047,15 +1137,15 @@ class _OutcomePageState extends State<OutcomePage> {
                                   radius: 30,
                                   lineWidth: 7.0,
                                   percent: sumOfOthers/outcomeValue,
-                                  center: new Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
+                                  center: Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
                                   progressColor: biggestColor,
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(width: 10),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text("Diğer Giderler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("${formattedSumOfOthers} / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                                    Text("$formattedSumOfOthers / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
                                   ],
                                 )
                               ],
@@ -1077,18 +1167,18 @@ class _OutcomePageState extends State<OutcomePage> {
                                   center: Text("%${((sumOfSubs/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
                                   progressColor: smallestColor,
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(width: 10),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text("Abonelikler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("${formattedSumOfSubs} / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                                    Text("$formattedSumOfSubs / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
                                   ],
                                 )
                               ],
                             ),
                           ),
-                          Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
+                          const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
                           Container(
                             child: Row(
                               children: [
@@ -1096,21 +1186,21 @@ class _OutcomePageState extends State<OutcomePage> {
                                   radius: 30,
                                   lineWidth: 7.0,
                                   percent: sumOfBills/outcomeValue,
-                                  center: new Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
+                                  center: Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
                                   progressColor: mediumColor,
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(width: 10),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text("Faturalar", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("${formattedSumOfBills} / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                                    Text("$formattedSumOfBills / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
                                   ],
                                 )
                               ],
                             ),
                           ),
-                          Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
+                          const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
                           Container(
                             child: Row(
                               children: [
@@ -1118,15 +1208,15 @@ class _OutcomePageState extends State<OutcomePage> {
                                   radius: 30,
                                   lineWidth: 7.0,
                                   percent: sumOfOthers/outcomeValue,
-                                  center: new Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
+                                  center: Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
                                   progressColor: biggestColor,
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(width: 10),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text("Diğer Giderler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("${formattedSumOfOthers} / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                                    Text("$formattedSumOfOthers / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
                                   ],
                                 )
                               ],
@@ -1148,18 +1238,18 @@ class _OutcomePageState extends State<OutcomePage> {
                                   center: Text("%${((sumOfSubs/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
                                   progressColor: smallestColor,
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(width: 10),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text("Abonelikler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("${formattedSumOfSubs} / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                                    Text("$formattedSumOfSubs / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
                                   ],
                                 )
                               ],
                             ),
                           ),
-                          Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
+                          const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
                           Container(
                             child: Row(
                               children: [
@@ -1167,21 +1257,21 @@ class _OutcomePageState extends State<OutcomePage> {
                                   radius: 30,
                                   lineWidth: 7.0,
                                   percent: sumOfBills/outcomeValue,
-                                  center: new Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
+                                  center: Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
                                   progressColor: mediumColor,
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(width: 10),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text("Faturalar", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("${formattedSumOfBills} / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                                    Text("$formattedSumOfBills / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
                                   ],
                                 )
                               ],
                             ),
                           ),
-                          Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
+                          const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
                           Container(
                             child: Row(
                               children: [
@@ -1189,15 +1279,15 @@ class _OutcomePageState extends State<OutcomePage> {
                                   radius: 30,
                                   lineWidth: 7.0,
                                   percent: sumOfOthers/outcomeValue,
-                                  center: new Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
+                                  center: Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
                                   progressColor: biggestColor,
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(width: 10),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text("Diğer Giderler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("${formattedSumOfOthers} / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                                    Text("$formattedSumOfOthers / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
                                   ],
                                 )
                               ],
@@ -1208,11 +1298,11 @@ class _OutcomePageState extends State<OutcomePage> {
                   ],
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Text("Abonelikler", style: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.bold)),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Container(
-                padding: EdgeInsets.all(20),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   color: Colors.white,
@@ -1221,30 +1311,30 @@ class _OutcomePageState extends State<OutcomePage> {
                       color: Colors.grey.withOpacity(0.5),
                       spreadRadius: 5,
                       blurRadius: 7,
-                      offset: Offset(0, 3),
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("${formattedSumOfSubs} / ${formattedOutcomeValue}", style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold)),
+                    Text("$formattedSumOfSubs / $formattedOutcomeValue", style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold)),
                     SizedBox(
                       child: LinearPercentIndicator(
-                        padding: EdgeInsets.only(right: 10),
-                        backgroundColor: Color(0xffc6c6c7),
+                        padding: const EdgeInsets.only(right: 10),
+                        backgroundColor: const Color(0xffc6c6c7),
                         animation: true,
                         lineHeight: 10,
                         animationDuration: 1000,
                         percent: sumOfSubs/outcomeValue,
                         trailing: Text("%${((sumOfSubs/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                        barRadius: Radius.circular(10),
+                        barRadius: const Radius.circular(10),
                         progressColor: Colors.lightBlue,
                       ),
                     ),
-                    SizedBox(height: 5),
+                    const SizedBox(height: 5),
                     ListView(
-                      physics: NeverScrollableScrollPhysics(),
+                      physics: const NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
                       children: [
                         if(tvTitleList.isNotEmpty)
@@ -1252,9 +1342,9 @@ class _OutcomePageState extends State<OutcomePage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text("TV", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                            const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                             ListView.builder(
-                              physics: NeverScrollableScrollPhysics(),
+                              physics: const NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
                               itemCount: tvTitleList.length + 1, // +1 for the "Abonelik Ekle" row
                               itemBuilder: (context, index) {
@@ -1284,22 +1374,23 @@ class _OutcomePageState extends State<OutcomePage> {
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
-                                          SizedBox(width: 20),
+                                          const SizedBox(width: 20),
                                           IconButton(
                                             splashRadius: 0.0001,
                                             padding: EdgeInsets.zero,
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                            icon: Icon(Icons.edit, size: 21),
+                                            icon: const Icon(Icons.edit, size: 21),
                                             onPressed: () {
                                               _showEditDialog(context, index, 1, 1); // Show the edit dialog
                                             },
                                           ),
                                         ],
                                       ),
-                                      Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                      const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                                     ],
                                   );
                                 }
+                                return null;
                               },
                             ),
                           ],
@@ -1309,9 +1400,9 @@ class _OutcomePageState extends State<OutcomePage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text("Gaming", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                            const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                             ListView.builder(
-                              physics: NeverScrollableScrollPhysics(),
+                              physics: const NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
                               itemCount: gameTitleList.length + 1, // +1 for the "Abonelik Ekle" row
                               itemBuilder: (context, index) {
@@ -1341,22 +1432,23 @@ class _OutcomePageState extends State<OutcomePage> {
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
-                                          SizedBox(width: 20),
+                                          const SizedBox(width: 20),
                                           IconButton(
                                             splashRadius: 0.0001,
                                             padding: EdgeInsets.zero,
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                            icon: Icon(Icons.edit, size: 21),
+                                            icon: const Icon(Icons.edit, size: 21),
                                             onPressed: () {
                                               _showEditDialog(context, index, 1, 2); // Show the edit dialog
                                             },
                                           ),
                                         ],
                                       ),
-                                      Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                      const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                                     ],
                                   );
                                 }
+                                return null;
                               },
                             ),
                           ],
@@ -1366,9 +1458,9 @@ class _OutcomePageState extends State<OutcomePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text("Music", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                            const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                             ListView.builder(
-                              physics: NeverScrollableScrollPhysics(),
+                              physics: const NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
                               itemCount: musicTitleList.length + 1, // +1 for the "Abonelik Ekle" row
                               itemBuilder: (context, index) {
@@ -1398,22 +1490,23 @@ class _OutcomePageState extends State<OutcomePage> {
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
-                                          SizedBox(width: 20),
+                                          const SizedBox(width: 20),
                                           IconButton(
                                             splashRadius: 0.0001,
                                             padding: EdgeInsets.zero,
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                            icon: Icon(Icons.edit, size: 21),
+                                            icon: const Icon(Icons.edit, size: 21),
                                             onPressed: () {
                                               _showEditDialog(context, index, 1, 3); // Show the edit dialog
                                             },
                                           ),
                                         ],
                                       ),
-                                      Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                      const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                                     ],
                                   );
                                 }
+                                return null;
                               },
                             ),
                           ],
@@ -1430,7 +1523,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                     isSubsAddActive = true;
                                   });
                                 },
-                                icon: Icon(Icons.add_circle),
+                                icon: const Icon(Icons.add_circle),
                               ),
                             ],
                           ),
@@ -1442,7 +1535,7 @@ class _OutcomePageState extends State<OutcomePage> {
                               Container(
                                 child:DropdownButton(
                                   value: dropdownvaluesubs,
-                                  icon:Icon(Icons.keyboard_arrow_down),
+                                  icon:const Icon(Icons.keyboard_arrow_down),
                                   items: subsItems.map((String items) {
                                     return DropdownMenuItem(
                                       value: items,
@@ -1466,7 +1559,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                         hasSubsCategorySelected = true;
                                       });
                                     },
-                                    icon: Icon(Icons.arrow_downward, size: 26),
+                                    icon: const Icon(Icons.arrow_downward, size: 26),
                                   ),
                                   if(!hasSubsCategorySelected)
                                   IconButton(
@@ -1476,7 +1569,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                         hasSubsCategorySelected = false;
                                       });
                                     },
-                                    icon: Icon(Icons.cancel, size: 26),
+                                    icon: const Icon(Icons.cancel, size: 26),
                                   ),
                                 ],
                               ),
@@ -1484,25 +1577,25 @@ class _OutcomePageState extends State<OutcomePage> {
                           ),
                         if(hasSubsCategorySelected)
                         Container(
-                          padding: EdgeInsets.only(top:10, bottom:10),
+                          padding: const EdgeInsets.only(top:10, bottom:10),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Expanded(
                                 child: TextFormField(
                                   controller: textController,
-                                  decoration: InputDecoration(
+                                  decoration: const InputDecoration(
                                     border: InputBorder.none,
                                     hintText: 'ABA',
                                   ),
                                 ),
                               ),
-                              SizedBox(width: 10),
+                              const SizedBox(width: 10),
                               Expanded(
                                 child: TextFormField(
                                   controller: platformPriceController,
                                   keyboardType: TextInputType.number, // Show numeric keyboard
-                                  decoration: InputDecoration(
+                                  decoration: const InputDecoration(
                                     border: InputBorder.none,
                                     hintText: 'GAG',
                                   ),
@@ -1511,45 +1604,59 @@ class _OutcomePageState extends State<OutcomePage> {
                               Wrap(
                                 children: [
                                   IconButton(
-                                    onPressed: () {
+                                    onPressed: () async {
+                                      final prefs = await SharedPreferences.getInstance();
                                       final text = textController.text.trim();
                                       final priceText = platformPriceController.text.trim();
                                       if (text.isNotEmpty && priceText.isNotEmpty && dropdownvaluesubs == "Film, Dizi ve TV") {
                                         double dprice = double.tryParse(priceText) ?? 0.0;
                                         String price = dprice.toStringAsFixed(2);
                                         setState(() {
-                                          //isEditingList = false; // Add a corresponding entry for the new item
+                                          tvTitleList.add(text);
+                                          tvPriceList.add(price);
+                                          prefs.setStringList('tvTitleList2', tvTitleList);
+                                          prefs.setStringList('tvPriceList2', tvPriceList);
+                                          formDataProvider2.calculateSumOfTV(tvPriceList);
                                           textController.clear();
                                           platformPriceController.clear();
-                                          //isTextFormFieldVisible = false;
                                           isSubsAddActive = false;
                                           hasSubsCategorySelected = false;
+                                          _load();
                                         });
                                       } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvaluesubs == "Oyun") {
                                         double dprice = double.tryParse(priceText) ?? 0.0;
                                         String price = dprice.toStringAsFixed(2);
                                         setState(() {
-                                          //isEditingList = false; // Add a corresponding entry for the new item
+                                          gameTitleList.add(text);
+                                          gamePriceList.add(price);
+                                          prefs.setStringList('gameTitleList2', gameTitleList);
+                                          prefs.setStringList('gamePriceList2', gamePriceList);
+                                          formDataProvider2.calculateSumOfGame(gamePriceList);
                                           textController.clear();
                                           platformPriceController.clear();
                                           //isTextFormFieldVisible = false;
                                           isSubsAddActive = false;
                                           hasSubsCategorySelected = false;
+                                          _load();
                                         });
                                       } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvaluesubs == "Müzik") {
                                         double dprice = double.tryParse(priceText) ?? 0.0;
                                         String price = dprice.toStringAsFixed(2);
                                         setState(() {
-                                          //isEditingList = false; // Add a corresponding entry for the new item
+                                          musicTitleList.add(text);
+                                          musicPriceList.add(price);
+                                          prefs.setStringList('musicTitleList2', musicTitleList);
+                                          prefs.setStringList('musicPriceList2', musicPriceList);
+                                          formDataProvider2.calculateSumOfMusic(musicPriceList);
                                           textController.clear();
                                           platformPriceController.clear();
-                                          //isTextFormFieldVisible = false;
                                           isSubsAddActive = false;
                                           hasSubsCategorySelected = false;
+                                          _load();
                                         });
                                       }
                                     },
-                                    icon: Icon(Icons.check_circle, size: 26),
+                                    icon: const Icon(Icons.check_circle, size: 26),
                                   ),
                                   IconButton(
                                     onPressed: () {
@@ -1561,7 +1668,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                         platformPriceController.clear();
                                       });
                                     },
-                                    icon: Icon(Icons.cancel, size: 26),
+                                    icon: const Icon(Icons.cancel, size: 26),
                                   ),
                                 ],
                               ),
@@ -1573,11 +1680,11 @@ class _OutcomePageState extends State<OutcomePage> {
                   ],
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Text("Faturalar", style: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.bold)),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Container(
-                padding: EdgeInsets.all(20),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   color: Colors.white,
@@ -1586,30 +1693,30 @@ class _OutcomePageState extends State<OutcomePage> {
                       color: Colors.grey.withOpacity(0.5),
                       spreadRadius: 5,
                       blurRadius: 7,
-                      offset: Offset(0, 3),
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("${formattedSumOfBills} / ${formattedOutcomeValue}", style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold)),
+                    Text("$formattedSumOfBills / $formattedOutcomeValue", style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold)),
                     SizedBox(
                       child: LinearPercentIndicator(
-                        padding: EdgeInsets.only(right: 10),
-                        backgroundColor: Color(0xffc6c6c7),
+                        padding: const EdgeInsets.only(right: 10),
+                        backgroundColor: const Color(0xffc6c6c7),
                         animation: true,
                         lineHeight: 10,
                         animationDuration: 1000,
                         percent: sumOfBills/outcomeValue,
                         trailing: Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                        barRadius: Radius.circular(10),
+                        barRadius: const Radius.circular(10),
                         progressColor: Colors.lightBlue,
                       ),
                     ),
-                    SizedBox(height: 5),
+                    const SizedBox(height: 5),
                     ListView(
-                      physics: NeverScrollableScrollPhysics(),
+                      physics: const NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
                       children: [
                         if(homeBillsTitleList.isNotEmpty)
@@ -1617,9 +1724,9 @@ class _OutcomePageState extends State<OutcomePage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text("Home Bills", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                            const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                             ListView.builder(
-                              physics: NeverScrollableScrollPhysics(),
+                              physics: const NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
                               itemCount: homeBillsTitleList.length + 1, // +1 for the "Abonelik Ekle" row
                               itemBuilder: (context, index) {
@@ -1649,22 +1756,23 @@ class _OutcomePageState extends State<OutcomePage> {
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
-                                          SizedBox(width: 20),
+                                          const SizedBox(width: 20),
                                           IconButton(
                                             splashRadius: 0.0001,
                                             padding: EdgeInsets.zero,
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                            icon: Icon(Icons.edit, size: 21),
+                                            icon: const Icon(Icons.edit, size: 21),
                                             onPressed: () {
                                               _showEditDialog(context, index, 2, 1); // Show the edit dialog
                                             },
                                           ),
                                         ],
                                       ),
-                                      Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                      const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                                     ],
                                   );
                                 }
+                                return null;
                               },
                             ),
                           ],
@@ -1674,9 +1782,9 @@ class _OutcomePageState extends State<OutcomePage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text("Internet", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                            const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                             ListView.builder(
-                              physics: NeverScrollableScrollPhysics(),
+                              physics: const NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
                               itemCount: internetTitleList.length + 1, // +1 for the "Abonelik Ekle" row
                               itemBuilder: (context, index) {
@@ -1706,22 +1814,23 @@ class _OutcomePageState extends State<OutcomePage> {
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
-                                          SizedBox(width: 20),
+                                          const SizedBox(width: 20),
                                           IconButton(
                                             splashRadius: 0.0001,
                                             padding: EdgeInsets.zero,
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                            icon: Icon(Icons.edit, size: 21),
+                                            icon: const Icon(Icons.edit, size: 21),
                                             onPressed: () {
                                               _showEditDialog(context, index, 2, 2); // Show the edit dialog
                                             },
                                           ),
                                         ],
                                       ),
-                                      Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                      const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                                     ],
                                   );
                                 }
+                                return null;
                               },
                             ),
                           ],
@@ -1731,9 +1840,9 @@ class _OutcomePageState extends State<OutcomePage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text("Phone", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                            const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                             ListView.builder(
-                              physics: NeverScrollableScrollPhysics(),
+                              physics: const NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
                               itemCount: phoneTitleList.length + 1, // +1 for the "Abonelik Ekle" row
                               itemBuilder: (context, index) {
@@ -1763,22 +1872,23 @@ class _OutcomePageState extends State<OutcomePage> {
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
-                                          SizedBox(width: 20),
+                                          const SizedBox(width: 20),
                                           IconButton(
                                             splashRadius: 0.0001,
                                             padding: EdgeInsets.zero,
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                            icon: Icon(Icons.edit, size: 21),
+                                            icon: const Icon(Icons.edit, size: 21),
                                             onPressed: () {
                                               _showEditDialog(context, index, 2, 3); // Show the edit dialog
                                             },
                                           ),
                                         ],
                                       ),
-                                      Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                      const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                                     ],
                                   );
                                 }
+                                return null;
                               },
                             ),
                           ],
@@ -1795,7 +1905,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                     isBillsAddActive = true;
                                   });
                                 },
-                                icon: Icon(Icons.add_circle),
+                                icon: const Icon(Icons.add_circle),
                               ),
                             ],
                           ),
@@ -1807,7 +1917,7 @@ class _OutcomePageState extends State<OutcomePage> {
                               Container(
                                   child:DropdownButton(
                                     value: dropdownvaluebills,
-                                    icon:Icon(Icons.keyboard_arrow_down),
+                                    icon:const Icon(Icons.keyboard_arrow_down),
                                     items: billsItems.map((String items) {
                                       return DropdownMenuItem(
                                         value: items,
@@ -1831,7 +1941,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                         hasBillsCategorySelected = true;
                                       });
                                     },
-                                    icon: Icon(Icons.arrow_downward, size: 26),
+                                    icon: const Icon(Icons.arrow_downward, size: 26),
                                   ),
                                   if(!hasBillsCategorySelected)
                                   IconButton(
@@ -1841,7 +1951,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                         hasBillsCategorySelected = false;
                                       });
                                     },
-                                    icon: Icon(Icons.cancel, size: 26),
+                                    icon: const Icon(Icons.cancel, size: 26),
                                   ),
                                 ],
                               ),
@@ -1849,25 +1959,25 @@ class _OutcomePageState extends State<OutcomePage> {
                           ),
                         if(hasBillsCategorySelected)
                           Container(
-                            padding: EdgeInsets.only(top:10, bottom:10),
+                            padding: const EdgeInsets.only(top:10, bottom:10),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Expanded(
                                   child: TextFormField(
                                     controller: textController,
-                                    decoration: InputDecoration(
+                                    decoration: const InputDecoration(
                                       border: InputBorder.none,
                                       hintText: 'ABA',
                                     ),
                                   ),
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(width: 10),
                                 Expanded(
                                   child: TextFormField(
                                     controller: platformPriceController,
                                     keyboardType: TextInputType.number, // Show numeric keyboard
-                                    decoration: InputDecoration(
+                                    decoration: const InputDecoration(
                                       border: InputBorder.none,
                                       hintText: 'GAG',
                                     ),
@@ -1876,45 +1986,61 @@ class _OutcomePageState extends State<OutcomePage> {
                                 Wrap(
                                   children: [
                                     IconButton(
-                                      onPressed: () {
+                                      onPressed: () async {
+                                        final prefs = await SharedPreferences.getInstance();
                                         final text = textController.text.trim();
                                         final priceText = platformPriceController.text.trim();
                                         if (text.isNotEmpty && priceText.isNotEmpty && dropdownvaluebills == "Ev Faturaları") {
                                           double dprice = double.tryParse(priceText) ?? 0.0;
                                           String price = dprice.toStringAsFixed(2);
                                           setState(() {
-                                            //isEditingList = false; // Add a corresponding entry for the new item
+                                            homeBillsTitleList.add(text);
+                                            homeBillsPriceList.add(price);
+                                            prefs.setStringList('homeBillsTitleList2', homeBillsTitleList);
+                                            prefs.setStringList('homeBillsPriceList2', homeBillsPriceList);
+                                            formDataProvider2.calculateSumOfHome(homeBillsPriceList);
                                             textController.clear();
                                             platformPriceController.clear();
                                             //isTextFormFieldVisible = false;
                                             isBillsAddActive = false;
                                             hasBillsCategorySelected = false;
+                                            _load();
                                           });
                                         } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvaluebills == "İnternet") {
                                           double dprice = double.tryParse(priceText) ?? 0.0;
                                           String price = dprice.toStringAsFixed(2);
                                           setState(() {
-                                            //isEditingList = false; // Add a corresponding entry for the new item
+                                            internetTitleList.add(text);
+                                            internetPriceList.add(price);
+                                            prefs.setStringList('internetTitleList2', internetTitleList);
+                                            prefs.setStringList('internetPriceList2', internetPriceList);
+                                            formDataProvider2.calculateSumOfInternet(internetPriceList);
                                             textController.clear();
                                             platformPriceController.clear();
                                             //isTextFormFieldVisible = false;
                                             isBillsAddActive = false;
                                             hasBillsCategorySelected = false;
+                                            _load();
                                           });
                                         } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvaluebills == "Telefon") {
                                           double dprice = double.tryParse(priceText) ?? 0.0;
                                           String price = dprice.toStringAsFixed(2);
                                           setState(() {
-                                            //isEditingList = false; // Add a corresponding entry for the new item
+                                            phoneTitleList.add(text);
+                                            phonePriceList.add(price);
+                                            prefs.setStringList('phoneTitleList2', phoneTitleList);
+                                            prefs.setStringList('phonePriceList2', phonePriceList);
+                                            formDataProvider2.calculateSumOfPhone(phonePriceList);
                                             textController.clear();
                                             platformPriceController.clear();
                                             //isTextFormFieldVisible = false;
                                             isBillsAddActive = false;
                                             hasBillsCategorySelected = false;
+                                            _load();
                                           });
                                         }
                                       },
-                                      icon: Icon(Icons.check_circle, size: 26),
+                                      icon: const Icon(Icons.check_circle, size: 26),
                                     ),
                                     IconButton(
                                       onPressed: () {
@@ -1926,7 +2052,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                           platformPriceController.clear();
                                         });
                                       },
-                                      icon: Icon(Icons.cancel, size: 26),
+                                      icon: const Icon(Icons.cancel, size: 26),
                                     ),
                                   ],
                                 ),
@@ -1938,11 +2064,11 @@ class _OutcomePageState extends State<OutcomePage> {
                   ],
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Text("Diğer Giderler", style: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.bold)),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Container(
-                padding: EdgeInsets.all(20),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   color: Colors.white,
@@ -1951,40 +2077,40 @@ class _OutcomePageState extends State<OutcomePage> {
                       color: Colors.grey.withOpacity(0.5),
                       spreadRadius: 5,
                       blurRadius: 7,
-                      offset: Offset(0, 3),
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("${formattedSumOfOthers} / ${formattedOutcomeValue}", style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold)),
+                    Text("$formattedSumOfOthers / $formattedOutcomeValue", style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold)),
                     SizedBox(
                       child: LinearPercentIndicator(
-                        padding: EdgeInsets.only(right: 10),
-                        backgroundColor: Color(0xffc6c6c7),
+                        padding: const EdgeInsets.only(right: 10),
+                        backgroundColor: const Color(0xffc6c6c7),
                         animation: true,
                         lineHeight: 10,
                         animationDuration: 1000,
                         percent: sumOfOthers/outcomeValue,
                         trailing: Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                        barRadius: Radius.circular(10),
+                        barRadius: const Radius.circular(10),
                         progressColor: Colors.lightBlue,
                       ),
                     ),
-                    SizedBox(height: 5),
+                    const SizedBox(height: 5),
                     ListView(
                       shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
+                      physics: const NeverScrollableScrollPhysics(),
                       children: [
                         if(rentTitleList.isNotEmpty)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text("Rent", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                            const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                             ListView.builder(
-                              physics: NeverScrollableScrollPhysics(),
+                              physics: const NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
                               itemCount: rentTitleList.length + 1, // +1 for the "Abonelik Ekle" row
                               itemBuilder: (context, index) {
@@ -2014,22 +2140,23 @@ class _OutcomePageState extends State<OutcomePage> {
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
-                                          SizedBox(width: 20),
+                                          const SizedBox(width: 20),
                                           IconButton(
                                             splashRadius: 0.0001,
                                             padding: EdgeInsets.zero,
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                            icon: Icon(Icons.edit, size: 21),
+                                            icon: const Icon(Icons.edit, size: 21),
                                             onPressed: () {
                                               _showEditDialog(context, index, 3, 1); // Show the edit dialog
                                             },
                                           ),
                                         ],
                                       ),
-                                      Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                      const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                                     ],
                                   );
                                 }
+                                return null;
                               },
                             ),
                           ],
@@ -2039,9 +2166,9 @@ class _OutcomePageState extends State<OutcomePage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text("Kitchen", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                            const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                             ListView.builder(
-                              physics: NeverScrollableScrollPhysics(),
+                              physics: const NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
                               itemCount: kitchenTitleList.length + 1, // +1 for the "Abonelik Ekle" row
                               itemBuilder: (context, index) {
@@ -2071,22 +2198,23 @@ class _OutcomePageState extends State<OutcomePage> {
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
-                                          SizedBox(width: 20),
+                                          const SizedBox(width: 20),
                                           IconButton(
                                             splashRadius: 0.0001,
                                             padding: EdgeInsets.zero,
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                            icon: Icon(Icons.edit, size: 21),
+                                            icon: const Icon(Icons.edit, size: 21),
                                             onPressed: () {
                                               _showEditDialog(context, index, 3, 2); // Show the edit dialog
                                             },
                                           ),
                                         ],
                                       ),
-                                      Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                      const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                                     ],
                                   );
                                 }
+                                return null;
                               },
                             ),
                           ],
@@ -2096,9 +2224,9 @@ class _OutcomePageState extends State<OutcomePage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text("Catering", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                            const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                             ListView.builder(
-                              physics: NeverScrollableScrollPhysics(),
+                              physics: const NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
                               itemCount: cateringTitleList.length + 1, // +1 for the "Abonelik Ekle" row
                               itemBuilder: (context, index) {
@@ -2128,22 +2256,23 @@ class _OutcomePageState extends State<OutcomePage> {
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
-                                          SizedBox(width: 20),
+                                          const SizedBox(width: 20),
                                           IconButton(
                                             splashRadius: 0.0001,
                                             padding: EdgeInsets.zero,
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                            icon: Icon(Icons.edit, size: 21),
+                                            icon: const Icon(Icons.edit, size: 21),
                                             onPressed: () {
                                               _showEditDialog(context, index, 3, 3); // Show the edit dialog
                                             },
                                           ),
                                         ],
                                       ),
-                                      Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                      const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                                     ],
                                   );
                                 }
+                                return null;
                               },
                             ),
                           ],
@@ -2153,9 +2282,9 @@ class _OutcomePageState extends State<OutcomePage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text("Entertainment", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                            const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                             ListView.builder(
-                              physics: NeverScrollableScrollPhysics(),
+                              physics: const NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
                               itemCount: entertainmentTitleList.length + 1, // +1 for the "Abonelik Ekle" row
                               itemBuilder: (context, index) {
@@ -2185,22 +2314,23 @@ class _OutcomePageState extends State<OutcomePage> {
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
-                                          SizedBox(width: 20),
+                                          const SizedBox(width: 20),
                                           IconButton(
                                             splashRadius: 0.0001,
                                             padding: EdgeInsets.zero,
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                            icon: Icon(Icons.edit, size: 21),
+                                            icon: const Icon(Icons.edit, size: 21),
                                             onPressed: () {
                                               _showEditDialog(context, index, 3, 4); // Show the edit dialog
                                             },
                                           ),
                                         ],
                                       ),
-                                      Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                      const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                                     ],
                                   );
                                 }
+                                return null;
                               },
                             ),
                           ],
@@ -2210,9 +2340,9 @@ class _OutcomePageState extends State<OutcomePage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text("Others", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                            const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                             ListView.builder(
-                              physics: NeverScrollableScrollPhysics(),
+                              physics: const NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
                               itemCount: otherTitleList.length + 1, // +1 for the "Abonelik Ekle" row
                               itemBuilder: (context, index) {
@@ -2242,22 +2372,23 @@ class _OutcomePageState extends State<OutcomePage> {
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
-                                          SizedBox(width: 20),
+                                          const SizedBox(width: 20),
                                           IconButton(
                                             splashRadius: 0.0001,
                                             padding: EdgeInsets.zero,
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                            icon: Icon(Icons.edit, size: 21),
+                                            icon: const Icon(Icons.edit, size: 21),
                                             onPressed: () {
                                               _showEditDialog(context, index, 3, 5); // Show the edit dialog
                                             },
                                           ),
                                         ],
                                       ),
-                                      Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                      const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                                     ],
                                   );
                                 }
+                                return null;
                               },
                             ),
                           ],
@@ -2274,7 +2405,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                       isOthersAddActive = true;
                                     });
                                   },
-                                  icon: Icon(Icons.add_circle),
+                                  icon: const Icon(Icons.add_circle),
                                 ),
                               ],
                             ),
@@ -2286,7 +2417,7 @@ class _OutcomePageState extends State<OutcomePage> {
                               Container(
                                   child:DropdownButton(
                                     value: dropdownvalueothers,
-                                    icon:Icon(Icons.keyboard_arrow_down),
+                                    icon:const Icon(Icons.keyboard_arrow_down),
                                     items: othersItems.map((String items) {
                                       return DropdownMenuItem(
                                         value: items,
@@ -2310,7 +2441,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                         hasOthersCategorySelected = true;
                                       });
                                     },
-                                    icon: Icon(Icons.arrow_downward, size: 26),
+                                    icon: const Icon(Icons.arrow_downward, size: 26),
                                   ),
                                   if(!hasOthersCategorySelected)
                                   IconButton(
@@ -2320,7 +2451,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                         hasOthersCategorySelected = false;
                                       });
                                     },
-                                    icon: Icon(Icons.cancel, size: 26),
+                                    icon: const Icon(Icons.cancel, size: 26),
                                   ),
                                 ],
                               ),
@@ -2328,25 +2459,25 @@ class _OutcomePageState extends State<OutcomePage> {
                           ),
                         if(hasOthersCategorySelected)
                           Container(
-                            padding: EdgeInsets.only(top:10, bottom:10),
+                            padding: const EdgeInsets.only(top:10, bottom:10),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Expanded(
                                   child: TextFormField(
                                     controller: textController,
-                                    decoration: InputDecoration(
+                                    decoration: const InputDecoration(
                                       border: InputBorder.none,
                                       hintText: 'ABA',
                                     ),
                                   ),
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(width: 10),
                                 Expanded(
                                   child: TextFormField(
                                     controller: platformPriceController,
                                     keyboardType: TextInputType.number, // Show numeric keyboard
-                                    decoration: InputDecoration(
+                                    decoration: const InputDecoration(
                                       border: InputBorder.none,
                                       hintText: 'GAG',
                                     ),
@@ -2355,67 +2486,93 @@ class _OutcomePageState extends State<OutcomePage> {
                                 Wrap(
                                   children: [
                                     IconButton(
-                                      onPressed: () {
+                                      onPressed: () async {
+                                        final prefs = await SharedPreferences.getInstance();
                                         final text = textController.text.trim();
                                         final priceText = platformPriceController.text.trim();
                                         if (text.isNotEmpty && priceText.isNotEmpty && dropdownvalueothers == "Kira") {
                                           double dprice = double.tryParse(priceText) ?? 0.0;
                                           String price = dprice.toStringAsFixed(2);
                                           setState(() {
-                                            //isEditingList = false; // Add a corresponding entry for the new item
+                                            rentTitleList.add(text);
+                                            rentPriceList.add(price);
+                                            prefs.setStringList('rentTitleList2', rentTitleList);
+                                            prefs.setStringList('rentPriceList2', rentPriceList);
+                                            formDataProvider2.calculateSumOfRent(rentPriceList);
                                             textController.clear();
                                             platformPriceController.clear();
                                             //isTextFormFieldVisible = false;
                                             isOthersAddActive = false;
                                             hasOthersCategorySelected = false;
+                                            _load();
                                           });
                                         } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvalueothers == "Mutfak") {
                                           double dprice = double.tryParse(priceText) ?? 0.0;
                                           String price = dprice.toStringAsFixed(2);
                                           setState(() {
-                                            //isEditingList = false; // Add a corresponding entry for the new item
+                                            kitchenTitleList.add(text);
+                                            kitchenPriceList.add(price);
+                                            prefs.setStringList('kitchenTitleList2', kitchenTitleList);
+                                            prefs.setStringList('kitchenPriceList2', kitchenPriceList);
+                                            formDataProvider2.calculateSumOfKitchen(kitchenPriceList);
                                             textController.clear();
                                             platformPriceController.clear();
                                             //isTextFormFieldVisible = false;
                                             isOthersAddActive = false;
                                             hasOthersCategorySelected = false;
+                                            _load();
                                           });
                                         } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvalueothers == "Yeme İçme") {
                                           double dprice = double.tryParse(priceText) ?? 0.0;
                                           String price = dprice.toStringAsFixed(2);
                                           setState(() {
-                                            //isEditingList = false; // Add a corresponding entry for the new item
+                                            cateringTitleList.add(text);
+                                            cateringPriceList.add(price);
+                                            prefs.setStringList('cateringTitleList2', cateringTitleList);
+                                            prefs.setStringList('cateringPriceList2', cateringPriceList);
+                                            formDataProvider2.calculateSumOfCatering(cateringPriceList);
                                             textController.clear();
                                             platformPriceController.clear();
                                             //isTextFormFieldVisible = false;
                                             isOthersAddActive = false;
                                             hasOthersCategorySelected = false;
+                                            _load();
                                           });
                                         } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvalueothers == "Eğlence") {
                                           double dprice = double.tryParse(priceText) ?? 0.0;
                                           String price = dprice.toStringAsFixed(2);
                                           setState(() {
-                                            //isEditingList = false; // Add a corresponding entry for the new item
+                                            entertainmentTitleList.add(text);
+                                            entertainmentPriceList.add(price);
+                                            prefs.setStringList('entertainmentTitleList2', entertainmentTitleList);
+                                            prefs.setStringList('entertainmentPriceList2', entertainmentPriceList);
+                                            formDataProvider2.calculateSumOfEnt(entertainmentPriceList);
                                             textController.clear();
                                             platformPriceController.clear();
                                             //isTextFormFieldVisible = false;
                                             isOthersAddActive = false;
                                             hasOthersCategorySelected = false;
+                                            _load();
                                           });
                                         } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvalueothers == "Diğer") {
                                           double dprice = double.tryParse(priceText) ?? 0.0;
                                           String price = dprice.toStringAsFixed(2);
                                           setState(() {
-                                            //isEditingList = false; // Add a corresponding entry for the new item
+                                            otherTitleList.add(text);
+                                            otherPriceList.add(price);
+                                            prefs.setStringList('otherTitleList2', otherTitleList);
+                                            prefs.setStringList('otherPriceList2', otherPriceList);
+                                            formDataProvider2.calculateSumOfOther(otherPriceList);
                                             textController.clear();
                                             platformPriceController.clear();
                                             //isTextFormFieldVisible = false;
                                             isOthersAddActive = false;
                                             hasOthersCategorySelected = false;
+                                            _load();
                                           });
                                         }
                                       },
-                                      icon: Icon(Icons.check_circle, size: 26),
+                                      icon: const Icon(Icons.check_circle, size: 26),
                                     ),
                                     IconButton(
                                       onPressed: () {
@@ -2427,7 +2584,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                           platformPriceController.clear();
                                         });
                                       },
-                                      icon: Icon(Icons.cancel, size: 26),
+                                      icon: const Icon(Icons.cancel, size: 26),
                                     ),
                                   ],
                                 ),
@@ -2450,16 +2607,16 @@ class _OutcomePageState extends State<OutcomePage> {
               color: Colors.black.withOpacity(0.5),
               spreadRadius: 5,
               blurRadius: 5,
-              offset: Offset(0, 3),
+              offset: const Offset(0, 3),
             ),
           ],
-          borderRadius: BorderRadius.only(
+          borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(10), // Adjust as needed
             topRight: Radius.circular(10), // Adjust as needed
           ),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.only(
+          borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(10), // Adjust as needed
             topRight: Radius.circular(10), // Adjust as needed
           ),
@@ -2485,7 +2642,7 @@ class _OutcomePageState extends State<OutcomePage> {
               }
             },
             type: BottomNavigationBarType.fixed,
-            items: [
+            items: const [
               BottomNavigationBarItem(
                 icon: Icon(Icons.home, size: 30),
                 label: 'Ana Sayfa',
