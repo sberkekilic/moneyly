@@ -211,9 +211,9 @@ class _OutcomePageState extends State<OutcomePage> {
       'othersPercent': othersPercent,
     };
     percentages.sort();
-    String smallestVariable = variableMap.keys.firstWhere((key) => variableMap[key] == percentages[0]);
-    String mediumVariable = variableMap.keys.firstWhere((key) => variableMap[key] == percentages[1]);
-    String largestVariable = variableMap.keys.firstWhere((key) => variableMap[key] == percentages[2]);
+    String smallestVariable = variableMap.keys.firstWhere((key) => variableMap[key] == percentages[0], orElse: () => "");
+    String mediumVariable = variableMap.keys.firstWhere((key) => variableMap[key] == percentages[1], orElse: () => "");
+    String largestVariable = variableMap.keys.firstWhere((key) => variableMap[key] == percentages[2], orElse: () => "");
 
     print("Biggest value: ${percentages[2]} $largestVariable");
     print("Medium value: ${percentages[1]} $mediumVariable");

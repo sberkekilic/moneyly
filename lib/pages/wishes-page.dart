@@ -1,4 +1,6 @@
-import 'dart:math';
+// ignore_for_file: unnecessary_null_comparison, avoid_print
+
+import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:fluttericon/font_awesome_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:percent_indicator/percent_indicator.dart';
-import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class WishesPage extends StatefulWidget {
   const WishesPage({Key? key}) : super(key: key);
@@ -36,7 +38,8 @@ class _WishesPageState extends State<WishesPage> {
   Map<int, Map<String, List<double>>> sumMap = {};
   int _nextId = 1;
 
-  void addBankData(String bankName, double percent, double sum, String currency, String selectedSymbol) {
+  Future<void> addBankData(String bankName, double percent, double sum, String currency, String selectedSymbol) async {
+    final prefs = await SharedPreferences.getInstance();
     print("AAAAAA 1 : $_nextId");
     final bankData = {
       'id': _nextId++,
@@ -64,9 +67,44 @@ class _WishesPageState extends State<WishesPage> {
       print("KOD 2");
       sumMap[(bankData['id'] as int)]?[currency] = [sum];
     }
-    setState(() {});
+    setState(() {
+      prefs.setInt('nextId', _nextId);
+      String bankDataListJson = jsonEncode(bankDataList);
+      prefs.setString('bankDataList', bankDataListJson);
+      prefs.setStringList('selectedTabList', selectedTabList);
+    });
   }
-  void updateBankData(int id, String bankName, double percent, double sum, String currency, String selectedSymbol, bool addButton) {
+  Future<void> deleteBankData(int id) async {
+    final prefs = await SharedPreferences.getInstance();
+    final Map<String, dynamic> serializableSumMap = {};
+    final values = sumMap[id];
+    if (values != null) {
+      values.clear();
+    }
+    bankDataList.removeWhere((bank) => bank['id'] == id);
+    reorganizeKeys(sumMap, id);
+    updateBankDataList(bankDataList, id);
+    selectedTabList.removeAt(selectedTabList.length-1);
+    _nextId--;
+    setState(() {
+      prefs.setInt('nextId', _nextId);
+      String bankDataListJson = jsonEncode(bankDataList);
+      prefs.setString('bankDataList', bankDataListJson);
+      prefs.setStringList('selectedTabList', selectedTabList);
+      sumMap.forEach((key, value) {
+        final innerMap = <String, List<double>>{};
+        value.forEach((innerKey, innerValue) {
+          innerMap[innerKey] = innerValue;
+        });
+        serializableSumMap[key.toString()] = innerMap;
+      });
+      final sumMapJson = jsonEncode(serializableSumMap);
+      prefs.setString('sumMap', sumMapJson);
+    });
+  }
+  Future<void> updateBankData(int id, String bankName, double percent, double sum, String currency, String selectedSymbol, bool addButton) async {
+    final prefs = await SharedPreferences.getInstance();
+    final Map<String, dynamic> serializableSumMap = {};
     final index = bankDataList.indexWhere((bank) => bank['id'] == id);
     if (!sumMap.containsKey(id)) {
       sumMap[id] = {currency: []};
@@ -104,6 +142,65 @@ class _WishesPageState extends State<WishesPage> {
         bankDataList[index] = bankData;
       }
     }
+    setState(() {
+      String bankDataListJson = jsonEncode(bankDataList);
+      prefs.setString('bankDataList', bankDataListJson);
+      sumMap.forEach((key, value) {
+        final innerMap = <String, List<double>>{};
+        value.forEach((innerKey, innerValue) {
+          innerMap[innerKey] = innerValue;
+        });
+        serializableSumMap[key.toString()] = innerMap;
+      });
+      final sumMapJson = jsonEncode(serializableSumMap);
+      prefs.setString('sumMap', sumMapJson);
+    });
+  }
+  Future<void> deleteValueById(int id, int index, String bankName, double percent, String currency, String selectedSymbol, bool addButton) async {
+    final prefs = await SharedPreferences.getInstance();
+    final Map<String, dynamic> serializableSumMap = {};
+    final idPosition = bankDataList.indexWhere((bank) => bank['id'] == id);
+    final values = sumMap[id]?[currency] ?? [];
+    if (values != null && index < values.length) {
+      values.removeAt(index);
+      if (values.isEmpty) {
+        sumMap[id]?.remove(currency);
+      } else {
+        double totalSum = 0.0;
+        for (double value in values) {
+          totalSum += value;
+        }
+        sumMap[id]?[currency] = values;
+        final bankData = {
+          'id': id,
+          'bankName': bankName,
+          'percent': percent,
+          'sum': totalSum,
+          'selectedTab': currency,
+          'selectedSymbol': selectedSymbol,
+          'isEditing': false,
+          'isAddButtonActive' : addButton
+        };
+        bankDataList[idPosition] = bankData;
+      }
+      Iterable<MapEntry<int, Map<String, List<double>>>> entries = sumMap.entries;
+      for (final entry in entries) {
+        print('(${entry.key}, ${entry.value[currency]})');
+      }
+    }
+    setState(() {
+      String bankDataListJson = jsonEncode(bankDataList);
+      prefs.setString('bankDataList', bankDataListJson);
+      sumMap.forEach((key, value) {
+        final innerMap = <String, List<double>>{};
+        value.forEach((innerKey, innerValue) {
+          innerMap[innerKey] = innerValue;
+        });
+        serializableSumMap[key.toString()] = innerMap;
+      });
+      final sumMapJson = jsonEncode(serializableSumMap);
+      prefs.setString('sumMap', sumMapJson);
+    });
   }
   double calculateSum(int id) {
     if (sumMap.containsKey(id)) {
@@ -148,25 +245,6 @@ class _WishesPageState extends State<WishesPage> {
     });
 
     return totalSum;
-  }
-  void deleteBankData(Map<int, Map<String, List<double>>> sumMap, int id) {
-    final values = sumMap[id];
-    if (values != null) {
-      values.clear();
-    }
-    print("bankDataList DBD : $bankDataList");
-    print("sumMap DBB : $sumMap");
-    bankDataList.removeWhere((bank) => bank['id'] == id);
-    print("bankDataList DBD 2: $bankDataList");
-    print("sumMap DBB 2: $sumMap");
-    reorganizeKeys(sumMap, id);
-    print("bankDataList DBD 3: $bankDataList");
-    print("sumMap DBB 3: $sumMap");
-    updateBankDataList(bankDataList, id);
-    print("bankDataList DBD4: $bankDataList");
-    print("sumMap DBB4 : $sumMap");
-    selectedTabList.removeAt(selectedTabList.length-1);
-    _nextId--;
   }
   void updateBankDataList(List<Map<String, dynamic>> bankDataList, int deletedId) {
     final updatedBankDataList = <Map<String, dynamic>>[];
@@ -235,44 +313,73 @@ class _WishesPageState extends State<WishesPage> {
   Map<int, Map<String, List<double>>> getSumMap() {
     return Map<int, Map<String, List<double>>>.from(sumMap);
   }
-  void deleteValueById(Map<int, Map<String, List<double>>> sumMap, int id, int index, String bankName, double percent, String currency, String selectedSymbol, bool addButton) {
-    final idPosition = bankDataList.indexWhere((bank) => bank['id'] == id);
-    final values = sumMap[id]?[currency] ?? [];
-    if (values != null && index < values.length) {
-      values.removeAt(index);
-      if (values.isEmpty) {
-        sumMap[id]?.remove(currency);
-      } else {
-        double totalSum = 0.0;
-        for (double value in values) {
-          totalSum += value;
-        }
-        sumMap[id]?[currency] = values;
-        final bankData = {
-          'id': id,
-          'bankName': bankName,
-          'percent': percent,
-          'sum': totalSum,
-          'selectedTab': currency,
-          'selectedSymbol': selectedSymbol,
-          'isEditing': false,
-          'isAddButtonActive' : addButton
-        };
-        bankDataList[idPosition] = bankData;
-      }
-      Iterable<MapEntry<int, Map<String, List<double>>>> entries = sumMap.entries;
-      for (final entry in entries) {
-        print('(${entry.key}, ${entry.value[currency]})');
-      }
-    }
-  }
   @override
   void dispose() {
     focusNode.dispose();
     super.dispose();
   }
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+  void _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final ab1 = prefs.getInt('nextId') ?? 1;
+    final ab2 = prefs.getStringList('selectedTabList') ?? [];
+    final ab3 = prefs.getString('bankDataList');
+    final ab4 = prefs.getString('sumMap');
+
+    setState(() {
+      print("ab1 : $ab1");
+      print("ab2 : $ab2");
+      print("ab3 type: $ab3");
+      _nextId = ab1;
+      selectedTabList = ab2;
+
+      try {
+        if (ab3 != null && ab3.isNotEmpty) {
+          bankDataList = (jsonDecode(ab3) as List<dynamic>).cast<Map<String, dynamic>>();
+        } else {
+          // Handle the case where 'bankDataList' is null or empty.
+          bankDataList = [];
+        }
+      } catch (e) {
+        // Handle any exceptions that may occur during decoding.
+        print("Error decoding bankDataList: $e");
+        bankDataList = [];
+      }
+
+      try {
+        if (ab4 != null && ab4.isNotEmpty) {
+          final decodedSumMap = jsonDecode(ab4) as Map<String, dynamic>;
+          sumMap = <int, Map<String, List<double>>>{};
+          decodedSumMap.forEach((key, value) {
+            final intKey = int.tryParse(key);
+            if (intKey != null && value is Map<String, dynamic>) {
+              final innerMap = <String, List<double>>{};
+              value.forEach((innerKey, innerValue) {
+                if (innerValue is List<dynamic>) {
+                  innerMap[innerKey] = innerValue.map((item) => (item is double) ? item : 0.0).toList();
+                }
+              });
+              sumMap[intKey] = innerMap;
+            }
+          });
+        } else {
+          sumMap = {};
+        }
+      } catch (e) {
+        sumMap = {};
+      }
+
+      // Assign the final sumMap to your instance variable if needed
+      // this.sumMap = sumMap;
+    });
+  }
+
   Widget buildBankCategories(BuildContext context, Map<String, dynamic> bankData) {
-    final newSelectedTab;
+    final String newSelectedTab;
     if (selectedTabList.isEmpty){
       newSelectedTab = "Türk Lirası";
     } else {
@@ -309,9 +416,9 @@ class _WishesPageState extends State<WishesPage> {
 
     return Column(
       children: [
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
         Container(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
             color: Colors.white,
@@ -320,7 +427,7 @@ class _WishesPageState extends State<WishesPage> {
                 color: Colors.grey.withOpacity(0.5),
                 spreadRadius: 5,
                 blurRadius: 7,
-                offset: Offset(0, 3),
+                offset: const Offset(0, 3),
               ),
             ],
           ),
@@ -341,13 +448,13 @@ class _WishesPageState extends State<WishesPage> {
                   focusNode.requestFocus();
                   SystemChannels.textInput.invokeMethod('TextInput.show');
                 },
-                child: Container(
+                child: SizedBox(
                   width: double.maxFinite, // Set a fixed width to match the Text widget
                   child: bankData['isEditing']
                       ? EditableText(
                     controller: nameController,
                     focusNode: focusNode,
-                    style: TextStyle(
+                    style: const TextStyle(
                       // Maintain text style
                       color: Colors.black,
                       fontSize: 25,
@@ -372,7 +479,7 @@ class _WishesPageState extends State<WishesPage> {
                   )
                       : Text(
                     bankData['bankName'],
-                    style: TextStyle(
+                    style: const TextStyle(
                       // Maintain text style
                       color: Colors.black,
                       fontSize: 19,
@@ -381,23 +488,9 @@ class _WishesPageState extends State<WishesPage> {
                   ),
                 ),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Text(
-                "${sumForCurrency.toString()}$selectedSymbol${selectedTabList}$newSelectedTab\n",
-                style: GoogleFonts.montserrat(
-                    color: Colors.black,
-                    fontSize: 19,
-                    fontWeight: FontWeight.normal),
-              ),
-              Text(
-                "$sumMap\n",
-                style: GoogleFonts.montserrat(
-                    color: Colors.black,
-                    fontSize: 19,
-                    fontWeight: FontWeight.normal),
-              ),
-              Text(
-                "$bankDataList\n",
+                "${sumForCurrency.toString()}$selectedSymbol",
                 style: GoogleFonts.montserrat(
                     color: Colors.black,
                     fontSize: 19,
@@ -405,8 +498,8 @@ class _WishesPageState extends State<WishesPage> {
               ),
               SizedBox(
                 child: LinearPercentIndicator(
-                  padding: EdgeInsets.only(right: 10),
-                  backgroundColor: Color(0xffc6c6c7),
+                  padding: const EdgeInsets.only(right: 10),
+                  backgroundColor: const Color(0xffc6c6c7),
                   animation: true,
                   lineHeight: 10,
                   animationDuration: 1000,
@@ -418,11 +511,11 @@ class _WishesPageState extends State<WishesPage> {
                         fontSize: 16,
                         fontWeight: FontWeight.normal),
                   ),
-                  barRadius: Radius.circular(10),
+                  barRadius: const Radius.circular(10),
                   progressColor: Colors.lightBlue,
                 ),
               ),
-              SizedBox(height: 5),
+              const SizedBox(height: 5),
               DefaultTabController(
                 length: currencyList.length,
                 child: Column(
@@ -435,15 +528,15 @@ class _WishesPageState extends State<WishesPage> {
                         isScrollable: true, // Set this to true if you have many currencies
                         indicator: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
-                          color: Color(0xffc6c6c7),
+                          color: const Color(0xffc6c6c7),
                         ),
                         labelColor: Colors.blue, // Color for the selected tab text
                         unselectedLabelColor: Colors.grey, // Color for unselected tab text
                         tabs: currencyList.map((currency) {
                           return Tab(
                             child: Container(
-                              padding: EdgeInsets.all(8.0), // Adjust padding as needed
-                              decoration: BoxDecoration(
+                              padding: const EdgeInsets.all(8.0), // Adjust padding as needed
+                              decoration: const BoxDecoration(
                                 shape: BoxShape.circle, // Circular background for each tab
                               ),
                               child: Text(
@@ -457,15 +550,15 @@ class _WishesPageState extends State<WishesPage> {
                           setState(() {
                             selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))] = currencyList[value];
                             bankData['selectedSymbol'] = getSelectedSymbol(selectedTab);
-                            print("selectedTabList : ${selectedTabList}");
+                            print("selectedTabList : $selectedTabList");
                             print("sumMap for onChange : $sumMap");
                           });
                         },
                       ),
                     ),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     ListView(
-                      physics: NeverScrollableScrollPhysics(),
+                      physics: const NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
                       children: [
                         if (sumMap[bankData['id']]?[selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))]] != null)
@@ -473,9 +566,9 @@ class _WishesPageState extends State<WishesPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))], style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                              Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                              const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                               ListView.builder(
-                                physics: NeverScrollableScrollPhysics(),
+                                physics: const NeverScrollableScrollPhysics(),
                                 shrinkWrap: true,
                                 itemCount: sumMap[bankData['id']]?[selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))]]?.length ?? 0 + 1,
                                 itemBuilder: (context, index) {
@@ -495,25 +588,25 @@ class _WishesPageState extends State<WishesPage> {
                                                 overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
-                                            SizedBox(width: 20),
+                                            const SizedBox(width: 20),
                                             IconButton(
                                               splashRadius: 0.0001,
                                               padding: EdgeInsets.zero,
                                               constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                              icon: Icon(Icons.delete, size: 21),
+                                              icon: const Icon(Icons.delete, size: 21),
                                               onPressed: () {
                                                 setState(() {
-                                                  deleteValueById(sumMap, bankData['id'], index, bankData['bankName'], bankData['percent'], selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))], bankData['selectedSymbol'], false);
+                                                  deleteValueById(bankData['id'], index, bankData['bankName'], bankData['percent'], selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))], bankData['selectedSymbol'], false);
                                                 });
                                               },
                                             ),
                                           ],
                                         ),
-                                        Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                        const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                                       ],
                                     );
                                   }
-                                  return SizedBox.shrink();
+                                  return const SizedBox.shrink();
                                 },
                               )
                             ],
@@ -548,31 +641,31 @@ class _WishesPageState extends State<WishesPage> {
                           context: context,
                           builder: (BuildContext context) {
                             return CupertinoAlertDialog(
-                              title: Text("Are you sure?"),
-                              content: Text("Do you want to delete this item?"),
+                              title: const Text("Are you sure?"),
+                              content: const Text("Do you want to delete this item?"),
                               actions: [
                                 CupertinoDialogAction(
                                   onPressed: () {
                                     // Close the dialog
                                     Navigator.of(context).pop();
                                   },
-                                  child: Text("Cancel"),
+                                  child: const Text("Cancel"),
                                 ),
                                 CupertinoDialogAction(
                                   onPressed: () {
                                     setState(() {
-                                      deleteBankData(sumMap, bankData['id']);
+                                      deleteBankData(bankData['id']);
                                       Navigator.of(context).pop();
                                     });
                                   },
-                                  child: Text("Delete"),
+                                  child: const Text("Delete"),
                                 ),
                               ],
                             );
                           },
                         );
                       },
-                      child: Icon(CupertinoIcons.delete),
+                      child: const Icon(CupertinoIcons.delete),
                     ),
                   ],
                 ),
@@ -580,61 +673,57 @@ class _WishesPageState extends State<WishesPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                        child:DropdownButton(
-                          value: dropDownValue,
-                          icon:Icon(Icons.keyboard_arrow_down),
-                          items: currencyList.map((String items) {
-                            return DropdownMenuItem(
-                              value: items,
-                              child: Text(items),
-                            );
-                          }).toList(),
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              dropDownValue = newValue!;
-                            });
-                          },
-                        )
+                    DropdownButton(
+                      value: dropDownValue,
+                      icon:const Icon(Icons.keyboard_arrow_down),
+                      items: currencyList.map((String items) {
+                        return DropdownMenuItem(
+                          value: items,
+                          child: Text(items),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          dropDownValue = newValue!;
+                        });
+                      },
                     ),
                   ],
                 ),
               if(bankData['isAddButtonActive'] == true && assetController != null)
-                Container(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: assetController,
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            hintText: 'Asset',
-                          ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: assetController,
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          hintText: 'Asset',
                         ),
                       ),
-                      Wrap(
-                        children: [
-                          IconButton(
-                            onPressed: () {
-                              double price = double.tryParse(assetController?.text.trim() ?? '0.3') ?? 0.3;
-                              String newName = nameController.text;
-                              setState(() {
-                                final text = assetController?.text.trim() ?? '';
-                                if (text.isNotEmpty && text != "0") {
-                                  updateBankData(bankData['id'], newName, bankData['percent'], price, dropDownValue , bankData['selectedSymbol'], false);
-                                  assetController?.clear();
-                                } else {
-                                  assetController?.clear();
-                                }
-                              });
-                            },
-                            icon: Icon(Icons.check_circle, size: 26),
-                          )
-                        ],
-                      )
-                    ],
-                  ),
+                    ),
+                    Wrap(
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            double price = double.tryParse(assetController?.text.trim() ?? '0.3') ?? 0.3;
+                            String newName = nameController.text;
+                            setState(() {
+                              final text = assetController?.text.trim() ?? '';
+                              if (text.isNotEmpty && text != "0") {
+                                updateBankData(bankData['id'], newName, bankData['percent'], price, dropDownValue , bankData['selectedSymbol'], false);
+                                assetController?.clear();
+                              } else {
+                                assetController?.clear();
+                              }
+                            });
+                          },
+                          icon: const Icon(Icons.check_circle, size: 26),
+                        )
+                      ],
+                    )
+                  ],
                 )
             ],
           ),
@@ -642,12 +731,13 @@ class _WishesPageState extends State<WishesPage> {
       ],
     );
   }
+
   @override
   Widget build(BuildContext context) {
     double totalCurrencySum = calculateTotalSumForCurrency("Türk Lirası");
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xfff0f0f1),
+        backgroundColor: const Color(0xfff0f0f1),
         elevation: 0,
         toolbarHeight: 70,
         automaticallyImplyLeading: false,
@@ -662,13 +752,13 @@ class _WishesPageState extends State<WishesPage> {
                   onPressed: () {
 
                   },
-                  icon: Icon(Icons.settings, color: Colors.black), // Replace with the desired left icon
+                  icon: const Icon(Icons.settings, color: Colors.black), // Replace with the desired left icon
                 ),
                 IconButton(
                   onPressed: () {
 
                   },
-                  icon: Icon(Icons.person, color: Colors.black), // Replace with the desired right icon
+                  icon: const Icon(Icons.person, color: Colors.black), // Replace with the desired right icon
                 ),
               ],
             ),
@@ -681,7 +771,7 @@ class _WishesPageState extends State<WishesPage> {
       ),
       body: SingleChildScrollView(
         child: Container(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -690,9 +780,9 @@ class _WishesPageState extends State<WishesPage> {
                       color: Colors.black,
                       fontSize: 16,
                       fontWeight: FontWeight.normal)),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Container(
-                padding: EdgeInsets.all(20),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   color: Colors.white,
@@ -701,7 +791,7 @@ class _WishesPageState extends State<WishesPage> {
                       color: Colors.grey.withOpacity(0.5),
                       spreadRadius: 5,
                       blurRadius: 7,
-                      offset: Offset(0, 3),
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
@@ -713,13 +803,13 @@ class _WishesPageState extends State<WishesPage> {
                             color: Colors.black,
                             fontSize: 19,
                             fontWeight: FontWeight.normal)),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     Text("${totalCurrencySum.toString()}₺",
                         style: GoogleFonts.montserrat(
                             color: Colors.black,
                             fontSize: 19,
                             fontWeight: FontWeight.normal)),
-                    SizedBox(height: 5),
+                    const SizedBox(height: 5),
                     SizedBox(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -737,7 +827,7 @@ class _WishesPageState extends State<WishesPage> {
                               print("TEK ADDBANKDATA ÇALIŞTI");
                               addBankData(bankName, initialPercent, 0.0, dropDownValue, "");
                             },
-                            icon: Icon(Icons.add_circle),
+                            icon: const Icon(Icons.add_circle),
                           ),
                         ],
                       ),
@@ -746,7 +836,7 @@ class _WishesPageState extends State<WishesPage> {
                 ),
               ),
               ListView(
-                physics: NeverScrollableScrollPhysics(),
+                physics: const NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
                 children: [
                   for (var bankData
@@ -765,16 +855,16 @@ class _WishesPageState extends State<WishesPage> {
               color: Colors.black.withOpacity(0.5),
               spreadRadius: 5,
               blurRadius: 5,
-              offset: Offset(0, 3),
+              offset: const Offset(0, 3),
             ),
           ],
-          borderRadius: BorderRadius.only(
+          borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(10), // Adjust as needed
             topRight: Radius.circular(10), // Adjust as needed
           ),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.only(
+          borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(10), // Adjust as needed
             topRight: Radius.circular(10), // Adjust as needed
           ),
@@ -800,7 +890,7 @@ class _WishesPageState extends State<WishesPage> {
               }
             },
             type: BottomNavigationBarType.fixed,
-            items: [
+            items: const [
               BottomNavigationBarItem(
                 icon: Icon(Icons.home, size: 30),
                 label: 'Ana Sayfa',
