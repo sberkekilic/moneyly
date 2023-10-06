@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -16,6 +18,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  Map<String, List<String>> incomeMap = {};
+  String selectedKey = "";
   List<String> sharedPreferencesData = [];
   List<String> desiredKeys = [
     'selected_option', 'income_value', 'sumOfTV2', 'sumOfGame2',
@@ -86,7 +90,7 @@ class _HomePageState extends State<HomePage> {
   void _load() async {
     final prefs = await SharedPreferences.getInstance();
     final ab1 = prefs.getInt('selected_option') ?? SelectedOption.None.index;
-    final ab2 = prefs.getString('income_value') ?? '0';
+    final ab2 = prefs.getString('incomeMap') ?? "0";
     final ab3 = prefs.getDouble('sumOfTV2') ?? 0.0;
     final ab4 = prefs.getDouble('sumOfGame2') ?? 0.0;
     final ab5 = prefs.getDouble('sumOfMusic2') ?? 0.0;
@@ -100,7 +104,6 @@ class _HomePageState extends State<HomePage> {
     final ab13 = prefs.getDouble('sumOfOther2') ?? 0.0;
     setState(() {
       selectedTitle = labelForOption(SelectedOption.values[ab1]);
-      incomeValue = NumberFormat.decimalPattern('tr_TR').parse(ab2) as double;
       sumOfTV = ab3.toString();
       sumOfGame = ab4.toString();
       sumOfMusic = ab5.toString();
@@ -112,6 +115,32 @@ class _HomePageState extends State<HomePage> {
       sumOfCatering = ab11.toString();
       sumOfEnt = ab12.toString();
       sumOfOther = ab13.toString();
+      if (ab2.isNotEmpty) {
+        final decodedData = json.decode(ab2);
+        if (decodedData is Map<String, dynamic>) {
+          decodedData.forEach((key, value) {
+            if (value is List<dynamic>) {
+              incomeMap[key] = value.cast<String>();
+            }
+            if (incomeMap.containsKey(key) && incomeMap[key]!.isNotEmpty) {
+              String valueToParse = incomeMap[selectedKey.isNotEmpty ? selectedKey : key]![0]; // Take the first (and only) string from the list
+              selectedKey = key;
+              incomeValue = NumberFormat.decimalPattern('tr_TR').parse(valueToParse) as double;
+              double sum = 0.0;
+              incomeMap.values.forEach((values) {
+                values.forEach((value) {
+                  // Replace ',' with '.' and parse as double
+                  double parsedValue = NumberFormat.decimalPattern('tr_TR').parse(value) as double;
+                  sum += parsedValue;
+                });
+              });
+              incomeValue = sum;
+            } else {
+              incomeValue = 0.0; // Default value if the key or value is not found
+            }
+          });
+        }
+      }
       loadSharedPreferencesData(actualDesiredKeys);
     });
   }

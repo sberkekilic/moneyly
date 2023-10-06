@@ -215,24 +215,33 @@ class _BillsState extends State<Bills> {
                 setState(() {
                   switch (orderIndex){
                     case 1:
+                      final priceText = selectedPriceController.text.trim();
+                      double dprice = double.tryParse(priceText) ?? 0.0;
+                      String price = dprice.toStringAsFixed(2);
                       homeBillsTitleList[index] = selectedEditController.text;
-                      homeBillsPriceList[index] = selectedPriceController.text;
+                      homeBillsPriceList[index] = price;
                       formDataProvider2.setHomeTitleValue(selectedEditController.text, homeBillsTitleList);
-                      formDataProvider2.setHomePriceValue(selectedPriceController.text, homeBillsPriceList);
+                      formDataProvider2.setHomePriceValue(price, homeBillsPriceList);
                       formDataProvider2.calculateSumOfHome(homeBillsPriceList);
                       break;
                     case 2:
+                      final priceText = selectedPriceController.text.trim();
+                      double dprice = double.tryParse(priceText) ?? 0.0;
+                      String price = dprice.toStringAsFixed(2);
                       internetTitleList[index] = selectedEditController.text;
-                      internetPriceList[index] = selectedPriceController.text;
+                      internetPriceList[index] = price;
                       formDataProvider2.setInternetTitleValue(selectedEditController.text, internetTitleList);
-                      formDataProvider2.setInternetPriceValue(selectedPriceController.text, internetPriceList);
+                      formDataProvider2.setInternetPriceValue(price, internetPriceList);
                       formDataProvider2.calculateSumOfInternet(internetPriceList);
                       break;
                     case 3:
+                      final priceText = selectedPriceController.text.trim();
+                      double dprice = double.tryParse(priceText) ?? 0.0;
+                      String price = dprice.toStringAsFixed(2);
                       phoneTitleList[index] = selectedEditController.text;
-                      phonePriceList[index] = selectedPriceController.text;
+                      phonePriceList[index] = price;
                       formDataProvider2.setPhoneTitleValue(selectedEditController.text, phoneTitleList);
-                      formDataProvider2.setPhonePriceValue(selectedPriceController.text, phonePriceList);
+                      formDataProvider2.setPhonePriceValue(price, phonePriceList);
                       formDataProvider2.calculateSumOfPhone(phonePriceList);
                       break;
                   }

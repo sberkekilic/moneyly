@@ -1294,11 +1294,10 @@ class _InvestmentPageState extends State<InvestmentPage> {
     final ab10 = prefs.getString('ananim') ?? "";
     final ab11 = prefs.getBool('isPopupVisible') ?? false;
     final jsonMap = prefs.getString('categoryValues') ?? "";
-    final decodedMap = jsonDecode(jsonMap) as Map<String, dynamic>;
     final jsonMap2 = prefs.getString('exchangeDepot') ?? "";
-    final decodedMap2 = jsonDecode(jsonMap2) as List<dynamic>;
     final jsonMap3 = prefs.getString('sumList') ?? "";
     final jsonMap4 = prefs.getString('cashDepot') ?? "";
+
     setState(() {
       sumInvestValue = ab1;
       totalInvestValue = ab2;
@@ -1311,12 +1310,22 @@ class _InvestmentPageState extends State<InvestmentPage> {
       hasOtherGoalSelected = ab9;
       ananim = ab10;
       isPopupVisible = ab11;
-      categoryValues = Map<String, double>.from(decodedMap.map((key, value) {
-        return MapEntry(key, value is double ? value : 0.0); // Ensure it's a double
-      }));
-      exchangeDepot = decodedMap2.map((e){
-        return e is double ? e : 0.0;
-      }).toList();
+
+      // Check if the JSON strings are not empty before decoding
+      if (jsonMap.isNotEmpty) {
+        final decodedMap = jsonDecode(jsonMap) as Map<String, dynamic>;
+        categoryValues = Map<String, double>.from(decodedMap.map((key, value) {
+          return MapEntry(key, value is double ? value : 0.0); // Ensure it's a double
+        }));
+      }
+
+      if (jsonMap2.isNotEmpty) {
+        final decodedMap2 = jsonDecode(jsonMap2) as List<dynamic>;
+        exchangeDepot = decodedMap2.map((e) {
+          return e is double ? e : 0.0;
+        }).toList();
+      }
+
       print("sumList EX : $sumList");
       if (jsonMap3.isNotEmpty) {
         try {
@@ -1331,6 +1340,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
           // Handle any other JSON decoding errors here
         }
       }
+
       if (jsonMap4.isNotEmpty) {
         try {
           final ab15 = jsonDecode(jsonMap4) as List<dynamic>;
@@ -1343,10 +1353,12 @@ class _InvestmentPageState extends State<InvestmentPage> {
           // Handle any other JSON decoding errors here
         }
       }
+
       print("categoryValues LOAD : $categoryValues");
       print("exchangeDepot LOAD : $exchangeDepot");
     });
   }
+
 
   @override
   Widget build(BuildContext context) {

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -21,6 +22,7 @@ class _AddIncomeState extends State<AddIncome> {
   double inputValue = 0.0;
   SelectedOption selectedOption = SelectedOption.None;
   String selectedTitle = '';
+  String newSelectedTitle = '';
   List<List<String>> numericButtons = [
     ['7', '8', '9'],
     ['4', '5', '6'],
@@ -42,9 +44,16 @@ class _AddIncomeState extends State<AddIncome> {
     });
   }
 
+  Map<String, List<String>> incomeMap = {};
+
   Future<void> goToNextPage() async {
+    final prefs = await SharedPreferences.getInstance();
     final selections = Provider.of<IncomeSelections>(context, listen: false);
-    selections.setIncomeValue(incomeController.text);
+    if (!incomeMap.containsKey(newSelectedTitle)) {
+      incomeMap[newSelectedTitle] = []; // Initialize the list if it doesn't exist
+    }
+    incomeMap[newSelectedTitle]!.add(incomeController.text);
+    prefs.setString('incomeMap', jsonEncode(incomeMap));
     selections.setSelectedOption(selectedOption);
     Navigator.pushNamed(context, 'abonelikler');
     //await printSharedPreferencesToFile();
@@ -128,6 +137,21 @@ class _AddIncomeState extends State<AddIncome> {
 
     return segments.join('.');
   }
+  String labelForOption(SelectedOption option) {
+    switch (option) {
+      case SelectedOption.Is:
+        newSelectedTitle = "İş";
+        return 'İş gelirinizi yazın';
+      case SelectedOption.Burs:
+        newSelectedTitle = "Burs";
+        return 'Burs gelirinizi yazın';
+      case SelectedOption.Emekli:
+        newSelectedTitle = "Emekli";
+        return 'Emekli gelirinizi yazın';
+      default:
+        return '';
+    }
+  }
 
   @override
   void initState() {
@@ -138,12 +162,15 @@ class _AddIncomeState extends State<AddIncome> {
   void _loadSelectedOption() async {
     final prefs = await SharedPreferences.getInstance();
     final index = prefs.getInt('selected_option') ?? SelectedOption.None.index;
-    final loadedIncomeValue = prefs.getString('income_value') ?? '0';
+    final loadedIncomeData = prefs.getString('incomeMap') ?? "{}";
     setState(() {
       selectedOption = SelectedOption.values[index];
       selectedTitle = labelForOption(selectedOption);
-      if (loadedIncomeValue.isNotEmpty) {
-        incomeController.text = loadedIncomeValue;
+      if (loadedIncomeData.isNotEmpty) {
+        Map<String, dynamic> decodedData = json.decode(loadedIncomeData);
+        if (decodedData.containsKey(newSelectedTitle)) {
+          incomeController.text = decodedData[newSelectedTitle].join(', ');
+        }
       }
     });
   }
@@ -650,19 +677,6 @@ class _AddIncomeState extends State<AddIncome> {
         child: icon,
       ),
     );
-  }
-}
-
-String labelForOption(SelectedOption option) {
-  switch (option) {
-    case SelectedOption.Is:
-      return 'İş gelirinizi yazın';
-    case SelectedOption.Burs:
-      return 'Burs gelirinizi yazın';
-    case SelectedOption.Emekli:
-      return 'Emekli gelirinizi yazın';
-    default:
-      return '';
   }
 }
 

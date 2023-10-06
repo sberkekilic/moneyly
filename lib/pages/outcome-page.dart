@@ -81,6 +81,10 @@ class _OutcomePageState extends State<OutcomePage> {
   List<String> otherPriceList = [];
 
   double incomeValue = 0.0;
+  double outcomeValue = 0.0;
+  double subsPercent = 0.0;
+  double billsPercent = 0.0;
+  double othersPercent = 0.0;
   double savingsValue = 0.0;
   double wishesValue = 0.0;
   double needsValue = 0.0;
@@ -164,7 +168,7 @@ class _OutcomePageState extends State<OutcomePage> {
     final ab38 = prefs.getStringList('otherPriceList2') ?? [];
     setState(() {
       selectedTitle = labelForOption(SelectedOption.values[ab1]);
-      incomeValue = double.parse(ab2);
+      incomeValue = NumberFormat.decimalPattern('tr_TR').parse(ab2) as double;
       sumOfTV = ab3;
       sumOfGame = ab4;
       sumOfMusic = ab5;
@@ -215,12 +219,16 @@ class _OutcomePageState extends State<OutcomePage> {
   @override
   Widget build(BuildContext context) {
     final formDataProvider2 = Provider.of<FormDataProvider2>(context, listen: false);
-    double outcomeValue = sumOfSubs+sumOfBills+sumOfOthers;
-    double subsPercent = sumOfSubs/outcomeValue;
-    double billsPercent = sumOfBills/outcomeValue;
-    double othersPercent = sumOfOthers/outcomeValue;
-    List<double> percentages = [subsPercent, billsPercent, othersPercent];
-    print("First List: $percentages");
+    outcomeValue = sumOfSubs+sumOfBills+sumOfOthers;
+    subsPercent = sumOfSubs/outcomeValue;
+    billsPercent = sumOfBills/outcomeValue;
+    othersPercent = sumOfOthers/outcomeValue;
+    List<double> percentages = [
+      subsPercent.isNaN ? 0.0 : subsPercent,
+      billsPercent.isNaN ? 0.0 : billsPercent,
+      othersPercent.isNaN ? 0.0 : othersPercent,
+    ];
+
     Map<String, double> variableMap = {
       'subsPercent': subsPercent,
       'billsPercent': billsPercent,
@@ -230,15 +238,8 @@ class _OutcomePageState extends State<OutcomePage> {
     String smallestVariable = variableMap.keys.firstWhere((key) => variableMap[key] == percentages[0], orElse: () => "");
     String mediumVariable = variableMap.keys.firstWhere((key) => variableMap[key] == percentages[1], orElse: () => "");
     String largestVariable = variableMap.keys.firstWhere((key) => variableMap[key] == percentages[2], orElse: () => "");
-
-    print("Biggest value: ${percentages[2]} $largestVariable");
-    print("Medium value: ${percentages[1]} $mediumVariable");
-    print("Smallest value: ${percentages[0]} $smallestVariable");
-
     percentages.sort((a, b) => b.compareTo(a),);
-    print("Original List: $percentages");
     percentages[0] = 1.0;
-    print("Modified List: $percentages");
     sumOfSubs = sumOfTV + sumOfGame + sumOfMusic;
     sumOfBills = sumOfHome + sumOfInternet + sumOfPhone;
     sumOfOthers = sumOfRent + sumOfKitchen + sumOfCatering + sumOfEnt + sumOfOther;
@@ -477,7 +478,7 @@ class _OutcomePageState extends State<OutcomePage> {
                             double dprice = double.tryParse(priceText) ?? 0.0;
                             String price = dprice.toStringAsFixed(2);
                             tvTitleList[index] = selectedEditController.text;
-                            tvPriceList[index] = selectedPriceController.text;
+                            tvPriceList[index] = price;
                             formDataProvider2.setTVTitleValue(selectedEditController.text, tvTitleList);
                             formDataProvider2.setTVPriceValue(price, tvPriceList);
                             formDataProvider2.calculateSumOfTV(tvPriceList);
@@ -487,7 +488,7 @@ class _OutcomePageState extends State<OutcomePage> {
                             double dprice = double.tryParse(priceText) ?? 0.0;
                             String price = dprice.toStringAsFixed(2);
                             gameTitleList[index] = selectedEditController.text;
-                            gamePriceList[index] = selectedPriceController.text;
+                            gamePriceList[index] = price;
                             formDataProvider2.setGameTitleValue(selectedEditController.text, gameTitleList);
                             formDataProvider2.setGamePriceValue(price, gamePriceList);
                             formDataProvider2.calculateSumOfGame(gamePriceList);
@@ -497,7 +498,7 @@ class _OutcomePageState extends State<OutcomePage> {
                             double dprice = double.tryParse(priceText) ?? 0.0;
                             String price = dprice.toStringAsFixed(2);
                             musicTitleList[index] = selectedEditController.text;
-                            musicPriceList[index] = selectedPriceController.text;
+                            musicPriceList[index] = price;
                             formDataProvider2.setMusicTitleValue(selectedEditController.text, musicTitleList);
                             formDataProvider2.setMusicPriceValue(price, musicPriceList);
                             formDataProvider2.calculateSumOfMusic(musicPriceList);
@@ -510,7 +511,7 @@ class _OutcomePageState extends State<OutcomePage> {
                             double dprice = double.tryParse(priceText) ?? 0.0;
                             String price = dprice.toStringAsFixed(2);
                             homeBillsTitleList[index] = selectedEditController.text;
-                            homeBillsPriceList[index] = selectedPriceController.text;
+                            homeBillsPriceList[index] = price;
                             formDataProvider2.setHomeTitleValue(selectedEditController.text, homeBillsTitleList);
                             formDataProvider2.setHomePriceValue(price, homeBillsPriceList);
                             formDataProvider2.calculateSumOfHome(homeBillsPriceList);
@@ -520,7 +521,7 @@ class _OutcomePageState extends State<OutcomePage> {
                             double dprice = double.tryParse(priceText) ?? 0.0;
                             String price = dprice.toStringAsFixed(2);
                             internetTitleList[index] = selectedEditController.text;
-                            internetPriceList[index] = selectedPriceController.text;
+                            internetPriceList[index] = price;
                             formDataProvider2.setInternetTitleValue(selectedEditController.text, internetTitleList);
                             formDataProvider2.setInternetPriceValue(price, internetPriceList);
                             formDataProvider2.calculateSumOfInternet(internetPriceList);
@@ -530,7 +531,7 @@ class _OutcomePageState extends State<OutcomePage> {
                             double dprice = double.tryParse(priceText) ?? 0.0;
                             String price = dprice.toStringAsFixed(2);
                             phoneTitleList[index] = selectedEditController.text;
-                            phonePriceList[index] = selectedPriceController.text;
+                            phonePriceList[index] = price;
                             formDataProvider2.setPhoneTitleValue(selectedEditController.text, phoneTitleList);
                             formDataProvider2.setPhonePriceValue(price, phonePriceList);
                             formDataProvider2.calculateSumOfPhone(phonePriceList);
@@ -543,7 +544,7 @@ class _OutcomePageState extends State<OutcomePage> {
                             double dprice = double.tryParse(priceText) ?? 0.0;
                             String price = dprice.toStringAsFixed(2);
                             rentTitleList[index] = selectedEditController.text;
-                            rentPriceList[index] = selectedPriceController.text;
+                            rentPriceList[index] = price;
                             formDataProvider2.setRentTitleValue(selectedEditController.text, rentTitleList);
                             formDataProvider2.setRentPriceValue(price, rentPriceList);
                             formDataProvider2.calculateSumOfRent(rentPriceList);
@@ -553,7 +554,7 @@ class _OutcomePageState extends State<OutcomePage> {
                             double dprice = double.tryParse(priceText) ?? 0.0;
                             String price = dprice.toStringAsFixed(2);
                             kitchenTitleList[index] = selectedEditController.text;
-                            kitchenPriceList[index] = selectedPriceController.text;
+                            kitchenPriceList[index] = price;
                             formDataProvider2.setKitchenTitleValue(selectedEditController.text, kitchenTitleList);
                             formDataProvider2.setKitchenPriceValue(price, kitchenPriceList);
                             formDataProvider2.calculateSumOfKitchen(kitchenPriceList);
@@ -563,7 +564,7 @@ class _OutcomePageState extends State<OutcomePage> {
                             double dprice = double.tryParse(priceText) ?? 0.0;
                             String price = dprice.toStringAsFixed(2);
                             cateringTitleList[index] = selectedEditController.text;
-                            cateringPriceList[index] = selectedPriceController.text;
+                            cateringPriceList[index] = price;
                             formDataProvider2.setCateringTitleValue(selectedEditController.text, cateringTitleList);
                             formDataProvider2.setCateringPriceValue(price, cateringPriceList);
                             formDataProvider2.calculateSumOfCatering(cateringPriceList);
@@ -573,7 +574,7 @@ class _OutcomePageState extends State<OutcomePage> {
                             double dprice = double.tryParse(priceText) ?? 0.0;
                             String price = dprice.toStringAsFixed(2);
                             entertainmentTitleList[index] = selectedEditController.text;
-                            entertainmentPriceList[index] = selectedPriceController.text;
+                            entertainmentPriceList[index] = price;
                             formDataProvider2.setEntertainmentTitleValue(selectedEditController.text, entertainmentTitleList);
                             formDataProvider2.setEntertainmentPriceValue(price, entertainmentPriceList);
                             formDataProvider2.calculateSumOfEnt(entertainmentPriceList);
@@ -583,7 +584,7 @@ class _OutcomePageState extends State<OutcomePage> {
                             double dprice = double.tryParse(priceText) ?? 0.0;
                             String price = dprice.toStringAsFixed(2);
                             otherTitleList[index] = selectedEditController.text;
-                            otherPriceList[index] = selectedPriceController.text;
+                            otherPriceList[index] = price;
                             formDataProvider2.setOtherTitleValue(selectedEditController.text, otherTitleList);
                             formDataProvider2.setOtherPriceValue(price, otherPriceList);
                             formDataProvider2.calculateSumOfOther(otherPriceList);

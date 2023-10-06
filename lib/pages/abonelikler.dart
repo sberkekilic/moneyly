@@ -234,24 +234,33 @@ class _SubscriptionsState extends State<Subscriptions> {
                 setState(() {
                   switch (orderIndex){
                     case 1:
+                      final priceText = selectedPriceController.text.trim();
+                      double dprice = double.tryParse(priceText) ?? 0.0;
+                      String price = dprice.toStringAsFixed(2);
                       tvTitleList[index] = selectedEditController.text;
-                      tvPriceList[index] = selectedPriceController.text;
+                      tvPriceList[index] = price;
                       formDataProvider2.setTVTitleValue(selectedEditController.text, tvTitleList);
-                      formDataProvider2.setTVPriceValue(selectedPriceController.text, tvPriceList);
+                      formDataProvider2.setTVPriceValue(price, tvPriceList);
                       formDataProvider2.calculateSumOfTV(tvPriceList);
                       break;
                     case 2:
+                      final priceText = selectedPriceController.text.trim();
+                      double dprice = double.tryParse(priceText) ?? 0.0;
+                      String price = dprice.toStringAsFixed(2);
                       gameTitleList[index] = selectedEditController.text;
-                      gamePriceList[index] = selectedPriceController.text;
+                      gamePriceList[index] = price;
                       formDataProvider2.setGameTitleValue(selectedEditController.text, gameTitleList);
-                      formDataProvider2.setGamePriceValue(selectedPriceController.text, gamePriceList);
+                      formDataProvider2.setGamePriceValue(price, gamePriceList);
                       formDataProvider2.calculateSumOfGame(gamePriceList);
                       break;
                     case 3:
+                      final priceText = selectedPriceController.text.trim();
+                      double dprice = double.tryParse(priceText) ?? 0.0;
+                      String price = dprice.toStringAsFixed(2);
                       musicTitleList[index] = selectedEditController.text;
-                      musicPriceList[index] = selectedPriceController.text;
+                      musicPriceList[index] = price;
                       formDataProvider2.setMusicTitleValue(selectedEditController.text, musicTitleList);
-                      formDataProvider2.setMusicPriceValue(selectedPriceController.text, musicPriceList);
+                      formDataProvider2.setMusicPriceValue(price, musicPriceList);
                       formDataProvider2.calculateSumOfMusic(musicPriceList);
                       break;
                   }

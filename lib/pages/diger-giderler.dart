@@ -321,38 +321,53 @@ class _OtherExpensesState extends State<OtherExpenses> {
                 setState(() {
                   switch (orderIndex){
                     case 1:
+                      final priceText = selectedPriceController.text.trim();
+                      double dprice = double.tryParse(priceText) ?? 0.0;
+                      String price = dprice.toStringAsFixed(2);
                       rentTitleList[index] = selectedEditController.text;
-                      rentPriceList[index] = selectedPriceController.text;
+                      rentPriceList[index] = price;
                       formDataProvider2.setRentTitleValue(selectedEditController.text, rentTitleList);
-                      formDataProvider2.setRentPriceValue(selectedPriceController.text, rentPriceList);
+                      formDataProvider2.setRentPriceValue(price, rentPriceList);
                       formDataProvider2.calculateSumOfRent(rentPriceList);
                       break;
                     case 2:
+                      final priceText = selectedPriceController.text.trim();
+                      double dprice = double.tryParse(priceText) ?? 0.0;
+                      String price = dprice.toStringAsFixed(2);
                       kitchenTitleList[index] = selectedEditController.text;
-                      kitchenPriceList[index] = selectedPriceController.text;
+                      kitchenPriceList[index] = price;
                       formDataProvider2.setKitchenTitleValue(selectedEditController.text, kitchenTitleList);
-                      formDataProvider2.setKitchenPriceValue(selectedPriceController.text, kitchenPriceList);
+                      formDataProvider2.setKitchenPriceValue(price, kitchenPriceList);
                       formDataProvider2.calculateSumOfKitchen(kitchenPriceList);
                       break;
                     case 3:
+                      final priceText = selectedPriceController.text.trim();
+                      double dprice = double.tryParse(priceText) ?? 0.0;
+                      String price = dprice.toStringAsFixed(2);
                       cateringTitleList[index] = selectedEditController.text;
-                      cateringPriceList[index] = selectedPriceController.text;
+                      cateringPriceList[index] = price;
                       formDataProvider2.setCateringTitleValue(selectedEditController.text, cateringTitleList);
-                      formDataProvider2.setCateringPriceValue(selectedPriceController.text, cateringPriceList);
+                      formDataProvider2.setCateringPriceValue(price, cateringPriceList);
                       formDataProvider2.calculateSumOfCatering(cateringPriceList);
                       break;
                     case 4:
+                      final priceText = selectedPriceController.text.trim();
+                      double dprice = double.tryParse(priceText) ?? 0.0;
+                      String price = dprice.toStringAsFixed(2);
                       entertainmentTitleList[index] = selectedEditController.text;
-                      entertainmentPriceList[index] = selectedPriceController.text;
+                      entertainmentPriceList[index] = price;
                       formDataProvider2.setEntertainmentTitleValue(selectedEditController.text, entertainmentTitleList);
-                      formDataProvider2.setEntertainmentPriceValue(selectedPriceController.text, entertainmentPriceList);
+                      formDataProvider2.setEntertainmentPriceValue(price, entertainmentPriceList);
                       formDataProvider2.calculateSumOfEnt(entertainmentPriceList);
                       break;
                     case 5:
+                      final priceText = selectedPriceController.text.trim();
+                      double dprice = double.tryParse(priceText) ?? 0.0;
+                      String price = dprice.toStringAsFixed(2);
                       otherTitleList[index] = selectedEditController.text;
-                      otherPriceList[index] = selectedPriceController.text;
+                      otherPriceList[index] = price;
                       formDataProvider2.setOtherTitleValue(selectedEditController.text, otherTitleList);
-                      formDataProvider2.setOtherPriceValue(selectedPriceController.text, otherPriceList);
+                      formDataProvider2.setOtherPriceValue(price, otherPriceList);
                       formDataProvider2.calculateSumOfOther(otherPriceList);
                       break;
                   }
