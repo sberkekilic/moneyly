@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 import 'package:moneyly/blocs/settings/settings-cubit.dart';
 import 'package:moneyly/blocs/settings/settings-state.dart';
 import 'package:moneyly/form-data-provider.dart';
@@ -21,17 +23,22 @@ import 'pages/selection.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(
-    MultiProvider(
-        providers: [
-          ChangeNotifierProvider(create: (context) => IncomeSelections()),
-          ChangeNotifierProvider(create: (context) => FormDataProvider()),
-          ChangeNotifierProvider(create: (context) => FormDataProvider2()),
-        ],
-        child: MyApp()
-    )
-  );
+  // // Initialize the Turkish locale data
+  Intl.defaultLocale = 'tr_TR';
+  initializeDateFormatting('tr_TR', null).then((_) {
+    runApp(
+        MultiProvider(
+            providers: [
+              ChangeNotifierProvider(create: (context) => IncomeSelections()),
+              ChangeNotifierProvider(create: (context) => FormDataProvider()),
+              ChangeNotifierProvider(create: (context) => FormDataProvider2()),
+            ],
+            child: MyApp()
+        )
+    );
+  });
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

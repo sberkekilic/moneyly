@@ -1,9 +1,44 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../deneme.dart';
+
+class Invoice {
+  final String category;
+  final String name;
+  final int periodDate;
+  final int? dueDate;
+
+  Invoice({
+    required this.category,
+    required this.name,
+    required this.periodDate,
+    this.dueDate,
+  });
+
+  // JSON serialization and deserialization methods
+  Map<String, dynamic> toJson() {
+    return {
+      'category': category,
+      'name': name,
+      'periodDate': periodDate,
+      'dueDate': dueDate,
+    };
+  }
+
+  factory Invoice.fromJson(Map<String, dynamic> json) {
+    return Invoice(
+      category: json['category'],
+      name: json['name'],
+      periodDate: json['periodDate'],
+      dueDate: json['dueDate'] != null ? json['dueDate'] : null,
+    );
+  }
+}
 
 class Bills extends StatefulWidget {
   const Bills({Key? key}) : super(key: key);
@@ -14,7 +49,8 @@ class Bills extends StatefulWidget {
 
 class _BillsState extends State<Bills> {
   List<String> sharedPreferencesData = [];
-  List<String> desiredKeys = ['homeBillsTitleList2', 'homeBillsPriceList2', 'hasHomeSelected2', 'sumOfHome2', 'internetTitleList2', 'internetPriceList2', 'hasInternetSelected2', 'sumOfInternet2', 'phoneTitleList2', 'phonePriceList2', 'hasPhoneSelected2', 'sumOfPhone2'];
+  List<String> desiredKeys = ['invoices', 'homeBillsTitleList2', 'homeBillsPriceList2', 'hasHomeSelected2', 'sumOfHome2', 'internetTitleList2', 'internetPriceList2', 'hasInternetSelected2', 'sumOfInternet2', 'phoneTitleList2', 'phonePriceList2', 'hasPhoneSelected2', 'sumOfPhone2'];
+  final List<Invoice> invoices = [];
   bool hasHomeSelected = false;
   bool hasInternetSelected = false;
   bool hasPhoneSelected = false;
@@ -46,6 +82,11 @@ class _BillsState extends State<Bills> {
   final TextEditingController platformPriceController = TextEditingController();
   TextEditingController NDplatformPriceController = TextEditingController();
   TextEditingController RDplatformPriceController = TextEditingController();
+
+  int? _selectedBillingDay;
+  int? _selectedDueDay;
+
+  List<int> daysList = List.generate(31, (index) => index + 1);
 
   TextEditingController editController = TextEditingController();
   TextEditingController NDeditController = TextEditingController();
@@ -201,6 +242,40 @@ class _BillsState extends State<Bills> {
                 style: GoogleFonts.montserrat(fontSize: 20),
                 keyboardType: TextInputType.number,
               ),
+              SizedBox(height: 10),
+              Align(child: Text("Period",style: GoogleFonts.montserrat(fontSize: 18)), alignment: Alignment.centerLeft),
+              SizedBox(height: 10),
+              DropdownButtonFormField<int>(
+                value: _selectedBillingDay,
+                onChanged: (value) {
+                  setState(() {
+                    _selectedBillingDay = value;
+                  });
+                },
+                items: daysList.map((day) {
+                  return DropdownMenuItem<int>(
+                    value: day,
+                    child: Text(day.toString()),
+                  );
+                }).toList(),
+              ),
+              SizedBox(height: 10),
+              Align(child: Text("Due Date",style: GoogleFonts.montserrat(fontSize: 18)), alignment: Alignment.centerLeft),
+              SizedBox(height: 10),
+              DropdownButtonFormField<int>(
+                value: _selectedDueDay,
+                onChanged: (value) {
+                  setState(() {
+                    _selectedDueDay = value;
+                  });
+                },
+                items: daysList.map((day) {
+                  return DropdownMenuItem<int>(
+                    value: day,
+                    child: Text(day.toString()),
+                  );
+                }).toList(),
+              ),
             ],
           ),
           actions: [
@@ -223,6 +298,15 @@ class _BillsState extends State<Bills> {
                       formDataProvider2.setHomeTitleValue(selectedEditController.text, homeBillsTitleList);
                       formDataProvider2.setHomePriceValue(price, homeBillsPriceList);
                       formDataProvider2.calculateSumOfHome(homeBillsPriceList);
+                      final invoice = Invoice(
+                        category: "Ev Faturaları",
+                        name: selectedEditController.text,
+                        periodDate: _selectedBillingDay!,
+                        dueDate: _selectedDueDay != null
+                            ? _selectedDueDay
+                            : null,
+                      );
+                      editInvoice(index, invoice);
                       break;
                     case 2:
                       final priceText = selectedPriceController.text.trim();
@@ -262,6 +346,7 @@ class _BillsState extends State<Bills> {
                         formDataProvider2.removeHomeTitleValue(homeBillsTitleList);
                         formDataProvider2.removeHomePriceValue(homeBillsPriceList);
                         formDataProvider2.calculateSumOfHome(homeBillsPriceList);
+                        removeInvoice(index);
                         isEditingList = false;
                         isAddButtonActive = false;
                         break;
@@ -330,6 +415,7 @@ class _BillsState extends State<Bills> {
     final db1 = prefs.getDouble('sumOfHome2') ?? 0.0;
     final db2 = prefs.getDouble('sumOfInternet2') ?? 0.0;
     final db3 = prefs.getDouble('sumOfPhone2') ?? 0.0;
+    final eb1 = prefs.getStringList('invoices') ?? [];
     setState(() {
       hasHomeSelected = ab1;
       hasInternetSelected = ab2;
@@ -343,6 +429,11 @@ class _BillsState extends State<Bills> {
       sumOfHomeBills = db1;
       sumOfInternet = db2;
       sumOfPhone = db3;
+      for (final invoiceString in eb1) {
+        final Map<String, dynamic> invoiceJson = jsonDecode(invoiceString);
+        final Invoice invoice = Invoice.fromJson(invoiceJson);
+        invoices.add(invoice);
+      }
       loadSharedPreferencesData(desiredKeys);
     });
     convertSum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfHomeBills);
@@ -353,6 +444,33 @@ class _BillsState extends State<Bills> {
   Future<void> setSumAll(double value) async {
     final prefs = await SharedPreferences.getInstance();
     prefs.setDouble('sumOfBills2', value);
+  }
+
+  Future<void> saveInvoices() async {
+    final prefs = await SharedPreferences.getInstance();
+    final invoiceList = invoices.map((invoice) => invoice.toJson()).toList();
+    await prefs.setStringList('invoices', invoiceList.map((invoice) => jsonEncode(invoice)).toList());
+  }
+
+  void onSave(Invoice invoice) {
+    setState(() {
+      invoices.add(invoice);
+    });
+    saveInvoices();
+  }
+
+  void editInvoice(int index, Invoice updatedInvoice) {
+    setState(() {
+      invoices[index] = updatedInvoice;
+    });
+    saveInvoices();
+  }
+
+  void removeInvoice(int index) {
+    setState(() {
+      invoices.removeAt(index);
+    });
+    saveInvoices();
   }
 
   @override
@@ -669,68 +787,121 @@ class _BillsState extends State<Bills> {
                                           if (isTextFormFieldVisible && hasHomeSelected)
                                             Container(
                                               padding: EdgeInsets.all(10),
-                                              child: Row(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                              child: Column(
                                                 children: [
-                                                  Expanded(
-                                                    child: TextFormField(
-                                                      controller: textController,
-                                                      decoration: InputDecoration(
-                                                        border: InputBorder.none,
-                                                        hintText: 'ABA',
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  SizedBox(width: 10),
-                                                  Expanded(
-                                                    child: TextFormField(
-                                                      controller: platformPriceController,
-                                                      keyboardType: TextInputType.number, // Show numeric keyboard
-                                                      decoration: InputDecoration(
-                                                        border: InputBorder.none,
-                                                        hintText: 'GAG',
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  Wrap(
+                                                  Row(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
                                                     children: [
-                                                      IconButton(
-                                                        onPressed: () {
-                                                          final text = textController.text.trim();
-                                                          final priceText = platformPriceController.text.trim();
-                                                          if (text.isNotEmpty && priceText.isNotEmpty) {
-                                                            double dprice = double.tryParse(priceText) ?? 0.0;
-                                                            String price = dprice.toStringAsFixed(2);
-                                                            setState(() {
-                                                              homeBillsTitleList.add(text);
-                                                              homeBillsPriceList.add(price);
-                                                              formDataProvider2.setHomeTitleValue(text, homeBillsTitleList);
-                                                              formDataProvider2.setHomePriceValue(price, homeBillsPriceList);
-                                                              formDataProvider2.calculateSumOfHome(homeBillsPriceList);
-                                                              isEditingList = false; // Add a corresponding entry for the new item
-                                                              textController.clear();
-                                                              platformPriceController.clear();
-                                                              isTextFormFieldVisible = false;
-                                                              isAddButtonActive = false;
-                                                              _load();
-                                                            });
-                                                          }
-                                                        },
-                                                        icon: Icon(Icons.check_circle, size: 26),
+                                                      Expanded(
+                                                        child: TextFormField(
+                                                          controller: textController,
+                                                          decoration: InputDecoration(
+                                                            border: InputBorder.none,
+                                                            hintText: 'ABA',
+                                                          ),
+                                                        ),
                                                       ),
-                                                      IconButton(
-                                                        onPressed: () {
-                                                          setState(() {
-                                                            isTextFormFieldVisible = false;
-                                                            isAddButtonActive = false;
-                                                            textController.clear();
-                                                            platformPriceController.clear();
-                                                          });
-                                                        },
-                                                        icon: Icon(Icons.cancel, size: 26),
+                                                      SizedBox(width: 10),
+                                                      Expanded(
+                                                        child: TextFormField(
+                                                          controller: platformPriceController,
+                                                          keyboardType: TextInputType.number, // Show numeric keyboard
+                                                          decoration: InputDecoration(
+                                                            border: InputBorder.none,
+                                                            hintText: 'GAG',
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      Wrap(
+                                                        children: [
+                                                          IconButton(
+                                                            onPressed: () {
+                                                              final text = textController.text.trim();
+                                                              final priceText = platformPriceController.text.trim();
+                                                              final invoice = Invoice(
+                                                                category: "Ev Faturaları",
+                                                                name: text,
+                                                                periodDate: _selectedBillingDay!,
+                                                                dueDate: _selectedDueDay != null
+                                                                    ? _selectedDueDay
+                                                                    : null,
+                                                              );
+                                                              onSave(invoice);
+                                                              if (text.isNotEmpty && priceText.isNotEmpty) {
+                                                                double dprice = double.tryParse(priceText) ?? 0.0;
+                                                                String price = dprice.toStringAsFixed(2);
+                                                                setState(() {
+                                                                  homeBillsTitleList.add(text);
+                                                                  homeBillsPriceList.add(price);
+                                                                  formDataProvider2.setHomeTitleValue(text, homeBillsTitleList);
+                                                                  formDataProvider2.setHomePriceValue(price, homeBillsPriceList);
+                                                                  formDataProvider2.calculateSumOfHome(homeBillsPriceList);
+                                                                  isEditingList = false; // Add a corresponding entry for the new item
+                                                                  textController.clear();
+                                                                  platformPriceController.clear();
+                                                                  isTextFormFieldVisible = false;
+                                                                  isAddButtonActive = false;
+                                                                  _load();
+                                                                });
+                                                              }
+                                                            },
+                                                            icon: Icon(Icons.check_circle, size: 26),
+                                                          ),
+                                                          IconButton(
+                                                            onPressed: () {
+                                                              setState(() {
+                                                                isTextFormFieldVisible = false;
+                                                                isAddButtonActive = false;
+                                                                textController.clear();
+                                                                platformPriceController.clear();
+                                                              });
+                                                            },
+                                                            icon: Icon(Icons.cancel, size: 26),
+                                                          ),
+                                                        ],
                                                       ),
                                                     ],
                                                   ),
+                                                  Row(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Expanded(
+                                                        child: DropdownButtonFormField<int>(
+                                                          value: _selectedBillingDay,
+                                                          onChanged: (value) {
+                                                            setState(() {
+                                                              _selectedBillingDay = value;
+                                                            });
+                                                          },
+                                                          decoration: InputDecoration(labelText: 'Billing Day'),
+                                                          items: daysList.map((day) {
+                                                            return DropdownMenuItem<int>(
+                                                              value: day,
+                                                              child: Text(day.toString()),
+                                                            );
+                                                          }).toList(),
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 10),
+                                                      Expanded(
+                                                        child: DropdownButtonFormField<int>(
+                                                          value: _selectedDueDay,
+                                                          onChanged: (value) {
+                                                            setState(() {
+                                                              _selectedDueDay = value;
+                                                            });
+                                                          },
+                                                          decoration: InputDecoration(labelText: 'Due Day (optional)'),
+                                                          items: daysList.map((day) {
+                                                            return DropdownMenuItem<int>(
+                                                              value: day,
+                                                              child: Text(day.toString()),
+                                                            );
+                                                          }).toList(),
+                                                        ),
+                                                      )
+                                                    ],
+                                                  )
                                                 ],
                                               ),
                                             ),

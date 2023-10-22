@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../deneme.dart';
+import 'faturalar.dart';
 
 class Subscriptions extends StatefulWidget {
   const Subscriptions({Key? key}) : super(key: key);
@@ -16,6 +18,7 @@ class Subscriptions extends StatefulWidget {
 class _SubscriptionsState extends State<Subscriptions> {
   List<String> sharedPreferencesData = [];
   List<String> desiredKeys = ['tvTitleList2', 'tvPriceList2', 'hasTVSelected2', 'sumOfTV2', 'gameTitleList2', 'gamePriceList2', 'hasGameSelected2', 'sumOfGame2', 'musicTitleList2', 'musicPriceList2', 'hasMusicSelected2', 'sumOfMusic2'];
+  final List<Invoice> invoices = [];
   bool hasTVSelected = false;
   bool hasGameSelected = false;
   bool hasMusicSelected = false;
@@ -59,6 +62,11 @@ class _SubscriptionsState extends State<Subscriptions> {
   bool isAddButtonActive = false;
   bool isAddButtonActiveND = false;
   bool isAddButtonActiveRD = false;
+
+  int? _selectedBillingDay;
+  int? _selectedDueDay;
+
+  List<int> daysList = List.generate(31, (index) => index + 1);
 
   Future<void> handleTVContainerTouch() async {
     final prefs = await SharedPreferences.getInstance();
@@ -137,7 +145,6 @@ class _SubscriptionsState extends State<Subscriptions> {
 
     // Optionally, display a message indicating the export is complete
   }
-
   void _showEditDialog(BuildContext context, int index, int orderIndex) {
     final formDataProvider2 = Provider.of<FormDataProvider2>(context, listen: false);
 
@@ -313,13 +320,11 @@ class _SubscriptionsState extends State<Subscriptions> {
       },
     );
   }
-
   @override
   void initState() {
     super.initState();
     _load();
   }
-
   Future<void> loadSharedPreferencesData(List<String> desiredKeys) async {
     final prefs = await SharedPreferences.getInstance();
     sharedPreferencesData = [];
@@ -334,8 +339,6 @@ class _SubscriptionsState extends State<Subscriptions> {
     setState(() {
     }); // Trigger a rebuild of the widget to display the data
   }
-
-  
   void _load() async {
     final prefs = await SharedPreferences.getInstance();
     final ab1 = prefs.getBool('hasTVSelected2') ?? false;
@@ -369,10 +372,35 @@ class _SubscriptionsState extends State<Subscriptions> {
     convertSum2 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfGame);
     convertSum3 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfMusic);
   }
-
   Future<void> setSumAll(double value) async {
     final prefs = await SharedPreferences.getInstance();
     prefs.setDouble('sumOfSubs2', value);
+  }
+  Future<void> saveInvoices() async {
+    final prefs = await SharedPreferences.getInstance();
+    final invoiceList = invoices.map((invoice) => invoice.toJson()).toList();
+    await prefs.setStringList('invoices', invoiceList.map((invoice) => jsonEncode(invoice)).toList());
+  }
+
+  void onSave(Invoice invoice) {
+    setState(() {
+      invoices.add(invoice);
+    });
+    saveInvoices();
+  }
+
+  void editInvoice(int index, Invoice updatedInvoice) {
+    setState(() {
+      invoices[index] = updatedInvoice;
+    });
+    saveInvoices();
+  }
+
+  void removeInvoice(int index) {
+    setState(() {
+      invoices.removeAt(index);
+    });
+    saveInvoices();
   }
 
   @override
@@ -681,68 +709,121 @@ class _SubscriptionsState extends State<Subscriptions> {
                                           if (isTextFormFieldVisible && hasTVSelected)
                                             Container(
                                               padding: const EdgeInsets.all(10),
-                                              child: Row(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                              child: Column(
                                                 children: [
-                                                  Expanded(
-                                                    child: TextFormField(
-                                                      controller: textController,
-                                                      decoration: const InputDecoration(
-                                                        border: InputBorder.none,
-                                                        hintText: 'ABA',
+                                                  Row(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          Expanded(
+                                                            child: TextFormField(
+                                                              controller: textController,
+                                                              decoration: const InputDecoration(
+                                                                border: InputBorder.none,
+                                                                hintText: 'ABA',
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          const SizedBox(width: 10),
+                                                          Expanded(
+                                                            child: TextFormField(
+                                                              controller: platformPriceController,
+                                                              keyboardType: TextInputType.number, // Show numeric keyboard
+                                                              decoration: const InputDecoration(
+                                                                border: InputBorder.none,
+                                                                hintText: 'GAG',
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          Wrap(
+                                                            children: [
+                                                              IconButton(
+                                                                onPressed: () {
+                                                                  final text = textController.text.trim();
+                                                                  final priceText = platformPriceController.text.trim();
+                                                                  final invoice = Invoice(
+                                                                    category: "Abonelikler",
+                                                                    name: text,
+                                                                    periodDate: _selectedBillingDay!,
+                                                                    dueDate: _selectedDueDay != null
+                                                                        ? _selectedDueDay
+                                                                        : null,
+                                                                  );
+                                                                  onSave(invoice);
+                                                                  if (text.isNotEmpty && priceText.isNotEmpty) {
+                                                                    double dprice = double.tryParse(priceText) ?? 0.0;
+                                                                    String price = dprice.toStringAsFixed(2);
+                                                                    setState(() {
+                                                                      tvTitleList.add(text);
+                                                                      tvPriceList.add(price);
+                                                                      formDataProvider2.setTVTitleValue(text, tvTitleList);
+                                                                      formDataProvider2.setTVPriceValue(price, tvPriceList);
+                                                                      formDataProvider2.calculateSumOfTV(tvPriceList);
+                                                                      isEditingList = false; // Add a corresponding entry for the new item
+                                                                      textController.clear();
+                                                                      platformPriceController.clear();
+                                                                      isTextFormFieldVisible = false;
+                                                                      isAddButtonActive = false;
+                                                                      _load();
+                                                                    });
+                                                                  }
+                                                                },
+                                                                icon: const Icon(Icons.check_circle, size: 26),
+                                                              ),
+                                                              IconButton(
+                                                                onPressed: () {
+                                                                  setState(() {
+                                                                    isTextFormFieldVisible = false;
+                                                                    isAddButtonActive = false;
+                                                                    textController.clear();
+                                                                    platformPriceController.clear();
+                                                                  });
+                                                                },
+                                                                icon: const Icon(Icons.cancel, size: 26),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ],
                                                       ),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 10),
-                                                  Expanded(
-                                                    child: TextFormField(
-                                                      controller: platformPriceController,
-                                                      keyboardType: TextInputType.number, // Show numeric keyboard
-                                                      decoration: const InputDecoration(
-                                                        border: InputBorder.none,
-                                                        hintText: 'GAG',
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  Wrap(
+                                                  Row(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
                                                     children: [
-                                                      IconButton(
-                                                        onPressed: () {
-                                                          final text = textController.text.trim();
-                                                          final priceText = platformPriceController.text.trim();
-                                                          if (text.isNotEmpty && priceText.isNotEmpty) {
-                                                            double dprice = double.tryParse(priceText) ?? 0.0;
-                                                            String price = dprice.toStringAsFixed(2);
+                                                      Expanded(
+                                                        child: DropdownButtonFormField<int>(
+                                                          value: _selectedBillingDay,
+                                                          onChanged: (value) {
                                                             setState(() {
-                                                              tvTitleList.add(text);
-                                                              tvPriceList.add(price);
-                                                              formDataProvider2.setTVTitleValue(text, tvTitleList);
-                                                              formDataProvider2.setTVPriceValue(price, tvPriceList);
-                                                              formDataProvider2.calculateSumOfTV(tvPriceList);
-                                                              isEditingList = false; // Add a corresponding entry for the new item
-                                                              textController.clear();
-                                                              platformPriceController.clear();
-                                                              isTextFormFieldVisible = false;
-                                                              isAddButtonActive = false;
-                                                              _load();
+                                                              _selectedBillingDay = value;
                                                             });
-                                                          }
-                                                        },
-                                                        icon: const Icon(Icons.check_circle, size: 26),
+                                                          },
+                                                          decoration: InputDecoration(labelText: 'Billing Day'),
+                                                          items: daysList.map((day) {
+                                                            return DropdownMenuItem<int>(
+                                                              value: day,
+                                                              child: Text(day.toString()),
+                                                            );
+                                                          }).toList(),
+                                                        ),
                                                       ),
-                                                      IconButton(
-                                                        onPressed: () {
-                                                          setState(() {
-                                                            isTextFormFieldVisible = false;
-                                                            isAddButtonActive = false;
-                                                            textController.clear();
-                                                            platformPriceController.clear();
-                                                          });
-                                                        },
-                                                        icon: const Icon(Icons.cancel, size: 26),
-                                                      ),
+                                                      const SizedBox(width: 10),
+                                                      Expanded(
+                                                        child: DropdownButtonFormField<int>(
+                                                          value: _selectedDueDay,
+                                                          onChanged: (value) {
+                                                            setState(() {
+                                                              _selectedDueDay = value;
+                                                            });
+                                                          },
+                                                          decoration: InputDecoration(labelText: 'Due Day (optional)'),
+                                                          items: daysList.map((day) {
+                                                            return DropdownMenuItem<int>(
+                                                              value: day,
+                                                              child: Text(day.toString()),
+                                                            );
+                                                          }).toList(),
+                                                        ),
+                                                      )
                                                     ],
-                                                  ),
+                                                  )
                                                 ],
                                               ),
                                             ),
