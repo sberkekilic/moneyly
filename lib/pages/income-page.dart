@@ -795,20 +795,19 @@ class _IncomePageState extends State<IncomePage> {
                         style: GoogleFonts.montserrat(
                             fontSize: 14, fontWeight: FontWeight.normal)),
                     Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
-                    SizedBox(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text("Yatırım Sayfasına Git", style: GoogleFonts
-                              .montserrat(
-                              fontSize: 16, fontWeight: FontWeight.w600)),
-                          IconButton(
-                              onPressed: () {
-                                Navigator.pushNamed(context, 'investment-page');
-                              },
-                              icon: Icon(Icons.forward)
-                          )
-                        ],
+                    InkWell(
+                      onTap: () {
+                        Navigator.pushNamed(context, 'investment-page');
+                      },
+                      child: SizedBox(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Text("Yatırım Sayfasına Git", style: GoogleFonts
+                                .montserrat(
+                                fontSize: 16, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
                       ),
                     )
                   ],

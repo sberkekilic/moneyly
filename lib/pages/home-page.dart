@@ -529,72 +529,85 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.5),
-              spreadRadius: 5,
-              blurRadius: 5,
-              offset: const Offset(0, 3),
-            ),
-          ],
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(10), // Adjust as needed
-            topRight: Radius.circular(10), // Adjust as needed
-          ),
-        ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(10), // Adjust as needed
-            topRight: Radius.circular(10), // Adjust as needed
-          ),
-          child: BottomNavigationBar(
-            currentIndex: 0,
-            onTap: (int index) {
-              switch (index) {
-                case 0:
-                  Navigator.pushNamed(context, 'ana-sayfa');
-                  break;
-                case 1:
-                  Navigator.pushNamed(context, 'income-page');
-                  break;
-                case 2:
-                  Navigator.pushNamed(context, 'outcome-page');
-                  break;
-                case 3:
-                  Navigator.pushNamed(context, 'investment-page');
-                  break;
-                case 4:
-                  Navigator.pushNamed(context, 'wishes-page');
-                  break;
-              }
-            },
-            type: BottomNavigationBarType.fixed,
-            selectedLabelStyle: GoogleFonts.montserrat(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w600),
-            unselectedLabelStyle: GoogleFonts.montserrat(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w600),
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home, size: 30),
-                label: 'Ana Sayfa',
+      bottomNavigationBar: SizedBox(
+        height: 50,
+        child: Container(
+          decoration: BoxDecoration(
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.5),
+                spreadRadius: 5,
+                blurRadius: 5,
+                offset: const Offset(0, 3),
               ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.attach_money, size: 30),
-                label: 'Gelir',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.money_off, size: 30),
-                label: 'Gider',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.trending_up, size: 30),
-                label: 'Yatırım',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.star, size: 30),
-                label: 'İstekler',
-              )
             ],
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(10), // Adjust as needed
+              topRight: Radius.circular(10), // Adjust as needed
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(10), // Adjust as needed
+              topRight: Radius.circular(10), // Adjust as needed
+            ),
+            child: BottomNavigationBar(
+              currentIndex: 0,
+              onTap: (int index) {
+                switch (index) {
+                  case 0:
+                    Navigator.pushNamed(context, 'ana-sayfa');
+                    break;
+                  case 1:
+                    Navigator.pushNamed(context, 'income-page');
+                    break;
+                  case 2:
+                    Navigator.pushNamed(context, 'outcome-page');
+                    break;
+                  case 3:
+                    Navigator.pushNamed(context, 'investment-page');
+                    break;
+                  case 4:
+                    Navigator.pushNamed(context, 'wishes-page');
+                    break;
+                }
+              },
+              type: BottomNavigationBarType.fixed,
+              selectedLabelStyle: GoogleFonts.montserrat(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w600),
+              unselectedLabelStyle: GoogleFonts.montserrat(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w600),
+              items: [
+                BottomNavigationBarItem(
+                  icon: Padding(
+                    padding: EdgeInsets.only(left: 10,right: 10),
+                    child: Container(
+                      width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade100, // Background color
+                          borderRadius: BorderRadius.circular(20), // Rounded corners
+                        ),
+                        child: Icon(Icons.home, size: 26)
+                    ),
+                  ),
+                  label: 'Ana Sayfa',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.attach_money, size: 26),
+                  label: 'Gelir',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.money_off, size: 26),
+                  label: 'Gider',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.trending_up, size: 26),
+                  label: 'Yatırım',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.star, size: 26),
+                  label: 'İstekler',
+                )
+              ],
+            ),
           ),
         ),
       ),

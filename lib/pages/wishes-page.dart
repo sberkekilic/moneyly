@@ -383,8 +383,9 @@ class _WishesPageState extends State<WishesPage> {
     if (selectedTabList.isEmpty){
       newSelectedTab = "Türk Lirası";
     } else {
-      newSelectedTab = selectedTabList[(selectedTabList.length)-1];
+      newSelectedTab = selectedTabList[(selectedTabList.length)-(selectedTabList.length-((bankData['id'] as int)-1))];
       print("bankData['id'] : ${bankData['id']}");
+      print("Type of bankData['id'] : ${bankData['id'].runtimeType}");
       print("bankDataProvider.selectedTabList : $selectedTabList");
       print("newSelectedTab : $newSelectedTab");
     }
