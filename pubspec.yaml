@@ -47,6 +47,11 @@ dependencies:
   google_fonts: ^5.1.0
   step_progress_indicator: ^1.0.2
   flutter_inset_box_shadow: ^1.0.8
+  flutter_svg: ^2.0.7
+  font_awesome_flutter: ^10.5.0
+  fluttericon: ^2.0.0
+  keyboard_actions: ^4.2.0
+  dropdown_button2: ^2.3.9
 
 dev_dependencies:
   flutter_test:
@@ -71,7 +76,7 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
+  assets:
     - assets/currency.svg
     - assets/cash.svg
     - assets/real-estate.svg

@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
 import 'package:flutter_inset_box_shadow/flutter_inset_box_shadow.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:fluttericon/font_awesome_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:percent_indicator/percent_indicator.dart';
@@ -515,10 +516,11 @@ class _InvestmentPageState extends State<InvestmentPage> {
                               onPressed: () {
                                 showModalBottomSheet(
                                   context: context,
+                                  isScrollControlled: true,
                                   builder: (context) {
                                     double? investValue;
                                     return Padding(
-                                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 50),
+                                      padding: EdgeInsets.fromLTRB(20,20,20,MediaQuery.of(context).viewInsets.bottom+20),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         mainAxisSize: MainAxisSize.min,
@@ -637,11 +639,12 @@ class _InvestmentPageState extends State<InvestmentPage> {
                             TextButton(
                               onPressed: () {
                                 showModalBottomSheet(
+                                  isScrollControlled: true,
                                   context: context,
                                   builder: (context) {
                                     double? investValue;
                                     return Padding(
-                                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 50),
+                                      padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom+20),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         mainAxisSize: MainAxisSize.min,
@@ -755,11 +758,12 @@ class _InvestmentPageState extends State<InvestmentPage> {
                             TextButton(
                               onPressed: () {
                                 showModalBottomSheet(
+                                  isScrollControlled: true,
                                   context: context,
                                   builder: (context) {
                                     double? investValue;
                                     return Padding(
-                                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 50),
+                                      padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom+20),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         mainAxisSize: MainAxisSize.min,
@@ -873,11 +877,12 @@ class _InvestmentPageState extends State<InvestmentPage> {
                             TextButton(
                               onPressed: () {
                                 showModalBottomSheet(
+                                  isScrollControlled: true,
                                   context: context,
                                   builder: (context) {
                                     double? investValue;
                                     return Padding(
-                                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 50),
+                                      padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom+20),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         mainAxisSize: MainAxisSize.min,
@@ -991,11 +996,12 @@ class _InvestmentPageState extends State<InvestmentPage> {
                             TextButton(
                               onPressed: () {
                                 showModalBottomSheet(
+                                  isScrollControlled: true,
                                   context: context,
                                   builder: (context) {
                                     double? investValue;
                                     return Padding(
-                                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 50),
+                                      padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom+20),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         mainAxisSize: MainAxisSize.min,
@@ -1109,11 +1115,12 @@ class _InvestmentPageState extends State<InvestmentPage> {
                             TextButton(
                               onPressed: () {
                                 showModalBottomSheet(
+                                  isScrollControlled: true,
                                   context: context,
                                   builder: (context) {
                                     double? investValue;
                                     return Padding(
-                                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 50),
+                                      padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom+20),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         mainAxisSize: MainAxisSize.min,
@@ -1199,10 +1206,11 @@ class _InvestmentPageState extends State<InvestmentPage> {
                               onPressed: () {
                                 showModalBottomSheet(
                                   context: context,
+                                  isScrollControlled: true,
                                   builder: (context) {
                                     double? enteredValue;
                                     return Padding(
-                                      padding: const EdgeInsets.fromLTRB(20,20,20,50),
+                                      padding:  EdgeInsets.fromLTRB(20,20,20,MediaQuery.of(context).viewInsets.bottom+20),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         mainAxisSize: MainAxisSize.min,
@@ -1491,70 +1499,88 @@ class _InvestmentPageState extends State<InvestmentPage> {
                     ),
                   ),
                 ),
-                bottomNavigationBar: Container(
-                  decoration: BoxDecoration(
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.5),
-                        spreadRadius: 5,
-                        blurRadius: 5,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(10), // Adjust as needed
-                      topRight: Radius.circular(10), // Adjust as needed
-                    ),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(10), // Adjust as needed
-                      topRight: Radius.circular(10), // Adjust as needed
-                    ),
-                    child: BottomNavigationBar(
-                      currentIndex: 3,
-                      onTap: (int index) {
-                        switch (index) {
-                          case 0:
-                            Navigator.pushNamed(context, 'ana-sayfa');
-                            break;
-                          case 1:
-                            Navigator.pushNamed(context, 'income-page');
-                            break;
-                          case 2:
-                            Navigator.pushNamed(context, 'outcome-page');
-                            break;
-                          case 3:
-                            Navigator.pushNamed(context, 'investment-page');
-                            break;
-                          case 4:
-                            Navigator.pushNamed(context, 'wishes-page');
-                            break;
-                        }
-                      },
-                      type: BottomNavigationBarType.fixed,
-                      items: const [
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.home, size: 30),
-                          label: 'Ana Sayfa',
-                        ),
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.attach_money, size: 30),
-                          label: 'Gelir',
-                        ),
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.money_off, size: 30),
-                          label: 'Gider',
-                        ),
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.trending_up, size: 30),
-                          label: 'Yatırım',
-                        ),
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.star, size: 30),
-                          label: 'İstekler',
+                bottomNavigationBar: SizedBox(
+                  height: 90,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.5),
+                          spreadRadius: 5,
+                          blurRadius: 5,
+                          offset: const Offset(0, 3),
                         ),
                       ],
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(10), // Adjust as needed
+                        topRight: Radius.circular(10), // Adjust as needed
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(10), // Adjust as needed
+                        topRight: Radius.circular(10), // Adjust as needed
+                      ),
+                      child: BottomNavigationBar(
+                        currentIndex: 3,
+                        onTap: (int index) {
+                          switch (index) {
+                            case 0:
+                              Navigator.pushNamed(context, 'ana-sayfa');
+                              break;
+                            case 1:
+                              Navigator.pushNamed(context, 'income-page');
+                              break;
+                            case 2:
+                              Navigator.pushNamed(context, 'outcome-page');
+                              break;
+                            case 3:
+                              Navigator.pushNamed(context, 'investment-page');
+                              break;
+                            case 4:
+                              Navigator.pushNamed(context, 'wishes-page');
+                              break;
+                          }
+                        },
+                        type: BottomNavigationBarType.fixed,
+                        selectedLabelStyle: GoogleFonts.montserrat(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold),
+                        unselectedLabelStyle: GoogleFonts.montserrat(color: Colors.black, fontSize: 11, fontWeight: FontWeight.w600),
+                        items: [
+                          BottomNavigationBarItem(
+                            icon: Icon(Icons.home, size: 30),
+                            label: 'Ana Sayfa',
+                          ),
+                          BottomNavigationBarItem(
+                            icon: Icon(Icons.attach_money, size: 30),
+                            label: 'Gelir',
+                          ),
+                          BottomNavigationBarItem(
+                            icon: Icon(Icons.money_off, size: 30),
+                            label: 'Gider',
+                          ),
+                          BottomNavigationBarItem(
+                            icon: Padding(
+                              padding: EdgeInsets.only(left: 5,right: 5),
+                              child: Container(
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.shade100, // Background color
+                                    borderRadius: BorderRadius.circular(20), // Rounded corners
+                                  ),
+                                  child: Icon(Icons.trending_up_sharp, size: 30)
+                              ),
+                            ),
+                            label: 'Yatırım',
+                          ),
+                          BottomNavigationBarItem(
+                            icon: Padding(
+                              padding: const EdgeInsets.only(top: 5,bottom: 5),
+                              child: Icon(FontAwesome.bank, size: 20),
+                            ),
+                            label: 'İstekler',
+                          )
+                        ],
+                      ),
                     ),
                   ),
                 ),

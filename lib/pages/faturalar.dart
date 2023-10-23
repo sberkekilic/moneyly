@@ -38,6 +38,10 @@ class Invoice {
       dueDate: json['dueDate'] != null ? json['dueDate'] : null,
     );
   }
+
+  String toDisplayString() {
+    return 'Category: $category\nName: $name\nPeriod Date: $periodDate\nDue Date: ${dueDate ?? 'N/A'}';
+  }
 }
 
 class Bills extends StatefulWidget {

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -788,14 +789,44 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                     crossAxisAlignment: CrossAxisAlignment.start,
                                                     children: [
                                                       Expanded(
-                                                        child: DropdownButtonFormField<int>(
+                                                        child: DropdownButtonFormField2<int>(
                                                           value: _selectedBillingDay,
                                                           onChanged: (value) {
                                                             setState(() {
                                                               _selectedBillingDay = value;
                                                             });
                                                           },
-                                                          decoration: InputDecoration(labelText: 'Billing Day'),
+                                                          isExpanded: true,
+                                                          decoration: InputDecoration(
+                                                            // Add Horizontal padding using menuItemStyleData.padding so it matches
+                                                            // the menu padding when button's width is not specified.
+                                                            contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                                                            border: OutlineInputBorder(
+                                                              borderRadius: BorderRadius.circular(10),
+                                                            ),
+                                                          ),
+                                                          hint: const Text(
+                                                            'Fatura Dönemi',
+                                                            style: TextStyle(fontSize: 14),
+                                                          ),
+                                                          buttonStyleData: const ButtonStyleData(
+                                                            padding: EdgeInsets.only(right: 8),
+                                                          ),
+                                                          iconStyleData: const IconStyleData(
+                                                            icon: Icon(
+                                                              Icons.arrow_drop_down,
+                                                              color: Colors.black45,
+                                                            ),
+                                                            iconSize: 24,
+                                                          ),
+                                                          dropdownStyleData: DropdownStyleData(
+                                                            decoration: BoxDecoration(
+                                                              borderRadius: BorderRadius.circular(15),
+                                                            ),
+                                                          ),
+                                                          menuItemStyleData: const MenuItemStyleData(
+                                                            padding: EdgeInsets.symmetric(horizontal: 16),
+                                                          ),
                                                           items: daysList.map((day) {
                                                             return DropdownMenuItem<int>(
                                                               value: day,
@@ -806,7 +837,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                       ),
                                                       const SizedBox(width: 10),
                                                       Expanded(
-                                                        child: DropdownButtonFormField<int>(
+                                                        child: DropdownButtonFormField2<int>(
                                                           value: _selectedDueDay,
                                                           onChanged: (value) {
                                                             setState(() {

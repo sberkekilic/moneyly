@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttericon/font_awesome_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:moneyly/pages/gelir-ekle.dart';
@@ -392,7 +393,7 @@ class _HomePageState extends State<HomePage> {
                                   "Abonelikler",
                                   style: GoogleFonts.montserrat(
                                     fontWeight: FontWeight.normal,
-                                    fontSize: 16,
+                                    fontSize: 13,
                                   ),
                                 ),
                                 LinearPercentIndicator(
@@ -409,7 +410,7 @@ class _HomePageState extends State<HomePage> {
                                   formattedSumOfSubs,
                                   style: GoogleFonts.montserrat(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 18,
+                                    fontSize: 16,
                                   ),
                                 ),
                               ],
@@ -423,7 +424,7 @@ class _HomePageState extends State<HomePage> {
                                   "Faturalar",
                                   style: GoogleFonts.montserrat(
                                     fontWeight: FontWeight.normal,
-                                    fontSize: 16,
+                                    fontSize: 13,
                                   ),
                                 ),
                                 LinearPercentIndicator(
@@ -440,7 +441,7 @@ class _HomePageState extends State<HomePage> {
                                   formattedSumOfBills,
                                   style: GoogleFonts.montserrat(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 18,
+                                    fontSize: 16,
                                   ),
                                 ),
                               ],
@@ -454,7 +455,7 @@ class _HomePageState extends State<HomePage> {
                                   "Diğer",
                                   style: GoogleFonts.montserrat(
                                     fontWeight: FontWeight.normal,
-                                    fontSize: 16,
+                                    fontSize: 13,
                                   ),
                                 ),
                                 LinearPercentIndicator(
@@ -471,7 +472,7 @@ class _HomePageState extends State<HomePage> {
                                   formattedSumOfOthers,
                                   style: GoogleFonts.montserrat(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 18,
+                                    fontSize: 16,
                                   ),
                                 ),
                               ],
@@ -485,6 +486,7 @@ class _HomePageState extends State<HomePage> {
               ),
               SizedBox(height: 20),
               Text("Faturalarım", style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold)),
+              //ListView.builder(shrinkWrap: true,itemCount: invoices.length,itemBuilder: (context, index) {return Text(invoices[index].toDisplayString());},),
               SizedBox(height: 20),
               Container(
                 width: double.infinity,
@@ -530,7 +532,7 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       bottomNavigationBar: SizedBox(
-        height: 50,
+        height: 90,
         child: Container(
           decoration: BoxDecoration(
             boxShadow: [
@@ -573,37 +575,40 @@ class _HomePageState extends State<HomePage> {
                 }
               },
               type: BottomNavigationBarType.fixed,
-              selectedLabelStyle: GoogleFonts.montserrat(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w600),
-              unselectedLabelStyle: GoogleFonts.montserrat(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w600),
+              selectedLabelStyle: GoogleFonts.montserrat(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold),
+              unselectedLabelStyle: GoogleFonts.montserrat(color: Colors.black, fontSize: 11, fontWeight: FontWeight.w600),
               items: [
                 BottomNavigationBarItem(
                   icon: Padding(
-                    padding: EdgeInsets.only(left: 10,right: 10),
+                    padding: EdgeInsets.only(left: 5,right: 5),
                     child: Container(
                       width: double.infinity,
                         decoration: BoxDecoration(
                           color: Colors.blue.shade100, // Background color
                           borderRadius: BorderRadius.circular(20), // Rounded corners
                         ),
-                        child: Icon(Icons.home, size: 26)
+                        child: Icon(Icons.home, size: 30)
                     ),
                   ),
                   label: 'Ana Sayfa',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.attach_money, size: 26),
+                  icon: Icon(Icons.attach_money, size: 30),
                   label: 'Gelir',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.money_off, size: 26),
+                  icon: Icon(Icons.money_off, size: 30),
                   label: 'Gider',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.trending_up, size: 26),
+                  icon: Icon(Icons.trending_up, size: 30),
                   label: 'Yatırım',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.star, size: 26),
+                  icon: Padding(
+                    padding: const EdgeInsets.only(top: 5,bottom: 5),
+                    child: Icon(FontAwesome.bank, size: 20),
+                  ),
                   label: 'İstekler',
                 )
               ],
