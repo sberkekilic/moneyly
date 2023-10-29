@@ -18,8 +18,8 @@ class Subscriptions extends StatefulWidget {
 }
 class _SubscriptionsState extends State<Subscriptions> {
   List<String> sharedPreferencesData = [];
-  List<String> desiredKeys = ['tvTitleList2', 'tvPriceList2', 'hasTVSelected2', 'sumOfTV2', 'gameTitleList2', 'gamePriceList2', 'hasGameSelected2', 'sumOfGame2', 'musicTitleList2', 'musicPriceList2', 'hasMusicSelected2', 'sumOfMusic2'];
-  final List<Invoice> invoices = [];
+  List<String> desiredKeys = ['invoices','tvTitleList2', 'tvPriceList2', 'hasTVSelected2', 'sumOfTV2', 'gameTitleList2', 'gamePriceList2', 'hasGameSelected2', 'sumOfGame2', 'musicTitleList2', 'musicPriceList2', 'hasMusicSelected2', 'sumOfMusic2'];
+  List<Invoice> invoices = [];
   bool hasTVSelected = false;
   bool hasGameSelected = false;
   bool hasMusicSelected = false;
@@ -82,7 +82,6 @@ class _SubscriptionsState extends State<Subscriptions> {
       isTextFormFieldVisibleND =false;
       isTextFormFieldVisibleRD = false;
       isEditingList = false;
-      _load();
     });
   }
   Future<void> handleOyunContainerTouch() async {
@@ -98,7 +97,6 @@ class _SubscriptionsState extends State<Subscriptions> {
       isTextFormFieldVisibleND =false;
       isTextFormFieldVisibleRD = false;
       isEditingListND = false;
-      _load();
     });
   }
   Future<void> handleMuzikContainerTouch() async {
@@ -114,7 +112,6 @@ class _SubscriptionsState extends State<Subscriptions> {
       isTextFormFieldVisibleND =false;
       isTextFormFieldVisibleRD = false;
       isEditingListRD = false;
-      _load();
     });
   }
 
@@ -138,7 +135,7 @@ class _SubscriptionsState extends State<Subscriptions> {
     }
 
     // Define the file path where you want to save the text file
-    final filePath = '/data/user/0/com.example.moneyly/app_flutter/preferences.txt';
+    const filePath = '/data/user/0/com.example.moneyly/app_flutter/preferences.txt';
 
     // Write the data to the file
     final file = File(filePath);
@@ -146,18 +143,21 @@ class _SubscriptionsState extends State<Subscriptions> {
 
     // Optionally, display a message indicating the export is complete
   }
-  void _showEditDialog(BuildContext context, int index, int orderIndex) {
+  void _showEditDialog(BuildContext context, int index, int orderIndex, int id) {
     final formDataProvider2 = Provider.of<FormDataProvider2>(context, listen: false);
 
     TextEditingController selectedEditController = TextEditingController();
     TextEditingController selectedPriceController = TextEditingController();
+    Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
+    _selectedBillingDay = invoice.periodDate;
+    _selectedDueDay = invoice.dueDate;
 
     switch (orderIndex) {
       case 1:
         TextEditingController editController =
-        TextEditingController(text: tvTitleList[index]);
+        TextEditingController(text: invoices[index].name);
         TextEditingController priceController =
-        TextEditingController(text: tvPriceList[index]);
+        TextEditingController(text: invoices[index].price);
         selectedEditController = editController;
         selectedPriceController = priceController;
         break;
@@ -186,7 +186,7 @@ class _SubscriptionsState extends State<Subscriptions> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10)
           ),
-          title: Text('Edit Item',style: GoogleFonts.montserrat(fontSize: 20)),
+          title: Text('Edit Item id:$id',style: GoogleFonts.montserrat(fontSize: 20)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -197,8 +197,8 @@ class _SubscriptionsState extends State<Subscriptions> {
                 decoration: InputDecoration(
                     isDense: true,
                     focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(width: 3, color: Colors.black)
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(width: 3, color: Colors.black)
         ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -228,6 +228,40 @@ class _SubscriptionsState extends State<Subscriptions> {
                 style: GoogleFonts.montserrat(fontSize: 20),
                 keyboardType: TextInputType.number,
               ),
+              const SizedBox(height: 10),
+              Align(alignment: Alignment.centerLeft, child: Text("Period Date",style: GoogleFonts.montserrat(fontSize: 18))),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<int>(
+                value: _selectedBillingDay,
+                onChanged: (value) {
+                  setState(() {
+                    _selectedBillingDay = value;
+                  });
+                },
+                items: daysList.map((day) {
+                  return DropdownMenuItem<int>(
+                    value: day,
+                    child: Text(day.toString()),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 10),
+              Align(alignment: Alignment.centerLeft, child: Text("Due Date",style: GoogleFonts.montserrat(fontSize: 18))),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<int>(
+                value: _selectedDueDay,
+                onChanged: (value) {
+                  setState(() {
+                    _selectedDueDay = value;
+                  });
+                },
+                items: daysList.map((day) {
+                  return DropdownMenuItem<int>(
+                    value: day,
+                    child: Text(day.toString()),
+                  );
+                }).toList(),
+              ),
             ],
           ),
           actions: [
@@ -245,11 +279,10 @@ class _SubscriptionsState extends State<Subscriptions> {
                       final priceText = selectedPriceController.text.trim();
                       double dprice = double.tryParse(priceText) ?? 0.0;
                       String price = dprice.toStringAsFixed(2);
-                      tvTitleList[index] = selectedEditController.text;
-                      tvPriceList[index] = price;
-                      formDataProvider2.setTVTitleValue(selectedEditController.text, tvTitleList);
-                      formDataProvider2.setTVPriceValue(price, tvPriceList);
-                      formDataProvider2.calculateSumOfTV(tvPriceList);
+                      String name = selectedEditController.text;
+                      invoice.name = name;
+                      invoice.price = price;
+                      editInvoice(id, _selectedBillingDay ?? 0, _selectedDueDay ?? null);
                       break;
                     case 2:
                       final priceText = selectedPriceController.text.trim();
@@ -273,7 +306,6 @@ class _SubscriptionsState extends State<Subscriptions> {
                       break;
                   }
                 });
-                _load();
                 Navigator.of(context).pop();
               },
 
@@ -284,13 +316,11 @@ class _SubscriptionsState extends State<Subscriptions> {
                   setState(() {
                     switch (orderIndex){
                       case 1:
-                        tvTitleList.removeAt(index);
-                        tvPriceList.removeAt(index);
                         formDataProvider2.removeTVTitleValue(tvTitleList);
                         formDataProvider2.removeTVPriceValue(tvPriceList);
-                        formDataProvider2.calculateSumOfTV(tvPriceList);
                         isEditingList = false;
                         isAddButtonActive = false;
+                        removeInvoice(id);
                         break;
                       case 2:
                         gameTitleList.removeAt(index);
@@ -311,7 +341,6 @@ class _SubscriptionsState extends State<Subscriptions> {
                         isAddButtonActiveRD = false;
                         break;
                     }
-                    _load();
                     Navigator.of(context).pop();
                   });
                 },
@@ -354,6 +383,7 @@ class _SubscriptionsState extends State<Subscriptions> {
     final db1 = prefs.getDouble('sumOfTV2') ?? 0.0;
     final db2 = prefs.getDouble('sumOfGame2') ?? 0.0;
     final db3 = prefs.getDouble('sumOfMusic2') ?? 0.0;
+    final eb1 = prefs.getStringList('invoices') ?? [];
     setState(() {
       hasTVSelected = ab1;
       hasGameSelected = ab2;
@@ -367,20 +397,43 @@ class _SubscriptionsState extends State<Subscriptions> {
       sumOfTV = db1;
       sumOfGame = db2;
       sumOfMusic = db3;
+      for (final invoiceString in eb1) {
+        final Map<String, dynamic> invoiceJson = jsonDecode(invoiceString);
+        final Invoice invoice = Invoice.fromJson(invoiceJson);
+        invoices.add(invoice);
+      }
       loadSharedPreferencesData(desiredKeys);
     });
+    //await prefs.setStringList('invoices', []);
+    //await prefs.setStringList('tvTitleList2', []);
+    //await prefs.setStringList('tvPriceList2', []);
+    //await prefs.setDouble('sumOfTV2', 0.0);
     convertSum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfTV);
     convertSum2 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfGame);
     convertSum3 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfMusic);
   }
   Future<void> setSumAll(double value) async {
     final prefs = await SharedPreferences.getInstance();
-    prefs.setDouble('sumOfSubs2', value);
+    print("value is $value");
+    prefs.setDouble('sumOfTV2', value);
   }
   Future<void> saveInvoices() async {
     final prefs = await SharedPreferences.getInstance();
     final invoiceList = invoices.map((invoice) => invoice.toJson()).toList();
     await prefs.setStringList('invoices', invoiceList.map((invoice) => jsonEncode(invoice)).toList());
+  }
+
+  double calculateSubcategorySum(List<Invoice> invoices, String subcategory) {
+    double sum = 0.0;
+
+    for (var invoice in invoices) {
+      if (invoice.subCategory == subcategory) {
+        double price = double.parse(invoice.price);
+        sum += price;
+      }
+    }
+
+    return sum;
   }
 
   void onSave(Invoice invoice) {
@@ -390,16 +443,37 @@ class _SubscriptionsState extends State<Subscriptions> {
     saveInvoices();
   }
 
-  void editInvoice(int index, Invoice updatedInvoice) {
-    setState(() {
-      invoices[index] = updatedInvoice;
-    });
-    saveInvoices();
+  void editInvoice(int id, int periodDate, int? dueDate) {
+    int index = invoices.indexWhere((invoice) => invoice.id == id);
+    if (index != -1) {
+      setState(() {
+        final invoice = invoices[index];
+        final updatedInvoice = Invoice(
+          id: invoice.id,
+          price: invoice.price,
+          subCategory: invoice.subCategory,
+          category: invoice.category,
+          name: invoice.name,
+          periodDate: periodDate,
+          dueDate: dueDate,
+        );
+        invoices[index] = updatedInvoice;
+        saveInvoices();
+      });
+    }
   }
 
-  void removeInvoice(int index) {
+
+  void removeInvoice(int id) {
     setState(() {
-      invoices.removeAt(index);
+      int index = invoices.indexWhere((invoice) => invoice.id == id);
+      if (index != -1) {
+        setState(() {
+          invoices.removeAt(index);
+        });
+      } else {
+        // Entry with the target ID not found
+      }
     });
     saveInvoices();
   }
@@ -408,11 +482,20 @@ class _SubscriptionsState extends State<Subscriptions> {
   Widget build(BuildContext context) {
     final formDataProvider2 = Provider.of<FormDataProvider2>(context, listen: false);
     double screenWidth = MediaQuery.of(context).size.width;
+    double tvSum = calculateSubcategorySum(invoices, 'TV');
+    String formattedTvSum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(tvSum);
     double sumAll = 0.0;
-    sumAll += sumOfTV;
+    sumAll += tvSum;
     sumAll += sumOfGame;
     sumAll += sumOfMusic;
-    setSumAll(sumAll);
+    print("tvSum : $tvSum");
+    setSumAll(tvSum);
+    List<int> idsWithTVTargetCategory = [];
+    for (Invoice invoice in invoices) {
+      if (invoice.subCategory == "TV") {
+        idsWithTVTargetCategory.add(invoice.id);
+      }
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -662,35 +745,62 @@ class _SubscriptionsState extends State<Subscriptions> {
                                               padding: const EdgeInsets.all(10),
                                               child: Text("Film, Dizi ve TV",style: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.bold),)
                                           ),
-                                          if (tvTitleList.isNotEmpty && tvPriceList.isNotEmpty)
+                                          ListView.builder(
+                                            shrinkWrap: true,
+                                            itemCount: invoices.length,
+                                            itemBuilder: (context, index) {
+                                              Invoice invoice = invoices[index];
+                                              String invoiceText = invoice.toDisplayString();
+                                              return Text(invoiceText);
+                                            },
+                                          ),
+                                          if (invoices.isNotEmpty && invoices.isNotEmpty)
                                             ListView.builder(
                                               shrinkWrap: true,
-                                              itemCount: tvTitleList.length,
+                                              itemCount: idsWithTVTargetCategory.length,
                                               itemBuilder: (BuildContext context, int i) {
-                                                double sum2 = double.parse(tvPriceList[i]);
-                                                String convertSumo = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum2);
+                                                int id = idsWithTVTargetCategory[i];
+                                                Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
                                                 return Container(
                                                     padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
                                                     child: Row(
                                                       children: [
                                                         Flexible(
-                                                          flex: 2,
+                                                          flex: 4,
                                                           fit: FlexFit.tight,
                                                           child: Text(
-                                                            tvTitleList[i],
+                                                            textAlign: TextAlign.center,
+                                                            invoice.name,
                                                             style: GoogleFonts.montserrat(fontSize: 20),
                                                             overflow: TextOverflow.ellipsis,
                                                           ),
                                                         ),
                                                         Flexible(
-                                                          flex: 2,
+                                                          flex: 4,
                                                           fit: FlexFit.tight,
                                                           child: Text(
-                                                                textAlign: TextAlign.right,
-                                                                convertSumo,
-                                                                style: GoogleFonts.montserrat(fontSize: 20),
-                                                                overflow: TextOverflow.ellipsis,
-                                                              ),
+                                                            invoice.price,
+                                                            style: GoogleFonts.montserrat(fontSize: 20),
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                        ),
+                                                        Flexible(
+                                                          flex: 4,
+                                                          fit: FlexFit.tight,
+                                                          child: Text(
+                                                            invoice.subCategory,
+                                                            style: GoogleFonts.montserrat(fontSize: 20),
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                        ),
+                                                        Flexible(
+                                                          flex: 4,
+                                                          fit: FlexFit.tight,
+                                                          child: Text(
+                                                            id.toString(),
+                                                            style: GoogleFonts.montserrat(fontSize: 20),
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
                                                         ),
                                                        const SizedBox(width: 20),
                                                        IconButton(
@@ -699,7 +809,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                               constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                                               icon: const Icon(Icons.edit, size: 21),
                                                               onPressed: () {
-                                                                _showEditDialog(context, i, 1); // Show the edit dialog
+                                                                _showEditDialog(context, i, 1, id); // Show the edit dialog
                                                               },
                                                             ),
                                                       ],
@@ -739,34 +849,40 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                             children: [
                                                               IconButton(
                                                                 onPressed: () {
-                                                                  final text = textController.text.trim();
-                                                                  final priceText = platformPriceController.text.trim();
-                                                                  final invoice = Invoice(
-                                                                    category: "Abonelikler",
-                                                                    name: text,
-                                                                    periodDate: _selectedBillingDay!,
-                                                                    dueDate: _selectedDueDay != null
-                                                                        ? _selectedDueDay
-                                                                        : null,
-                                                                  );
-                                                                  onSave(invoice);
-                                                                  if (text.isNotEmpty && priceText.isNotEmpty) {
+                                                                  setState(() {
+                                                                    int maxId = 0; // Initialize with the lowest possible value
+                                                                    for (var invoice in invoices) {
+                                                                      if (invoice.id > maxId) {
+                                                                        maxId = invoice.id;
+                                                                      }
+                                                                    }
+                                                                    int newId = maxId + 1;
+                                                                    final text = textController.text.trim();
+                                                                    final priceText = platformPriceController.text.trim();
                                                                     double dprice = double.tryParse(priceText) ?? 0.0;
                                                                     String price = dprice.toStringAsFixed(2);
-                                                                    setState(() {
-                                                                      tvTitleList.add(text);
-                                                                      tvPriceList.add(price);
-                                                                      formDataProvider2.setTVTitleValue(text, tvTitleList);
-                                                                      formDataProvider2.setTVPriceValue(price, tvPriceList);
-                                                                      formDataProvider2.calculateSumOfTV(tvPriceList);
-                                                                      isEditingList = false; // Add a corresponding entry for the new item
-                                                                      textController.clear();
-                                                                      platformPriceController.clear();
-                                                                      isTextFormFieldVisible = false;
-                                                                      isAddButtonActive = false;
-                                                                      _load();
-                                                                    });
-                                                                  }
+                                                                    final invoice = Invoice(
+                                                                      id: newId,
+                                                                      price: price,
+                                                                      subCategory: 'TV',
+                                                                      category: "Abonelikler",
+                                                                      name: text,
+                                                                      periodDate: _selectedBillingDay!,
+                                                                      dueDate: _selectedDueDay != null
+                                                                          ? _selectedDueDay
+                                                                          : null,
+                                                                    );
+                                                                    onSave(invoice);
+                                                                    if (text.isNotEmpty && priceText.isNotEmpty) {
+                                                                      setState(() {
+                                                                        isEditingList = false; // Add a corresponding entry for the new item
+                                                                        textController.clear();
+                                                                        platformPriceController.clear();
+                                                                        isTextFormFieldVisible = false;
+                                                                        isAddButtonActive = false;
+                                                                      });
+                                                                    }
+                                                                  });
                                                                 },
                                                                 icon: const Icon(Icons.check_circle, size: 26),
                                                               ),
@@ -844,7 +960,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                               _selectedDueDay = value;
                                                             });
                                                           },
-                                                          decoration: InputDecoration(labelText: 'Due Day (optional)'),
+                                                          decoration: const InputDecoration(labelText: 'Due Day (optional)'),
                                                           items: daysList.map((day) {
                                                             return DropdownMenuItem<int>(
                                                               value: day,
@@ -879,10 +995,10 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                     },
                                                     child: const Icon(Icons.add_circle, size: 26),
                                                   ),
-                                                  if (convertSum != "0,00")
+                                                  if (formattedTvSum != "0,00")
                                                   Padding(
                                                     padding: const EdgeInsets.only(right: 43),
-                                                    child: Text("Toplam: $convertSum", style: GoogleFonts.montserrat(fontSize: 20),),
+                                                    child: Text("Toplam: $formattedTvSum", style: GoogleFonts.montserrat(fontSize: 20),),
                                                   ),
                                                 ],
                                               ),
@@ -956,7 +1072,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                         constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                                         icon: const Icon(Icons.edit, size: 21),
                                                         onPressed: () {
-                                                          _showEditDialog(context, i, 2); // Show the edit dialog
+                                                          _showEditDialog(context, i, 2, 0); // Show the edit dialog
                                                         },
                                                       ),
                                                     ],
@@ -1010,7 +1126,6 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                               NDplatformPriceController.clear();
                                                               isTextFormFieldVisibleND = false;
                                                               isAddButtonActiveND = false;
-                                                              _load();
                                                             });
                                                           }
                                                         },
@@ -1130,7 +1245,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                         constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                                         icon: const Icon(Icons.edit, size: 21),
                                                         onPressed: () {
-                                                          _showEditDialog(context, i, 3); // Show the edit dialog
+                                                          _showEditDialog(context, i, 3, 0); // Show the edit dialog
                                                         },
                                                       ),
                                                     ],
@@ -1184,7 +1299,6 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                               RDplatformPriceController.clear();
                                                               isTextFormFieldVisibleRD = false;
                                                               isAddButtonActiveRD = false;
-                                                              _load();
                                                             });
                                                           }
                                                         },

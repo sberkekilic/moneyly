@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_inset_box_shadow/flutter_inset_box_shadow.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fluttericon/font_awesome_icons.dart';
@@ -54,6 +55,9 @@ class _InvestmentPageState extends State<InvestmentPage> {
     setState(() {
       isPopupVisible = !isPopupVisible;
       prefs.setBool('isPopupVisible', isPopupVisible);
+    });
+    SchedulerBinding.instance!.addPostFrameCallback((_) {
+      setState(() {});
     });
   }
 
@@ -121,17 +125,13 @@ class _InvestmentPageState extends State<InvestmentPage> {
           child: Row(
             children: [
               Center(
-                child: ClipOval(
-                  child: Container(
-                    color: Colors.white,
-                    child: Center(
-                      child: SvgPicture.asset(
-                        iconAsset,
-                        width: 34,
-                      ),
-                    ),
+                child: CircleAvatar(
+                  backgroundColor: Colors.white,
+                  child: SvgPicture.asset(
+                    iconAsset,
+                    width: 34,
                   ),
-                ),
+                )
               ),
               const SizedBox(width: 15),
               Text(
@@ -1591,51 +1591,55 @@ class _InvestmentPageState extends State<InvestmentPage> {
             right: 0,
             left: 0,
             bottom: 0,
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: isPopupVisible ? 5 : 0, sigmaY: isPopupVisible ? 5 : 0),
-              child: AnimatedOpacity(
-                opacity: isPopupVisible ? 0.7 : 0.0, // Fade in/out based on visibility
-                duration: const Duration(milliseconds: 500), // Duration for the opacity animation
-                child: Visibility(
-                  visible: isPopupVisible,
-                  child: Container(
-                    padding: const EdgeInsets.only(top: 320),
-                    color: Colors.black.withOpacity(0.5), // Darkened background
-                    child: Align(
-                        alignment: Alignment.bottomLeft,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: itemList.map((category) {
-                            return buildCategoryButton(category, itemIcons);
-                          }).toList(),
-                        )
+            child: Stack(
+              children: [
+                BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: isPopupVisible ? 5 : 0, sigmaY: isPopupVisible ? 5 : 0),
+                  child: AnimatedOpacity(
+                    opacity: isPopupVisible ? 0.7 : 0.0, // Fade in/out based on visibility
+                    duration: const Duration(milliseconds: 500), // Duration for the opacity animation
+                    child: Visibility(
+                      visible: isPopupVisible,
+                      child: Container(
+                        padding: const EdgeInsets.only(top: 320),
+                        color: Colors.black.withOpacity(0.5), // Darkened background
+                        child: Align(
+                            alignment: Alignment.bottomLeft,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: itemList.map((category) {
+                                return buildCategoryButton(category, itemIcons);
+                              }).toList(),
+                            )
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 60,
-            right: 20,
-            child: Visibility(
-                visible: isPopupVisible,
-                child: Center(
-                    child: GestureDetector(
-                      onTap: () {
-                        togglePopupVisibility(context);
-                      },
-                      child: const Icon(
-                        Icons.close,
-                        color: Colors.white,
-                        size: 50,
-                        shadows: <Shadow>[
-                          Shadow(color: Colors.black, blurRadius: 10.0, offset: Offset(6, 3))
-                        ],
-                      ),
-                    )
-                )
-            ),
+                Positioned(
+                  top: 60,
+                  right: 20,
+                  child: Visibility(
+                      visible: isPopupVisible,
+                      child: Center(
+                          child: GestureDetector(
+                            onTap: () {
+                              togglePopupVisibility(context);
+                            },
+                            child: const Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 50,
+                              shadows: <Shadow>[
+                                Shadow(color: Colors.black, blurRadius: 10.0, offset: Offset(6, 3))
+                              ],
+                            ),
+                          )
+                      )
+                  ),
+                ),
+              ],
+            )
           ),
         ],
       ),

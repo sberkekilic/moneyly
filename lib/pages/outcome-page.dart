@@ -1,5 +1,7 @@
 // ignore_for_file: unused_import, avoid_unnecessary_containers
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:fluttericon/font_awesome_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -10,6 +12,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../deneme.dart';
+import 'faturalar.dart';
 
 class OutcomePage extends StatefulWidget {
   const OutcomePage({Key? key}) : super(key: key);
@@ -19,6 +22,7 @@ class OutcomePage extends StatefulWidget {
 }
 
 class _OutcomePageState extends State<OutcomePage> {
+  final List<Invoice> invoices = [];
   int biggestIndex = 0;
   final TextEditingController textController = TextEditingController();
   final TextEditingController platformPriceController = TextEditingController();
@@ -83,9 +87,9 @@ class _OutcomePageState extends State<OutcomePage> {
 
   double incomeValue = 0.0;
   double outcomeValue = 0.0;
-  double subsPercent = 0.0;
-  double billsPercent = 0.0;
-  double othersPercent = 0.0;
+  int subsPercent = 0;
+  int billsPercent = 0;
+  int othersPercent = 0;
   double savingsValue = 0.0;
   double wishesValue = 0.0;
   double needsValue = 0.0;
@@ -107,6 +111,10 @@ class _OutcomePageState extends State<OutcomePage> {
   String convertSum = "";
   String convertSum2 = "";
   String convertSum3 = "";
+
+  int? _selectedBillingDay;
+  int? _selectedDueDay;
+  List<int> daysList = List.generate(31, (index) => index + 1);
 
   @override
   void initState() {
@@ -167,6 +175,7 @@ class _OutcomePageState extends State<OutcomePage> {
     final ab36 = prefs.getStringList('cateringPriceList2') ?? [];
     final ab37 = prefs.getStringList('entertainmentPriceList2') ?? [];
     final ab38 = prefs.getStringList('otherPriceList2') ?? [];
+    final ab39 = prefs.getStringList('invoices') ?? [];
     setState(() {
       selectedTitle = labelForOption(SelectedOption.values[ab1]);
       incomeValue = NumberFormat.decimalPattern('tr_TR').parse(ab2) as double;
@@ -206,6 +215,11 @@ class _OutcomePageState extends State<OutcomePage> {
       cateringPriceList = ab36;
       entertainmentPriceList = ab37;
       otherPriceList = ab38;
+      for (final invoiceString in ab39) {
+        final Map<String, dynamic> invoiceJson = jsonDecode(invoiceString);
+        final Invoice invoice = Invoice.fromJson(invoiceJson);
+        invoices.add(invoice);
+      }
     });
     convertSum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfTV);
     convertSum2 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfGame);
@@ -217,34 +231,81 @@ class _OutcomePageState extends State<OutcomePage> {
     prefs.setDouble('sumOfSubs2', value);
   }
 
+  Future<void> saveInvoices() async {
+    final prefs = await SharedPreferences.getInstance();
+    final invoiceList = invoices.map((invoice) => invoice.toJson()).toList();
+    await prefs.setStringList('invoices', invoiceList.map((invoice) => jsonEncode(invoice)).toList());
+  }
+
+  void removeInvoice(int id) {
+    setState(() {
+      int index = invoices.indexWhere((invoice) => invoice.id == id);
+      if (index != -1) {
+        setState(() {
+          invoices.removeAt(index);
+        });
+      } else {
+        // Entry with the target ID not found
+      }
+    });
+    saveInvoices();
+  }
+
+  void editInvoice(int id, int periodDate, int? dueDate) {
+    int index = invoices.indexWhere((invoice) => invoice.id == id);
+    if (index != -1) {
+      setState(() {
+        final invoice = invoices[index];
+        final updatedInvoice = Invoice(
+          id: invoice.id,
+          price: invoice.price,
+          subCategory: invoice.subCategory,
+          category: invoice.category,
+          name: invoice.name,
+          periodDate: periodDate,
+          dueDate: dueDate,
+        );
+        invoices[index] = updatedInvoice;
+        saveInvoices();
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final formDataProvider2 = Provider.of<FormDataProvider2>(context, listen: false);
-    outcomeValue = sumOfSubs+sumOfBills+sumOfOthers;
-    subsPercent = sumOfSubs/outcomeValue;
-    billsPercent = sumOfBills/outcomeValue;
-    othersPercent = sumOfOthers/outcomeValue;
-    List<double> percentages = [
-      subsPercent.isNaN ? 0.0 : subsPercent,
-      billsPercent.isNaN ? 0.0 : billsPercent,
-      othersPercent.isNaN ? 0.0 : othersPercent,
-    ];
-
-    Map<String, double> variableMap = {
-      'subsPercent': subsPercent,
-      'billsPercent': billsPercent,
-      'othersPercent': othersPercent,
-    };
-    percentages.sort();
-    String smallestVariable = variableMap.keys.firstWhere((key) => variableMap[key] == percentages[0], orElse: () => "");
-    String mediumVariable = variableMap.keys.firstWhere((key) => variableMap[key] == percentages[1], orElse: () => "");
-    String largestVariable = variableMap.keys.firstWhere((key) => variableMap[key] == percentages[2], orElse: () => "");
-    percentages.sort((a, b) => b.compareTo(a),);
-    percentages[0] = 1.0;
     sumOfSubs = sumOfTV + sumOfGame + sumOfMusic;
     sumOfBills = sumOfHome + sumOfInternet + sumOfPhone;
     sumOfOthers = sumOfRent + sumOfKitchen + sumOfCatering + sumOfEnt + sumOfOther;
-    outcomeValue = sumOfSubs + sumOfBills + sumOfOthers;
+    outcomeValue = sumOfSubs+sumOfBills+sumOfOthers;
+    subsPercent = (outcomeValue != 0) ? ((sumOfSubs / outcomeValue) * 100).round() : 0;
+    billsPercent = (outcomeValue != 0) ? ((sumOfBills / outcomeValue) * 100).round() : 0;
+    othersPercent = (outcomeValue != 0) ? ((sumOfOthers / outcomeValue) * 100).round() : 0;
+    List<double> percentages = [
+      subsPercent.isNaN ? 0.0 : (subsPercent.toDouble()/100),
+      billsPercent.isNaN ? 0.0 : (billsPercent.toDouble()/100),
+      othersPercent.isNaN ? 0.0 : (othersPercent.toDouble()/100),
+    ];
+    print("İLK percentages:$percentages");
+    Map<String, double> variableMap = {
+      'subsPercent': subsPercent.toDouble(),
+      'billsPercent': billsPercent.toDouble(),
+      'othersPercent': othersPercent.toDouble(),
+    };
+    percentages.sort();
+
+    List<String> variableNames = variableMap.keys.toList()
+      ..sort((a, b) => (variableMap[a] ?? 0.0).compareTo(variableMap[b] ?? 0.0));
+
+    String smallestVariable = variableNames[0];
+    String mediumVariable = variableNames[1];
+    String largestVariable = variableNames[2];
+
+
+    percentages.sort((a, b) => b.compareTo(a),);
+    percentages[0] = 1.0;
+    print("son percentages:$percentages, smallestVariable:$smallestVariable, mediumVariable:$mediumVariable, largestVariable:$largestVariable");
+
     String formattedIncomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(incomeValue);
     String formattedOutcomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(outcomeValue);
     String formattedsavingsValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(savingsValue);
@@ -258,11 +319,22 @@ class _OutcomePageState extends State<OutcomePage> {
     Color mediumColor = Color(0xFFFFA500);
     Color biggestColor = Color(0xFFFF8C00);
 
-    int totalSubsElement = tvTitleList.length + gameTitleList.length + musicTitleList.length;
-    int totalBillsElement = homeBillsTitleList.length + internetTitleList.length + phoneTitleList.length;
+    List<int> idsWithTVTargetCategory = [];
+    List<int> idsWithHBTargetCategory = [];
+    for (Invoice invoice in invoices) {
+      if (invoice.subCategory == "TV") {
+        idsWithTVTargetCategory.add(invoice.id);
+      } if (invoice.subCategory == "Ev Faturaları") {
+        idsWithHBTargetCategory.add(invoice.id);
+      }
+      print(idsWithTVTargetCategory);
+    }
+
+    int totalSubsElement = idsWithTVTargetCategory.length + gameTitleList.length + musicTitleList.length;
+    int totalBillsElement = idsWithHBTargetCategory.length + internetTitleList.length + phoneTitleList.length;
     int totalOthersElement = rentTitleList.length + kitchenTitleList.length + cateringTitleList.length + entertainmentTitleList.length + otherTitleList.length;
 
-    void _showEditDialog(BuildContext context, int index, int page, int orderIndex) {
+    void _showEditDialog(BuildContext context, int index, int page, int orderIndex, int id) {
       String caterogyName = "";
       if(page == 1){
         switch (orderIndex) {
@@ -310,14 +382,17 @@ class _OutcomePageState extends State<OutcomePage> {
 
       TextEditingController selectedEditController = TextEditingController();
       TextEditingController selectedPriceController = TextEditingController();
+      Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
+      _selectedBillingDay = invoice.periodDate;
+      _selectedDueDay = invoice.dueDate;
 
       if(page == 1){
         switch (orderIndex) {
           case 1:
             TextEditingController editController =
-            TextEditingController(text: tvTitleList[index]);
+            TextEditingController(text: invoices[index].name);
             TextEditingController priceController =
-            TextEditingController(text: tvPriceList[index]);
+            TextEditingController(text: invoices[index].price);
             selectedEditController = editController;
             selectedPriceController = priceController;
             break;
@@ -459,6 +534,38 @@ class _OutcomePageState extends State<OutcomePage> {
                   style: const TextStyle(fontSize: 20),
                   keyboardType: TextInputType.number,
                 ),
+                const Align(child: Text("Bill Period",style: TextStyle(fontSize: 18)), alignment: Alignment.centerLeft),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<int>(
+                  value: _selectedBillingDay,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedBillingDay = value;
+                    });
+                  },
+                  items: daysList.map((day) {
+                    return DropdownMenuItem<int>(
+                      value: day,
+                      child: Text(day.toString()),
+                    );
+                  }).toList(),
+                ),
+                const Align(child: Text("Due Date",style: TextStyle(fontSize: 18)), alignment: Alignment.centerLeft),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<int>(
+                  value: _selectedDueDay,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedDueDay = value;
+                    });
+                  },
+                  items: daysList.map((day) {
+                    return DropdownMenuItem<int>(
+                      value: day,
+                      child: Text(day.toString()),
+                    );
+                  }).toList(),
+                ),
               ],
             ),
             actions: [
@@ -469,8 +576,7 @@ class _OutcomePageState extends State<OutcomePage> {
                   icon: const Icon(Icons.cancel)
               ),
               IconButton(
-                  onPressed: () async {
-                    final prefs = await SharedPreferences.getInstance();
+                  onPressed: () {
                     setState(() {
                       if(page == 1){
                         switch (orderIndex){
@@ -478,11 +584,10 @@ class _OutcomePageState extends State<OutcomePage> {
                             final priceText = selectedPriceController.text.trim();
                             double dprice = double.tryParse(priceText) ?? 0.0;
                             String price = dprice.toStringAsFixed(2);
-                            tvTitleList[index] = selectedEditController.text;
-                            tvPriceList[index] = price;
-                            formDataProvider2.setTVTitleValue(selectedEditController.text, tvTitleList);
-                            formDataProvider2.setTVPriceValue(price, tvPriceList);
-                            formDataProvider2.calculateSumOfTV(tvPriceList);
+                            String name = selectedEditController.text;
+                            invoice.name = name;
+                            invoice.price = price;
+                            editInvoice(id, _selectedBillingDay ?? 0, _selectedDueDay ?? null);
                             break;
                           case 2:
                             final priceText = selectedPriceController.text.trim();
@@ -599,17 +704,14 @@ class _OutcomePageState extends State<OutcomePage> {
                   icon: const Icon(Icons.save)
               ),
                 IconButton(
-                    onPressed: () async {
-                      final prefs = await SharedPreferences.getInstance();
+                    onPressed: () {
                       setState(() {
                         if(page == 1 && totalSubsElement != 1){
                           switch (orderIndex){
                             case 1:
-                              tvTitleList.removeAt(index);
-                              tvPriceList.removeAt(index);
                               formDataProvider2.removeTVTitleValue(tvTitleList);
                               formDataProvider2.removeTVPriceValue(tvPriceList);
-                              formDataProvider2.calculateSumOfTV(tvPriceList);
+                              removeInvoice(id);
                               break;
                             case 2:
                               gameTitleList.removeAt(index);
@@ -707,6 +809,11 @@ class _OutcomePageState extends State<OutcomePage> {
         },
       );
     }
+    for (Invoice invoice in invoices) {
+      print('Before ID: ${invoice.id}, Subcategory: ${invoice.subCategory}');
+    }
+
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xfff0f0f1),
@@ -800,6 +907,7 @@ class _OutcomePageState extends State<OutcomePage> {
                         )
                       ],
                     ),
+                    Text("$percentages", style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 10),
                     const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
                     if (largestVariable == "subsPercent" && mediumVariable == "billsPercent")
@@ -1302,6 +1410,7 @@ class _OutcomePageState extends State<OutcomePage> {
               ),
               const SizedBox(height: 20),
               Text("Abonelikler", style: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.bold)),
+              Text('Period Dates: ${invoices.map((invoice) => invoice.periodDate.toString()).join(', ')}'),
               const SizedBox(height: 10),
               Container(
                 padding: const EdgeInsets.all(20),
@@ -1339,7 +1448,7 @@ class _OutcomePageState extends State<OutcomePage> {
                       physics: const NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
                       children: [
-                        if(tvTitleList.isNotEmpty)
+                        if(invoices.isNotEmpty)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -1348,9 +1457,11 @@ class _OutcomePageState extends State<OutcomePage> {
                             ListView.builder(
                               physics: const NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
-                              itemCount: tvTitleList.length + 1, // +1 for the "Abonelik Ekle" row
+                              itemCount: idsWithTVTargetCategory.length,
                               itemBuilder: (context, index) {
-                                if (index < tvTitleList.length) {
+                                int id = idsWithTVTargetCategory[index];
+                                Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
+                                if (index < idsWithTVTargetCategory.length) {
                                   return Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -1361,7 +1472,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             flex: 2,
                                             fit: FlexFit.tight,
                                             child: Text(
-                                              tvTitleList[index],
+                                              invoice.name,
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -1371,7 +1482,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             fit: FlexFit.tight,
                                             child: Text(
                                               textAlign: TextAlign.right,
-                                              tvPriceList[index],
+                                              invoice.price,
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -1383,7 +1494,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                             icon: const Icon(Icons.edit, size: 21),
                                             onPressed: () {
-                                              _showEditDialog(context, index, 1, 1); // Show the edit dialog
+                                              _showEditDialog(context, index, 1, 1, id); // Show the edit dialog
                                             },
                                           ),
                                         ],
@@ -1441,7 +1552,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                             icon: const Icon(Icons.edit, size: 21),
                                             onPressed: () {
-                                              _showEditDialog(context, index, 1, 2); // Show the edit dialog
+                                              _showEditDialog(context, index, 1, 2, 0); // Show the edit dialog
                                             },
                                           ),
                                         ],
@@ -1499,7 +1610,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                             icon: const Icon(Icons.edit, size: 21),
                                             onPressed: () {
-                                              _showEditDialog(context, index, 1, 3); // Show the edit dialog
+                                              _showEditDialog(context, index, 1, 3, 0); // Show the edit dialog
                                             },
                                           ),
                                         ],
@@ -1618,7 +1729,6 @@ class _OutcomePageState extends State<OutcomePage> {
                                           tvPriceList.add(price);
                                           prefs.setStringList('tvTitleList2', tvTitleList);
                                           prefs.setStringList('tvPriceList2', tvPriceList);
-                                          formDataProvider2.calculateSumOfTV(tvPriceList);
                                           textController.clear();
                                           platformPriceController.clear();
                                           isSubsAddActive = false;
@@ -1721,7 +1831,7 @@ class _OutcomePageState extends State<OutcomePage> {
                       physics: const NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
                       children: [
-                        if(homeBillsTitleList.isNotEmpty)
+                        if(invoices.isNotEmpty)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -1730,9 +1840,11 @@ class _OutcomePageState extends State<OutcomePage> {
                             ListView.builder(
                               physics: const NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
-                              itemCount: homeBillsTitleList.length + 1, // +1 for the "Abonelik Ekle" row
+                              itemCount: idsWithHBTargetCategory.length,
                               itemBuilder: (context, index) {
-                                if (index < homeBillsTitleList.length) {
+                                int id = idsWithHBTargetCategory[index];
+                                Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
+                                if (index < idsWithHBTargetCategory.length) {
                                   return Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -1743,7 +1855,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             flex: 2,
                                             fit: FlexFit.tight,
                                             child: Text(
-                                              homeBillsTitleList[index],
+                                              invoice.name,
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -1753,7 +1865,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             fit: FlexFit.tight,
                                             child: Text(
                                               textAlign: TextAlign.right,
-                                              homeBillsPriceList[index],
+                                              invoice.price,
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -1765,7 +1877,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                             icon: const Icon(Icons.edit, size: 21),
                                             onPressed: () {
-                                              _showEditDialog(context, index, 2, 1); // Show the edit dialog
+                                              _showEditDialog(context, index, 2, 1, id); // Show the edit dialog
                                             },
                                           ),
                                         ],
@@ -1823,7 +1935,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                             icon: const Icon(Icons.edit, size: 21),
                                             onPressed: () {
-                                              _showEditDialog(context, index, 2, 2); // Show the edit dialog
+                                              _showEditDialog(context, index, 2, 2, 0); // Show the edit dialog
                                             },
                                           ),
                                         ],
@@ -1881,7 +1993,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                             icon: const Icon(Icons.edit, size: 21),
                                             onPressed: () {
-                                              _showEditDialog(context, index, 2, 3); // Show the edit dialog
+                                              _showEditDialog(context, index, 2, 3, 0); // Show the edit dialog
                                             },
                                           ),
                                         ],
@@ -2149,7 +2261,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                             icon: const Icon(Icons.edit, size: 21),
                                             onPressed: () {
-                                              _showEditDialog(context, index, 3, 1); // Show the edit dialog
+                                              _showEditDialog(context, index, 3, 1, 0); // Show the edit dialog
                                             },
                                           ),
                                         ],
@@ -2207,7 +2319,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                             icon: const Icon(Icons.edit, size: 21),
                                             onPressed: () {
-                                              _showEditDialog(context, index, 3, 2); // Show the edit dialog
+                                              _showEditDialog(context, index, 3, 2, 0); // Show the edit dialog
                                             },
                                           ),
                                         ],
@@ -2265,7 +2377,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                             icon: const Icon(Icons.edit, size: 21),
                                             onPressed: () {
-                                              _showEditDialog(context, index, 3, 3); // Show the edit dialog
+                                              _showEditDialog(context, index, 3, 3, 0); // Show the edit dialog
                                             },
                                           ),
                                         ],
@@ -2323,7 +2435,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                             icon: const Icon(Icons.edit, size: 21),
                                             onPressed: () {
-                                              _showEditDialog(context, index, 3, 4); // Show the edit dialog
+                                              _showEditDialog(context, index, 3, 4, 0); // Show the edit dialog
                                             },
                                           ),
                                         ],
@@ -2381,7 +2493,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                             icon: const Icon(Icons.edit, size: 21),
                                             onPressed: () {
-                                              _showEditDialog(context, index, 3, 5); // Show the edit dialog
+                                              _showEditDialog(context, index, 3, 5, 0); // Show the edit dialog
                                             },
                                           ),
                                         ],

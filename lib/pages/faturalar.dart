@@ -8,12 +8,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../deneme.dart';
 
 class Invoice {
-  final String category;
-  final String name;
-  final int periodDate;
-  final int? dueDate;
+  int id;
+  String price;
+  String subCategory;
+  String category;
+  String name;
+  int periodDate;
+  int? dueDate;
 
   Invoice({
+    required this.id,
+    required this.price,
+    required this.subCategory,
     required this.category,
     required this.name,
     required this.periodDate,
@@ -23,6 +29,9 @@ class Invoice {
   // JSON serialization and deserialization methods
   Map<String, dynamic> toJson() {
     return {
+      'id':id,
+      'price':price,
+      'subCategory': subCategory,
       'category': category,
       'name': name,
       'periodDate': periodDate,
@@ -32,6 +41,9 @@ class Invoice {
 
   factory Invoice.fromJson(Map<String, dynamic> json) {
     return Invoice(
+      id: json['id'],
+      price: json['price'],
+      subCategory: json['subCategory'],
       category: json['category'],
       name: json['name'],
       periodDate: json['periodDate'],
@@ -40,8 +52,9 @@ class Invoice {
   }
 
   String toDisplayString() {
-    return 'Category: $category\nName: $name\nPeriod Date: $periodDate\nDue Date: ${dueDate ?? 'N/A'}';
+    return 'ID: $id\nPrice: $price\nSubcategory: $subCategory\nCategory: $category\nName: $name\nPeriod Date: $periodDate\nDue Date: ${dueDate ?? 'N/A'}';
   }
+
 }
 
 class Bills extends StatefulWidget {
@@ -121,7 +134,6 @@ class _BillsState extends State<Bills> {
       isTextFormFieldVisibleND =false;
       isTextFormFieldVisibleRD = false;
       isEditingList = false;
-      _load();
     });
   }
   Future<void> handleInternetContainerTouch() async {
@@ -137,7 +149,6 @@ class _BillsState extends State<Bills> {
       isTextFormFieldVisibleND =false;
       isTextFormFieldVisibleRD = false;
       isEditingListND = false;
-      _load();
     });
   }
   Future<void> handlePhoneContainerTouch() async {
@@ -153,7 +164,6 @@ class _BillsState extends State<Bills> {
       isTextFormFieldVisibleND =false;
       isTextFormFieldVisibleRD = false;
       isEditingListRD = false;
-      _load();
     });
   }
 
@@ -164,18 +174,21 @@ class _BillsState extends State<Bills> {
     Navigator.pushNamed(context, 'diger-giderler');
   }
 
-  void _showEditDialog(BuildContext context, int index, int orderIndex) {
+  void _showEditDialog(BuildContext context, int index, int orderIndex, int id) {
     final formDataProvider2 = Provider.of<FormDataProvider2>(context, listen: false);
 
     TextEditingController selectedEditController = TextEditingController();
     TextEditingController selectedPriceController = TextEditingController();
+    Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
+    _selectedBillingDay = invoice.periodDate;
+    _selectedDueDay = invoice.dueDate;
 
     switch (orderIndex) {
       case 1:
         TextEditingController editController =
-        TextEditingController(text: homeBillsTitleList[index]);
+        TextEditingController(text: invoice.name);
         TextEditingController priceController =
-        TextEditingController(text: homeBillsPriceList[index]);
+        TextEditingController(text: invoice.price);
         selectedEditController = editController;
         selectedPriceController = priceController;
         break;
@@ -297,20 +310,10 @@ class _BillsState extends State<Bills> {
                       final priceText = selectedPriceController.text.trim();
                       double dprice = double.tryParse(priceText) ?? 0.0;
                       String price = dprice.toStringAsFixed(2);
-                      homeBillsTitleList[index] = selectedEditController.text;
-                      homeBillsPriceList[index] = price;
-                      formDataProvider2.setHomeTitleValue(selectedEditController.text, homeBillsTitleList);
-                      formDataProvider2.setHomePriceValue(price, homeBillsPriceList);
-                      formDataProvider2.calculateSumOfHome(homeBillsPriceList);
-                      final invoice = Invoice(
-                        category: "Ev Faturaları",
-                        name: selectedEditController.text,
-                        periodDate: _selectedBillingDay!,
-                        dueDate: _selectedDueDay != null
-                            ? _selectedDueDay
-                            : null,
-                      );
-                      editInvoice(index, invoice);
+                      String name = selectedEditController.text;
+                      invoice.name = name;
+                      invoice.price = price;
+                      editInvoice(id, _selectedBillingDay ?? 0, _selectedDueDay ?? null);
                       break;
                     case 2:
                       final priceText = selectedPriceController.text.trim();
@@ -334,7 +337,6 @@ class _BillsState extends State<Bills> {
                       break;
                   }
                 });
-                _load();
                 Navigator.of(context).pop();
               },
 
@@ -345,14 +347,12 @@ class _BillsState extends State<Bills> {
                   setState(() {
                     switch (orderIndex){
                       case 1:
-                        homeBillsTitleList.removeAt(index);
-                        homeBillsPriceList.removeAt(index);
                         formDataProvider2.removeHomeTitleValue(homeBillsTitleList);
                         formDataProvider2.removeHomePriceValue(homeBillsPriceList);
                         formDataProvider2.calculateSumOfHome(homeBillsPriceList);
-                        removeInvoice(index);
                         isEditingList = false;
                         isAddButtonActive = false;
+                        removeInvoice(id);
                         break;
                       case 2:
                         internetTitleList.removeAt(index);
@@ -373,7 +373,6 @@ class _BillsState extends State<Bills> {
                         isAddButtonActiveRD = false;
                         break;
                     }
-                    _load();
                     Navigator.of(context).pop();
                   });
                 },
@@ -456,6 +455,19 @@ class _BillsState extends State<Bills> {
     await prefs.setStringList('invoices', invoiceList.map((invoice) => jsonEncode(invoice)).toList());
   }
 
+  double calculateSubcategorySum(List<Invoice> invoices, String subcategory) {
+    double sum = 0.0;
+
+    for (var invoice in invoices) {
+      if (invoice.subCategory == subcategory) {
+        double price = double.parse(invoice.price);
+        sum += price;
+      }
+    }
+
+    return sum;
+  }
+
   void onSave(Invoice invoice) {
     setState(() {
       invoices.add(invoice);
@@ -463,16 +475,37 @@ class _BillsState extends State<Bills> {
     saveInvoices();
   }
 
-  void editInvoice(int index, Invoice updatedInvoice) {
-    setState(() {
-      invoices[index] = updatedInvoice;
-    });
-    saveInvoices();
+  void editInvoice(int id, int periodDate, int? dueDate) {
+    int index = invoices.indexWhere((invoice) => invoice.id == id);
+    if (index != -1) {
+      setState(() {
+        final invoice = invoices[index];
+        final updatedInvoice = Invoice(
+          id: invoice.id,
+          price: invoice.price,
+          subCategory: invoice.subCategory,
+          category: invoice.category,
+          name: invoice.name,
+          periodDate: periodDate,
+          dueDate: dueDate,
+        );
+        invoices[index] = updatedInvoice;
+        saveInvoices();
+      });
+    }
   }
 
-  void removeInvoice(int index) {
+
+  void removeInvoice(int id) {
     setState(() {
-      invoices.removeAt(index);
+      int index = invoices.indexWhere((invoice) => invoice.id == id);
+      if (index != -1) {
+        setState(() {
+          invoices.removeAt(index);
+        });
+      } else {
+        // Entry with the target ID not found
+      }
     });
     saveInvoices();
   }
@@ -481,11 +514,20 @@ class _BillsState extends State<Bills> {
   Widget build(BuildContext context) {
     final formDataProvider2 = Provider.of<FormDataProvider2>(context, listen: false);
     double screenWidth = MediaQuery.of(context).size.width;
+    double hbSum = calculateSubcategorySum(invoices, 'Ev Faturaları');
+    String formattedHbSum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(hbSum);
     double sumAll = 0.0;
-    sumAll += sumOfHomeBills;
+    sumAll += hbSum;
     sumAll += sumOfInternet;
     sumAll += sumOfPhone;
     setSumAll(sumAll);
+    List<int> idsWithHBTargetCategory = [];
+    for (Invoice invoice in invoices) {
+      if (invoice.subCategory == "Ev Faturaları") {
+        idsWithHBTargetCategory.add(invoice.id);
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
           backgroundColor: Color(0xfff0f0f1),
@@ -740,34 +782,51 @@ class _BillsState extends State<Bills> {
                                               padding: EdgeInsets.all(10),
                                               child: Text("Ev Faturaları",style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold),)
                                           ),
-                                          if (homeBillsTitleList.isNotEmpty && homeBillsPriceList.isNotEmpty)
+                                          if (invoices.isNotEmpty && invoices.isNotEmpty)
                                             Container(
-                                              child:
-                                              ListView.builder(
+                                              child: ListView.builder(
                                                 shrinkWrap: true,
-                                                itemCount: homeBillsTitleList.length,
+                                                itemCount: idsWithHBTargetCategory.length,
                                                 itemBuilder: (BuildContext context, int i) {
-                                                  double sum2 = double.parse(homeBillsPriceList[i]);
-                                                  String convertSumo = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum2);
+                                                  int id = idsWithHBTargetCategory[i];
+                                                  Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
                                                   return Container(
                                                     padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
                                                     child: Row(
                                                       children: [
                                                         Flexible(
-                                                          flex: 2,
+                                                          flex: 4,
                                                           fit: FlexFit.tight,
                                                           child: Text(
-                                                            homeBillsTitleList[i],
+                                                            textAlign: TextAlign.center,
+                                                            invoice.name,
                                                             style: GoogleFonts.montserrat(fontSize: 20),
                                                             overflow: TextOverflow.ellipsis,
                                                           ),
                                                         ),
                                                         Flexible(
-                                                          flex: 2,
+                                                          flex: 4,
                                                           fit: FlexFit.tight,
                                                           child: Text(
-                                                            textAlign: TextAlign.right,
-                                                            convertSumo,
+                                                            invoice.price,
+                                                            style: GoogleFonts.montserrat(fontSize: 20),
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                        ),
+                                                        Flexible(
+                                                          flex: 4,
+                                                          fit: FlexFit.tight,
+                                                          child: Text(
+                                                            invoice.subCategory,
+                                                            style: GoogleFonts.montserrat(fontSize: 20),
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                        ),
+                                                        Flexible(
+                                                          flex: 4,
+                                                          fit: FlexFit.tight,
+                                                          child: Text(
+                                                            id.toString(),
                                                             style: GoogleFonts.montserrat(fontSize: 20),
                                                             overflow: TextOverflow.ellipsis,
                                                           ),
@@ -779,7 +838,7 @@ class _BillsState extends State<Bills> {
                                                           constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                                           icon: Icon(Icons.edit, size: 21),
                                                           onPressed: () {
-                                                            _showEditDialog(context, i, 1); // Show the edit dialog
+                                                            _showEditDialog(context, i, 1, id); // Show the edit dialog
                                                           },
                                                         ),
                                                       ],
@@ -820,34 +879,47 @@ class _BillsState extends State<Bills> {
                                                         children: [
                                                           IconButton(
                                                             onPressed: () {
-                                                              final text = textController.text.trim();
-                                                              final priceText = platformPriceController.text.trim();
-                                                              final invoice = Invoice(
-                                                                category: "Ev Faturaları",
-                                                                name: text,
-                                                                periodDate: _selectedBillingDay!,
-                                                                dueDate: _selectedDueDay != null
-                                                                    ? _selectedDueDay
-                                                                    : null,
-                                                              );
-                                                              onSave(invoice);
-                                                              if (text.isNotEmpty && priceText.isNotEmpty) {
+                                                              setState(() {
+                                                                int maxId = 0; // Initialize with the lowest possible value
+                                                                for (var invoice in invoices) {
+                                                                  if (invoice.id > maxId) {
+                                                                    maxId = invoice.id;
+                                                                  }
+                                                                }
+                                                                int newId = maxId + 1;
+                                                                final text = textController.text.trim();
+                                                                final priceText = platformPriceController.text.trim();
                                                                 double dprice = double.tryParse(priceText) ?? 0.0;
                                                                 String price = dprice.toStringAsFixed(2);
-                                                                setState(() {
-                                                                  homeBillsTitleList.add(text);
-                                                                  homeBillsPriceList.add(price);
-                                                                  formDataProvider2.setHomeTitleValue(text, homeBillsTitleList);
-                                                                  formDataProvider2.setHomePriceValue(price, homeBillsPriceList);
-                                                                  formDataProvider2.calculateSumOfHome(homeBillsPriceList);
-                                                                  isEditingList = false; // Add a corresponding entry for the new item
-                                                                  textController.clear();
-                                                                  platformPriceController.clear();
-                                                                  isTextFormFieldVisible = false;
-                                                                  isAddButtonActive = false;
-                                                                  _load();
-                                                                });
-                                                              }
+                                                                final invoice = Invoice(
+                                                                  id: newId,
+                                                                  price: price,
+                                                                  subCategory: 'Ev Faturaları',
+                                                                  category: "Faturalar",
+                                                                  name: text,
+                                                                  periodDate: _selectedBillingDay!,
+                                                                  dueDate: _selectedDueDay != null
+                                                                      ? _selectedDueDay
+                                                                      : null,
+                                                                );
+                                                                onSave(invoice);
+                                                                if (text.isNotEmpty && priceText.isNotEmpty) {
+                                                                  double dprice = double.tryParse(priceText) ?? 0.0;
+                                                                  String price = dprice.toStringAsFixed(2);
+                                                                  setState(() {
+                                                                    homeBillsTitleList.add(text);
+                                                                    homeBillsPriceList.add(price);
+                                                                    formDataProvider2.setHomeTitleValue(text, homeBillsTitleList);
+                                                                    formDataProvider2.setHomePriceValue(price, homeBillsPriceList);
+                                                                    formDataProvider2.calculateSumOfHome(homeBillsPriceList);
+                                                                    isEditingList = false; // Add a corresponding entry for the new item
+                                                                    textController.clear();
+                                                                    platformPriceController.clear();
+                                                                    isTextFormFieldVisible = false;
+                                                                    isAddButtonActive = false;
+                                                                  });
+                                                                }
+                                                              });
                                                             },
                                                             icon: Icon(Icons.check_circle, size: 26),
                                                           ),
@@ -945,10 +1017,10 @@ class _BillsState extends State<Bills> {
                                                     },
                                                     child: Icon(Icons.add_circle, size: 26),
                                                   ),
-                                                  if (convertSum != "0,00")
+                                                  if (formattedHbSum != "0,00")
                                                     Padding(
                                                       padding: const EdgeInsets.only(right: 43),
-                                                      child: Text("Toplam: $convertSum", style: GoogleFonts.montserrat(fontSize: 20),),
+                                                      child: Text("Toplam: $formattedHbSum", style: GoogleFonts.montserrat(fontSize: 20),),
                                                     ),
                                                 ],
                                               ),
@@ -1022,7 +1094,7 @@ class _BillsState extends State<Bills> {
                                                           constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                                           icon: Icon(Icons.edit, size: 21),
                                                           onPressed: () {
-                                                            _showEditDialog(context, i, 2); // Show the edit dialog
+                                                            _showEditDialog(context, i, 2, 1); // Show the edit dialog
                                                           },
                                                         ),
                                                       ],
@@ -1077,7 +1149,6 @@ class _BillsState extends State<Bills> {
                                                               NDplatformPriceController.clear();
                                                               isTextFormFieldVisibleND = false;
                                                               isAddButtonActiveND = false;
-                                                              _load();
                                                             });
                                                           }
                                                         },
@@ -1197,7 +1268,7 @@ class _BillsState extends State<Bills> {
                                                           constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                                           icon: Icon(Icons.edit, size: 21),
                                                           onPressed: () {
-                                                            _showEditDialog(context, i, 3); // Show the edit dialog
+                                                            _showEditDialog(context, i, 3, 1); // Show the edit dialog
                                                           },
                                                         ),
                                                       ],
@@ -1252,7 +1323,6 @@ class _BillsState extends State<Bills> {
                                                               RDplatformPriceController.clear();
                                                               isTextFormFieldVisibleRD = false;
                                                               isAddButtonActiveRD = false;
-                                                              _load();
                                                             });
                                                           }
                                                         },
