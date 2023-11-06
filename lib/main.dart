@@ -46,7 +46,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     List<String> actualDesiredKeys = [
-      'selected_option', 'incomeMap', 'sumOfSubs2', 'sumOfBills2', 'sumOfOthers2'
+      'selected_option', 'incomeMap', 'invoices'
     ];
     return BlocProvider(
       create: (context) => SettingsCubit(SettingsState()),

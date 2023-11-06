@@ -15,6 +15,7 @@ class Invoice {
   String name;
   int periodDate;
   int? dueDate;
+  String difference; // Add this field
 
   Invoice({
     required this.id,
@@ -24,18 +25,20 @@ class Invoice {
     required this.name,
     required this.periodDate,
     this.dueDate,
+    required this.difference, // Include it in the constructor
   });
 
   // JSON serialization and deserialization methods
   Map<String, dynamic> toJson() {
     return {
-      'id':id,
-      'price':price,
+      'id': id,
+      'price': price,
       'subCategory': subCategory,
       'category': category,
       'name': name,
       'periodDate': periodDate,
       'dueDate': dueDate,
+      'difference': difference, // Serialize it
     };
   }
 
@@ -48,13 +51,13 @@ class Invoice {
       name: json['name'],
       periodDate: json['periodDate'],
       dueDate: json['dueDate'] != null ? json['dueDate'] : null,
+      difference: json['difference'], // Deserialize it
     );
   }
 
   String toDisplayString() {
-    return 'ID: $id\nPrice: $price\nSubcategory: $subCategory\nCategory: $category\nName: $name\nPeriod Date: $periodDate\nDue Date: ${dueDate ?? 'N/A'}';
+    return 'ID: $id\nPrice: $price\nSubcategory: $subCategory\nCategory: $category\nName: $name\nPeriod Date: $periodDate\nDue Date: ${dueDate ?? 'N/A'}\nDifference: $difference';
   }
-
 }
 
 class Bills extends StatefulWidget {
@@ -468,7 +471,94 @@ class _BillsState extends State<Bills> {
     return sum;
   }
 
+  DateTime faturaDonemi = DateTime.now();
+  DateTime sonOdeme = DateTime.now();
+
+  void formatDate(int day) {
+    final currentDate = DateTime.now();
+    int year = currentDate.year;
+    int month = currentDate.month;
+
+    // Handle the case where the day is greater than the current day
+    if (day > currentDate.day) {
+      // Set the period month to the current month
+      month = currentDate.month;
+    } else {
+      // Increase the month by one if needed
+      month++;
+      if (month > 12) {
+        month = 1;
+        year++;
+      }
+    }
+
+    // Handle the case where the day is 29th February and it's not a leap year
+    if (day == 29 && month == 2 && !isLeapYear(year)) {
+      day = 28;
+    }
+
+    faturaDonemi = DateTime(year, month, day);
+  }
+
+  void formatDate2(int day, Invoice invoice) {
+    final currentDate = DateTime.now();
+    int year = currentDate.year;
+    int month = currentDate.month;
+
+    // Handle the case where the day is greater than the current day
+    if (day > currentDate.day && invoice != null && invoice.dueDate != null) {
+      // Set the period month to the current month
+      month = currentDate.month;
+    } else {
+      // Increase the month by one if needed
+      month++;
+      if (month > 12) {
+        month = 1;
+        year++;
+      }
+    }
+
+    // Handle the case where the day is 29th February and it's not a leap year
+    if (day == 29 && month == 2 && !isLeapYear(year)) {
+      day = 28;
+    }
+
+    sonOdeme = DateTime(year, month, day);
+  }
+
+  bool isLeapYear(int year) {
+    if (year % 4 != 0) return false;
+    if (year % 100 != 0) return true;
+    return year % 400 == 0;
+  }
+
+  String getDaysRemainingMessage(Invoice invoice) {
+    formatDate(invoice.periodDate);
+    formatDate2(invoice.dueDate ?? invoice.periodDate, invoice);
+    final currentDate = DateTime.now();
+    final dueDateKnown = invoice.dueDate != null;
+
+    if (currentDate.isBefore(faturaDonemi)) {
+      invoice.difference = faturaDonemi.difference(currentDate).inDays.toString();
+      print("invoice.difference1:${invoice.difference}");
+      return invoice.difference;
+    } else if (dueDateKnown) {
+      if (currentDate.isBefore(sonOdeme)) {
+        invoice.difference = sonOdeme.difference(currentDate).inDays.toString();
+        print("invoice.difference2:${invoice.difference}");
+        return invoice.difference;
+      } else {
+        print("invoice.difference3:${invoice.difference}");
+        return invoice.difference;
+      }
+    } else {
+      print("invoice.difference4:${invoice.difference}");
+      return invoice.difference;
+    }
+  }
+
   void onSave(Invoice invoice) {
+    getDaysRemainingMessage(invoice);
     setState(() {
       invoices.add(invoice);
     });
@@ -488,6 +578,7 @@ class _BillsState extends State<Bills> {
           name: invoice.name,
           periodDate: periodDate,
           dueDate: dueDate,
+          difference: "fa1"
         );
         invoices[index] = updatedInvoice;
         saveInvoices();
@@ -901,6 +992,7 @@ class _BillsState extends State<Bills> {
                                                                   dueDate: _selectedDueDay != null
                                                                       ? _selectedDueDay
                                                                       : null,
+                                                                  difference: "fa2"
                                                                 );
                                                                 onSave(invoice);
                                                                 if (text.isNotEmpty && priceText.isNotEmpty) {

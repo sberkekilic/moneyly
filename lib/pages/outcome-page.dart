@@ -219,6 +219,7 @@ class _OutcomePageState extends State<OutcomePage> {
         final Map<String, dynamic> invoiceJson = jsonDecode(invoiceString);
         final Invoice invoice = Invoice.fromJson(invoiceJson);
         invoices.add(invoice);
+        print("INVOICE LENGTH E08 : ${invoices.length}");
       }
     });
     convertSum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfTV);
@@ -232,9 +233,12 @@ class _OutcomePageState extends State<OutcomePage> {
   }
 
   Future<void> saveInvoices() async {
+    print("INVOICE LENGTH E06 : ${invoices.length}");
+    final invoicesCopy = invoices.toList();
     final prefs = await SharedPreferences.getInstance();
-    final invoiceList = invoices.map((invoice) => invoice.toJson()).toList();
+    final invoiceList = invoicesCopy.map((invoice) => invoice.toJson()).toList();
     await prefs.setStringList('invoices', invoiceList.map((invoice) => jsonEncode(invoice)).toList());
+    print("INVOICE LENGTH E07 : ${invoices.length}");
   }
 
   void removeInvoice(int id) {
@@ -251,11 +255,102 @@ class _OutcomePageState extends State<OutcomePage> {
     saveInvoices();
   }
 
+  DateTime faturaDonemi = DateTime.now();
+  DateTime sonOdeme = DateTime.now();
+
+  void formatDate(int day) {
+    final currentDate = DateTime.now();
+    int year = currentDate.year;
+    int month = currentDate.month;
+
+    // Handle the case where the day is greater than the current day
+    if (day > currentDate.day) {
+      // Set the period month to the current month
+      month = currentDate.month;
+    } else {
+      // Increase the month by one if needed
+      month++;
+      if (month > 12) {
+        month = 1;
+        year++;
+      }
+    }
+
+    // Handle the case where the day is 29th February and it's not a leap year
+    if (day == 29 && month == 2 && !isLeapYear(year)) {
+      day = 28;
+    }
+
+    faturaDonemi = DateTime(year, month, day);
+  }
+
+  void formatDate2(int day, Invoice invoice) {
+    final currentDate = DateTime.now();
+    int year = currentDate.year;
+    int month = currentDate.month;
+
+    // Handle the case where the day is greater than the current day
+    if (day > currentDate.day && invoice != null && invoice.dueDate != null) {
+      // Set the period month to the current month
+      month = currentDate.month;
+    } else {
+      // Increase the month by one if needed
+      month++;
+      if (month > 12) {
+        month = 1;
+        year++;
+      }
+    }
+
+    // Handle the case where the day is 29th February and it's not a leap year
+    if (day == 29 && month == 2 && !isLeapYear(year)) {
+      day = 28;
+    }
+
+    sonOdeme = DateTime(year, month, day);
+  }
+
+  bool isLeapYear(int year) {
+    if (year % 4 != 0) return false;
+    if (year % 100 != 0) return true;
+    return year % 400 == 0;
+  }
+
+  String getDaysRemainingMessage(Invoice invoice, int periodDate) {
+    print("INVOICE PERIOD DATE INSIDE DIFF : ${invoice.periodDate}");
+    formatDate(periodDate);
+    formatDate2(invoice.dueDate ?? invoice.periodDate, invoice);
+    final currentDate = DateTime.now();
+    final dueDateKnown = invoice.dueDate != null;
+
+    if (currentDate.isBefore(faturaDonemi)) {
+      invoice.difference = faturaDonemi.difference(currentDate).inDays.toString();
+      print("invoice.difference1:${invoice.difference}");
+      return invoice.difference;
+    } else if (dueDateKnown) {
+      if (currentDate.isBefore(sonOdeme)) {
+        invoice.difference = sonOdeme.difference(currentDate).inDays.toString();
+        print("invoice.difference2:${invoice.difference}");
+        return invoice.difference;
+      } else {
+        print("invoice.difference3:${invoice.difference}");
+        return invoice.difference;
+      }
+    } else {
+      print("invoice.difference4:${invoice.difference}");
+      return invoice.difference;
+    }
+  }
+
   void editInvoice(int id, int periodDate, int? dueDate) {
+    print("INVOICE LENGTH E02 : ${invoices.length}");
     int index = invoices.indexWhere((invoice) => invoice.id == id);
     if (index != -1) {
       setState(() {
         final invoice = invoices[index];
+        print("INVOICE LENGTH E03 : ${invoices.length}");
+        print("INVOICE PERIOD DATE BEFORE EDIT : ${invoice.periodDate}");
+        final difference = getDaysRemainingMessage(invoice, periodDate);
         final updatedInvoice = Invoice(
           id: invoice.id,
           price: invoice.price,
@@ -264,18 +359,37 @@ class _OutcomePageState extends State<OutcomePage> {
           name: invoice.name,
           periodDate: periodDate,
           dueDate: dueDate,
+          difference: difference
         );
+        print("INVOICE LENGTH E04 : ${invoices.length}");
         invoices[index] = updatedInvoice;
         saveInvoices();
+        print("INVOICE PERIOD DATE AFTER EDIT : ${invoice.periodDate}");
+        print("INVOICE LENGTH E05 : ${invoices.length}");
       });
     }
+  }
+
+  double calculateSubcategorySum(List<Invoice> invoices, String subcategory) {
+    double sum = 0.0;
+
+    for (var invoice in invoices) {
+      if (invoice.subCategory == subcategory) {
+        double price = double.parse(invoice.price);
+        sum += price;
+      }
+    }
+
+    return sum;
   }
 
   @override
   Widget build(BuildContext context) {
     final formDataProvider2 = Provider.of<FormDataProvider2>(context, listen: false);
-    sumOfSubs = sumOfTV + sumOfGame + sumOfMusic;
-    sumOfBills = sumOfHome + sumOfInternet + sumOfPhone;
+    double tvSum = calculateSubcategorySum(invoices, 'TV');
+    double hbSum = calculateSubcategorySum(invoices, 'Ev Faturaları');
+    sumOfSubs = tvSum + sumOfGame + sumOfMusic;
+    sumOfBills = hbSum + sumOfInternet + sumOfPhone;
     sumOfOthers = sumOfRent + sumOfKitchen + sumOfCatering + sumOfEnt + sumOfOther;
     outcomeValue = sumOfSubs+sumOfBills+sumOfOthers;
     subsPercent = (outcomeValue != 0) ? ((sumOfSubs / outcomeValue) * 100).round() : 0;
@@ -319,16 +433,17 @@ class _OutcomePageState extends State<OutcomePage> {
     Color mediumColor = Color(0xFFFFA500);
     Color biggestColor = Color(0xFFFF8C00);
 
-    List<int> idsWithTVTargetCategory = [];
-    List<int> idsWithHBTargetCategory = [];
-    for (Invoice invoice in invoices) {
-      if (invoice.subCategory == "TV") {
-        idsWithTVTargetCategory.add(invoice.id);
-      } if (invoice.subCategory == "Ev Faturaları") {
-        idsWithHBTargetCategory.add(invoice.id);
-      }
-      print(idsWithTVTargetCategory);
+    List<int> getIdsWithSubcategory(List<Invoice> invoices, String subCategory) {
+      return invoices
+          .where((invoice) => invoice.subCategory == subCategory)
+          .map((invoice) => invoice.id)
+          .toList();
     }
+
+
+    List<int> idsWithTVTargetCategory = getIdsWithSubcategory(invoices, "TV");
+    List<int> idsWithHBTargetCategory = getIdsWithSubcategory(invoices, "Ev Faturaları");
+
 
     int totalSubsElement = idsWithTVTargetCategory.length + gameTitleList.length + musicTitleList.length;
     int totalBillsElement = idsWithHBTargetCategory.length + internetTitleList.length + phoneTitleList.length;
@@ -386,13 +501,14 @@ class _OutcomePageState extends State<OutcomePage> {
       _selectedBillingDay = invoice.periodDate;
       _selectedDueDay = invoice.dueDate;
 
+
       if(page == 1){
         switch (orderIndex) {
           case 1:
             TextEditingController editController =
-            TextEditingController(text: invoices[index].name);
+            TextEditingController(text: invoice.name);
             TextEditingController priceController =
-            TextEditingController(text: invoices[index].price);
+            TextEditingController(text: invoice.price);
             selectedEditController = editController;
             selectedPriceController = priceController;
             break;
@@ -581,6 +697,7 @@ class _OutcomePageState extends State<OutcomePage> {
                       if(page == 1){
                         switch (orderIndex){
                           case 1:
+                            print("INVOICE LENGTH E01 : ${invoices.length}");
                             final priceText = selectedPriceController.text.trim();
                             double dprice = double.tryParse(priceText) ?? 0.0;
                             String price = dprice.toStringAsFixed(2);
@@ -698,12 +815,12 @@ class _OutcomePageState extends State<OutcomePage> {
                         }
                       }
                     });
-                    _load();
+                    saveInvoices();
                     Navigator.pop(context);
                   },
                   icon: const Icon(Icons.save)
               ),
-                IconButton(
+              IconButton(
                     onPressed: () {
                       setState(() {
                         if(page == 1 && totalSubsElement != 1){
@@ -798,7 +915,6 @@ class _OutcomePageState extends State<OutcomePage> {
                             ),
                           );
                         }
-                        _load();
                         Navigator.of(context).pop();
                       });
                     },
@@ -1411,6 +1527,17 @@ class _OutcomePageState extends State<OutcomePage> {
               const SizedBox(height: 20),
               Text("Abonelikler", style: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.bold)),
               Text('Period Dates: ${invoices.map((invoice) => invoice.periodDate.toString()).join(', ')}'),
+              Text('Liste: $idsWithTVTargetCategory'),
+              Text(
+                invoices
+                    .map((invoice) =>
+                '\nID: ${invoice.id}'
+                '\nName: ${invoice.name}'
+                '\nSubcategory: ${invoice.subCategory}'
+                '\nDifference: ${invoice.difference}'
+                '\nPeriod: ${invoice.periodDate}\n')
+                    .join(' | '),
+              ),
               const SizedBox(height: 10),
               Container(
                 padding: const EdgeInsets.all(20),
@@ -2802,5 +2929,3 @@ class _OutcomePageState extends State<OutcomePage> {
     );
   }
 }
-
-

@@ -155,19 +155,28 @@ class _HomePageState extends State<HomePage> {
       loadSharedPreferencesData(actualDesiredKeys);
     });
   }
-
-
   void removeInvoice(int index) async {
     setState(() {
       invoices.removeAt(index);
     });
     saveInvoicesToSharedPreferences();
   }
-
   void saveInvoicesToSharedPreferences() async {
     final prefs = await SharedPreferences.getInstance();
     final invoicesJson = invoices.map((invoice) => jsonEncode(invoice.toJson())).toList();
     prefs.setStringList('invoices', invoicesJson);
+  }
+  double calculateSubcategorySum(List<Invoice> invoices, String subcategory) {
+    double sum = 0.0;
+
+    for (var invoice in invoices) {
+      if (invoice.subCategory == subcategory) {
+        double price = double.parse(invoice.price);
+        sum += price;
+      }
+    }
+
+    return sum;
   }
 
   @override
@@ -175,8 +184,10 @@ class _HomePageState extends State<HomePage> {
     savingsValue = incomeValue * 0.2;
     wishesValue = incomeValue  * 0.3;
     needsValue = incomeValue * 0.5;
-    double sumOfSubs = double.parse(sumOfTV)+double.parse(sumOfGame)+double.parse(sumOfMusic);
-    double sumOfBills = double.parse(sumOfHome)+double.parse(sumOfInternet)+double.parse(sumOfPhone);
+    double tvSum = calculateSubcategorySum(invoices, 'TV');
+    double hbSum = calculateSubcategorySum(invoices, 'Ev Faturaları');
+    double sumOfSubs = tvSum + double.parse(sumOfGame)+double.parse(sumOfMusic);
+    double sumOfBills = hbSum + double.parse(sumOfInternet)+double.parse(sumOfPhone);
     double sumOfOthers = double.parse(sumOfRent)+double.parse(sumOfKitchen)+double.parse(sumOfCatering)+double.parse(sumOfEnt)+double.parse(sumOfOther);
     double outcomeValue = sumOfSubs+sumOfBills+sumOfOthers;
     double netProfit = incomeValue - outcomeValue;
@@ -214,6 +225,7 @@ class _HomePageState extends State<HomePage> {
     print("$netProfitYuzdesi netProfitYuzdesi SON");
     print("${bolum} bolum SON"); // Print as an integer
     print("$incomeYuzdesi incomeYuzdesi SON");
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xfff0f0f1),
@@ -494,6 +506,7 @@ class _HomePageState extends State<HomePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Text("Yaklaşan", style: GoogleFonts.montserrat(fontSize: 15, fontWeight: FontWeight.bold)),
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
@@ -502,6 +515,7 @@ class _HomePageState extends State<HomePage> {
                           return Padding(
                             padding: EdgeInsets.all(10.0),
                             child: InvoiceCard(
+                              invoices: invoices,
                               invoice: invoice,
                               onDelete: () {
                                 removeInvoice(index);
@@ -611,10 +625,12 @@ class _HomePageState extends State<HomePage> {
 }
 
 class InvoiceCard extends StatelessWidget {
-  final Invoice invoice;
+  final List<Invoice> invoices;
+  Invoice invoice;
   final VoidCallback onDelete;
 
   InvoiceCard({
+    required this.invoices,
     required this.invoice,
     required this.onDelete,
   });
@@ -648,7 +664,7 @@ class InvoiceCard extends StatelessWidget {
     faturaDonemi = DateTime(year, month, day);
   }
 
-  void formatDate2(int day) {
+  void formatDate2(int day, Invoice invoice) {
     final currentDate = DateTime.now();
     int year = currentDate.year;
     int month = currentDate.month;
@@ -680,21 +696,25 @@ class InvoiceCard extends StatelessWidget {
     return year % 400 == 0;
   }
 
-  bool isPaidActive = false;
-  String difference = "";
+  Future<void> saveInvoices() async {
+    final invoicesCopy = invoices.toList();
+    final prefs = await SharedPreferences.getInstance();
+    final invoiceList = invoicesCopy.map((invoice) => invoice.toJson()).toList();
+    await prefs.setStringList('invoices', invoiceList.map((invoice) => jsonEncode(invoice)).toList());
+  }
 
   String getDaysRemainingMessage() {
+    formatDate(invoice.periodDate);
+    formatDate2(invoice.dueDate ?? invoice.periodDate, invoice);
     final currentDate = DateTime.now();
     final dueDateKnown = invoice.dueDate != null;
 
     if (currentDate.isBefore(faturaDonemi)) {
       isPaidActive = false;
-      difference = faturaDonemi.difference(currentDate).inDays.toString();
       return "Fatura kesimine kalan gün";
     } else if (dueDateKnown) {
       isPaidActive = true;
       if (currentDate.isBefore(sonOdeme)) {
-        difference = sonOdeme.difference(currentDate).inDays.toString();
         return "Son ödeme tarihine kalan gün";
       } else {
         isPaidActive = true;
@@ -706,10 +726,10 @@ class InvoiceCard extends StatelessWidget {
     }
   }
 
+  bool isPaidActive = false;
+
   @override
   Widget build(BuildContext context) {
-    formatDate(invoice.periodDate);
-    formatDate2(invoice.dueDate ?? invoice.periodDate);
     final daysRemainingMessage = getDaysRemainingMessage();
     return IntrinsicWidth(
       child: Container(
@@ -767,7 +787,7 @@ class InvoiceCard extends StatelessWidget {
                   style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.normal),
                 ),
                 subtitle: Text(
-                    "\n$difference",
+                    invoice.difference,
                   style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
