@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -91,12 +93,27 @@ class MyApp extends StatelessWidget {
 
   Future<bool> checkIfAllKeysHaveValues(List<String> desiredKeys) async {
     final prefs = await SharedPreferences.getInstance();
+
     for (var key in desiredKeys) {
       final value = prefs.get(key);
+
       if (value == null) {
         return false; // If any key is empty, return false
       }
+
+      if (key == 'invoices') {
+        // Check if 'invoices' has at least 3 instances
+        try {
+          List<dynamic> invoices = json.decode(value.toString());
+          if (invoices.length < 3) {
+            return false; // If 'invoices' has less than 3 instances, return false
+          }
+        } catch (e) {
+          return false; // If there's an error decoding 'invoices', return false
+        }
+      }
     }
+
     return true; // All keys have values
   }
 

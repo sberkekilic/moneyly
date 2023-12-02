@@ -13,9 +13,9 @@ class Invoice {
   String subCategory;
   String category;
   String name;
-  int periodDate;
-  int? dueDate;
-  String difference; // Add this field
+  String periodDate;
+  String? dueDate;
+  String difference;
 
   Invoice({
     required this.id,
@@ -25,7 +25,7 @@ class Invoice {
     required this.name,
     required this.periodDate,
     this.dueDate,
-    required this.difference, // Include it in the constructor
+    required this.difference,
   });
 
   // JSON serialization and deserialization methods
@@ -57,6 +57,19 @@ class Invoice {
 
   String toDisplayString() {
     return 'ID: $id\nPrice: $price\nSubcategory: $subCategory\nCategory: $category\nName: $name\nPeriod Date: $periodDate\nDue Date: ${dueDate ?? 'N/A'}\nDifference: $difference';
+  }
+
+  int getPeriodDay() {
+    DateTime periodDateTime = DateTime.parse(periodDate);
+    return periodDateTime.day;
+  }
+
+  int? getDueDay() {
+    if (dueDate != null) {
+      DateTime dueDateTime = DateTime.parse(dueDate!);
+      return dueDateTime.day;
+    }
+    return null; // or any default value if dueDate is null
   }
 }
 
@@ -105,6 +118,8 @@ class _BillsState extends State<Bills> {
 
   int? _selectedBillingDay;
   int? _selectedDueDay;
+  String faturaDonemi = "";
+  String? sonOdeme;
 
   List<int> daysList = List.generate(31, (index) => index + 1);
 
@@ -177,14 +192,88 @@ class _BillsState extends State<Bills> {
     Navigator.pushNamed(context, 'diger-giderler');
   }
 
+  String formatPeriodDate(int day) {
+    final currentDate = DateTime.now();
+    int year = currentDate.year;
+    int month = currentDate.month;
+
+    // Handle the case where the day is greater than the current day
+    if (day > currentDate.day) {
+      // Set the period month to the current month
+      month = currentDate.month;
+    } else {
+      // Increase the month by one if needed
+      month++;
+      if (month > 12) {
+        month = 1;
+        year++;
+      }
+    }
+
+    // Handle the case where the day is 29th February and it's not a leap year
+    if (day == 29 && month == 2 && !isLeapYear(year)) {
+      day = 28;
+    }
+
+    return faturaDonemi = '${year.toString()}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+  }
+  String formatDueDate(int? day, String periodDay) {
+    final currentDate = DateTime.now();
+    int year = currentDate.year;
+    int month = currentDate.month;
+
+    // Parse the periodDay string to DateTime
+    DateTime parsedPeriodDay = DateTime.parse(periodDay);
+
+    // Handle the case where day is not null and is greater than the current day
+    if (day != null && day > currentDate.day) {
+      // Set the period month to the current month
+      month = currentDate.month;
+    } else {
+      // Increase the month by one if needed
+      month++;
+      if (month > 12) {
+        month = 1;
+        year++;
+      }
+    }
+
+    // Handle the case where day is not null and is 29th February, and it's not a leap year
+    if (day != null && day == 29 && month == 2 && !isLeapYear(year)) {
+      day = 28;
+    }
+
+    // Use a default value of null if day is null
+    int? calculatedDay = day;
+
+    DateTime calculatedDate = DateTime(year, month, calculatedDay ?? 1);
+
+    // Check if calculatedDate is before the parsedPeriodDay and increase the month if needed
+    if (calculatedDate.isBefore(parsedPeriodDay)) {
+      month++;
+      if (month > 12) {
+        month = 1;
+        year++;
+      }
+      calculatedDate = DateTime(year, month, calculatedDay ?? 1);
+    }
+
+    // Return the formatted date as a string
+    return '${calculatedDate.year}-${calculatedDate.month.toString().padLeft(2, '0')}-${calculatedDate.day.toString().padLeft(2, '0')}';
+  }
+
   void _showEditDialog(BuildContext context, int index, int orderIndex, int id) {
     final formDataProvider2 = Provider.of<FormDataProvider2>(context, listen: false);
 
     TextEditingController selectedEditController = TextEditingController();
     TextEditingController selectedPriceController = TextEditingController();
     Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
-    _selectedBillingDay = invoice.periodDate;
-    _selectedDueDay = invoice.dueDate;
+    _selectedBillingDay = invoice.getPeriodDay();
+    _selectedDueDay = invoice.getDueDay();
+    invoice.periodDate = formatPeriodDate(_selectedBillingDay ?? 0);
+    if (_selectedDueDay != null) {
+      invoice.dueDate = formatDueDate(_selectedDueDay, invoice.periodDate);
+    }
 
     switch (orderIndex) {
       case 1:
@@ -220,7 +309,7 @@ class _BillsState extends State<Bills> {
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10)
           ),
-          title: Text('Edit Item',style: GoogleFonts.montserrat(fontSize: 20)),
+          title: Text('Edit Item id:$id',style: GoogleFonts.montserrat(fontSize: 20)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -316,7 +405,19 @@ class _BillsState extends State<Bills> {
                       String name = selectedEditController.text;
                       invoice.name = name;
                       invoice.price = price;
-                      editInvoice(id, _selectedBillingDay ?? 0, _selectedDueDay ?? null);
+                      if (_selectedDueDay != null) {
+                        editInvoice(
+                          id,
+                          formatPeriodDate(_selectedBillingDay!),
+                          formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!)),
+                        );
+                      } else {
+                        editInvoice(
+                          id,
+                          formatPeriodDate(_selectedBillingDay!),
+                          null, // or provide any default value you want for dueDate when _selectedDueDay is null
+                        );
+                      }
                       break;
                     case 2:
                       final priceText = selectedPriceController.text.trim();
@@ -471,61 +572,6 @@ class _BillsState extends State<Bills> {
     return sum;
   }
 
-  DateTime faturaDonemi = DateTime.now();
-  DateTime sonOdeme = DateTime.now();
-
-  void formatDate(int day) {
-    final currentDate = DateTime.now();
-    int year = currentDate.year;
-    int month = currentDate.month;
-
-    // Handle the case where the day is greater than the current day
-    if (day > currentDate.day) {
-      // Set the period month to the current month
-      month = currentDate.month;
-    } else {
-      // Increase the month by one if needed
-      month++;
-      if (month > 12) {
-        month = 1;
-        year++;
-      }
-    }
-
-    // Handle the case where the day is 29th February and it's not a leap year
-    if (day == 29 && month == 2 && !isLeapYear(year)) {
-      day = 28;
-    }
-
-    faturaDonemi = DateTime(year, month, day);
-  }
-
-  void formatDate2(int day, Invoice invoice) {
-    final currentDate = DateTime.now();
-    int year = currentDate.year;
-    int month = currentDate.month;
-
-    // Handle the case where the day is greater than the current day
-    if (day > currentDate.day && invoice != null && invoice.dueDate != null) {
-      // Set the period month to the current month
-      month = currentDate.month;
-    } else {
-      // Increase the month by one if needed
-      month++;
-      if (month > 12) {
-        month = 1;
-        year++;
-      }
-    }
-
-    // Handle the case where the day is 29th February and it's not a leap year
-    if (day == 29 && month == 2 && !isLeapYear(year)) {
-      day = 28;
-    }
-
-    sonOdeme = DateTime(year, month, day);
-  }
-
   bool isLeapYear(int year) {
     if (year % 4 != 0) return false;
     if (year % 100 != 0) return true;
@@ -533,26 +579,20 @@ class _BillsState extends State<Bills> {
   }
 
   String getDaysRemainingMessage(Invoice invoice) {
-    formatDate(invoice.periodDate);
-    formatDate2(invoice.dueDate ?? invoice.periodDate, invoice);
     final currentDate = DateTime.now();
     final dueDateKnown = invoice.dueDate != null;
 
-    if (currentDate.isBefore(faturaDonemi)) {
-      invoice.difference = faturaDonemi.difference(currentDate).inDays.toString();
-      print("invoice.difference1:${invoice.difference}");
+    if (currentDate.isBefore(DateTime.parse(faturaDonemi))) {
+      invoice.difference = DateTime.parse(faturaDonemi).difference(currentDate).inDays.toString();
       return invoice.difference;
     } else if (dueDateKnown) {
-      if (currentDate.isBefore(sonOdeme)) {
-        invoice.difference = sonOdeme.difference(currentDate).inDays.toString();
-        print("invoice.difference2:${invoice.difference}");
+      if (currentDate.isBefore(DateTime.parse(sonOdeme!))) {
+        invoice.difference = DateTime.parse(sonOdeme!).difference(currentDate).inDays.toString();
         return invoice.difference;
       } else {
-        print("invoice.difference3:${invoice.difference}");
         return invoice.difference;
       }
     } else {
-      print("invoice.difference4:${invoice.difference}");
       return invoice.difference;
     }
   }
@@ -565,11 +605,12 @@ class _BillsState extends State<Bills> {
     saveInvoices();
   }
 
-  void editInvoice(int id, int periodDate, int? dueDate) {
+  void editInvoice(int id, String periodDate, String? dueDate) {
     int index = invoices.indexWhere((invoice) => invoice.id == id);
     if (index != -1) {
       setState(() {
         final invoice = invoices[index];
+        String diff = getDaysRemainingMessage(invoice);
         final updatedInvoice = Invoice(
           id: invoice.id,
           price: invoice.price,
@@ -578,7 +619,7 @@ class _BillsState extends State<Bills> {
           name: invoice.name,
           periodDate: periodDate,
           dueDate: dueDate,
-          difference: "fa1"
+          difference: diff
         );
         invoices[index] = updatedInvoice;
         saveInvoices();
@@ -988,10 +1029,10 @@ class _BillsState extends State<Bills> {
                                                                   subCategory: 'Ev Faturaları',
                                                                   category: "Faturalar",
                                                                   name: text,
-                                                                  periodDate: _selectedBillingDay!,
-                                                                  dueDate: _selectedDueDay != null
-                                                                      ? _selectedDueDay
-                                                                      : null,
+                                                                    periodDate: formatPeriodDate(_selectedBillingDay!),
+                                                                    dueDate: _selectedDueDay != null
+                                                                        ? "shit"
+                                                                        : null,
                                                                   difference: "fa2"
                                                                 );
                                                                 onSave(invoice);

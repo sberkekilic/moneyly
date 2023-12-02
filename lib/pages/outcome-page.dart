@@ -114,6 +114,9 @@ class _OutcomePageState extends State<OutcomePage> {
 
   int? _selectedBillingDay;
   int? _selectedDueDay;
+  String faturaDonemi = "";
+  String? sonOdeme;
+
   List<int> daysList = List.generate(31, (index) => index + 1);
 
   @override
@@ -255,117 +258,49 @@ class _OutcomePageState extends State<OutcomePage> {
     saveInvoices();
   }
 
-  DateTime faturaDonemi = DateTime.now();
-  DateTime sonOdeme = DateTime.now();
-
-  void formatDate(int day) {
-    final currentDate = DateTime.now();
-    int year = currentDate.year;
-    int month = currentDate.month;
-
-    // Handle the case where the day is greater than the current day
-    if (day > currentDate.day) {
-      // Set the period month to the current month
-      month = currentDate.month;
-    } else {
-      // Increase the month by one if needed
-      month++;
-      if (month > 12) {
-        month = 1;
-        year++;
-      }
-    }
-
-    // Handle the case where the day is 29th February and it's not a leap year
-    if (day == 29 && month == 2 && !isLeapYear(year)) {
-      day = 28;
-    }
-
-    faturaDonemi = DateTime(year, month, day);
-  }
-
-  void formatDate2(int day, Invoice invoice) {
-    final currentDate = DateTime.now();
-    int year = currentDate.year;
-    int month = currentDate.month;
-
-    // Handle the case where the day is greater than the current day
-    if (day > currentDate.day && invoice != null && invoice.dueDate != null) {
-      // Set the period month to the current month
-      month = currentDate.month;
-    } else {
-      // Increase the month by one if needed
-      month++;
-      if (month > 12) {
-        month = 1;
-        year++;
-      }
-    }
-
-    // Handle the case where the day is 29th February and it's not a leap year
-    if (day == 29 && month == 2 && !isLeapYear(year)) {
-      day = 28;
-    }
-
-    sonOdeme = DateTime(year, month, day);
-  }
-
   bool isLeapYear(int year) {
     if (year % 4 != 0) return false;
     if (year % 100 != 0) return true;
     return year % 400 == 0;
   }
 
-  String getDaysRemainingMessage(Invoice invoice, int periodDate) {
-    print("INVOICE PERIOD DATE INSIDE DIFF : ${invoice.periodDate}");
-    formatDate(periodDate);
-    formatDate2(invoice.dueDate ?? invoice.periodDate, invoice);
+  String getDaysRemainingMessage(Invoice invoice) {
     final currentDate = DateTime.now();
     final dueDateKnown = invoice.dueDate != null;
 
-    if (currentDate.isBefore(faturaDonemi)) {
-      invoice.difference = faturaDonemi.difference(currentDate).inDays.toString();
-      print("invoice.difference1:${invoice.difference}");
+    if (currentDate.isBefore(DateTime.parse(faturaDonemi))) {
+      invoice.difference = DateTime.parse(faturaDonemi).difference(currentDate).inDays.toString();
       return invoice.difference;
     } else if (dueDateKnown) {
-      if (currentDate.isBefore(sonOdeme)) {
-        invoice.difference = sonOdeme.difference(currentDate).inDays.toString();
-        print("invoice.difference2:${invoice.difference}");
+      if (currentDate.isBefore(DateTime.parse(sonOdeme!))) {
+        invoice.difference = DateTime.parse(sonOdeme!).difference(currentDate).inDays.toString();
         return invoice.difference;
       } else {
-        print("invoice.difference3:${invoice.difference}");
         return invoice.difference;
       }
     } else {
-      print("invoice.difference4:${invoice.difference}");
       return invoice.difference;
     }
   }
 
-  void editInvoice(int id, int periodDate, int? dueDate) {
-    print("INVOICE LENGTH E02 : ${invoices.length}");
+  void editInvoice(int id, String periodDate, String? dueDate) {
     int index = invoices.indexWhere((invoice) => invoice.id == id);
     if (index != -1) {
       setState(() {
         final invoice = invoices[index];
-        print("INVOICE LENGTH E03 : ${invoices.length}");
-        print("INVOICE PERIOD DATE BEFORE EDIT : ${invoice.periodDate}");
-        final difference = getDaysRemainingMessage(invoice, periodDate);
+        String diff = getDaysRemainingMessage(invoice);
         final updatedInvoice = Invoice(
-          id: invoice.id,
-          price: invoice.price,
-          subCategory: invoice.subCategory,
-          category: invoice.category,
-          name: invoice.name,
-          periodDate: periodDate,
-          dueDate: dueDate,
-          difference: difference
+            id: invoice.id,
+            price: invoice.price,
+            subCategory: invoice.subCategory,
+            category: invoice.category,
+            name: invoice.name,
+            periodDate: periodDate,
+            dueDate: dueDate,
+            difference: diff
         );
-        print("INVOICE LENGTH E04 : ${invoices.length}");
         invoices[index] = updatedInvoice;
         saveInvoices();
-        print("INVOICE PERIOD DATE AFTER EDIT : ${invoice.periodDate}");
-        print("INVOICE LENGTH E05 : ${invoices.length}");
       });
     }
   }
@@ -443,11 +378,81 @@ class _OutcomePageState extends State<OutcomePage> {
 
     List<int> idsWithTVTargetCategory = getIdsWithSubcategory(invoices, "TV");
     List<int> idsWithHBTargetCategory = getIdsWithSubcategory(invoices, "Ev Faturaları");
-
+    List<int> idsWithRentTargetCategory = getIdsWithSubcategory(invoices, "Kira");
 
     int totalSubsElement = idsWithTVTargetCategory.length + gameTitleList.length + musicTitleList.length;
     int totalBillsElement = idsWithHBTargetCategory.length + internetTitleList.length + phoneTitleList.length;
-    int totalOthersElement = rentTitleList.length + kitchenTitleList.length + cateringTitleList.length + entertainmentTitleList.length + otherTitleList.length;
+    int totalOthersElement = idsWithRentTargetCategory.length + kitchenTitleList.length + cateringTitleList.length + entertainmentTitleList.length + otherTitleList.length;
+
+    String formatPeriodDate(int day) {
+      final currentDate = DateTime.now();
+      int year = currentDate.year;
+      int month = currentDate.month;
+
+      // Handle the case where the day is greater than the current day
+      if (day > currentDate.day) {
+        // Set the period month to the current month
+        month = currentDate.month;
+      } else {
+        // Increase the month by one if needed
+        month++;
+        if (month > 12) {
+          month = 1;
+          year++;
+        }
+      }
+
+      // Handle the case where the day is 29th February and it's not a leap year
+      if (day == 29 && month == 2 && !isLeapYear(year)) {
+        day = 28;
+      }
+
+      return faturaDonemi = '${year.toString()}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+    }
+    String formatDueDate(int? day, String periodDay) {
+      final currentDate = DateTime.now();
+      int year = currentDate.year;
+      int month = currentDate.month;
+
+      // Parse the periodDay string to DateTime
+      DateTime parsedPeriodDay = DateTime.parse(periodDay);
+
+      // Handle the case where day is not null and is greater than the current day
+      if (day != null && day > currentDate.day) {
+        // Set the period month to the current month
+        month = currentDate.month;
+      } else {
+        // Increase the month by one if needed
+        month++;
+        if (month > 12) {
+          month = 1;
+          year++;
+        }
+      }
+
+      // Handle the case where day is not null and is 29th February, and it's not a leap year
+      if (day != null && day == 29 && month == 2 && !isLeapYear(year)) {
+        day = 28;
+      }
+
+      // Use a default value of null if day is null
+      int? calculatedDay = day;
+
+      DateTime calculatedDate = DateTime(year, month, calculatedDay ?? 1);
+
+      // Check if calculatedDate is before the parsedPeriodDay and increase the month if needed
+      if (calculatedDate.isBefore(parsedPeriodDay)) {
+        month++;
+        if (month > 12) {
+          month = 1;
+          year++;
+        }
+        calculatedDate = DateTime(year, month, calculatedDay ?? 1);
+      }
+
+      // Return the formatted date as a string
+      return '${calculatedDate.year}-${calculatedDate.month.toString().padLeft(2, '0')}-${calculatedDate.day.toString().padLeft(2, '0')}';
+    }
 
     void _showEditDialog(BuildContext context, int index, int page, int orderIndex, int id) {
       String caterogyName = "";
@@ -498,8 +503,12 @@ class _OutcomePageState extends State<OutcomePage> {
       TextEditingController selectedEditController = TextEditingController();
       TextEditingController selectedPriceController = TextEditingController();
       Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
-      _selectedBillingDay = invoice.periodDate;
-      _selectedDueDay = invoice.dueDate;
+      _selectedBillingDay = invoice.getPeriodDay();
+      _selectedDueDay = invoice.getDueDay();
+      invoice.periodDate = formatPeriodDate(_selectedBillingDay ?? 0);
+      if (_selectedDueDay != null) {
+        invoice.dueDate = formatDueDate(_selectedDueDay, invoice.periodDate);
+      }
 
 
       if(page == 1){
@@ -697,14 +706,25 @@ class _OutcomePageState extends State<OutcomePage> {
                       if(page == 1){
                         switch (orderIndex){
                           case 1:
-                            print("INVOICE LENGTH E01 : ${invoices.length}");
                             final priceText = selectedPriceController.text.trim();
                             double dprice = double.tryParse(priceText) ?? 0.0;
                             String price = dprice.toStringAsFixed(2);
                             String name = selectedEditController.text;
                             invoice.name = name;
                             invoice.price = price;
-                            editInvoice(id, _selectedBillingDay ?? 0, _selectedDueDay ?? null);
+                            if (_selectedDueDay != null) {
+                              editInvoice(
+                                id,
+                                formatPeriodDate(_selectedBillingDay!),
+                                formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!)),
+                              );
+                            } else {
+                              editInvoice(
+                                id,
+                                formatPeriodDate(_selectedBillingDay!),
+                                null, // or provide any default value you want for dueDate when _selectedDueDay is null
+                              );
+                            }
                             break;
                           case 2:
                             final priceText = selectedPriceController.text.trim();
@@ -1527,7 +1547,6 @@ class _OutcomePageState extends State<OutcomePage> {
               const SizedBox(height: 20),
               Text("Abonelikler", style: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.bold)),
               Text('Period Dates: ${invoices.map((invoice) => invoice.periodDate.toString()).join(', ')}'),
-              Text('Liste: $idsWithTVTargetCategory'),
               Text(
                 invoices
                     .map((invoice) =>
@@ -2344,7 +2363,7 @@ class _OutcomePageState extends State<OutcomePage> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       children: [
-                        if(rentTitleList.isNotEmpty)
+                        if(invoices.isNotEmpty)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -2353,9 +2372,11 @@ class _OutcomePageState extends State<OutcomePage> {
                             ListView.builder(
                               physics: const NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
-                              itemCount: rentTitleList.length + 1, // +1 for the "Abonelik Ekle" row
+                              itemCount: idsWithRentTargetCategory.length,
                               itemBuilder: (context, index) {
-                                if (index < rentTitleList.length) {
+                                int id = idsWithRentTargetCategory[index];
+                                Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
+                                if (index < idsWithRentTargetCategory.length) {
                                   return Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -2388,7 +2409,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                             icon: const Icon(Icons.edit, size: 21),
                                             onPressed: () {
-                                              _showEditDialog(context, index, 3, 1, 0); // Show the edit dialog
+                                              _showEditDialog(context, index, 3, 1, id); // Show the edit dialog
                                             },
                                           ),
                                         ],
