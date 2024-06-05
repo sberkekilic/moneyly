@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -19,6 +20,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  List<double> pageHeights = [403, 150, 100, 50];
   List<Invoice> invoices = [];
   Map<String, List<String>> incomeMap = {};
   String selectedKey = "";
@@ -52,10 +54,126 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
+    _pageController = PageController(initialPage: _currentPage);
+    pageHeights = List.filled(4, 200.0);
+    Future.delayed(Duration.zero, () {
+      calculatePageHeights(context);
+    });
     _load();
   }
 
+  List<Invoice> upcomingInvoices = [];
+  List<Invoice> dueDateInvoices = [];
+  List<Invoice> lastDayInvoices = [];
+  List<Invoice> otherInvoices = [];
+
+  List<Invoice> getInvoicesForIndex(int index) {
+    switch (index) {
+      case 0:
+        return upcomingInvoices;
+      case 1:
+        return dueDateInvoices;
+      case 2:
+        return lastDayInvoices;
+      case 3:
+        return otherInvoices;
+      default:
+        return [];
+    }
+  }
+  String getTitleForIndex(int index) {
+    switch (index) {
+      case 0:
+        return "Yaklaşan Faturalar";
+      case 1:
+        return "Son Ödeme Tarihi Yaklaşan";
+      case 2:
+        return "Ödeme İçin Son Gün";
+      case 3:
+        return "Ödeme Dönemi";
+      default:
+        return "null";
+    }
+  }
+  Widget buildInvoiceListView(BuildContext context, int index) {
+    List<Invoice> invoices = getInvoicesForIndex(index);
+    String title = getTitleForIndex(index);
+    return Column(
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.montserrat(fontSize: 17, fontWeight: FontWeight.bold),
+        ),
+        Expanded(
+          child: ListView.builder(
+            shrinkWrap: true,
+            scrollDirection: Axis.horizontal,
+            itemCount: invoices.length,
+            itemBuilder: (context, index) {
+              var invoice = invoices[index];
+              double height = 500;// Adjust index to cycle through pageHeights list
+              return SizedBox(
+                height: height,
+                child: Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: InvoiceCard(
+                    invoices: invoices,
+                    invoice: invoice,
+                    onDelete: () {
+                      setState(() {
+                        invoices.removeAt(index);
+                      });
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+  Future<void> calculatePageHeights(BuildContext context) async {
+    pageHeights = [];
+
+    for (int index = 0; index < 4; index++) {
+      double maxHeight = 0.0;
+      List<Invoice> invoices = getInvoicesForIndex(index);
+
+      await Future.wait(
+        invoices.map((invoice) async {
+          final cardHeight = await calculateCardHeight(invoice, context);
+          maxHeight = maxHeight < cardHeight ? cardHeight : maxHeight;
+        }),
+      );
+
+      double height = maxHeight + 21.0; // Add padding
+      print('Page $index height: $height');
+      pageHeights.add(height);
+    }
+  }
+  Future<double> calculateCardHeight(Invoice invoice, BuildContext context) async {
+    Completer<double> cardHeightCompleter = Completer<double>();
+    final card = Builder(
+      builder: (BuildContext context) {
+        WidgetsBinding.instance!.addPostFrameCallback((_) {
+          final RenderBox renderBox = context.findRenderObject() as RenderBox;
+          cardHeightCompleter.complete(renderBox.size.height);
+        });
+
+        return InvoiceCard(
+            invoice: invoice,
+            onDelete: () {},
+            invoices: getInvoicesForIndex(0)
+        ); // Update with appropriate index
+      },
+    );
+
+    // To force the widget to be built for measurement
+    Overlay.of(context)!.context.findRenderObject()!.markNeedsLayout();
+
+    return cardHeightCompleter.future;
+  }
   Future<void> loadSharedPreferencesData(List<String> desiredKeys) async {
     final prefs = await SharedPreferences.getInstance();
     sharedPreferencesData = [];
@@ -146,11 +264,22 @@ class _HomePageState extends State<HomePage> {
       if (savedInvoicesJson != null) {
         setState(() {
           invoices = savedInvoicesJson.map((json) => Invoice.fromJson(jsonDecode(json))).toList();
-        });
-        invoices.sort((a, b) {
-          int differenceA = int.parse(a.difference);
-          int differenceB = int.parse(b.difference);
-          return differenceA.compareTo(differenceB);
+          DateTime currentDate = DateTime.now(); // Recalculates the difference data for current date and save the invoice
+          setState(() {
+            invoices.forEach((invoice) {
+              invoice.updateDifference(currentDate);
+            });
+
+            invoices.sort((a, b) {
+              int differenceA = int.parse(a.difference);
+              int differenceB = int.parse(b.difference);
+              return differenceA.compareTo(differenceB);
+            });
+
+            final invoiceJsonList = invoices.map((invoice) => jsonEncode(invoice.toJson())).toList();
+            prefs.setStringList('invoices', invoiceJsonList);
+
+          });
         });
       }
       loadSharedPreferencesData(actualDesiredKeys);
@@ -342,27 +471,26 @@ class _HomePageState extends State<HomePage> {
 
     String getDaysRemainingMessage(Invoice invoice) {
       final currentDate = DateTime.now();
-      final formattedCurrentDate = DateFormat('yyyy-MM-dd').format(currentDate);
       final dueDateKnown = invoice.dueDate != null;
+
       if (currentDate.isBefore(DateTime.parse(invoice.periodDate))) {
         return "Fatura kesimine kalan gün";
       } else if (dueDateKnown) {
-        if (currentDate.isBefore(DateTime.parse(invoice.dueDate!))) {
+        final periodDate = DateTime.parse(invoice.periodDate);
+        final dueDate = DateTime.parse(invoice.dueDate!);
+
+        if (currentDate.isBefore(dueDate) && currentDate.isAfter(periodDate)) {
           return "Son ödeme tarihine kalan gün";
-        } else {
+        } else if (currentDate.day == dueDate.day && currentDate.month == dueDate.month && currentDate.year == dueDate.year) {
           return "Ödeme için son gün";
         }
-      } else if (formattedCurrentDate == invoice.periodDate){
+      } else if (currentDate.day == DateTime.parse(invoice.periodDate).day && currentDate.month == DateTime.parse(invoice.periodDate).month && currentDate.year == DateTime.parse(invoice.periodDate).year) {
         return "Ödeme dönemi";
-      } else {
-        return "Error";
       }
+
+      return "Error";
     }
 
-    List<Invoice> upcomingInvoices = [];
-    List<Invoice> dueDateInvoices = [];
-    List<Invoice> lastDayInvoices = [];
-    List<Invoice> otherInvoices = [];
 
     for (var invoice in invoices) {
       if (getDaysRemainingMessage(invoice) == "Fatura kesimine kalan gün") {
@@ -376,61 +504,8 @@ class _HomePageState extends State<HomePage> {
       }
     }
 
-    Widget buildInvoiceListView(BuildContext context, int index) {
-      List<Invoice> invoices;
-      String title;
 
-      switch (index) {
-        case 0:
-          invoices = upcomingInvoices;
-          title = "Yaklaşan Faturalar";
-          break;
-        case 1:
-          invoices = dueDateInvoices;
-          title = "Son Ödeme Tarihi Yaklaşan";
-          break;
-        case 2:
-          invoices = lastDayInvoices;
-          title = "Ödeme İçin Son Gün";
-          break;
-        case 3:
-          invoices = otherInvoices;
-          title = "Ödeme Dönemi";
-          break;
-        default:
-          invoices = [];
-          title = "";
-      }
 
-      return Column(
-        children: [
-          Text(
-            title,
-            style: GoogleFonts.montserrat(fontSize: 17, fontWeight: FontWeight.bold),
-          ),
-          Expanded(
-            child: ListView.builder(
-              shrinkWrap: true,
-              scrollDirection: Axis.horizontal,
-              itemCount: invoices.length,
-              itemBuilder: (context, index) {
-                var invoice = invoices[index];
-                return Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: InvoiceCard(
-                    invoices: invoices,
-                    invoice: invoice,
-                    onDelete: () {
-                      removeInvoice(invoice, index, invoice.periodDate, invoice.dueDate != null ? invoice.dueDate! : null);
-                    },
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      );
-    }
 
     return Scaffold(
       appBar: AppBar(
@@ -692,7 +767,7 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 20),
               Text("Faturalarım", style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold)),
-              //ListView.builder(shrinkWrap: true,itemCount: invoices.length,itemBuilder: (context, index) {return Text(invoices[index].toDisplayString());},),
+              //ListView.builder(shrinkWrap: true, physics: NeverScrollableScrollPhysics(), itemCount: invoices.length,itemBuilder: (context, index) {return Text(invoices[index].toDisplayString());},),
               const SizedBox(height: 20),
               Container(
               width: double.infinity,
@@ -744,7 +819,7 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+              const SizedBox(height: 20)
             ],
           ),
         ),

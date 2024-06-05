@@ -55,6 +55,17 @@ class Invoice {
     );
   }
 
+  void updateDifference(DateTime currentDate) {
+    final dueDateKnown = dueDate != null;
+    if (currentDate.isBefore(DateTime.parse(periodDate))) {
+      difference = DateTime.parse(periodDate).difference(currentDate).inDays.toString();
+    } else if (dueDateKnown) {
+      if (currentDate.isBefore(DateTime.parse(dueDate!))) {
+        difference = DateTime.parse(dueDate!).difference(currentDate).inDays.toString();
+      }
+    }
+  }
+
   String toDisplayString() {
     return 'ID: $id\nPrice: $price\nSubcategory: $subCategory\nCategory: $category\nName: $name\nPeriod Date: $periodDate\nDue Date: ${dueDate ?? 'N/A'}\nDifference: $difference';
   }
