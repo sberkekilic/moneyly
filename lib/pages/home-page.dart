@@ -767,7 +767,7 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 20),
               Text("Faturalarım", style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold)),
-              //ListView.builder(shrinkWrap: true, physics: NeverScrollableScrollPhysics(), itemCount: invoices.length,itemBuilder: (context, index) {return Text(invoices[index].toDisplayString());},),
+              ListView.builder(shrinkWrap: true, physics: NeverScrollableScrollPhysics(), itemCount: invoices.length,itemBuilder: (context, index) {return Text(invoices[index].toDisplayString());},),
               const SizedBox(height: 20),
               Container(
               width: double.infinity,
@@ -917,6 +917,7 @@ class InvoiceCard extends StatelessWidget {
   }) {
     faturaDonemi = DateTime.parse(invoice.periodDate);
     if (invoice.dueDate != null){
+      print("dueDate:${invoice.dueDate!}");
       sonOdeme = DateTime.parse(invoice.dueDate!);
     }
   }

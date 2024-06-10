@@ -68,6 +68,7 @@ class _SubscriptionsState extends State<Subscriptions> {
   int? _selectedDueDay;
   String faturaDonemi = "";
   String? sonOdeme;
+  bool  isPromptOK = true;
 
   List<int> daysList = List.generate(31, (index) => index + 1);
 
@@ -152,7 +153,7 @@ class _SubscriptionsState extends State<Subscriptions> {
     int month = currentDate.month;
 
     // Handle the case where the day is greater than the current day
-    if (day > currentDate.day) {
+    if (isPromptOK == false) {
       // Set the period month to the current month
       month = currentDate.month;
     } else {
@@ -180,10 +181,10 @@ class _SubscriptionsState extends State<Subscriptions> {
     DateTime parsedPeriodDay = DateTime.parse(periodDay);
 
     // Handle the case where day is not null and is greater than the current day
-    if (day != null && day > currentDate.day) {
+    if (isPromptOK == false) {
       // Set the period month to the current month
       month = currentDate.month;
-    } else {
+    } else if (day != null && day < currentDate.day) {
       // Increase the month by one if needed
       month++;
       if (month > 12) {
@@ -439,6 +440,39 @@ class _SubscriptionsState extends State<Subscriptions> {
       },
     );
   }
+  void _showBillPaidPrompt() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Fatura Ödendi mi?'),
+          content: Text('Bu ay fatura ödendi mi?'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Hayır'),
+              onPressed: () {
+                setState(() {
+                  isPromptOK = false;
+                });
+                print("1F: isPromptOK:${isPromptOK}");
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('Evet'),
+              onPressed: () {
+                setState(() {
+                  isPromptOK = true;
+                });
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -539,10 +573,11 @@ class _SubscriptionsState extends State<Subscriptions> {
       invoice.difference = DateTime.parse(faturaDonemi).difference(currentDate).inDays.toString();
       return invoice.difference;
     } else if (dueDateKnown) {
-      if (currentDate.isBefore(DateTime.parse(sonOdeme!))) {
+      if (sonOdeme != null && currentDate.isBefore(DateTime.parse(sonOdeme!))) {
         invoice.difference = DateTime.parse(sonOdeme!).difference(currentDate).inDays.toString();
         return invoice.difference;
       } else {
+        print("2FA: sonOdeme:${sonOdeme}");
         return invoice.difference;
       }
     } else {
@@ -1027,6 +1062,9 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                           onChanged: (value) {
                                                             setState(() {
                                                               _selectedBillingDay = value;
+                                                              if (_selectedBillingDay! <= DateTime.now().day){
+                                                                _showBillPaidPrompt(); // Show the prompt when a day is selected
+                                                              }
                                                             });
                                                           },
                                                           isExpanded: true,
@@ -1077,7 +1115,37 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                               _selectedDueDay = value;
                                                             });
                                                           },
-                                                          decoration: const InputDecoration(labelText: 'Due Day (optional)'),
+                                                          isExpanded: true,
+                                                          decoration: InputDecoration(
+                                                            // Add Horizontal padding using menuItemStyleData.padding so it matches
+                                                            // the menu padding when button's width is not specified.
+                                                            contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                                                            border: OutlineInputBorder(
+                                                              borderRadius: BorderRadius.circular(10),
+                                                            ),
+                                                          ),
+                                                          hint: const Text(
+                                                            'Due Day (optional)',
+                                                            style: TextStyle(fontSize: 14),
+                                                          ),
+                                                          buttonStyleData: const ButtonStyleData(
+                                                            padding: EdgeInsets.only(right: 8),
+                                                          ),
+                                                          iconStyleData: const IconStyleData(
+                                                            icon: Icon(
+                                                              Icons.arrow_drop_down,
+                                                              color: Colors.black45,
+                                                            ),
+                                                            iconSize: 24,
+                                                          ),
+                                                          dropdownStyleData: DropdownStyleData(
+                                                            decoration: BoxDecoration(
+                                                              borderRadius: BorderRadius.circular(15),
+                                                            ),
+                                                          ),
+                                                          menuItemStyleData: const MenuItemStyleData(
+                                                            padding: EdgeInsets.symmetric(horizontal: 16),
+                                                          ),
                                                           items: daysList.map((day) {
                                                             return DropdownMenuItem<int>(
                                                               value: day,

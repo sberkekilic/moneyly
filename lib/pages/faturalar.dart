@@ -1042,7 +1042,7 @@ class _BillsState extends State<Bills> {
                                                                   name: text,
                                                                     periodDate: formatPeriodDate(_selectedBillingDay!),
                                                                     dueDate: _selectedDueDay != null
-                                                                        ? "shit"
+                                                                        ? formatDueDate(_selectedDueDay!, formatPeriodDate(_selectedBillingDay!))
                                                                         : null,
                                                                   difference: "fa2"
                                                                 );

@@ -239,6 +239,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
     return faturaDonemi = '${year.toString()}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
   }
   String formatDueDate(int? day, String periodDay) {
+    print("day:${day}, periodDay:${periodDay}");
     final currentDate = DateTime.now();
     int year = currentDate.year;
     int month = currentDate.month;
@@ -1099,7 +1100,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                     name: text,
                                                                     periodDate: formatPeriodDate(_selectedBillingDay!),
                                                                     dueDate: _selectedDueDay != null
-                                                                        ? "shit"
+                                                                        ? formatDueDate(_selectedDueDay!, formatPeriodDate(_selectedBillingDay!))
                                                                         : null,
                                                                     difference: "do2"
                                                                 );
@@ -1118,7 +1119,6 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                     platformPriceController.clear();
                                                                     isTextFormFieldVisible = false;
                                                                     isAddButtonActive = false;
-
                                                                   });
                                                                 }
                                                               });
