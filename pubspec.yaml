@@ -52,6 +52,7 @@ dependencies:
   fluttericon: ^2.0.0
   keyboard_actions: ^4.2.0
   dropdown_button2: ^2.3.9
+  persistent_bottom_nav_bar: ^5.0.2
 
 dev_dependencies:
   flutter_test:

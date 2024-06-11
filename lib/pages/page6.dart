@@ -1,4 +1,24 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Expandable PageView Demo',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: CategoryScroll(),
+    );
+  }
+}
 
 class CategoryScroll extends StatefulWidget {
   @override
@@ -6,67 +26,145 @@ class CategoryScroll extends StatefulWidget {
 }
 
 class _CategoryScrollState extends State<CategoryScroll> {
-  late PageController _pageController;
-  int _currentPage = 0;
-  List<Color> pageColors = [
-    Colors.blue,
-    Colors.green,
-    Colors.orange,
-    Colors.purple,
-  ];
-  List<List<String>> pageContents = [
-    ["Lorem ipsum dolor sit amet, consectetur adipiscing elit.", "More content for page 1."],
-    ["Content for page 2.", "Some additional text for page 2."],
-    ["Short content for page 3."],
-    ["A very long text for page 4. " * 10], // Example of a long paragraph
-  ];
-  List<double> pageHeights = [];
+  late PersistentTabController _controller;
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: _currentPage);
-    pageHeights = List.filled(pageContents.length, 200.0);
-    Future.delayed(Duration.zero, () {
-      calculatePageHeights();
-      setState(() {});
-    });
+    _controller = PersistentTabController(initialIndex: 0);
   }
 
-  void calculatePageHeights() {
-    pageHeights = List.generate(pageContents.length, (index) {
-      double maxHeight = 0.0;
-
-      // Calculate the height of the title
-      final titleTextPainter = TextPainter(
-        text: TextSpan(
-          text: "Some Title", // Add your title here
-          style: TextStyle(fontSize: 24, color: Colors.white),
-        ),
-        maxLines: 1,
-        textDirection: TextDirection.ltr,
-      )..layout(maxWidth: MediaQuery.of(context).size.width - 16.0);
-
-      maxHeight += titleTextPainter.size.height;
-
-      // Calculate the height of each InvoiceCard
-      for (String content in pageContents[index]) {
-        final TextPainter textPainter = TextPainter(
-          text: TextSpan(
-            text: content,
-            style: TextStyle(fontSize: 18, color: Colors.white),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Expandable PageView Demo'),
+      ),
+      body: Column(
+        children: [
+          Container(
+            height: 150,
+            color: Colors.pink,
           ),
-          maxLines: 999,
-          textDirection: TextDirection.ltr,
-        )..layout(maxWidth: MediaQuery.of(context).size.width - 16.0);
+          SizedBox(height: 50),
+          Expanded(
+            child: PersistentTabView(
+              context,
+              controller: _controller,
+              screens: [
+                ExpandablePageView(
+                  children: [
+                    Container(
+                      color: Colors.red,
+                      child: Center(
+                        child: Text(
+                          'Page 1'*10,
+                          style: TextStyle(fontSize: 24, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                ExpandablePageView(
+                    children: [
+                      Container(
+                        color: Colors.green,
+                        child: Center(
+                          child: Text(
+                            'Page 2'*20,
+                            style: TextStyle(fontSize: 24, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ]
+                ),
+                ExpandablePageView(
+                    children: [
+                      Container(
+                        color: Colors.blue,
+                        child: Center(
+                          child: Text(
+                            'Page 3'*30,
+                            style: TextStyle(fontSize: 24, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ]
+                ),
+              ],
+              items: [
+                PersistentBottomNavBarItem(
+                  icon: Icon(Icons.home),
+                  title: 'Page 1',
+                  activeColorPrimary: Colors.blue,
+                  inactiveColorPrimary: Colors.grey,
+                ),
+                PersistentBottomNavBarItem(
+                  icon: Icon(Icons.explore),
+                  title: 'Page 2',
+                  activeColorPrimary: Colors.green,
+                  inactiveColorPrimary: Colors.grey,
+                ),
+                PersistentBottomNavBarItem(
+                  icon: Icon(Icons.person),
+                  title: 'Page 3',
+                  activeColorPrimary: Colors.orange,
+                  inactiveColorPrimary: Colors.grey,
+                ),
+              ],
+              confineInSafeArea: true,
+              backgroundColor: Colors.white,
+              handleAndroidBackButtonPress: true,
+              resizeToAvoidBottomInset: true,
+              stateManagement: true,
+              hideNavigationBarWhenKeyboardShows: true,
+              decoration: NavBarDecoration(
+                borderRadius: BorderRadius.circular(10.0),
+              ),
+            ),
+          ),
+          SizedBox(height: 50),
+          Container(
+            height: 150,
+            color: Colors.pink,
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-        maxHeight += textPainter.size.height;
-      }
+class ExpandablePageView extends StatefulWidget {
+  final List<Widget> children;
 
-      double height = maxHeight + 56.0; // Add padding
-      print('Page $index height: $height');
-      return height;
-    });
+  const ExpandablePageView({
+    Key? key,
+    required this.children,
+  }) : super(key: key);
+
+  @override
+  State<ExpandablePageView> createState() => _ExpandablePageViewState();
+}
+
+class _ExpandablePageViewState extends State<ExpandablePageView>
+    with TickerProviderStateMixin {
+  late PageController _pageController;
+  late List<double> _heights;
+  int _currentPage = 0;
+
+  double get _currentHeight => _heights[_currentPage];
+
+  @override
+  void initState() {
+    _heights = widget.children.map((e) => 0.0).toList();
+    super.initState();
+    _pageController = PageController()
+      ..addListener(() {
+        final newPage = _pageController.page?.round() ?? 0;
+        if (_currentPage != newPage) {
+          setState(() => _currentPage = newPage);
+        }
+      });
   }
 
   @override
@@ -77,69 +175,74 @@ class _CategoryScrollState extends State<CategoryScroll> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Category ${_currentPage + 1}"),
-      ),
-      body: Center(
-        child: pageHeights.isEmpty
-            ? CircularProgressIndicator()
-            : SizedBox(
-          height: pageHeights[_currentPage],
-          child: PageView.builder(
-            controller: _pageController,
-            onPageChanged: (index) {
-              setState(() {
-                _currentPage = index;
-              });
-            },
-            itemCount: pageColors.length,
-            itemBuilder: (context, index) {
-              return buildPage(index);
-            },
-          ),
-        ),
+    return TweenAnimationBuilder<double>(
+      curve: Curves.easeInOutCubic,
+      duration: const Duration(milliseconds: 100),
+      tween: Tween<double>(begin: _heights[0], end: _currentHeight),
+      builder: (context, value, child) => SizedBox(height: value, child: child),
+      child: PageView(
+        controller: _pageController,
+        children: _sizeReportingChildren
+            .asMap() //
+            .map((index, child) => MapEntry(index, child))
+            .values
+            .toList(),
       ),
     );
   }
 
-  Widget buildPage(int index) {
-    return Container(
-      color: pageColors[index],
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                "Some Title", // Add your title here
-                style: TextStyle(fontSize: 24, color: Colors.white),
-              ),
-            ),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              itemCount: pageContents[index].length,
-              itemBuilder: (context, contentIndex) {
-                return Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: Text(
-                    pageContents[index][contentIndex],
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  ),
-                );
-              },
-            ),
-          ],
+  List<Widget> get _sizeReportingChildren => widget.children
+      .asMap() //
+      .map(
+        (index, child) => MapEntry(
+      index,
+      OverflowBox(
+        minHeight: 0,
+        maxHeight: double.infinity,
+        alignment: Alignment.topCenter,
+        child: SizeReportingWidget(
+          onSizeChange: (size) =>
+              setState(() => _heights[index] = size.height),
+          child: Align(child: child),
         ),
       ),
-    );
-  }
+    ),
+  )
+      .values
+      .toList();
 }
 
-void main() {
-  runApp(MaterialApp(
-    home: CategoryScroll(),
-  ));
+class SizeReportingWidget extends StatefulWidget {
+  final Widget child;
+  final ValueChanged<Size> onSizeChange;
+
+  const SizeReportingWidget({
+    Key? key,
+    required this.child,
+    required this.onSizeChange,
+  }) : super(key: key);
+
+  @override
+  State<SizeReportingWidget> createState() => _SizeReportingWidgetState();
+}
+
+class _SizeReportingWidgetState extends State<SizeReportingWidget> {
+  Size? _oldSize;
+
+  @override
+  Widget build(BuildContext context) {
+    WidgetsBinding.instance!.addPostFrameCallback((_) => _notifySize());
+    return widget.child;
+  }
+
+  void _notifySize() {
+    if (!mounted) {
+      return;
+    }
+    final size = context.size;
+    if (_oldSize != size && size != null) {
+      _oldSize = size;
+      widget.onSizeChange(size);
+    }
+  }
 }

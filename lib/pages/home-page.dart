@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:moneyly/pages/page6.dart';
 import 'package:moneyly/pages/selection.dart';
 import 'package:percent_indicator/percent_indicator.dart';
+import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'faturalar.dart';
@@ -20,6 +21,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  late PersistentTabController _controller;
   List<double> pageHeights = [403, 150, 100, 50];
   List<Invoice> invoices = [];
   Map<String, List<String>> incomeMap = {};
@@ -54,12 +56,50 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    _controller = PersistentTabController(initialIndex: 0);
     _pageController = PageController(initialPage: _currentPage);
     pageHeights = List.filled(4, 200.0);
     Future.delayed(Duration.zero, () {
       calculatePageHeights(context);
     });
     _load();
+  }
+
+  List<Widget> _buildScreens() {
+    return [
+      Container(color: Colors.red), // Replace with your pages
+      Container(color: Colors.green),
+      Container(color: Colors.blue),
+      Container(color: Colors.yellow),
+    ];
+  }
+  List<PersistentBottomNavBarItem> _navBarsItems() {
+    return [
+      PersistentBottomNavBarItem(
+        icon: Icon(Icons.looks_one),
+        title: "One",
+        activeColorPrimary: Colors.blue,
+        inactiveColorPrimary: Colors.grey,
+      ),
+      PersistentBottomNavBarItem(
+        icon: Icon(Icons.looks_two),
+        title: "Two",
+        activeColorPrimary: Colors.blue,
+        inactiveColorPrimary: Colors.grey,
+      ),
+      PersistentBottomNavBarItem(
+        icon: Icon(Icons.looks_3),
+        title: "Three",
+        activeColorPrimary: Colors.blue,
+        inactiveColorPrimary: Colors.grey,
+      ),
+      PersistentBottomNavBarItem(
+        icon: Icon(Icons.looks_4),
+        title: "Four",
+        activeColorPrimary: Colors.blue,
+        inactiveColorPrimary: Colors.grey,
+      ),
+    ];
   }
 
   List<Invoice> upcomingInvoices = [];
@@ -97,13 +137,8 @@ class _HomePageState extends State<HomePage> {
   }
   Widget buildInvoiceListView(BuildContext context, int index) {
     List<Invoice> invoices = getInvoicesForIndex(index);
-    String title = getTitleForIndex(index);
     return Column(
       children: [
-        Text(
-          title,
-          style: GoogleFonts.montserrat(fontSize: 17, fontWeight: FontWeight.bold),
-        ),
         Expanded(
           child: ListView.builder(
             shrinkWrap: true,
@@ -128,7 +163,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               );
             },
-          ),
+          )
         ),
       ],
     );
@@ -425,6 +460,22 @@ class _HomePageState extends State<HomePage> {
   PageController _pageController = PageController();
   int _currentPage = 0;
 
+  void _nextPage() {
+    _pageController.animateToPage(
+      _currentPage + 1,
+      duration: Duration(milliseconds: 300),
+      curve: Curves.ease,
+    );
+  }
+
+  void _previousPage() {
+    _pageController.animateToPage(
+      _currentPage - 1,
+      duration: Duration(milliseconds: 300),
+      curve: Curves.ease,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     savingsValue = incomeValue * 0.2;
@@ -446,7 +497,6 @@ class _HomePageState extends State<HomePage> {
     String formattedSavingsValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(savingsValue);
     String formattedWishesValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(wishesValue);
     String formattedNeedsValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(needsValue);
-
     int incomeYuzdesi = (incomeValue * 100).toInt();
     int netProfitYuzdesi = (netProfit * 100).toInt();
     int bolum;
@@ -491,7 +541,6 @@ class _HomePageState extends State<HomePage> {
       return "Error";
     }
 
-
     for (var invoice in invoices) {
       if (getDaysRemainingMessage(invoice) == "Fatura kesimine kalan gün") {
         upcomingInvoices.add(invoice);
@@ -503,9 +552,6 @@ class _HomePageState extends State<HomePage> {
         otherInvoices.add(invoice);
       }
     }
-
-
-
 
     return Scaffold(
       appBar: AppBar(
@@ -767,58 +813,58 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 20),
               Text("Faturalarım", style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold)),
-              ListView.builder(shrinkWrap: true, physics: NeverScrollableScrollPhysics(), itemCount: invoices.length,itemBuilder: (context, index) {return Text(invoices[index].toDisplayString());},),
+              //ListView.builder(shrinkWrap: true, physics: NeverScrollableScrollPhysics(), itemCount: invoices.length,itemBuilder: (context, index) {return Text(invoices[index].toDisplayString());},),
               const SizedBox(height: 20),
               Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.5),
-                    spreadRadius: 5,
-                    blurRadius: 7,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    height:403,
-                    child: PageView.builder(
-                      controller: _pageController,
-                      onPageChanged: (index) {
-                        setState(() {
-                          _currentPage = index;
-                        });
-                      },
-                      itemCount: 4,
-                      itemBuilder: (context, index) {
-                        return buildInvoiceListView(context, index);
-                      },
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.5),
+                      spreadRadius: 5,
+                      blurRadius: 7,
+                      offset: const Offset(0, 3),
                     ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(4, (index) {
-                      return Container(
-                        width: 8.0,
-                        height: 8.0,
-                        margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 2.0),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _currentPage == index ? Colors.blue : Colors.grey,
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      getTitleForIndex(_currentPage),
+                      style: GoogleFonts.montserrat(fontSize: 17, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(
+                      height: 382, // Adjust height as needed
+                      child: PageView.builder(
+                        controller: _pageController,
+                        onPageChanged: (index) {
+                          setState(() {
+                            _currentPage = index;
+                          });
+                        },
+                        itemCount: 4,
+                        itemBuilder: (context, index) {
+                          return buildInvoiceListView(context, index);
+                        },
+                      ),
+                    ),
+                    Container(
+                      height: 100,
+                      child: PersistentTabView(
+                          context,
+                          controller: _controller,
+                          screens: _buildScreens(),
+                          items: _navBarsItems(),
+                          navBarStyle: NavBarStyle.style1,
                         ),
-                      );
-                    }),
-                  ),
-                ],
+                    )
+                  ],
+                ),
               ),
-            ),
               const SizedBox(height: 20)
             ],
           ),
