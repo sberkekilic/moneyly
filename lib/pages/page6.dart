@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
+import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 
 void main() {
   runApp(MyApp());
@@ -112,12 +112,12 @@ class _CategoryScrollState extends State<CategoryScroll> {
                   inactiveColorPrimary: Colors.grey,
                 ),
               ],
-              confineInSafeArea: true,
+              confineToSafeArea: true,
               backgroundColor: Colors.white,
               handleAndroidBackButtonPress: true,
               resizeToAvoidBottomInset: true,
               stateManagement: true,
-              hideNavigationBarWhenKeyboardShows: true,
+              isVisible: true,
               decoration: NavBarDecoration(
                 borderRadius: BorderRadius.circular(10.0),
               ),

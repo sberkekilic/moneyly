@@ -323,9 +323,10 @@ class _OutcomePageState extends State<OutcomePage> {
     final formDataProvider2 = Provider.of<FormDataProvider2>(context, listen: false);
     double tvSum = calculateSubcategorySum(invoices, 'TV');
     double hbSum = calculateSubcategorySum(invoices, 'Ev Faturaları');
+    double rentSum = calculateSubcategorySum(invoices, 'Kira');
     sumOfSubs = tvSum + sumOfGame + sumOfMusic;
     sumOfBills = hbSum + sumOfInternet + sumOfPhone;
-    sumOfOthers = sumOfRent + sumOfKitchen + sumOfCatering + sumOfEnt + sumOfOther;
+    sumOfOthers = rentSum + sumOfKitchen + sumOfCatering + sumOfEnt + sumOfOther;
     outcomeValue = sumOfSubs+sumOfBills+sumOfOthers;
     subsPercent = (outcomeValue != 0) ? ((sumOfSubs / outcomeValue) * 100).round() : 0;
     billsPercent = (outcomeValue != 0) ? ((sumOfBills / outcomeValue) * 100).round() : 0;
@@ -2387,7 +2388,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             flex: 2,
                                             fit: FlexFit.tight,
                                             child: Text(
-                                              rentTitleList[index],
+                                              invoice.name,
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -2397,7 +2398,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             fit: FlexFit.tight,
                                             child: Text(
                                               textAlign: TextAlign.right,
-                                              rentPriceList[index],
+                                              invoice.price,
                                               style: GoogleFonts.montserrat(fontSize: 20),
                                               overflow: TextOverflow.ellipsis,
                                             ),

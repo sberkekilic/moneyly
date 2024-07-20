@@ -192,7 +192,7 @@ class _IncomePageState extends State<IncomePage> {
                       }
                     },
                     child: Text('Delete'),
-                    style: ElevatedButton.styleFrom(primary: Colors.red),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                   ),
                 ],
               ),

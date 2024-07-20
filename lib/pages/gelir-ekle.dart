@@ -191,7 +191,7 @@ class _AddIncomeState extends State<AddIncome> {
       appBar: AppBar(
           backgroundColor: Color(0xfff0f0f1),
           elevation: 0,
-          toolbarHeight: 70,
+          toolbarHeight: 60,
           automaticallyImplyLeading: false,
           leadingWidth: 30,
           title: Stack(

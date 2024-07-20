@@ -1,7 +1,9 @@
 import 'dart:convert';
 
 import 'package:dotted_border/dotted_border.dart';
+import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -26,11 +28,13 @@ class _OtherExpensesState extends State<OtherExpenses> {
     'otherTitleList2', 'otherPriceList2', 'hasOtherSelected2', 'sumOfOther2'
   ];
   List<Invoice> invoices = [];
+
   bool hasRentSelected = false;
   bool hasKitchenSelected = false;
   bool hasCateringSelected = false;
   bool hasEntertainmentSelected = false;
   bool hasOtherSelected = false;
+
   List<String> rentTitleList = [];
   List<String> kitchenTitleList = [];
   List<String> cateringTitleList = [];
@@ -41,11 +45,13 @@ class _OtherExpensesState extends State<OtherExpenses> {
   List<String> cateringPriceList = [];
   List<String> entertainmentPriceList = [];
   List<String> otherPriceList = [];
+
   double sumOfRent = 0.0;
   double sumOfKitchen = 0.0;
   double sumOfCatering = 0.0;
   double sumOfEnt = 0.0;
   double sumOfOther = 0.0;
+
   String convertSum = "";
   String convertSum2 = "";
   String convertSum3 = "";
@@ -95,11 +101,13 @@ class _OtherExpensesState extends State<OtherExpenses> {
   bool isAddButtonActiveOther = false;
 
   int? _selectedBillingDay;
+  int? _selectedBillingMonth;
   int? _selectedDueDay;
   String faturaDonemi = "";
   String? sonOdeme;
 
   List<int> daysList = List.generate(31, (index) => index + 1);
+  List<int> monthsList = List.generate(12, (index) => index + 1);
 
   Future<void> handleRentContainerTouch() async {
     final prefs = await SharedPreferences.getInstance();
@@ -213,76 +221,6 @@ class _OtherExpensesState extends State<OtherExpenses> {
   void goToNextPage() {
     Navigator.pushNamed(context, 'ana-sayfa');
   }
-  String formatPeriodDate(int day) {
-    final currentDate = DateTime.now();
-    int year = currentDate.year;
-    int month = currentDate.month;
-
-    // Handle the case where the day is greater than the current day
-    if (day > currentDate.day) {
-      // Set the period month to the current month
-      month = currentDate.month;
-    } else {
-      // Increase the month by one if needed
-      month++;
-      if (month > 12) {
-        month = 1;
-        year++;
-      }
-    }
-
-    // Handle the case where the day is 29th February and it's not a leap year
-    if (day == 29 && month == 2 && !isLeapYear(year)) {
-      day = 28;
-    }
-
-    return faturaDonemi = '${year.toString()}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
-  }
-  String formatDueDate(int? day, String periodDay) {
-    print("day:${day}, periodDay:${periodDay}");
-    final currentDate = DateTime.now();
-    int year = currentDate.year;
-    int month = currentDate.month;
-
-    // Parse the periodDay string to DateTime
-    DateTime parsedPeriodDay = DateTime.parse(periodDay);
-
-    // Handle the case where day is not null and is greater than the current day
-    if (day != null && day > currentDate.day) {
-      // Set the period month to the current month
-      month = currentDate.month;
-    } else {
-      // Increase the month by one if needed
-      month++;
-      if (month > 12) {
-        month = 1;
-        year++;
-      }
-    }
-
-    // Handle the case where day is not null and is 29th February, and it's not a leap year
-    if (day != null && day == 29 && month == 2 && !isLeapYear(year)) {
-      day = 28;
-    }
-
-    // Use a default value of null if day is null
-    int? calculatedDay = day;
-
-    DateTime calculatedDate = DateTime(year, month, calculatedDay ?? 1);
-
-    // Check if calculatedDate is before the parsedPeriodDay and increase the month if needed
-    if (calculatedDate.isBefore(parsedPeriodDay)) {
-      month++;
-      if (month > 12) {
-        month = 1;
-        year++;
-      }
-      calculatedDate = DateTime(year, month, calculatedDay ?? 1);
-    }
-
-    // Return the formatted date as a string
-    return '${calculatedDate.year}-${calculatedDate.month.toString().padLeft(2, '0')}-${calculatedDate.day.toString().padLeft(2, '0')}';
-  }
 
   void _showEditDialog(BuildContext context, int index, int orderIndex, int id) {
     final formDataProvider2 = Provider.of<FormDataProvider2>(context, listen: false);
@@ -292,7 +230,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
     Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
     _selectedBillingDay = invoice.getPeriodDay();
     _selectedDueDay = invoice.getDueDay();
-    invoice.periodDate = formatPeriodDate(_selectedBillingDay ?? 0);
+    invoice.periodDate = formatPeriodDate(_selectedBillingDay ?? 0, _selectedBillingMonth ?? 0);
     if (_selectedDueDay != null) {
       invoice.dueDate = formatDueDate(_selectedDueDay, invoice.periodDate);
     }
@@ -392,19 +330,41 @@ class _OtherExpensesState extends State<OtherExpenses> {
               const SizedBox(height: 10),
               Align(alignment: Alignment.centerLeft, child: Text("Period Date",style: GoogleFonts.montserrat(fontSize: 18))),
               const SizedBox(height: 10),
-              DropdownButtonFormField<int>(
-                value: _selectedBillingDay,
-                onChanged: (value) {
-                  setState(() {
-                    _selectedBillingDay = value;
-                  });
-                },
-                items: daysList.map((day) {
-                  return DropdownMenuItem<int>(
-                    value: day,
-                    child: Text(day.toString()),
-                  );
-                }).toList(),
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<int>(
+                      value: _selectedBillingDay,
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedBillingDay = value;
+                        });
+                      },
+                      items: daysList.map((day) {
+                        return DropdownMenuItem<int>(
+                          value: day,
+                          child: Text(day.toString()),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  Expanded(
+                    child: DropdownButtonFormField<int>(
+                      value: _selectedBillingMonth,
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedBillingMonth = value;
+                        });
+                      },
+                      items: monthsList.map((month) {
+                        return DropdownMenuItem<int>(
+                          value: month,
+                          child: Text(month.toString()),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 10),
               Align(alignment: Alignment.centerLeft, child: Text("Due Date",style: GoogleFonts.montserrat(fontSize: 18))),
@@ -446,13 +406,13 @@ class _OtherExpensesState extends State<OtherExpenses> {
                       if (_selectedDueDay != null) {
                         editInvoice(
                           id,
-                          formatPeriodDate(_selectedBillingDay!),
-                          formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!)),
+                          formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
+                          formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!)),
                         );
                       } else {
                         editInvoice(
                           id,
-                          formatPeriodDate(_selectedBillingDay!),
+                          formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
                           null, // or provide any default value you want for dueDate when _selectedDueDay is null
                         );
                       }
@@ -646,35 +606,106 @@ class _OtherExpensesState extends State<OtherExpenses> {
     prefs.setDouble('sumOfOthers2', value);
   }
 
+  Future<void> saveInvoices() async {
+    final prefs = await SharedPreferences.getInstance();
+    final invoiceList = invoices.map((invoice) => invoice.toJson()).toList();
+    await prefs.setStringList('invoices', invoiceList.map((invoice) => jsonEncode(invoice)).toList());
+  }
+
+  double calculateSubcategorySum(List<Invoice> invoices, String subcategory) {
+    double sum = 0.0;
+
+    for (var invoice in invoices) {
+      if (invoice.subCategory == subcategory) {
+        double price = double.parse(invoice.price);
+        sum += price;
+      }
+    }
+
+    return sum;
+  }
+
   bool isLeapYear(int year) {
     if (year % 4 != 0) return false;
     if (year % 100 != 0) return true;
     return year % 400 == 0;
   }
 
+  String formatPeriodDate(int day, int month) {
+    final currentDate = DateTime.now();
+    int year = currentDate.year;
+
+    if (month > 12) {
+      month = 1;
+      year++;
+    }
+
+    // Handle the case where the day is 29th February and it's not a leap year
+    if (day == 29 && month == 2 && !isLeapYear(year)) {
+      day = 28;
+    }
+
+    return faturaDonemi = '${year.toString()}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+  }
+
+  String formatDueDate(int? day, String periodDay) {
+    final currentDate = DateTime.now();
+    int year = currentDate.year;
+
+    // Parse the periodDay string to DateTime
+    DateTime parsedPeriodDay = DateTime.parse(periodDay);
+    int month = parsedPeriodDay.month;
+
+    if (month > 12) {
+      month = 1;
+      year++;
+    }
+
+    // Handle the case where day is not null and is 29th February, and it's not a leap year
+    if (day != null && day == 29 && month == 2 && !isLeapYear(year)) {
+      day = 28;
+    }
+
+    // Use a default value of null if day is null
+    int? calculatedDay = day;
+
+    DateTime calculatedDate = DateTime(year, month, calculatedDay ?? 1);
+
+    // Check if calculatedDate is before the parsedPeriodDay and increase the month if needed
+    if (calculatedDate.isBefore(parsedPeriodDay)) {
+      month++;
+      if (month > 12) {
+        month = 1;
+        year++;
+      }
+      calculatedDate = DateTime(year, month, calculatedDay ?? 1);
+    }
+
+    // Return the formatted date as a string
+    return sonOdeme = '${calculatedDate.year}-${calculatedDate.month.toString().padLeft(2, '0')}-${calculatedDate.day.toString().padLeft(2, '0')}';
+  }
+
   String getDaysRemainingMessage(Invoice invoice) {
     final currentDate = DateTime.now();
+    final formattedDate = DateFormat('yyyy-MM-dd').format(currentDate);
     final dueDateKnown = invoice.dueDate != null;
 
     if (currentDate.isBefore(DateTime.parse(faturaDonemi))) {
-      invoice.difference = DateTime.parse(faturaDonemi).difference(currentDate).inDays.toString();
+      invoice.difference = (DateTime.parse(faturaDonemi).difference(currentDate).inDays + 1).toString();
+      return invoice.difference;
+    } else if (formattedDate == faturaDonemi) {
+      invoice.difference = "0";
       return invoice.difference;
     } else if (dueDateKnown) {
-      if (currentDate.isBefore(DateTime.parse(sonOdeme!))) {
-        invoice.difference = DateTime.parse(sonOdeme!).difference(currentDate).inDays.toString();
+      if (sonOdeme != null && currentDate.isAfter(DateTime.parse(faturaDonemi))) {
+        invoice.difference = (DateTime.parse(sonOdeme!).difference(currentDate).inDays + 1).toString();;
         return invoice.difference;
       } else {
-        return invoice.difference;
+        return "error1";
       }
     } else {
-      return invoice.difference;
+      return "error2";
     }
-  }
-
-  Future<void> saveInvoices() async {
-    final prefs = await SharedPreferences.getInstance();
-    final invoiceList = invoices.map((invoice) => invoice.toJson()).toList();
-    await prefs.setStringList('invoices', invoiceList.map((invoice) => jsonEncode(invoice)).toList());
   }
 
   void onSave(Invoice invoice) {
@@ -725,8 +756,10 @@ class _OtherExpensesState extends State<OtherExpenses> {
   Widget build(BuildContext context) {
     final formDataProvider2 = Provider.of<FormDataProvider2>(context, listen: false);
     double screenWidth = MediaQuery.of(context).size.width;
+    double rentSum = calculateSubcategorySum(invoices, 'Kira');
+    String formattedRentSum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(rentSum);
     double sumAll = 0.0;
-    sumAll += sumOfRent;
+    sumAll += rentSum;
     sumAll += sumOfKitchen;
     sumAll += sumOfCatering;
     sumAll += sumOfEnt;
@@ -791,7 +824,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                         backgroundColor: sumAll!=0.0 ? Colors.black : Colors.grey,
                       ),
                       clipBehavior: Clip.hardEdge,
-                      onPressed: sumAll!=0.0 ? () async {
+                      onPressed: sumAll!=0.0 ? () {
                         goToNextPage();
                       } : null,
                       child: const Text('Sonraki', style: TextStyle(fontSize: 18),),
@@ -975,7 +1008,16 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                       ),
                                     ),
                                     child: InkWell(
-                                      onTap: isAddButtonActive ? null : handleRentContainerTouch,
+                                      onTap: () {
+                                        if(isAddButtonActive==false){
+                                          handleRentContainerTouch();
+                                          isAddButtonActiveND = false;
+                                          isAddButtonActiveRD = false;
+                                        } else {
+                                          isAddButtonActiveND = false;
+                                          isAddButtonActiveRD = false;
+                                        }
+                                      },
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
@@ -1051,136 +1093,258 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                           if (isTextFormFieldVisible && hasRentSelected)
                                             Container(
                                               padding: EdgeInsets.all(10),
-                                              child: Column(
-                                                children: [
-                                                  Row(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Expanded(
-                                                        child: TextFormField(
-                                                          controller: textController,
-                                                          decoration: InputDecoration(
-                                                            border: InputBorder.none,
-                                                            hintText: 'ABA',
+                                              child: SingleChildScrollView(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text("Fatura Adı"),
+                                                    SizedBox(height: 5.h),
+                                                    TextFormField(
+                                                      controller: textController,
+                                                      decoration: InputDecoration(
+                                                        isDense: true,
+                                                        contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
+                                                        filled: true,
+                                                        hoverColor: Colors.blue,
+                                                        border: OutlineInputBorder(
+                                                          borderRadius: BorderRadius.circular(10),
+                                                        ),
+                                                        hintText: 'ABA',
+                                                      ),
+                                                    ),
+                                                    SizedBox(height: 10.h),
+                                                    Text("Tutar"),
+                                                    SizedBox(height: 5.h),
+                                                    TextFormField(
+                                                      controller: platformPriceController,
+                                                      keyboardType: TextInputType.number, // Show numeric keyboard
+                                                      decoration: InputDecoration(
+                                                        isDense: true,
+                                                        contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
+                                                        filled: true,
+                                                        hoverColor: Colors.blue,
+                                                        border: OutlineInputBorder(
+                                                          borderRadius: BorderRadius.circular(10),
+                                                        ),
+                                                        hintText: 'GAG',
+                                                      ),
+                                                    ),
+                                                    SizedBox(height: 10.h),
+                                                    Row(
+                                                      children: [
+                                                        Expanded(
+                                                          child: Column(
+                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                            children: [
+                                                              Text("Başlangıç Tarihi"),
+                                                              SizedBox(height: 5.h),
+                                                              Row(
+                                                                children: [
+                                                                  Expanded(
+                                                                    child: DropdownButtonFormField2<int>(
+                                                                      value: _selectedBillingDay,
+                                                                      onChanged: (value) {
+                                                                        setState(() {
+                                                                          _selectedBillingDay = value;
+                                                                        });
+                                                                      },
+                                                                      isExpanded: true,
+                                                                      decoration: InputDecoration(
+                                                                        contentPadding: const EdgeInsets.fromLTRB(0, 5, 0, 0),
+                                                                        isDense: true,
+                                                                        border: OutlineInputBorder(
+                                                                          borderRadius: BorderRadius.circular(10),
+                                                                        ),
+                                                                      ),
+                                                                      hint: const Text(
+                                                                        'Gün',
+                                                                        style: TextStyle(fontSize: 14),
+                                                                      ),
+                                                                      buttonStyleData: const ButtonStyleData(
+                                                                        padding: EdgeInsets.only(right: 8),
+                                                                      ),
+                                                                      iconStyleData: const IconStyleData(
+                                                                        icon: Icon(
+                                                                          Icons.arrow_drop_down,
+                                                                          color: Colors.black45,
+                                                                        ),
+                                                                        iconSize: 24,
+                                                                      ),
+                                                                      dropdownStyleData: DropdownStyleData(
+                                                                        decoration: BoxDecoration(
+                                                                          borderRadius: BorderRadius.circular(15),
+                                                                        ),
+                                                                      ),
+                                                                      menuItemStyleData: const MenuItemStyleData(
+                                                                        padding: EdgeInsets.symmetric(horizontal: 16),
+                                                                      ),
+                                                                      items: daysList.map((day) {
+                                                                        return DropdownMenuItem<int>(
+                                                                          value: day,
+                                                                          child: Text(day.toString()),
+                                                                        );
+                                                                      }).toList(),
+                                                                    ),
+                                                                  ),
+                                                                  SizedBox(width: 10),
+                                                                  Expanded(
+                                                                    child: DropdownButtonFormField2<int>(
+                                                                      value: _selectedBillingMonth,
+                                                                      onChanged: (value) {
+                                                                        setState(() {
+                                                                          _selectedBillingMonth = value;
+                                                                        });
+                                                                      },
+                                                                      isExpanded: true,
+                                                                      decoration: InputDecoration(
+                                                                        contentPadding: const EdgeInsets.fromLTRB(0, 5, 0, 0),
+                                                                        isDense: true,
+                                                                        border: OutlineInputBorder(
+                                                                          borderRadius: BorderRadius.circular(10),
+                                                                        ),
+                                                                      ),
+                                                                      hint: const Text(
+                                                                        'Ay',
+                                                                        style: TextStyle(fontSize: 14),
+                                                                      ),
+                                                                      buttonStyleData: const ButtonStyleData(
+                                                                        padding: EdgeInsets.only(right: 8),
+                                                                      ),
+                                                                      iconStyleData: const IconStyleData(
+                                                                        icon: Icon(
+                                                                          Icons.arrow_drop_down,
+                                                                          color: Colors.black45,
+                                                                        ),
+                                                                        iconSize: 24,
+                                                                      ),
+                                                                      dropdownStyleData: DropdownStyleData(
+                                                                        decoration: BoxDecoration(
+                                                                          borderRadius: BorderRadius.circular(15),
+                                                                        ),
+                                                                      ),
+                                                                      menuItemStyleData: const MenuItemStyleData(
+                                                                        padding: EdgeInsets.symmetric(horizontal: 16),
+                                                                      ),
+                                                                      items: monthsList.map((month) {
+                                                                        return DropdownMenuItem<int>(
+                                                                          value: month,
+                                                                          child: Text(month.toString()),
+                                                                        );
+                                                                      }).toList(),
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                              SizedBox(height: 10.h),
+                                                              Text("Son Ödeme Tarihi"),
+                                                              SizedBox(height: 5.h),
+                                                              DropdownButtonFormField2<int>(
+                                                                value: _selectedDueDay,
+                                                                onChanged: (value) {
+                                                                  setState(() {
+                                                                    _selectedDueDay = value;
+                                                                  });
+                                                                },
+                                                                isExpanded: true,
+                                                                decoration: InputDecoration(
+                                                                  contentPadding: const EdgeInsets.fromLTRB(0, 5, 0, 0),
+                                                                  isDense: true,
+                                                                  border: OutlineInputBorder(
+                                                                    borderRadius: BorderRadius.circular(10),
+                                                                  ),
+                                                                ),
+                                                                hint: const Text(
+                                                                  'Gün',
+                                                                  style: TextStyle(fontSize: 14),
+                                                                ),
+                                                                buttonStyleData: const ButtonStyleData(
+                                                                  padding: EdgeInsets.only(right: 8),
+                                                                ),
+                                                                iconStyleData: const IconStyleData(
+                                                                  icon: Icon(
+                                                                    Icons.arrow_drop_down,
+                                                                    color: Colors.black45,
+                                                                  ),
+                                                                  iconSize: 24,
+                                                                ),
+                                                                dropdownStyleData: DropdownStyleData(
+                                                                  decoration: BoxDecoration(
+                                                                    borderRadius: BorderRadius.circular(15),
+                                                                  ),
+                                                                ),
+                                                                menuItemStyleData: const MenuItemStyleData(
+                                                                  padding: EdgeInsets.symmetric(horizontal: 16),
+                                                                ),
+                                                                items: daysList.map((day) {
+                                                                  return DropdownMenuItem<int>(
+                                                                    value: day,
+                                                                    child: Text(day.toString()),
+                                                                  );
+                                                                }).toList(),
+                                                              ),
+                                                            ],
                                                           ),
                                                         ),
-                                                      ),
-                                                      SizedBox(width: 10),
-                                                      Expanded(
-                                                        child: TextFormField(
-                                                          controller: platformPriceController,
-                                                          keyboardType: TextInputType.number, // Show numeric keyboard
-                                                          decoration: InputDecoration(
-                                                            border: InputBorder.none,
-                                                            hintText: 'GAG',
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      Wrap(
-                                                        children: [
-                                                          IconButton(
-                                                            onPressed: () {
-                                                              setState(() {
-                                                                int maxId = 0; // Initialize with the lowest possible value
-                                                                for (var invoice in invoices) {
-                                                                  if (invoice.id > maxId) {
-                                                                    maxId = invoice.id;
+                                                        Column(
+                                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                          children: [
+                                                            IconButton(
+                                                              onPressed: () {
+                                                                setState(() {
+                                                                  int maxId = 0; // Initialize with the lowest possible value
+                                                                  for (var invoice in invoices) {
+                                                                    if (invoice.id > maxId) {
+                                                                      maxId = invoice.id;
+                                                                    }
                                                                   }
-                                                                }
-                                                                int newId = maxId + 1;
-                                                                final text = textController.text.trim();
-                                                                final priceText = platformPriceController.text.trim();
-                                                                double dprice = double.tryParse(priceText) ?? 0.0;
-                                                                String price = dprice.toStringAsFixed(2);
-                                                                final invoice = Invoice(
-                                                                    id: newId,
-                                                                    price: price,
-                                                                    subCategory: 'Kira',
-                                                                    category: "Diğer Giderler",
-                                                                    name: text,
-                                                                    periodDate: formatPeriodDate(_selectedBillingDay!),
-                                                                    dueDate: _selectedDueDay != null
-                                                                        ? formatDueDate(_selectedDueDay!, formatPeriodDate(_selectedBillingDay!))
-                                                                        : null,
-                                                                    difference: "do2"
-                                                                );
-                                                                onSave(invoice);
-                                                                if (text.isNotEmpty && priceText.isNotEmpty) {
+                                                                  int newId = maxId + 1;
+                                                                  final text = textController.text.trim();
+                                                                  final priceText = platformPriceController.text.trim();
                                                                   double dprice = double.tryParse(priceText) ?? 0.0;
                                                                   String price = dprice.toStringAsFixed(2);
-                                                                  setState(() {
-                                                                    rentTitleList.add(text);
-                                                                    rentPriceList.add(price);
-                                                                    formDataProvider2.setRentTitleValue(text, rentTitleList);
-                                                                    formDataProvider2.setRentPriceValue(price, rentPriceList);
-                                                                    formDataProvider2.calculateSumOfRent(rentPriceList);
-                                                                    isEditingList = false; // Add a corresponding entry for the new item
-                                                                    textController.clear();
-                                                                    platformPriceController.clear();
-                                                                    isTextFormFieldVisible = false;
-                                                                    isAddButtonActive = false;
-                                                                  });
-                                                                }
-                                                              });
-                                                            },
-                                                            icon: Icon(Icons.check_circle, size: 26),
-                                                          ),
-                                                          IconButton(
-                                                            onPressed: () {
-                                                              setState(() {
-                                                                isTextFormFieldVisible = false;
-                                                                isAddButtonActive = false;
-                                                                textController.clear();
-                                                                platformPriceController.clear();
-                                                              });
-                                                            },
-                                                            icon: Icon(Icons.cancel, size: 26),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  Row(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Expanded(
-                                                        child: DropdownButtonFormField<int>(
-                                                          value: _selectedBillingDay,
-                                                          onChanged: (value) {
-                                                            setState(() {
-                                                              _selectedBillingDay = value;
-                                                            });
-                                                          },
-                                                          decoration: InputDecoration(labelText: 'Billing Day'),
-                                                          items: daysList.map((day) {
-                                                            return DropdownMenuItem<int>(
-                                                              value: day,
-                                                              child: Text(day.toString()),
-                                                            );
-                                                          }).toList(),
-                                                        ),
-                                                      ),
-                                                      const SizedBox(width: 10),
-                                                      Expanded(
-                                                        child: DropdownButtonFormField<int>(
-                                                          value: _selectedDueDay,
-                                                          onChanged: (value) {
-                                                            setState(() {
-                                                              _selectedDueDay = value;
-                                                            });
-                                                          },
-                                                          decoration: InputDecoration(labelText: 'Due Day (optional)'),
-                                                          items: daysList.map((day) {
-                                                            return DropdownMenuItem<int>(
-                                                              value: day,
-                                                              child: Text(day.toString()),
-                                                            );
-                                                          }).toList(),
-                                                        ),
-                                                      )
-                                                    ],
-                                                  )
-                                                ],
+                                                                  final invoice = Invoice(
+                                                                      id: newId,
+                                                                      price: price,
+                                                                      subCategory: 'Kira',
+                                                                      category: "Diğer Giderler",
+                                                                      name: text,
+                                                                      periodDate: formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
+                                                                      dueDate: _selectedDueDay != null
+                                                                          ? formatDueDate(_selectedDueDay!, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!))
+                                                                          : null,
+                                                                      difference: "do2"
+                                                                  );
+                                                                  onSave(invoice);
+                                                                  if (text.isNotEmpty && priceText.isNotEmpty) {
+                                                                    setState(() {
+                                                                      isEditingList = false; // Add a corresponding entry for the new item
+                                                                      textController.clear();
+                                                                      platformPriceController.clear();
+                                                                      isTextFormFieldVisible = false;
+                                                                      isAddButtonActive = false;
+                                                                    });
+                                                                  }
+                                                                });
+                                                              },
+                                                              icon: Icon(Icons.check_circle, size: 26),
+                                                            ),
+                                                            IconButton(
+                                                              onPressed: () {
+                                                                setState(() {
+                                                                  isTextFormFieldVisible = false;
+                                                                  isAddButtonActive = false;
+                                                                  textController.clear();
+                                                                  platformPriceController.clear();
+                                                                });
+                                                              },
+                                                              icon: Icon(Icons.cancel, size: 26),
+                                                            ),
+                                                          ],
+                                                        )
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
                                             ),
                                           if (!isEditingList && !isTextFormFieldVisible)
@@ -1208,10 +1372,10 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                     },
                                                     child: Icon(Icons.add_circle, size: 26),
                                                   ),
-                                                  if (convertSum != "0,00")
+                                                  if (formattedRentSum != "0,00")
                                                     Padding(
                                                       padding: const EdgeInsets.only(right: 43),
-                                                      child: Text("Toplam: ${convertSum}", style: TextStyle(fontSize: 20),),
+                                                      child: Text("Toplam: ${formattedRentSum}", style: TextStyle(fontSize: 20),),
                                                     ),
                                                 ],
                                               ),

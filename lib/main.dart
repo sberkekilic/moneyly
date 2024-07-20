@@ -1,7 +1,7 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:moneyly/blocs/settings/settings-cubit.dart';
@@ -59,26 +59,29 @@ class MyApp extends StatelessWidget {
             if (snapshot.connectionState == ConnectionState.done) {
               final allKeysHaveValues = snapshot.data ?? false;
               final initialRoute = allKeysHaveValues ? 'ana-sayfa' : '/';
-              return MaterialApp(
-                initialRoute: initialRoute,
-                routes: {
-                  '/': (context) => MyHomePage(),
-                  'gelir-ekle': (context) => AddIncome(),
-                  'abonelikler': (context) => Subscriptions(),
-                  'faturalar': (context) => Bills(),
-                  'diger-giderler': (context) => OtherExpenses(),
-                  'page5': (context) => Page5(),
-                  'ana-sayfa': (context) => HomePage(),
-                  'income-page': (context) => IncomePage(),
-                  'outcome-page': (context) => OutcomePage(),
-                  'investment-page': (context) => InvestmentPage(),
-                  'wishes-page': (context) => WishesPage()
-                },
-                debugShowCheckedModeBanner: false,
-                title: 'Flutter Demo',
-                theme: ThemeData(
-                  primarySwatch: Colors.blue,
-                  scaffoldBackgroundColor: Color(0xfff0f0f1),
+              return ScreenUtilInit(
+                designSize: const Size(360, 640),
+                builder: (context, child) => MaterialApp(
+                  initialRoute: initialRoute,
+                  routes: {
+                    '/': (context) => MyHomePage(),
+                    'gelir-ekle': (context) => AddIncome(),
+                    'abonelikler': (context) => Subscriptions(),
+                    'faturalar': (context) => Bills(),
+                    'diger-giderler': (context) => OtherExpenses(),
+                    'page5': (context) => Page5(),
+                    'ana-sayfa': (context) => HomePage(),
+                    'income-page': (context) => IncomePage(),
+                    'outcome-page': (context) => OutcomePage(),
+                    'investment-page': (context) => InvestmentPage(),
+                    'wishes-page': (context) => WishesPage()
+                  },
+                  debugShowCheckedModeBanner: false,
+                  title: 'Flutter Demo',
+                  theme: ThemeData(
+                    primarySwatch: Colors.blue,
+                    scaffoldBackgroundColor: Color(0xfff0f0f1),
+                  ),
                 ),
               );
             } else {
