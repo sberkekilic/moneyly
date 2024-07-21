@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttericon/font_awesome_icons.dart';
@@ -54,53 +55,16 @@ class _HomePageState extends State<HomePage> {
   String sumOfOther = "0.0";
   String selectedTitle = '';
 
+  String faturaDonemi = "";
+  String? sonOdeme;
+
   @override
   void initState() {
     super.initState();
     _controller = PersistentTabController(initialIndex: 0);
     _pageController = PageController(initialPage: _currentPage);
     pageHeights = List.filled(4, 200.0);
-    Future.delayed(Duration.zero, () {
-      calculatePageHeights(context);
-    });
     _load();
-  }
-
-  List<Widget> _buildScreens() {
-    return [
-      Container(color: Colors.red), // Replace with your pages
-      Container(color: Colors.green),
-      Container(color: Colors.blue),
-      Container(color: Colors.yellow),
-    ];
-  }
-  List<PersistentBottomNavBarItem> _navBarsItems() {
-    return [
-      PersistentBottomNavBarItem(
-        icon: Icon(Icons.looks_one),
-        title: "One",
-        activeColorPrimary: Colors.blue,
-        inactiveColorPrimary: Colors.grey,
-      ),
-      PersistentBottomNavBarItem(
-        icon: Icon(Icons.looks_two),
-        title: "Two",
-        activeColorPrimary: Colors.blue,
-        inactiveColorPrimary: Colors.grey,
-      ),
-      PersistentBottomNavBarItem(
-        icon: Icon(Icons.looks_3),
-        title: "Three",
-        activeColorPrimary: Colors.blue,
-        inactiveColorPrimary: Colors.grey,
-      ),
-      PersistentBottomNavBarItem(
-        icon: Icon(Icons.looks_4),
-        title: "Four",
-        activeColorPrimary: Colors.blue,
-        inactiveColorPrimary: Colors.grey,
-      ),
-    ];
   }
 
   List<Invoice> upcomingInvoices = [];
@@ -136,79 +100,80 @@ class _HomePageState extends State<HomePage> {
         return "null";
     }
   }
-  Widget buildInvoiceListView(BuildContext context, int index) {
-    List<Invoice> invoices = getInvoicesForIndex(index);
-    return Column(
-      children: [
-        Expanded(
-          child: ListView.builder(
-            shrinkWrap: true,
-            scrollDirection: Axis.horizontal,
-            itemCount: invoices.length,
-            itemBuilder: (context, index) {
-              var invoice = invoices[index];
-              double height = 550;// Adjust index to cycle through pageHeights list
-              return SizedBox(
-                height: height,
-                child: Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: InvoiceCard(
-                    invoices: invoices,
-                    invoice: invoice,
-                    onDelete: () {
-                      setState(() {
-                        invoices.removeAt(index);
-                      });
-                    },
+  Widget buildInvoiceListView(BuildContext context, List<Invoice> invoices) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              shrinkWrap: true,
+              scrollDirection: Axis.horizontal,
+              itemCount: invoices.length,
+              itemBuilder: (context, index) {
+                var invoice = invoices[index];
+                double height = 550;// Adjust index to cycle through pageHeights list
+                return SizedBox(
+                  height: height,
+                  child: Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: InvoiceCard(
+                      invoices: invoices,
+                      invoice: invoice,
+                      onDelete: () {
+                        setState(() {
+                          invoices.removeAt(index);
+                        });
+                      },
+                    ),
                   ),
+                );
+              },
+            )
+          ),
+        ],
+      ),
+    );
+  }
+  Widget buildIndicator(int itemCount, int currentIndex) {
+    return GestureDetector(
+      onHorizontalDragEnd: (details) {
+        if (details.primaryVelocity != null && details.primaryVelocity! < 0) {
+          // Swiped left
+          if (_currentPage < itemCount - 1) {
+            _carouselController.nextPage();
+          }
+        } else if (details.primaryVelocity != null && details.primaryVelocity! > 0) {
+          // Swiped right
+          if (_currentPage > 0) {
+            _carouselController.previousPage();
+          }
+        }
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.green.withOpacity(0.2), // Highlight color for the touchable area
+          borderRadius: BorderRadius.all(Radius.circular(20)),
+        ),
+        padding: EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
+        child: IntrinsicWidth(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(itemCount, (index) {
+              return Container(
+                width: 8.0,
+                height: 8.0,
+                margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 2.0),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: currentIndex == index ? Color.fromARGB(125, 0, 149, 30) : Colors.grey,
                 ),
               );
-            },
-          )
+            }),
+          ),
         ),
-      ],
+      ),
     );
-  }
-  Future<void> calculatePageHeights(BuildContext context) async {
-    pageHeights = [];
-
-    for (int index = 0; index < 4; index++) {
-      double maxHeight = 0.0;
-      List<Invoice> invoices = getInvoicesForIndex(index);
-
-      await Future.wait(
-        invoices.map((invoice) async {
-          final cardHeight = await calculateCardHeight(invoice, context);
-          maxHeight = maxHeight < cardHeight ? cardHeight : maxHeight;
-        }),
-      );
-
-      double height = maxHeight + 21.0; // Add padding
-      print('Page $index height: $height');
-      pageHeights.add(height);
-    }
-  }
-  Future<double> calculateCardHeight(Invoice invoice, BuildContext context) async {
-    Completer<double> cardHeightCompleter = Completer<double>();
-    final card = Builder(
-      builder: (BuildContext context) {
-        WidgetsBinding.instance!.addPostFrameCallback((_) {
-          final RenderBox renderBox = context.findRenderObject() as RenderBox;
-          cardHeightCompleter.complete(renderBox.size.height);
-        });
-
-        return InvoiceCard(
-            invoice: invoice,
-            onDelete: () {},
-            invoices: getInvoicesForIndex(0)
-        ); // Update with appropriate index
-      },
-    );
-
-    // To force the widget to be built for measurement
-    Overlay.of(context)!.context.findRenderObject()!.markNeedsLayout();
-
-    return cardHeightCompleter.future;
   }
   Future<void> loadSharedPreferencesData(List<String> desiredKeys) async {
     final prefs = await SharedPreferences.getInstance();
@@ -303,7 +268,7 @@ class _HomePageState extends State<HomePage> {
           DateTime currentDate = DateTime.now(); // Recalculates the difference data for current date and save the invoice
           setState(() {
             invoices.forEach((invoice) {
-              invoice.updateDifference(currentDate);
+              invoice.updateDifference(invoice, invoice.periodDate, invoice.dueDate!);
             });
 
             invoices.sort((a, b) {
@@ -327,21 +292,29 @@ class _HomePageState extends State<HomePage> {
     final invoiceList = invoicesCopy.map((invoice) => invoice.toJson()).toList();
     await prefs.setStringList('invoices', invoiceList.map((invoice) => jsonEncode(invoice)).toList());
   }
-  String getDaysRemainingMessage(Invoice invoice, String faturaDonemi, String? sonOdeme) {
+  String getDaysRemainingMessage(Invoice invoice) {
     final currentDate = DateTime.now();
+    final formattedDate = DateFormat('yyyy-MM-dd').format(currentDate);
     final dueDateKnown = invoice.dueDate != null;
+
     if (currentDate.isBefore(DateTime.parse(faturaDonemi))) {
-      invoice.difference = DateTime.parse(faturaDonemi).difference(currentDate).inDays.toString();
+      invoice.difference = (DateTime.parse(faturaDonemi).difference(currentDate).inDays + 1).toString();
+      print("GDRM1: ${invoice.difference}");
+      return invoice.difference;
+    } else if (formattedDate == faturaDonemi) {
+      invoice.difference = "0";
+      print("GDRM2: ${invoice.difference}");
       return invoice.difference;
     } else if (dueDateKnown) {
-      if (currentDate.isBefore(DateTime.parse(sonOdeme!))) {
-        invoice.difference = DateTime.parse(sonOdeme).difference(currentDate).inDays.toString();
+      if (sonOdeme != null && currentDate.isAfter(DateTime.parse(faturaDonemi))) {
+        invoice.difference = (DateTime.parse(sonOdeme!).difference(currentDate).inDays + 1).toString();
+        print("GDRM3: ${invoice.difference}");
         return invoice.difference;
       } else {
-        return invoice.difference;
+        return "error1";
       }
     } else {
-      return invoice.difference;
+      return "error2";
     }
   }
   void editInvoice(int id, String periodDate, String? dueDate) {
@@ -349,7 +322,7 @@ class _HomePageState extends State<HomePage> {
     if (index != -1) {
       setState(() {
         final invoice = invoices[index];
-        String diff = getDaysRemainingMessage(invoice, invoice.periodDate, invoice.dueDate);
+        String diff = getDaysRemainingMessage(invoice);
         final updatedInvoice = Invoice(
             id: invoice.id,
             price: invoice.price,
@@ -423,7 +396,7 @@ class _HomePageState extends State<HomePage> {
           DateTime newDueDate = incrementMonth(originalDueDate);
           stringDueDate = DateFormat('yyyy-MM-dd').format(newDueDate);
         }
-        String diff = getDaysRemainingMessage(invoice, stringPeriodDate, stringDueDate);
+        String diff = getDaysRemainingMessage(invoice);
         final updatedInvoice = Invoice(
             id: invoice.id,
             price: invoice.price,
@@ -459,6 +432,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   PageController _pageController = PageController();
+  CarouselController _carouselController = CarouselController();
   int _currentPage = 0;
 
   void _nextPage() {
@@ -864,26 +838,33 @@ class _HomePageState extends State<HomePage> {
                 ),
                 child: Column(
                   children: [
-                    Text(
-                      getTitleForIndex(_currentPage),
-                      style: GoogleFonts.montserrat(fontSize: 17, fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(
-                      height: 347.h, // Adjust height as needed
-                      child: PageView.builder(
-                        controller: _pageController,
-                        onPageChanged: (index) {
-                          setState(() {
-                            _currentPage = index;
-                          });
-                        },
-                        itemCount: 4,
-                        itemBuilder: (context, index) {
-                          return buildInvoiceListView(context, index);
-                        },
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        getTitleForIndex(_currentPage),
+                        style: GoogleFonts.montserrat(fontSize: 17, fontWeight: FontWeight.bold),
                       ),
                     ),
+                    const SizedBox(height: 20),
+                    CarouselSlider.builder(
+                      carouselController: _carouselController,
+                      options: CarouselOptions(
+                        height: 347.h,
+                        viewportFraction: 1.0,
+                        onPageChanged: (index, reason) {
+                          setState(() {
+                            _currentPage = index;
+                            invoices = getInvoicesForIndex(index);
+                          });
+                        },
+                      ),
+                      itemCount: 4,
+                      itemBuilder: (context, index, realIndex) {
+                        return buildInvoiceListView(context, invoices);
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    buildIndicator(4, _currentPage),
                   ],
                 ),
               ),
@@ -994,13 +975,6 @@ class InvoiceCard extends StatelessWidget {
   DateTime sonOdeme = DateTime.now();
   bool isPaidActive = false;
 
-  Future<void> saveInvoices() async {
-    final invoicesCopy = invoices.toList();
-    final prefs = await SharedPreferences.getInstance();
-    final invoiceList = invoicesCopy.map((invoice) => invoice.toJson()).toList();
-    await prefs.setStringList('invoices', invoiceList.map((invoice) => jsonEncode(invoice)).toList());
-  }
-
   String getDaysRemainingMessage() {
     final currentDate = DateTime.now();
     final formattedCurrentDate = DateFormat('yyyy-MM-dd').format(currentDate);
@@ -1033,19 +1007,10 @@ class InvoiceCard extends StatelessWidget {
       child: Container(
         width: 200.w,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.5),
-              spreadRadius: 5,
-              blurRadius: 7,
-              offset: const Offset(0, 3),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(20),
+          color: Color.fromARGB(125, 169, 219, 255),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ListTile(
               title: Text(
@@ -1096,8 +1061,8 @@ class InvoiceCard extends StatelessWidget {
                 width: double.infinity,
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(10),
-                    bottomRight: Radius.circular(10),
+                    bottomLeft: Radius.circular(20),
+                    bottomRight: Radius.circular(20),
                   ),
                   color: isPaidActive ? Colors.black : Colors.grey,
                 ),

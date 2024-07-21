@@ -57,14 +57,29 @@ class Invoice {
     );
   }
 
-  void updateDifference(DateTime currentDate) {
-    final dueDateKnown = dueDate != null;
-    if (currentDate.isBefore(DateTime.parse(periodDate))) {
-      difference = DateTime.parse(periodDate).difference(currentDate).inDays.toString();
+  String updateDifference(Invoice invoice, String faturaDonemi, String sonOdeme) {
+    final currentDate = DateTime.now();
+    final formattedDate = DateFormat('yyyy-MM-dd').format(currentDate);
+    final dueDateKnown = invoice.dueDate != null;
+
+    if (currentDate.isBefore(DateTime.parse(faturaDonemi))) {
+      invoice.difference = (DateTime.parse(faturaDonemi).difference(currentDate).inDays + 1).toString();
+      print("GDRM1: ${invoice.difference}");
+      return invoice.difference;
+    } else if (formattedDate == faturaDonemi) {
+      invoice.difference = "0";
+      print("GDRM2: ${invoice.difference}");
+      return invoice.difference;
     } else if (dueDateKnown) {
-      if (currentDate.isBefore(DateTime.parse(dueDate!))) {
-        difference = DateTime.parse(dueDate!).difference(currentDate).inDays.toString();
+      if (sonOdeme != null && currentDate.isAfter(DateTime.parse(faturaDonemi))) {
+        invoice.difference = (DateTime.parse(sonOdeme!).difference(currentDate).inDays + 1).toString();
+        print("GDRM3: ${invoice.difference}");
+        return invoice.difference;
+      } else {
+        return "error1";
       }
+    } else {
+      return "error2";
     }
   }
 

@@ -113,11 +113,13 @@ class _OutcomePageState extends State<OutcomePage> {
   String convertSum3 = "";
 
   int? _selectedBillingDay;
+  int? _selectedBillingMonth;
   int? _selectedDueDay;
   String faturaDonemi = "";
   String? sonOdeme;
 
   List<int> daysList = List.generate(31, (index) => index + 1);
+  List<int> monthsList = List.generate(12, (index) => index + 1);
 
   @override
   void initState() {
@@ -266,20 +268,24 @@ class _OutcomePageState extends State<OutcomePage> {
 
   String getDaysRemainingMessage(Invoice invoice) {
     final currentDate = DateTime.now();
+    final formattedDate = DateFormat('yyyy-MM-dd').format(currentDate);
     final dueDateKnown = invoice.dueDate != null;
 
     if (currentDate.isBefore(DateTime.parse(faturaDonemi))) {
-      invoice.difference = DateTime.parse(faturaDonemi).difference(currentDate).inDays.toString();
+      invoice.difference = (DateTime.parse(faturaDonemi).difference(currentDate).inDays + 1).toString();
+      return invoice.difference;
+    } else if (formattedDate == faturaDonemi) {
+      invoice.difference = "0";
       return invoice.difference;
     } else if (dueDateKnown) {
-      if (currentDate.isBefore(DateTime.parse(sonOdeme!))) {
-        invoice.difference = DateTime.parse(sonOdeme!).difference(currentDate).inDays.toString();
+      if (sonOdeme != null && currentDate.isAfter(DateTime.parse(faturaDonemi))) {
+        invoice.difference = (DateTime.parse(sonOdeme!).difference(currentDate).inDays + 1).toString();
         return invoice.difference;
       } else {
-        return invoice.difference;
+        return "error1";
       }
     } else {
-      return invoice.difference;
+      return "error2";
     }
   }
 
@@ -385,22 +391,13 @@ class _OutcomePageState extends State<OutcomePage> {
     int totalBillsElement = idsWithHBTargetCategory.length + internetTitleList.length + phoneTitleList.length;
     int totalOthersElement = idsWithRentTargetCategory.length + kitchenTitleList.length + cateringTitleList.length + entertainmentTitleList.length + otherTitleList.length;
 
-    String formatPeriodDate(int day) {
+    String formatPeriodDate(int day, int month) {
       final currentDate = DateTime.now();
       int year = currentDate.year;
-      int month = currentDate.month;
 
-      // Handle the case where the day is greater than the current day
-      if (day > currentDate.day) {
-        // Set the period month to the current month
-        month = currentDate.month;
-      } else {
-        // Increase the month by one if needed
-        month++;
-        if (month > 12) {
-          month = 1;
-          year++;
-        }
+      if (month > 12) {
+        month = 1;
+        year++;
       }
 
       // Handle the case where the day is 29th February and it's not a leap year
@@ -410,25 +407,18 @@ class _OutcomePageState extends State<OutcomePage> {
 
       return faturaDonemi = '${year.toString()}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
     }
+
     String formatDueDate(int? day, String periodDay) {
       final currentDate = DateTime.now();
       int year = currentDate.year;
-      int month = currentDate.month;
 
       // Parse the periodDay string to DateTime
       DateTime parsedPeriodDay = DateTime.parse(periodDay);
+      int month = parsedPeriodDay.month;
 
-      // Handle the case where day is not null and is greater than the current day
-      if (day != null && day > currentDate.day) {
-        // Set the period month to the current month
-        month = currentDate.month;
-      } else {
-        // Increase the month by one if needed
-        month++;
-        if (month > 12) {
-          month = 1;
-          year++;
-        }
+      if (month > 12) {
+        month = 1;
+        year++;
       }
 
       // Handle the case where day is not null and is 29th February, and it's not a leap year
@@ -452,7 +442,7 @@ class _OutcomePageState extends State<OutcomePage> {
       }
 
       // Return the formatted date as a string
-      return '${calculatedDate.year}-${calculatedDate.month.toString().padLeft(2, '0')}-${calculatedDate.day.toString().padLeft(2, '0')}';
+      return sonOdeme = '${calculatedDate.year}-${calculatedDate.month.toString().padLeft(2, '0')}-${calculatedDate.day.toString().padLeft(2, '0')}';
     }
 
     void _showEditDialog(BuildContext context, int index, int page, int orderIndex, int id) {
@@ -506,7 +496,7 @@ class _OutcomePageState extends State<OutcomePage> {
       Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
       _selectedBillingDay = invoice.getPeriodDay();
       _selectedDueDay = invoice.getDueDay();
-      invoice.periodDate = formatPeriodDate(_selectedBillingDay ?? 0);
+      invoice.periodDate = formatPeriodDate(_selectedBillingDay ?? 0, _selectedBillingMonth ?? 0);
       if (_selectedDueDay != null) {
         invoice.dueDate = formatDueDate(_selectedDueDay, invoice.periodDate);
       }
@@ -622,7 +612,7 @@ class _OutcomePageState extends State<OutcomePage> {
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Align(child: Text("Item", style: TextStyle(fontSize: 18),), alignment: Alignment.centerLeft,),
+                Align(alignment: Alignment.centerLeft,child: Text("Item", style: GoogleFonts.montserrat(fontSize: 18),),),
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: selectedEditController,
@@ -638,10 +628,10 @@ class _OutcomePageState extends State<OutcomePage> {
                     ),
                     contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
                   ),
-                  style: const TextStyle(fontSize: 20),
+                  style: GoogleFonts.montserrat(fontSize: 20),
                 ),
                 const SizedBox(height: 10),
-                const Align(child: Text("Price",style: TextStyle(fontSize: 18)), alignment: Alignment.centerLeft),
+                Align(alignment: Alignment.centerLeft, child: Text("Price",style: GoogleFonts.montserrat(fontSize: 18))),
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: selectedPriceController,
@@ -657,26 +647,50 @@ class _OutcomePageState extends State<OutcomePage> {
                     ),
                     contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
                   ),
-                  style: const TextStyle(fontSize: 20),
+                  style: GoogleFonts.montserrat(fontSize: 20),
                   keyboardType: TextInputType.number,
                 ),
-                const Align(child: Text("Bill Period",style: TextStyle(fontSize: 18)), alignment: Alignment.centerLeft),
                 const SizedBox(height: 10),
-                DropdownButtonFormField<int>(
-                  value: _selectedBillingDay,
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedBillingDay = value;
-                    });
-                  },
-                  items: daysList.map((day) {
-                    return DropdownMenuItem<int>(
-                      value: day,
-                      child: Text(day.toString()),
-                    );
-                  }).toList(),
+                Align(alignment: Alignment.centerLeft, child: Text("Period Date",style: GoogleFonts.montserrat(fontSize: 18))),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<int>(
+                        value: _selectedBillingDay,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedBillingDay = value;
+                          });
+                        },
+                        items: daysList.map((day) {
+                          return DropdownMenuItem<int>(
+                            value: day,
+                            child: Text(day.toString()),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    Expanded(
+                      child: DropdownButtonFormField<int>(
+                        value: _selectedBillingMonth,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedBillingMonth = value;
+                          });
+                        },
+                        items: monthsList.map((month) {
+                          return DropdownMenuItem<int>(
+                            value: month,
+                            child: Text(month.toString()),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
                 ),
-                const Align(child: Text("Due Date",style: TextStyle(fontSize: 18)), alignment: Alignment.centerLeft),
+                const SizedBox(height: 10),
+                Align(alignment: Alignment.centerLeft, child: Text("Due Date",style: GoogleFonts.montserrat(fontSize: 18))),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<int>(
                   value: _selectedDueDay,
@@ -716,13 +730,13 @@ class _OutcomePageState extends State<OutcomePage> {
                             if (_selectedDueDay != null) {
                               editInvoice(
                                 id,
-                                formatPeriodDate(_selectedBillingDay!),
-                                formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!)),
+                                formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
+                                formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!)),
                               );
                             } else {
                               editInvoice(
                                 id,
-                                formatPeriodDate(_selectedBillingDay!),
+                                formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
                                 null, // or provide any default value you want for dueDate when _selectedDueDay is null
                               );
                             }
@@ -946,6 +960,7 @@ class _OutcomePageState extends State<OutcomePage> {
         },
       );
     }
+
     for (Invoice invoice in invoices) {
       print('Before ID: ${invoice.id}, Subcategory: ${invoice.subCategory}');
     }

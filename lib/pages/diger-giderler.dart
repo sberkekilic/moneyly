@@ -698,7 +698,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
       return invoice.difference;
     } else if (dueDateKnown) {
       if (sonOdeme != null && currentDate.isAfter(DateTime.parse(faturaDonemi))) {
-        invoice.difference = (DateTime.parse(sonOdeme!).difference(currentDate).inDays + 1).toString();;
+        invoice.difference = (DateTime.parse(sonOdeme!).difference(currentDate).inDays + 1).toString();
         return invoice.difference;
       } else {
         return "error1";
