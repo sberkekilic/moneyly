@@ -23,7 +23,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  late PersistentTabController _controller;
   List<double> pageHeights = [403, 150, 100, 50];
   List<Invoice> invoices = [];
   Map<String, List<String>> incomeMap = {};
@@ -58,48 +57,65 @@ class _HomePageState extends State<HomePage> {
   String faturaDonemi = "";
   String? sonOdeme;
 
+  List<Invoice> upcomingInvoices = [];
+  List<Invoice> todayInvoices = [];
+  List<Invoice> approachingDueInvoices = [];
+  List<Invoice> paymentDueInvoices = [];
+  List<Invoice> overdueInvoices = [];
+
   @override
   void initState() {
     super.initState();
-    _controller = PersistentTabController(initialIndex: 0);
-    _pageController = PageController(initialPage: _currentPage);
     pageHeights = List.filled(4, 200.0);
     _load();
   }
 
-  List<Invoice> upcomingInvoices = [];
-  List<Invoice> dueDateInvoices = [];
-  List<Invoice> lastDayInvoices = [];
-  List<Invoice> otherInvoices = [];
 
-  List<Invoice> getInvoicesForIndex(int index) {
-    switch (index) {
-      case 0:
-        return upcomingInvoices;
-      case 1:
-        return dueDateInvoices;
-      case 2:
-        return lastDayInvoices;
-      case 3:
-        return otherInvoices;
-      default:
-        return [];
-    }
+  void categorizeInvoices(List<Invoice> faturalar) {
+    DateTime today = DateTime.now();
+
+    // 1. Upcoming Invoice Date (those with PeriodDate before today)
+    upcomingInvoices = faturalar.where((invoice) {
+      DateTime periodDate = DateTime.parse(invoice.periodDate);
+      return periodDate.isAfter(today);
+    }).toList();
+
+    // 2. Invoice Day (with PeriodDate today)
+    todayInvoices = faturalar.where((invoice) {
+      DateTime periodDate = DateTime.parse(invoice.periodDate);
+      return periodDate.day == today.day && periodDate.month == today.month && periodDate.year == today.year;
+    }).toList();
+
+    // 3. Approaching Due Date (those with DueDate data and this date is before today)
+    approachingDueInvoices = faturalar.where((invoice) {
+      if (invoice.dueDate!= null) {
+        DateTime dueDate = DateTime.parse(invoice.dueDate!);
+        return dueDate.isAfter(today) && dueDate.difference(today).inDays <= 7;
+      }
+      return false;
+    }).toList();
+
+    // 4. Payment Due Date (those with DueDate data and this date is today)
+    paymentDueInvoices = faturalar.where((invoice) {
+      if (invoice.dueDate!= null) {
+        DateTime dueDate = DateTime.parse(invoice.dueDate!);
+        return dueDate.day == today.day && dueDate.month == today.month && dueDate.year == today.year;
+      }
+      return false;
+    }).toList();
+
+    // 5. Overdue Invoices (Invoices with DueDate data that are overdue or invoices without DueDate data but with an overdue PeriodDate)
+    overdueInvoices = faturalar.where((invoice) {
+      if (invoice.dueDate!= null) {
+        DateTime dueDate = DateTime.parse(invoice.dueDate!);
+        return dueDate.isBefore(today);
+      } else {
+        DateTime periodDate = DateTime.parse(invoice.periodDate);
+        return periodDate.isBefore(today);
+      }
+    }).toList();
   }
-  String getTitleForIndex(int index) {
-    switch (index) {
-      case 0:
-        return "Yaklaşan Faturalar";
-      case 1:
-        return "Son Ödeme Tarihi Yaklaşan";
-      case 2:
-        return "Ödeme İçin Son Gün";
-      case 3:
-        return "Ödeme Dönemi";
-      default:
-        return "null";
-    }
-  }
+
   Widget buildInvoiceListView(BuildContext context, List<Invoice> invoices) {
     return Align(
       alignment: Alignment.centerLeft,
@@ -142,11 +158,17 @@ class _HomePageState extends State<HomePage> {
           // Swiped left
           if (_currentPage < itemCount - 1) {
             _carouselController.nextPage();
+          } else {
+            // If on the last page, go back to the first page
+            _carouselController.animateToPage(0);
           }
         } else if (details.primaryVelocity != null && details.primaryVelocity! > 0) {
           // Swiped right
           if (_currentPage > 0) {
             _carouselController.previousPage();
+          } else {
+            // If on the first page, go to the last page
+            _carouselController.animateToPage(itemCount - 1);
           }
         }
       },
@@ -166,7 +188,7 @@ class _HomePageState extends State<HomePage> {
                 margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 2.0),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: currentIndex == index ? Color.fromARGB(125, 0, 149, 30) : Colors.grey,
+                  color: (currentIndex % itemCount == index) ? Color.fromARGB(125, 0, 149, 30) : Colors.grey,
                 ),
               );
             }),
@@ -207,6 +229,39 @@ class _HomePageState extends State<HomePage> {
         return '';
     }
   }
+  String getTitleForIndex(int index) {
+    switch (index) {
+      case 0:
+        return "Fatura Tarihi Yaklaşan";
+      case 1:
+        return "Fatura Günü";
+      case 2:
+        return "Son Ödeme Tarihi Yaklaşan";
+      case 3:
+        return "Son Ödeme Günü";
+      case 4:
+        return "Tarihi Geçmiş Faturalar";
+      default:
+        return "null";
+    }
+  }
+  List<Invoice> getCurrentPageInvoices(int currentPage) {
+    switch (currentPage) {
+      case 0:
+        return upcomingInvoices;
+      case 1:
+        return todayInvoices;
+      case 2:
+        return approachingDueInvoices;
+      case 3:
+        return paymentDueInvoices;
+      case 4:
+        return overdueInvoices;
+      default:
+        return [];
+    }
+  }
+
   void _load() async {
     final prefs = await SharedPreferences.getInstance();
     final ab1 = prefs.getInt('selected_option') ?? SelectedOption.None.index;
@@ -281,6 +336,7 @@ class _HomePageState extends State<HomePage> {
             prefs.setStringList('invoices', invoiceJsonList);
 
           });
+          categorizeInvoices(invoices);
         });
       }
       loadSharedPreferencesData(actualDesiredKeys);
@@ -431,25 +487,8 @@ class _HomePageState extends State<HomePage> {
     return sum;
   }
 
-  PageController _pageController = PageController();
   CarouselController _carouselController = CarouselController();
   int _currentPage = 0;
-
-  void _nextPage() {
-    _pageController.animateToPage(
-      _currentPage + 1,
-      duration: Duration(milliseconds: 300),
-      curve: Curves.ease,
-    );
-  }
-
-  void _previousPage() {
-    _pageController.animateToPage(
-      _currentPage - 1,
-      duration: Duration(milliseconds: 300),
-      curve: Curves.ease,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -493,41 +532,6 @@ class _HomePageState extends State<HomePage> {
     String formattedBolum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(bolum);
     String currentDate = DateFormat('dd MMMM yyyy').format(DateTime.now());
     incomeYuzdesi = incomeYuzdesi*10;
-    // Print as an integer
-
-    String getDaysRemainingMessage(Invoice invoice) {
-      final currentDate = DateTime.now();
-      final dueDateKnown = invoice.dueDate != null;
-
-      if (currentDate.isBefore(DateTime.parse(invoice.periodDate))) {
-        return "Fatura kesimine kalan gün";
-      } else if (dueDateKnown) {
-        final periodDate = DateTime.parse(invoice.periodDate);
-        final dueDate = DateTime.parse(invoice.dueDate!);
-
-        if (currentDate.isBefore(dueDate) && currentDate.isAfter(periodDate)) {
-          return "Son ödeme tarihine kalan gün";
-        } else if (currentDate.day == dueDate.day && currentDate.month == dueDate.month && currentDate.year == dueDate.year) {
-          return "Ödeme için son gün";
-        }
-      } else if (currentDate.day == DateTime.parse(invoice.periodDate).day && currentDate.month == DateTime.parse(invoice.periodDate).month && currentDate.year == DateTime.parse(invoice.periodDate).year) {
-        return "Ödeme dönemi";
-      }
-
-      return "Error";
-    }
-
-    for (var invoice in invoices) {
-      if (getDaysRemainingMessage(invoice) == "Fatura kesimine kalan gün") {
-        upcomingInvoices.add(invoice);
-      } else if (getDaysRemainingMessage(invoice) == "Son ödeme tarihine kalan gün") {
-        dueDateInvoices.add(invoice);
-      } else if (getDaysRemainingMessage(invoice) == "Ödeme için son gün") {
-        lastDayInvoices.add(invoice);
-      } else if (getDaysRemainingMessage(invoice) == "Ödeme dönemi") {
-        otherInvoices.add(invoice);
-      }
-    }
 
     return Scaffold(
       appBar: AppBar(
@@ -716,7 +720,7 @@ class _HomePageState extends State<HomePage> {
                                 animation: true,
                                 lineHeight: 6.h,
                                 animationDuration: 1000,
-                                percent: sumOfSubs/outcomeValue,
+                                percent: (outcomeValue != 0) ? (sumOfSubs / outcomeValue) : 0,
                                 barRadius: const Radius.circular(10),
                                 progressColor: const Color(0xffb71a1a),
                               ),
@@ -755,7 +759,7 @@ class _HomePageState extends State<HomePage> {
                                 animation: true,
                                 lineHeight: 6.h,
                                 animationDuration: 1000,
-                                percent: sumOfBills/outcomeValue,
+                                percent: (outcomeValue != 0) ? (sumOfBills / outcomeValue) : 0,
                                 barRadius: const Radius.circular(10),
                                 progressColor: const Color(0xff1a9eb7),
                               ),
@@ -794,7 +798,7 @@ class _HomePageState extends State<HomePage> {
                                 animation: true,
                                 lineHeight: 6.h,
                                 animationDuration: 1000,
-                                percent: sumOfOthers/outcomeValue,
+                                percent: (outcomeValue != 0) ? (sumOfOthers / outcomeValue) : 0,
                                 barRadius: const Radius.circular(10),
                                 progressColor: const Color(0xff381ab7),
                               ),
@@ -851,20 +855,21 @@ class _HomePageState extends State<HomePage> {
                       options: CarouselOptions(
                         height: 347.h,
                         viewportFraction: 1.0,
+                        enableInfiniteScroll: true,
                         onPageChanged: (index, reason) {
                           setState(() {
                             _currentPage = index;
-                            invoices = getInvoicesForIndex(index);
                           });
                         },
                       ),
-                      itemCount: 4,
+                      itemCount: 5,
                       itemBuilder: (context, index, realIndex) {
-                        return buildInvoiceListView(context, invoices);
+                        print("itemBuilder index : ${index}");
+                        return buildInvoiceListView(context, getCurrentPageInvoices(_currentPage));
                       },
                     ),
                     const SizedBox(height: 20),
-                    buildIndicator(4, _currentPage),
+                    buildIndicator(5, _currentPage),
                   ],
                 ),
               ),
