@@ -1317,6 +1317,11 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                   onSave(invoice);
                                                                   if (text.isNotEmpty && priceText.isNotEmpty) {
                                                                     setState(() {
+                                                                      rentTitleList.add(text);
+                                                                      rentPriceList.add(price);
+                                                                      formDataProvider2.setRentTitleValue(text, rentTitleList);
+                                                                      formDataProvider2.setRentPriceValue(price, rentPriceList);
+                                                                      formDataProvider2.calculateSumOfRent(rentPriceList);
                                                                       isEditingList = false; // Add a corresponding entry for the new item
                                                                       textController.clear();
                                                                       platformPriceController.clear();

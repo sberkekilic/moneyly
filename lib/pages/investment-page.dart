@@ -3,8 +3,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_inset_box_shadow/flutter_inset_box_shadow.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fluttericon/font_awesome_icons.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:percent_indicator/percent_indicator.dart';
@@ -20,13 +22,13 @@ class InvestmentPage extends StatefulWidget {
 class _InvestmentPageState extends State<InvestmentPage> {
   List<String> itemList = ["Döviz", "Nakit", "Gayrimenkül", "Araba", "Elektronik", "Diğer"];
 
-  List<String> itemIcons = [
-    'assets/currency.svg',
-    'assets/cash.svg',
-    'assets/real-estate.svg',
-    'assets/car.svg',
-    'assets/electronic.svg',
-    'assets/chevron-down.svg',
+  List<FaIcon> itemIcons = [
+    FaIcon(FontAwesomeIcons.dollarSign, size: 20.sp, color: Colors.black,),
+    FaIcon(FontAwesomeIcons.moneyBill, size: 20.sp),
+    FaIcon(FontAwesomeIcons.handHoldingDollar, size: 20.sp),
+    FaIcon(FontAwesomeIcons.carSide, size: 20.sp),
+    FaIcon(FontAwesomeIcons.mobile, size: 20.sp),
+    FaIcon(FontAwesomeIcons.chevronDown, size: 20.sp),
   ];
   String selectedInvestmentType = "";
   Map<String, double?> categoryValues = {};
@@ -109,44 +111,43 @@ class _InvestmentPageState extends State<InvestmentPage> {
     }
   }
 
-  Widget buildCategoryButton(String category, List<String> itemIcons) {
+  Widget buildCategoryButton(String category, List<FaIcon> itemIcons) {
     int index = itemList.indexOf(category);
-    String iconAsset = itemIcons[index];
+    FaIcon iconAsset = itemIcons[index];
 
-    return GestureDetector(
-      onTap: () {
-        selectCategory(category);
-        togglePopupVisibility(context);
-      },
-      child: Padding(
+    return Padding(
         padding: const EdgeInsets.fromLTRB(30, 15, 30, 15),
         child: Align(
           alignment: Alignment.centerLeft,
-          child: Row(
-            children: [
-              Center(
-                child: CircleAvatar(
-                  backgroundColor: Colors.white,
-                  child: SvgPicture.asset(
-                    iconAsset,
-                    width: 34,
-                  ),
-                )
-              ),
-              const SizedBox(width: 15),
-              Text(
-                category,
-                style: GoogleFonts.montserrat(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w600,
+          child: GestureDetector(
+            onTap: () {
+              selectCategory(category);
+              togglePopupVisibility(context);
+            },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Center(
+                  child: CircleAvatar(
+                    radius: 16.sp,
+                    backgroundColor: Colors.white,
+                    child: iconAsset
+                  )
                 ),
-              ),
-            ],
+                const SizedBox(width: 15),
+                Text(
+                  category,
+                  style: GoogleFonts.montserrat(
+                    color: Colors.white,
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   void showEditDialog(String category, int categoryIndex, int index){
@@ -454,7 +455,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                       padding: const EdgeInsets.only(right: 10),
                       backgroundColor: const Color(0xffc6c6c7),
                       animation: true,
-                      lineHeight: 10,
+                      lineHeight: 7.h,
                       animationDuration: 1000,
                       percent: sum / goal!,
                       trailing: Text("%${((sum / goal)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.normal)),
@@ -695,15 +696,20 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                     "Biriktir",
                                     style: GoogleFonts.montserrat(fontSize: 20),
                                   ),
-                                  TextButton(
-                                      onPressed: () {
-                                        setState(() {
+                                  IconButton(
+                                      onPressed: () async{
+                                        final prefs = await SharedPreferences.getInstance();
+                                        setState(()  {
                                           removeCategory(category, goal, sum);
                                           removeValues(sumList, cashDepot);
                                           cashDepot = [];
+                                          final sumListJson = jsonEncode(sumList);
+                                          final cashDepotJson = jsonEncode(cashDepot);
+                                          prefs.setString('sumList', sumListJson);
+                                          prefs.setString('cashDepot', cashDepotJson);
                                         });
                                       },
-                                      child: Text("Sil", style: GoogleFonts.montserrat(fontSize: 20),)
+                                      icon: const Icon(Icons.remove_circle_outline)
                                   )
                                 ],
                               ),
@@ -814,15 +820,20 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                     "Biriktir",
                                     style: GoogleFonts.montserrat(fontSize: 20),
                                   ),
-                                  TextButton(
-                                      onPressed: () {
-                                        setState(() {
+                                  IconButton(
+                                      onPressed: () async{
+                                        final prefs = await SharedPreferences.getInstance();
+                                        setState(()  {
                                           removeCategory(category, goal, sum);
                                           removeValues(sumList, realEstateDepot);
                                           realEstateDepot = [];
+                                          final sumListJson = jsonEncode(sumList);
+                                          final realEstateDepotJson = jsonEncode(realEstateDepot);
+                                          prefs.setString('sumList', sumListJson);
+                                          prefs.setString('realEstateDepot', realEstateDepotJson);
                                         });
                                       },
-                                      child: Text("Sil", style: GoogleFonts.montserrat(fontSize: 20),)
+                                      icon: const Icon(Icons.remove_circle_outline)
                                   )
                                 ],
                               ),
@@ -933,15 +944,20 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                     "Biriktir",
                                     style: GoogleFonts.montserrat(fontSize: 20),
                                   ),
-                                  TextButton(
-                                      onPressed: () {
-                                        setState(() {
+                                  IconButton(
+                                      onPressed: () async{
+                                        final prefs = await SharedPreferences.getInstance();
+                                        setState(()  {
                                           removeCategory(category, goal, sum);
                                           removeValues(sumList, carDepot);
                                           carDepot = [];
+                                          final sumListJson = jsonEncode(sumList);
+                                          final carDepotJson = jsonEncode(carDepot);
+                                          prefs.setString('sumList', sumListJson);
+                                          prefs.setString('carDepot', carDepotJson);
                                         });
                                       },
-                                      child: Text("Sil", style: GoogleFonts.montserrat(fontSize: 20),)
+                                      icon: const Icon(Icons.remove_circle_outline)
                                   )
                                 ],
                               ),
@@ -1052,15 +1068,20 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                     "Biriktir",
                                     style: GoogleFonts.montserrat(fontSize: 20),
                                   ),
-                                  TextButton(
-                                      onPressed: () {
-                                        setState(() {
+                                  IconButton(
+                                      onPressed: () async{
+                                        final prefs = await SharedPreferences.getInstance();
+                                        setState(()  {
                                           removeCategory(category, goal, sum);
                                           removeValues(sumList, electronicDepot);
                                           electronicDepot = [];
+                                          final sumListJson = jsonEncode(sumList);
+                                          final electronicDepotJson = jsonEncode(electronicDepot);
+                                          prefs.setString('sumList', sumListJson);
+                                          prefs.setString('electronicDepot', electronicDepotJson);
                                         });
                                       },
-                                      child: Text("Sil", style: GoogleFonts.montserrat(fontSize: 20),)
+                                      icon: const Icon(Icons.remove_circle_outline)
                                   )
                                 ],
                               ),
@@ -1171,15 +1192,20 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                     "Biriktir",
                                     style: GoogleFonts.montserrat(fontSize: 20),
                                   ),
-                                  TextButton(
-                                      onPressed: () {
-                                        setState(() {
+                                  IconButton(
+                                      onPressed: () async{
+                                        final prefs = await SharedPreferences.getInstance();
+                                        setState(()  {
                                           removeCategory(category, goal, sum);
                                           removeValues(sumList, otherDepot);
                                           otherDepot = [];
+                                          final sumListJson = jsonEncode(sumList);
+                                          final otherDepotJson = jsonEncode(otherDepot);
+                                          prefs.setString('sumList', sumListJson);
+                                          prefs.setString('otherDepot', otherDepotJson);
                                         });
                                       },
-                                      child: Text("Sil", style: GoogleFonts.montserrat(fontSize: 20),)
+                                      icon: const Icon(Icons.remove_circle_outline)
                                   )
                                 ],
                               ),
@@ -1209,39 +1235,60 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                   isScrollControlled: true,
                                   builder: (context) {
                                     double? enteredValue;
-                                    return Padding(
-                                      padding:  EdgeInsets.fromLTRB(20,20,20,MediaQuery.of(context).viewInsets.bottom+20),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            'Add a value for $category',
-                                            style: const TextStyle(fontSize: 18),
-                                          ),
-                                          const SizedBox(height: 10),
-                                          TextFormField(
-                                            controller: textController,
-                                            keyboardType: TextInputType.number,
-                                            decoration: const InputDecoration(
-                                              labelText: 'Enter a number',
+                                    return Container(
+                                      height: MediaQuery.of(context).size.height * 0.6,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white, // Background color
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(10),
+                                          topRight: Radius.circular(10),
+                                        ),
+                                      ),
+                                      child: Padding(
+                                        padding:  EdgeInsets.fromLTRB(20,20,20,MediaQuery.of(context).viewInsets.bottom+20),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              '$category hedefin için tutar belirle.',
+                                              style: const TextStyle(fontSize: 18),
                                             ),
-                                          ),
-                                          const SizedBox(height: 10),
-                                          ElevatedButton(
-                                            onPressed: () {
-                                              setState(() {
-                                                String inputText = textController.text;
-                                                enteredValue = double.parse(inputText);
-                                                if (enteredValue != null) {
-                                                  addCategoryValue(category, enteredValue ?? 0, sum);
-                                                  Navigator.pop(context); // Close the form
-                                                }
-                                              });
-                                            },
-                                            child: const Text('Add'),
-                                          ),
-                                        ],
+                                            SizedBox(height: 20.h),
+                                            TextFormField(
+                                              controller: textController,
+                                              keyboardType: TextInputType.number,
+                                              decoration: const InputDecoration(
+                                                border: OutlineInputBorder(),
+                                                labelText: 'Tutar',
+                                              ),
+                                            ),
+                                            Expanded(child: Container()), // Create a space to push ElevatedButton to bottom.
+                                            Align(
+                                              alignment: Alignment.bottomCenter,
+                                              child: ElevatedButton(
+                                                style: ElevatedButton.styleFrom(
+                                                  shape: RoundedRectangleBorder(
+                                                      borderRadius: BorderRadius.circular(12)),
+                                                  backgroundColor: Colors.black,
+                                                  minimumSize: Size(double.infinity, 40),
+                                                ),
+                                                clipBehavior: Clip.hardEdge,
+                                                onPressed: () {
+                                                  setState(() {
+                                                    String inputText = textController.text;
+                                                    enteredValue = double.parse(inputText);
+                                                    if (enteredValue != null) {
+                                                      addCategoryValue(category, enteredValue ?? 0, sum);
+                                                      Navigator.pop(context); // Close the form
+                                                    }
+                                                  });
+                                                },
+                                                child: const Text('Add'),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     );
                                   },
@@ -1370,6 +1417,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
 
   @override
   Widget build(BuildContext context) {
+    String currentDate = DateFormat('dd MMMM yyyy').format(DateTime.now());
     sumOfSavingValue = sumInvestValue.isNaN ? 0.0 : sumInvestValue;
     savingsValue = totalInvestValue.isNaN ? 0.0 : totalInvestValue;
     result = (savingsValue == 0.0) ? 0.0 : sumOfSavingValue / savingsValue;
@@ -1382,9 +1430,9 @@ class _InvestmentPageState extends State<InvestmentPage> {
                 appBar: AppBar(
                   backgroundColor: const Color(0xfff0f0f1),
                   elevation: 0,
-                  toolbarHeight: 70,
+                  toolbarHeight: 50.h,
                   automaticallyImplyLeading: false,
-                  leadingWidth: 30,
+                  leadingWidth: 30.w,
                   title: Stack(
                     alignment: Alignment.centerLeft,
                     children: [
@@ -1393,21 +1441,19 @@ class _InvestmentPageState extends State<InvestmentPage> {
                         children: [
                           IconButton(
                             onPressed: () {
-
                             },
                             icon: const Icon(Icons.settings, color: Colors.black), // Replace with the desired left icon
                           ),
                           IconButton(
                             onPressed: () {
-
                             },
                             icon: const Icon(Icons.person, color: Colors.black), // Replace with the desired right icon
                           ),
                         ],
                       ),
                       Text(
-                        "Eylül 2023",
-                        style: GoogleFonts.montserrat(color: Colors.black, fontSize: 28, fontWeight: FontWeight.normal),
+                        currentDate,
+                        style: GoogleFonts.montserrat(color: Colors.black, fontSize: 20.sp, fontWeight: FontWeight.normal),
                       ),
                     ],
                   ),
@@ -1445,7 +1491,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                   padding: const EdgeInsets.only(right: 10),
                                   backgroundColor: const Color(0xffc6c6c7),
                                   animation: true,
-                                  lineHeight: 10,
+                                  lineHeight: 7.h,
                                   animationDuration: 1000,
                                   percent: result,
                                   trailing: Text("%${((result)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.normal)),
@@ -1463,7 +1509,9 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                     Text("Birikim Ekle", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.normal)),
                                     IconButton(
                                       onPressed: () {
-                                        togglePopupVisibility(context);
+                                        setState(() {
+                                          togglePopupVisibility(context);
+                                        });
                                       },
                                       icon: const Icon(Icons.add_circle),
                                     )
@@ -1492,6 +1540,11 @@ class _InvestmentPageState extends State<InvestmentPage> {
                             );
                           },
                         ),
+                        Text("result : $result"),
+                        Text("electronic $electronicDepot"),
+                        Text("exchange $exchangeDepot"),
+                        Text("savingsValue : $savingsValue"),
+                        Text("sumOfSavingValue : $sumOfSavingValue"),
                         Text("sumInvestValue : $sumInvestValue"),
                         Text("sumList : $sumList"),
                         Text("formattedSumOfSavingValue : $formattedSumOfSavingValue")
@@ -1499,88 +1552,80 @@ class _InvestmentPageState extends State<InvestmentPage> {
                     ),
                   ),
                 ),
-                bottomNavigationBar: SizedBox(
-                  height: 90,
-                  child: Container(
-                    decoration: BoxDecoration(
+                bottomNavigationBar: Container(
+                  decoration: BoxDecoration(
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.5),
                           spreadRadius: 5,
                           blurRadius: 5,
-                          offset: const Offset(0, 3),
+                          offset: const Offset(0, 2),
                         ),
                       ],
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(10), // Adjust as needed
-                        topRight: Radius.circular(10), // Adjust as needed
-                      ),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(10), // Adjust as needed
-                        topRight: Radius.circular(10), // Adjust as needed
-                      ),
-                      child: BottomNavigationBar(
-                        currentIndex: 3,
-                        onTap: (int index) {
-                          switch (index) {
-                            case 0:
-                              Navigator.pushNamed(context, 'ana-sayfa');
-                              break;
-                            case 1:
-                              Navigator.pushNamed(context, 'income-page');
-                              break;
-                            case 2:
-                              Navigator.pushNamed(context, 'outcome-page');
-                              break;
-                            case 3:
-                              Navigator.pushNamed(context, 'investment-page');
-                              break;
-                            case 4:
-                              Navigator.pushNamed(context, 'wishes-page');
-                              break;
-                          }
-                        },
-                        type: BottomNavigationBarType.fixed,
-                        selectedLabelStyle: GoogleFonts.montserrat(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold),
-                        unselectedLabelStyle: GoogleFonts.montserrat(color: Colors.black, fontSize: 11, fontWeight: FontWeight.w600),
-                        items: [
-                          BottomNavigationBarItem(
-                            icon: Icon(Icons.home, size: 30),
-                            label: 'Ana Sayfa',
-                          ),
-                          BottomNavigationBarItem(
-                            icon: Icon(Icons.attach_money, size: 30),
-                            label: 'Gelir',
-                          ),
-                          BottomNavigationBarItem(
-                            icon: Icon(Icons.money_off, size: 30),
-                            label: 'Gider',
-                          ),
-                          BottomNavigationBarItem(
-                            icon: Padding(
-                              padding: EdgeInsets.only(left: 5,right: 5),
-                              child: Container(
-                                  width: double.infinity,
-                                  decoration: BoxDecoration(
-                                    color: Colors.blue.shade100, // Background color
-                                    borderRadius: BorderRadius.circular(20), // Rounded corners
-                                  ),
-                                  child: Icon(Icons.trending_up_sharp, size: 30)
-                              ),
+                      borderRadius: BorderRadius.circular(10)
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: BottomNavigationBar(
+                      type: BottomNavigationBarType.fixed, // Set the type to shifting
+                      selectedItemColor: const Color.fromARGB(255, 26, 183, 56),
+                      selectedLabelStyle: GoogleFonts.montserrat(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold),
+                      unselectedLabelStyle: GoogleFonts.montserrat(color: const Color.fromARGB(255, 26, 183, 56), fontSize: 11, fontWeight: FontWeight.w600),
+                      currentIndex: 3,
+                      onTap: (int index) {
+                        switch (index) {
+                          case 0:
+                            Navigator.pushNamed(context, 'ana-sayfa');
+                            break;
+                          case 1:
+                            Navigator.pushNamed(context, 'income-page');
+                            break;
+                          case 2:
+                            Navigator.pushNamed(context, 'outcome-page');
+                            break;
+                          case 3:
+                            Navigator.pushNamed(context, 'investment-page');
+                            break;
+                          case 4:
+                            Navigator.pushNamed(context, 'wishes-page');
+                            break;
+                        }
+                      },
+                      items: [
+                        BottomNavigationBarItem(
+                          icon: Icon(Icons.home, size: 30),
+                          label: 'Ana Sayfa',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Icon(Icons.attach_money, size: 30),
+                          label: 'Gelir',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Icon(Icons.money_off, size: 30),
+                          label: 'Gider',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Padding(
+                            padding: EdgeInsets.only(left: 5,right: 5),
+                            child: Container(
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: const Color.fromARGB(125, 26, 183, 56), // Background color
+                                  borderRadius: BorderRadius.circular(20), // Rounded corners
+                                ),
+                                child: Icon(Icons.trending_up_sharp, size: 30)
                             ),
-                            label: 'Yatırım',
                           ),
-                          BottomNavigationBarItem(
-                            icon: Padding(
-                              padding: const EdgeInsets.only(top: 5,bottom: 5),
-                              child: Icon(FontAwesome.bank, size: 20),
-                            ),
-                            label: 'İstekler',
-                          )
-                        ],
-                      ),
+                          label: 'Yatırım',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Padding(
+                            padding: const EdgeInsets.only(top: 5,bottom: 5),
+                            child: Icon(FontAwesome.bank, size: 20),
+                          ),
+                          label: 'İstekler',
+                        )
+                      ],
                     ),
                   ),
                 ),
@@ -1600,42 +1645,32 @@ class _InvestmentPageState extends State<InvestmentPage> {
                     duration: const Duration(milliseconds: 500), // Duration for the opacity animation
                     child: Visibility(
                       visible: isPopupVisible,
-                      child: Container(
-                        padding: const EdgeInsets.only(top: 320),
-                        color: Colors.black.withOpacity(0.5), // Darkened background
-                        child: Align(
-                            alignment: Alignment.bottomLeft,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: itemList.map((category) {
-                                return buildCategoryButton(category, itemIcons);
-                              }).toList(),
-                            )
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 60,
-                  right: 20,
-                  child: Visibility(
-                      visible: isPopupVisible,
-                      child: Center(
-                          child: GestureDetector(
+                      child: Stack(
+                        children: [
+                          GestureDetector(
                             onTap: () {
                               togglePopupVisibility(context);
                             },
-                            child: const Icon(
-                              Icons.close,
-                              color: Colors.white,
-                              size: 50,
-                              shadows: <Shadow>[
-                                Shadow(color: Colors.black, blurRadius: 10.0, offset: Offset(6, 3))
-                              ],
+                            child: Container(
+                              padding: EdgeInsets.only(bottom: 50.h),
+                              color: Colors.black.withOpacity(0.2), // Darkened background
+                              child: Align(
+                                alignment: Alignment.bottomLeft,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: itemList.map((category) {
+                                    return GestureDetector(
+                                      onTap: () {}, // Add an empty callback to prevent togglePopupVisibility from being called
+                                      child: buildCategoryButton(category, itemIcons),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
                             ),
-                          )
-                      )
+                          ),
+                        ]
+                      ),
+                    ),
                   ),
                 ),
               ],

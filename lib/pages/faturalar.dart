@@ -64,16 +64,13 @@ class Invoice {
 
     if (currentDate.isBefore(DateTime.parse(faturaDonemi))) {
       invoice.difference = (DateTime.parse(faturaDonemi).difference(currentDate).inDays + 1).toString();
-      print("GDRM1: ${invoice.difference}");
       return invoice.difference;
-    } else if (formattedDate == faturaDonemi) {
+    } else if (formattedDate == faturaDonemi || sonOdeme ==formattedDate) {
       invoice.difference = "0";
-      print("GDRM2: ${invoice.difference}");
       return invoice.difference;
     } else if (dueDateKnown) {
       if (sonOdeme != null && currentDate.isAfter(DateTime.parse(faturaDonemi))) {
         invoice.difference = (DateTime.parse(sonOdeme!).difference(currentDate).inDays + 1).toString();
-        print("GDRM3: ${invoice.difference}");
         return invoice.difference;
       } else {
         return "error1";
@@ -90,6 +87,11 @@ class Invoice {
   int getPeriodDay() {
     DateTime periodDateTime = DateTime.parse(periodDate);
     return periodDateTime.day;
+  }
+
+  int getPeriodMonth() {
+    DateTime periodDateTime = DateTime.parse(periodDate);
+    return periodDateTime.month;
   }
 
   int? getDueDay() {
@@ -229,6 +231,7 @@ class _BillsState extends State<Bills> {
     TextEditingController selectedEditController = TextEditingController();
     TextEditingController selectedPriceController = TextEditingController();
     Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
+    _selectedBillingMonth = invoice.getPeriodMonth();
     _selectedBillingDay = invoice.getPeriodDay();
     _selectedDueDay = invoice.getDueDay();
     invoice.periodDate = formatPeriodDate(_selectedBillingDay ?? 0, _selectedBillingMonth ?? 0);
@@ -1298,21 +1301,6 @@ class _BillsState extends State<Bills> {
                                                         isTextFormFieldVisibleND =false;
                                                         isTextFormFieldVisibleRD = false;
                                                         platformPriceController.clear();
-                                                        if (homeBillsTitleList.isEmpty){
-                                                          print("homeBillsTitleList is empty!");
-                                                        }
-                                                        homeBillsTitleList.forEach((element) {
-                                                          print('itemList: $element');
-                                                        });
-                                                        homeBillsPriceList.forEach((element) {
-                                                          print('pricesList: $element');
-                                                        });
-                                                        //print("isEditingList: $isEditingList");
-                                                        //print("isEditingListND: $isEditingList");
-                                                        //print("isEditingListRD: $isEditingList");
-                                                        //print("isTextFormFieldVisible: $isTextFormFieldVisible");
-                                                        //print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-                                                        //print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
                                                       });
                                                     },
                                                     child: Icon(Icons.add_circle, size: 26),
@@ -1661,21 +1649,6 @@ class _BillsState extends State<Bills> {
                                                         isTextFormFieldVisibleND =false;
                                                         isTextFormFieldVisibleRD = true;
                                                         RDplatformPriceController.clear();
-                                                        if (phoneTitleList.isEmpty){
-                                                          print("homeBillsTitleList is empty!");
-                                                        }
-                                                        phoneTitleList.forEach((element) {
-                                                          print('itemList: $element');
-                                                        });
-                                                        phonePriceList.forEach((element) {
-                                                          print('pricesList: $element');
-                                                        });
-                                                        //print("isEditingList: $isEditingList");
-                                                        //print("isEditingListND: $isEditingList");
-                                                        //print("isEditingListRD: $isEditingList");
-                                                        //print("isTextFormFieldVisible: $isTextFormFieldVisible");
-                                                        //print("isTextFormFieldVisibleND: $isTextFormFieldVisibleND");
-                                                        //print("isTextFormFieldVisibleRD: $isTextFormFieldVisibleRD");
                                                       });
                                                     },
                                                     child: Icon(Icons.add_circle, size: 26),

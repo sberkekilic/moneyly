@@ -3,6 +3,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttericon/font_awesome_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -289,6 +290,14 @@ class _OutcomePageState extends State<OutcomePage> {
     }
   }
 
+  void onSave(Invoice invoice) {
+    getDaysRemainingMessage(invoice);
+    setState(() {
+      invoices.add(invoice);
+    });
+    saveInvoices();
+  }
+
   void editInvoice(int id, String periodDate, String? dueDate) {
     int index = invoices.indexWhere((invoice) => invoice.id == id);
     if (index != -1) {
@@ -407,7 +416,6 @@ class _OutcomePageState extends State<OutcomePage> {
 
       return faturaDonemi = '${year.toString()}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
     }
-
     String formatDueDate(int? day, String periodDay) {
       final currentDate = DateTime.now();
       int year = currentDate.year;
@@ -494,6 +502,7 @@ class _OutcomePageState extends State<OutcomePage> {
       TextEditingController selectedEditController = TextEditingController();
       TextEditingController selectedPriceController = TextEditingController();
       Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
+      _selectedBillingMonth = invoice.getPeriodMonth();
       _selectedBillingDay = invoice.getPeriodDay();
       _selectedDueDay = invoice.getDueDay();
       invoice.periodDate = formatPeriodDate(_selectedBillingDay ?? 0, _selectedBillingMonth ?? 0);
@@ -533,9 +542,9 @@ class _OutcomePageState extends State<OutcomePage> {
         switch (orderIndex) {
           case 1:
             TextEditingController editController =
-            TextEditingController(text: homeBillsTitleList[index]);
+            TextEditingController(text: invoice.name);
             TextEditingController priceController =
-            TextEditingController(text: homeBillsPriceList[index]);
+            TextEditingController(text: invoice.price);
             selectedEditController = editController;
             selectedPriceController = priceController;
             break;
@@ -560,9 +569,9 @@ class _OutcomePageState extends State<OutcomePage> {
         switch (orderIndex) {
           case 1:
             TextEditingController editController =
-            TextEditingController(text: rentTitleList[index]);
+            TextEditingController(text: invoice.name);
             TextEditingController priceController =
-            TextEditingController(text: rentPriceList[index]);
+            TextEditingController(text: invoice.price);
             selectedEditController = editController;
             selectedPriceController = priceController;
             break;
@@ -768,11 +777,22 @@ class _OutcomePageState extends State<OutcomePage> {
                             final priceText = selectedPriceController.text.trim();
                             double dprice = double.tryParse(priceText) ?? 0.0;
                             String price = dprice.toStringAsFixed(2);
-                            homeBillsTitleList[index] = selectedEditController.text;
-                            homeBillsPriceList[index] = price;
-                            formDataProvider2.setHomeTitleValue(selectedEditController.text, homeBillsTitleList);
-                            formDataProvider2.setHomePriceValue(price, homeBillsPriceList);
-                            formDataProvider2.calculateSumOfHome(homeBillsPriceList);
+                            String name = selectedEditController.text;
+                            invoice.name = name;
+                            invoice.price = price;
+                            if (_selectedDueDay != null) {
+                              editInvoice(
+                                id,
+                                formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
+                                formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!)),
+                              );
+                            } else {
+                              editInvoice(
+                                id,
+                                formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
+                                null, // or provide any default value you want for dueDate when _selectedDueDay is null
+                              );
+                            }
                             break;
                           case 2:
                             final priceText = selectedPriceController.text.trim();
@@ -801,11 +821,22 @@ class _OutcomePageState extends State<OutcomePage> {
                             final priceText = selectedPriceController.text.trim();
                             double dprice = double.tryParse(priceText) ?? 0.0;
                             String price = dprice.toStringAsFixed(2);
-                            rentTitleList[index] = selectedEditController.text;
-                            rentPriceList[index] = price;
-                            formDataProvider2.setRentTitleValue(selectedEditController.text, rentTitleList);
-                            formDataProvider2.setRentPriceValue(price, rentPriceList);
-                            formDataProvider2.calculateSumOfRent(rentPriceList);
+                            String name = selectedEditController.text;
+                            invoice.name = name;
+                            invoice.price = price;
+                            if (_selectedDueDay != null) {
+                              editInvoice(
+                                id,
+                                formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
+                                formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!)),
+                              );
+                            } else {
+                              editInvoice(
+                                id,
+                                formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
+                                null, // or provide any default value you want for dueDate when _selectedDueDay is null
+                              );
+                            }
                             break;
                           case 2:
                             final priceText = selectedPriceController.text.trim();
@@ -883,11 +914,9 @@ class _OutcomePageState extends State<OutcomePage> {
                         } else if (page == 2 && totalBillsElement != 1){
                           switch (orderIndex){
                             case 1:
-                              homeBillsTitleList.removeAt(index);
-                              homeBillsPriceList.removeAt(index);
                               formDataProvider2.removeHomeTitleValue(homeBillsTitleList);
                               formDataProvider2.removeHomePriceValue(homeBillsPriceList);
-                              formDataProvider2.calculateSumOfHome(homeBillsPriceList);
+                              removeInvoice(id);
                               break;
                             case 2:
                               internetTitleList.removeAt(index);
@@ -907,11 +936,9 @@ class _OutcomePageState extends State<OutcomePage> {
                         } else if (page == 3 && totalOthersElement != 1){
                           switch (orderIndex){
                             case 1:
-                              rentTitleList.removeAt(index);
-                              rentPriceList.removeAt(index);
                               formDataProvider2.removeRentTitleValue(rentTitleList);
                               formDataProvider2.removeRentPriceValue(rentPriceList);
-                              formDataProvider2.calculateSumOfRent(rentPriceList);
+                              removeInvoice(id);
                               break;
                             case 2:
                               kitchenTitleList.removeAt(index);
@@ -943,7 +970,6 @@ class _OutcomePageState extends State<OutcomePage> {
                               break;
                           }
                         } else {
-                          // Show a Snackbar
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text("Delete operation not allowed."),
@@ -965,14 +991,15 @@ class _OutcomePageState extends State<OutcomePage> {
       print('Before ID: ${invoice.id}, Subcategory: ${invoice.subCategory}');
     }
 
+    String currentDate = DateFormat('dd MMMM yyyy').format(DateTime.now());
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xfff0f0f1),
         elevation: 0,
-        toolbarHeight: 70,
+        toolbarHeight: 50.h,
         automaticallyImplyLeading: false,
-        leadingWidth: 30,
+        leadingWidth: 30.w,
         title: Stack(
           alignment: Alignment.centerLeft,
           children: [
@@ -989,15 +1016,14 @@ class _OutcomePageState extends State<OutcomePage> {
                 ),
                 IconButton(
                   onPressed: () {
-
                   },
                   icon: const Icon(Icons.person, color: Colors.black), // Replace with the desired right icon
                 ),
               ],
             ),
             Text(
-              "Eylül 2023",
-              style: GoogleFonts.montserrat(color: Colors.black, fontSize: 28, fontWeight: FontWeight.normal),
+              currentDate,
+              style: GoogleFonts.montserrat(color: Colors.black, fontSize: 20.sp, fontWeight: FontWeight.normal),
             ),
           ],
         ),
@@ -1656,6 +1682,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                             icon: const Icon(Icons.edit, size: 21),
                                             onPressed: () {
+                                              print("TV: ${context}, ${index}, ${id}");
                                               _showEditDialog(context, index, 1, 1, id); // Show the edit dialog
                                             },
                                           ),
@@ -2039,6 +2066,8 @@ class _OutcomePageState extends State<OutcomePage> {
                                             constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                             icon: const Icon(Icons.edit, size: 21),
                                             onPressed: () {
+                                              print("EV: ${context}, ${index}, ${id}");
+                                              print("home list : ${homeBillsTitleList[index]}");
                                               _showEditDialog(context, index, 2, 1, id); // Show the edit dialog
                                             },
                                           ),
@@ -2236,101 +2265,175 @@ class _OutcomePageState extends State<OutcomePage> {
                         if(hasBillsCategorySelected)
                           Container(
                             padding: const EdgeInsets.only(top:10, bottom:10),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            child: Column(
                               children: [
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: textController,
-                                    decoration: const InputDecoration(
-                                      border: InputBorder.none,
-                                      hintText: 'ABA',
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: platformPriceController,
-                                    keyboardType: TextInputType.number, // Show numeric keyboard
-                                    decoration: const InputDecoration(
-                                      border: InputBorder.none,
-                                      hintText: 'GAG',
-                                    ),
-                                  ),
-                                ),
-                                Wrap(
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    IconButton(
-                                      onPressed: () async {
-                                        final prefs = await SharedPreferences.getInstance();
-                                        final text = textController.text.trim();
-                                        final priceText = platformPriceController.text.trim();
-                                        if (text.isNotEmpty && priceText.isNotEmpty && dropdownvaluebills == "Ev Faturaları") {
-                                          double dprice = double.tryParse(priceText) ?? 0.0;
-                                          String price = dprice.toStringAsFixed(2);
-                                          setState(() {
-                                            homeBillsTitleList.add(text);
-                                            homeBillsPriceList.add(price);
-                                            prefs.setStringList('homeBillsTitleList2', homeBillsTitleList);
-                                            prefs.setStringList('homeBillsPriceList2', homeBillsPriceList);
-                                            formDataProvider2.calculateSumOfHome(homeBillsPriceList);
-                                            textController.clear();
-                                            platformPriceController.clear();
-                                            //isTextFormFieldVisible = false;
-                                            isBillsAddActive = false;
-                                            hasBillsCategorySelected = false;
-                                            _load();
-                                          });
-                                        } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvaluebills == "İnternet") {
-                                          double dprice = double.tryParse(priceText) ?? 0.0;
-                                          String price = dprice.toStringAsFixed(2);
-                                          setState(() {
-                                            internetTitleList.add(text);
-                                            internetPriceList.add(price);
-                                            prefs.setStringList('internetTitleList2', internetTitleList);
-                                            prefs.setStringList('internetPriceList2', internetPriceList);
-                                            formDataProvider2.calculateSumOfInternet(internetPriceList);
-                                            textController.clear();
-                                            platformPriceController.clear();
-                                            //isTextFormFieldVisible = false;
-                                            isBillsAddActive = false;
-                                            hasBillsCategorySelected = false;
-                                            _load();
-                                          });
-                                        } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvaluebills == "Telefon") {
-                                          double dprice = double.tryParse(priceText) ?? 0.0;
-                                          String price = dprice.toStringAsFixed(2);
-                                          setState(() {
-                                            phoneTitleList.add(text);
-                                            phonePriceList.add(price);
-                                            prefs.setStringList('phoneTitleList2', phoneTitleList);
-                                            prefs.setStringList('phonePriceList2', phonePriceList);
-                                            formDataProvider2.calculateSumOfPhone(phonePriceList);
-                                            textController.clear();
-                                            platformPriceController.clear();
-                                            //isTextFormFieldVisible = false;
-                                            isBillsAddActive = false;
-                                            hasBillsCategorySelected = false;
-                                            _load();
-                                          });
-                                        }
-                                      },
-                                      icon: const Icon(Icons.check_circle, size: 26),
+                                    Expanded(
+                                      child: TextFormField(
+                                        controller: textController,
+                                        decoration: const InputDecoration(
+                                          border: InputBorder.none,
+                                          hintText: 'ABA',
+                                        ),
+                                      ),
                                     ),
-                                    IconButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          //isTextFormFieldVisible = false;
-                                          isBillsAddActive = false;
-                                          hasBillsCategorySelected = false;
-                                          textController.clear();
-                                          platformPriceController.clear();
-                                        });
-                                      },
-                                      icon: const Icon(Icons.cancel, size: 26),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: TextFormField(
+                                        controller: platformPriceController,
+                                        keyboardType: TextInputType.number, // Show numeric keyboard
+                                        decoration: const InputDecoration(
+                                          border: InputBorder.none,
+                                          hintText: 'GAG',
+                                        ),
+                                      ),
+                                    ),
+                                    Wrap(
+                                      children: [
+                                        IconButton(
+                                          onPressed: () async{
+                                            final prefs = await SharedPreferences.getInstance();
+                                            setState((){
+                                              int maxId = 0; // Initialize with the lowest possible value
+                                              for (var invoice in invoices) {
+                                                if (invoice.id > maxId) {
+                                                  maxId = invoice.id;
+                                                }
+                                              }
+                                              int newId = maxId + 1;
+                                              final text = textController.text.trim();
+                                              final priceText = platformPriceController.text.trim();
+                                              double dprice = double.tryParse(priceText) ?? 0.0;
+                                              String price = dprice.toStringAsFixed(2);
+
+                                              if (text.isNotEmpty && priceText.isNotEmpty && dropdownvaluebills == "Ev Faturaları") {
+                                                setState(() {
+                                                  final invoice = Invoice(
+                                                      id: newId,
+                                                      price: price,
+                                                      subCategory: 'Ev Faturaları',
+                                                      category: "Faturalar",
+                                                      name: text,
+                                                      periodDate: formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
+                                                      dueDate: _selectedDueDay != null
+                                                          ? formatDueDate(_selectedDueDay!, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!))
+                                                          : null,
+                                                      difference: "fa2"
+                                                  );
+                                                  onSave(invoice);
+                                                  homeBillsTitleList.add(text);
+                                                  homeBillsPriceList.add(price);
+                                                  prefs.setStringList('homeBillsTitleList2', homeBillsTitleList);
+                                                  prefs.setStringList('homeBillsPriceList2', homeBillsPriceList);
+                                                  formDataProvider2.calculateSumOfHome(homeBillsPriceList);
+                                                  textController.clear();
+                                                  platformPriceController.clear();
+                                                  //isTextFormFieldVisible = false;
+                                                  isBillsAddActive = false;
+                                                  hasBillsCategorySelected = false;
+                                                });
+                                              } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvaluebills == "İnternet") {
+                                                setState(() {
+                                                  internetTitleList.add(text);
+                                                  internetPriceList.add(price);
+                                                  prefs.setStringList('internetTitleList2', internetTitleList);
+                                                  prefs.setStringList('internetPriceList2', internetPriceList);
+                                                  formDataProvider2.calculateSumOfInternet(internetPriceList);
+                                                  textController.clear();
+                                                  platformPriceController.clear();
+                                                  //isTextFormFieldVisible = false;
+                                                  isBillsAddActive = false;
+                                                  hasBillsCategorySelected = false;
+                                                  _load();
+                                                });
+                                              } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvaluebills == "Telefon") {
+                                                setState(() {
+                                                  phoneTitleList.add(text);
+                                                  phonePriceList.add(price);
+                                                  prefs.setStringList('phoneTitleList2', phoneTitleList);
+                                                  prefs.setStringList('phonePriceList2', phonePriceList);
+                                                  formDataProvider2.calculateSumOfPhone(phonePriceList);
+                                                  textController.clear();
+                                                  platformPriceController.clear();
+                                                  //isTextFormFieldVisible = false;
+                                                  isBillsAddActive = false;
+                                                  hasBillsCategorySelected = false;
+                                                  _load();
+                                                });
+                                              }
+
+                                            });
+                                          },
+                                          icon: const Icon(Icons.check_circle, size: 26),
+                                        ),
+                                        IconButton(
+                                          onPressed: () {
+                                            setState(() {
+                                              //isTextFormFieldVisible = false;
+                                              isBillsAddActive = false;
+                                              hasBillsCategorySelected = false;
+                                              textController.clear();
+                                              platformPriceController.clear();
+                                            });
+                                          },
+                                          icon: const Icon(Icons.cancel, size: 26),
+                                        ),
+                                      ],
                                     ),
                                   ],
+                                ),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: DropdownButtonFormField<int>(
+                                        value: null,
+                                        onChanged: (value) {
+                                          setState(() {
+                                            _selectedBillingDay = value;
+                                          });
+                                        },
+                                        items: daysList.map((day) {
+                                          return DropdownMenuItem<int>(
+                                            value: day,
+                                            child: Text(day.toString()),
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: DropdownButtonFormField<int>(
+                                        value: null,
+                                        onChanged: (value) {
+                                          setState(() {
+                                            _selectedBillingMonth = value;
+                                          });
+                                        },
+                                        items: monthsList.map((month) {
+                                          return DropdownMenuItem<int>(
+                                            value: month,
+                                            child: Text(month.toString()),
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                DropdownButtonFormField<int>(
+                                  value: null,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _selectedDueDay = value;
+                                    });
+                                  },
+                                  items: daysList.map((day) {
+                                    return DropdownMenuItem<int>(
+                                      value: day,
+                                      child: Text(day.toString()),
+                                    );
+                                  }).toList(),
                                 ),
                               ],
                             ),
@@ -2878,88 +2981,80 @@ class _OutcomePageState extends State<OutcomePage> {
           ),
         ),
       ),
-      bottomNavigationBar: SizedBox(
-        height: 90,
-        child: Container(
-          decoration: BoxDecoration(
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.5),
                 spreadRadius: 5,
                 blurRadius: 5,
-                offset: const Offset(0, 3),
+                offset: const Offset(0, 2),
               ),
             ],
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(10), // Adjust as needed
-              topRight: Radius.circular(10), // Adjust as needed
-            ),
-          ),
-          child: ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(10), // Adjust as needed
-              topRight: Radius.circular(10), // Adjust as needed
-            ),
-            child: BottomNavigationBar(
-              currentIndex: 2,
-              onTap: (int index) {
-                switch (index) {
-                  case 0:
-                    Navigator.pushNamed(context, 'ana-sayfa');
-                    break;
-                  case 1:
-                    Navigator.pushNamed(context, 'income-page');
-                    break;
-                  case 2:
-                    Navigator.pushNamed(context, 'outcome-page');
-                    break;
-                  case 3:
-                    Navigator.pushNamed(context, 'investment-page');
-                    break;
-                  case 4:
-                    Navigator.pushNamed(context, 'wishes-page');
-                    break;
-                }
-              },
-              type: BottomNavigationBarType.fixed,
-              selectedLabelStyle: GoogleFonts.montserrat(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold),
-              unselectedLabelStyle: GoogleFonts.montserrat(color: Colors.black, fontSize: 11, fontWeight: FontWeight.w600),
-              items: [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.home, size: 30),
-                  label: 'Ana Sayfa',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.attach_money, size: 30),
-                  label: 'Gelir',
-                ),
-                BottomNavigationBarItem(
-                  icon: Padding(
-                    padding: EdgeInsets.only(left: 5,right: 5),
-                    child: Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade100, // Background color
-                          borderRadius: BorderRadius.circular(20), // Rounded corners
-                        ),
-                        child: Icon(Icons.money_off_sharp, size: 30)
-                    ),
+            borderRadius: BorderRadius.circular(10)
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: BottomNavigationBar(
+            type: BottomNavigationBarType.fixed, // Set the type to shifting
+            selectedItemColor: const Color.fromARGB(255, 26, 183, 56),
+            selectedLabelStyle: GoogleFonts.montserrat(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold),
+            unselectedLabelStyle: GoogleFonts.montserrat(color: const Color.fromARGB(255, 26, 183, 56), fontSize: 11, fontWeight: FontWeight.w600),
+            currentIndex: 2,
+            onTap: (int index) {
+              switch (index) {
+                case 0:
+                  Navigator.pushNamed(context, 'ana-sayfa');
+                  break;
+                case 1:
+                  Navigator.pushNamed(context, 'income-page');
+                  break;
+                case 2:
+                  Navigator.pushNamed(context, 'outcome-page');
+                  break;
+                case 3:
+                  Navigator.pushNamed(context, 'investment-page');
+                  break;
+                case 4:
+                  Navigator.pushNamed(context, 'wishes-page');
+                  break;
+              }
+            },
+            items: [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home, size: 30),
+                label: 'Ana Sayfa',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.attach_money, size: 30),
+                label: 'Gelir',
+              ),
+              BottomNavigationBarItem(
+                icon: Padding(
+                  padding: EdgeInsets.only(left: 5,right: 5),
+                  child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: const Color.fromARGB(125, 26, 183, 56), // Background color
+                        borderRadius: BorderRadius.circular(20), // Rounded corners
+                      ),
+                      child: Icon(Icons.money_off_sharp, size: 30)
                   ),
-                  label: 'Gider',
                 ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.trending_up, size: 30),
-                  label: 'Yatırım',
+                label: 'Gider',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.trending_up, size: 30),
+                label: 'Yatırım',
+              ),
+              BottomNavigationBarItem(
+                icon: Padding(
+                  padding: const EdgeInsets.only(top: 5,bottom: 5),
+                  child: Icon(FontAwesome.bank, size: 20),
                 ),
-                BottomNavigationBarItem(
-                  icon: Padding(
-                    padding: const EdgeInsets.only(top: 5,bottom: 5),
-                    child: Icon(FontAwesome.bank, size: 20),
-                  ),
-                  label: 'İstekler',
-                )
-              ],
-            ),
+                label: 'İstekler',
+              )
+            ],
           ),
         ),
       ),

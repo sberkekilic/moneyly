@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui' as ui;
 
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttericon/font_awesome_icons.dart';
@@ -10,7 +12,6 @@ import 'package:intl/intl.dart';
 import 'package:moneyly/pages/page6.dart';
 import 'package:moneyly/pages/selection.dart';
 import 'package:percent_indicator/percent_indicator.dart';
-import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'faturalar.dart';
@@ -23,7 +24,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<double> pageHeights = [403, 150, 100, 50];
   List<Invoice> invoices = [];
   Map<String, List<String>> incomeMap = {};
   String selectedKey = "";
@@ -54,6 +54,9 @@ class _HomePageState extends State<HomePage> {
   String sumOfOther = "0.0";
   String selectedTitle = '';
 
+  int? _selectedBillingDay;
+  int? _selectedBillingMonth;
+  int? _selectedDueDay;
   String faturaDonemi = "";
   String? sonOdeme;
 
@@ -63,16 +66,25 @@ class _HomePageState extends State<HomePage> {
   List<Invoice> paymentDueInvoices = [];
   List<Invoice> overdueInvoices = [];
 
+  List<int> daysList = List.generate(31, (index) => index + 1);
+  List<int> monthsList = List.generate(12, (index) => index + 1);
+
+  List<int> getIdsWithSubcategory(List<Invoice> invoices, String subCategory) {
+    return invoices
+        .where((invoice) => invoice.subCategory == subCategory)
+        .map((invoice) => invoice.id)
+        .toList();
+  }
+
   @override
   void initState() {
     super.initState();
-    pageHeights = List.filled(4, 200.0);
     _load();
   }
 
-
   void categorizeInvoices(List<Invoice> faturalar) {
     DateTime today = DateTime.now();
+    today = DateTime(today.year, today.month, today.day);
 
     // 1. Upcoming Invoice Date (those with PeriodDate before today)
     upcomingInvoices = faturalar.where((invoice) {
@@ -89,8 +101,9 @@ class _HomePageState extends State<HomePage> {
     // 3. Approaching Due Date (those with DueDate data and this date is before today)
     approachingDueInvoices = faturalar.where((invoice) {
       if (invoice.dueDate!= null) {
+        DateTime periodDate = DateTime.parse(invoice.periodDate!);
         DateTime dueDate = DateTime.parse(invoice.dueDate!);
-        return dueDate.isAfter(today) && dueDate.difference(today).inDays <= 7;
+        return periodDate.isBefore(today) && today.isBefore(dueDate);
       }
       return false;
     }).toList();
@@ -106,49 +119,41 @@ class _HomePageState extends State<HomePage> {
 
     // 5. Overdue Invoices (Invoices with DueDate data that are overdue or invoices without DueDate data but with an overdue PeriodDate)
     overdueInvoices = faturalar.where((invoice) {
-      if (invoice.dueDate!= null) {
+      if (invoice.dueDate != null) {
+        DateTime periodDate = DateTime.parse(invoice.periodDate!);
         DateTime dueDate = DateTime.parse(invoice.dueDate!);
-        return dueDate.isBefore(today);
+        return dueDate.isBefore(today) && periodDate.isBefore(today);
       } else {
-        DateTime periodDate = DateTime.parse(invoice.periodDate);
-        return periodDate.isBefore(today);
+        return false;
       }
     }).toList();
   }
-
-  Widget buildInvoiceListView(BuildContext context, List<Invoice> invoices) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              shrinkWrap: true,
-              scrollDirection: Axis.horizontal,
-              itemCount: invoices.length,
-              itemBuilder: (context, index) {
-                var invoice = invoices[index];
-                double height = 550;// Adjust index to cycle through pageHeights list
-                return SizedBox(
-                  height: height,
-                  child: Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: InvoiceCard(
-                      invoices: invoices,
-                      invoice: invoice,
-                      onDelete: () {
-                        setState(() {
-                          invoices.removeAt(index);
-                        });
-                      },
-                    ),
-                  ),
-                );
-              },
-            )
-          ),
-        ],
-      ),
+  void showDeleteConfirmation(Invoice invoice){
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text("Are you sure?"),
+            content: Text("Do you really want to delete this invoice?"),
+            actions: [
+              TextButton(
+                child: Text("Cancel"),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+              TextButton(
+                child: Text("Delete"),
+                onPressed: () {
+                  setState(() {
+                    invoices.removeWhere((item) => item.id == invoice.id);
+                  });
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
     );
   }
   Widget buildIndicator(int itemCount, int currentIndex) {
@@ -157,18 +162,24 @@ class _HomePageState extends State<HomePage> {
         if (details.primaryVelocity != null && details.primaryVelocity! < 0) {
           // Swiped left
           if (_currentPage < itemCount - 1) {
-            _carouselController.nextPage();
+            setState(() {
+              _currentPage++;
+            });
           } else {
-            // If on the last page, go back to the first page
-            _carouselController.animateToPage(0);
+            setState(() {
+              _currentPage = 0;
+            });
           }
         } else if (details.primaryVelocity != null && details.primaryVelocity! > 0) {
           // Swiped right
           if (_currentPage > 0) {
-            _carouselController.previousPage();
+            setState(() {
+              _currentPage--;
+            });
           } else {
-            // If on the first page, go to the last page
-            _carouselController.animateToPage(itemCount - 1);
+            setState(() {
+              _currentPage = itemCount - 1;
+            });
           }
         }
       },
@@ -188,7 +199,9 @@ class _HomePageState extends State<HomePage> {
                 margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 2.0),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: (currentIndex % itemCount == index) ? Color.fromARGB(125, 0, 149, 30) : Colors.grey,
+                  color: (currentIndex % itemCount == index)
+                      ? Color.fromARGB(125, 0, 149, 30)
+                      : Colors.grey,
                 ),
               );
             }),
@@ -320,7 +333,6 @@ class _HomePageState extends State<HomePage> {
       if (savedInvoicesJson != null) {
         setState(() {
           invoices = savedInvoicesJson.map((json) => Invoice.fromJson(jsonDecode(json))).toList();
-          DateTime currentDate = DateTime.now(); // Recalculates the difference data for current date and save the invoice
           setState(() {
             invoices.forEach((invoice) {
               invoice.updateDifference(invoice, invoice.periodDate, invoice.dueDate!);
@@ -348,23 +360,24 @@ class _HomePageState extends State<HomePage> {
     final invoiceList = invoicesCopy.map((invoice) => invoice.toJson()).toList();
     await prefs.setStringList('invoices', invoiceList.map((invoice) => jsonEncode(invoice)).toList());
   }
+  bool isLeapYear(int year) {
+    if (year % 4 != 0) return false;
+    if (year % 100 != 0) return true;
+    return year % 400 == 0;
+  }
   String getDaysRemainingMessage(Invoice invoice) {
     final currentDate = DateTime.now();
     final formattedDate = DateFormat('yyyy-MM-dd').format(currentDate);
     final dueDateKnown = invoice.dueDate != null;
-
-    if (currentDate.isBefore(DateTime.parse(faturaDonemi))) {
-      invoice.difference = (DateTime.parse(faturaDonemi).difference(currentDate).inDays + 1).toString();
-      print("GDRM1: ${invoice.difference}");
+    if (currentDate.isBefore(DateTime.parse(invoice.periodDate))) {
+      invoice.difference = (DateTime.parse(invoice.periodDate).difference(currentDate).inDays + 1).toString();
       return invoice.difference;
-    } else if (formattedDate == faturaDonemi) {
+    } else if (formattedDate == invoice.periodDate) {
       invoice.difference = "0";
-      print("GDRM2: ${invoice.difference}");
       return invoice.difference;
     } else if (dueDateKnown) {
-      if (sonOdeme != null && currentDate.isAfter(DateTime.parse(faturaDonemi))) {
-        invoice.difference = (DateTime.parse(sonOdeme!).difference(currentDate).inDays + 1).toString();
-        print("GDRM3: ${invoice.difference}");
+      if (invoice.dueDate != null && currentDate.isAfter(DateTime.parse(invoice.periodDate))) {
+        invoice.difference = (DateTime.parse(invoice.dueDate!).difference(currentDate).inDays + 1).toString();
         return invoice.difference;
       } else {
         return "error1";
@@ -372,6 +385,58 @@ class _HomePageState extends State<HomePage> {
     } else {
       return "error2";
     }
+  }
+  String formatPeriodDate(int day, int month) {
+    final currentDate = DateTime.now();
+    int year = currentDate.year;
+
+    if (month > 12) {
+      month = 1;
+      year++;
+    }
+
+    // Handle the case where the day is 29th February and it's not a leap year
+    if (day == 29 && month == 2 && !isLeapYear(year)) {
+      day = 28;
+    }
+
+    return faturaDonemi = '${year.toString()}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+  }
+  String formatDueDate(int? day, String periodDay) {
+    final currentDate = DateTime.now();
+    int year = currentDate.year;
+
+    // Parse the periodDay string to DateTime
+    DateTime parsedPeriodDay = DateTime.parse(periodDay);
+    int month = parsedPeriodDay.month;
+
+    if (month > 12) {
+      month = 1;
+      year++;
+    }
+
+    // Handle the case where day is not null and is 29th February, and it's not a leap year
+    if (day != null && day == 29 && month == 2 && !isLeapYear(year)) {
+      day = 28;
+    }
+
+    // Use a default value of null if day is null
+    int? calculatedDay = day;
+
+    DateTime calculatedDate = DateTime(year, month, calculatedDay ?? 1);
+
+    // Check if calculatedDate is before the parsedPeriodDay and increase the month if needed
+    if (calculatedDate.isBefore(parsedPeriodDay)) {
+      month++;
+      if (month > 12) {
+        month = 1;
+        year++;
+      }
+      calculatedDate = DateTime(year, month, calculatedDay ?? 1);
+    }
+
+    // Return the formatted date as a string
+    return sonOdeme = '${calculatedDate.year}-${calculatedDate.month.toString().padLeft(2, '0')}-${calculatedDate.day.toString().padLeft(2, '0')}';
   }
   void editInvoice(int id, String periodDate, String? dueDate) {
     int index = invoices.indexWhere((invoice) => invoice.id == id);
@@ -394,7 +459,198 @@ class _HomePageState extends State<HomePage> {
       });
     }
   }
-  void removeInvoice(Invoice invoice, int index, String periodDate, String? dueDate) async {
+  void showEditInvoice(int id, String periodDate, String? dueDate) {
+    Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
+    TextEditingController selectedEditController = TextEditingController(text: invoice.name);
+    TextEditingController selectedPriceController = TextEditingController(text: invoice.price);
+    _selectedBillingMonth = invoice.getPeriodMonth();
+    _selectedBillingDay = invoice.getPeriodDay();
+    _selectedDueDay = invoice.getDueDay();
+    invoice.periodDate = formatPeriodDate(_selectedBillingDay ?? 0, _selectedBillingMonth ?? 0);
+    if (_selectedDueDay != null) {
+      invoice.dueDate = formatDueDate(_selectedDueDay, invoice.periodDate);
+    }
+
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10)
+            ),
+            title: Text('Edit ${invoice.category}',style: const TextStyle(fontSize: 20)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Align(alignment: Alignment.centerLeft,child: Text("Item", style: GoogleFonts.montserrat(fontSize: 18),),),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: selectedEditController,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(width: 3, color: Colors.black)
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
+                    ),
+                    contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
+                  ),
+                  style: GoogleFonts.montserrat(fontSize: 20),
+                ),
+                const SizedBox(height: 10),
+                Align(alignment: Alignment.centerLeft, child: Text("Price",style: GoogleFonts.montserrat(fontSize: 18))),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: selectedPriceController,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(width: 3, color: Colors.black)
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
+                    ),
+                    contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
+                  ),
+                  style: GoogleFonts.montserrat(fontSize: 20),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 10),
+                Align(alignment: Alignment.centerLeft, child: Text("Period Date",style: GoogleFonts.montserrat(fontSize: 18))),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<int>(
+                        value: _selectedBillingDay,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedBillingDay = value;
+                          });
+                        },
+                        items: daysList.map((day) {
+                          return DropdownMenuItem<int>(
+                            value: day,
+                            child: Text(day.toString()),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    Expanded(
+                      child: DropdownButtonFormField<int>(
+                        value: _selectedBillingMonth,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedBillingMonth = value;
+                          });
+                        },
+                        items: monthsList.map((month) {
+                          return DropdownMenuItem<int>(
+                            value: month,
+                            child: Text(month.toString()),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Align(alignment: Alignment.centerLeft, child: Text("Due Date",style: GoogleFonts.montserrat(fontSize: 18))),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<int>(
+                  value: _selectedDueDay,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedDueDay = value;
+                    });
+                  },
+                  items: daysList.map((day) {
+                    return DropdownMenuItem<int>(
+                      value: day,
+                      child: Text(day.toString()),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+            actions: [
+              IconButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  icon: const Icon(Icons.cancel)
+              ),
+              IconButton(
+                  onPressed: () {
+                    setState(() {
+                      final priceText = selectedPriceController.text.trim();
+                      double dprice = double.tryParse(priceText) ?? 0.0;
+                      String price = dprice.toStringAsFixed(2);
+                      String name = selectedEditController.text;
+                      invoice.name = name;
+                      invoice.price = price;
+                      if (_selectedDueDay != null) {
+                        editInvoice(
+                          id,
+                          formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
+                          formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!)),
+                        );
+                      } else {
+                        editInvoice(
+                          id,
+                          formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
+                          null, // or provide any default value you want for dueDate when _selectedDueDay is null
+                        );
+                      }
+                      _load(); //Update values immediantly
+                      Navigator.of(context).pop();
+                    });
+                  },
+                  icon: const Icon(Icons.save)
+              ),
+              IconButton(
+                  onPressed: () {
+                    setState(() {
+                      List<int> quantityOfCategory = getIdsWithSubcategory(invoices, invoice.subCategory);
+                      if (quantityOfCategory.length != 1){
+                        removeInvoice(id);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Delete operation not allowed."),
+                          ),
+                        );
+                      }
+                      Navigator.of(context).pop();
+                    });
+                  },
+                  icon: const Icon(Icons.delete_forever)
+              ),
+            ],
+          );
+        },
+    );
+  }
+  void removeInvoice(int id) {
+    setState(() {
+      int index = invoices.indexWhere((invoice) => invoice.id == id);
+      if (index != -1) {
+        setState(() {
+          invoices.removeAt(index);
+        });
+      } else {
+        // Entry with the target ID not found
+      }
+    });
+    saveInvoices();
+  }
+  void payInvoice(Invoice invoice, int id, String periodDate, String? dueDate) async {
+    int index = invoices.indexWhere((invoice) => invoice.id == id);
     bool confirmDelete = false;
     await showDialog(
       context: context,
@@ -465,8 +721,8 @@ class _HomePageState extends State<HomePage> {
         );
         invoices[index] = updatedInvoice;
         saveInvoices();
+        saveInvoicesToSharedPreferences();
       });
-      saveInvoicesToSharedPreferences();
     }
   }
   void saveInvoicesToSharedPreferences() async {
@@ -487,11 +743,18 @@ class _HomePageState extends State<HomePage> {
     return sum;
   }
 
-  CarouselController _carouselController = CarouselController();
   int _currentPage = 0;
 
   @override
   Widget build(BuildContext context) {
+    List<List<Invoice>> categorizedInvoices = [
+      upcomingInvoices,
+      todayInvoices,
+      approachingDueInvoices,
+      paymentDueInvoices,
+      overdueInvoices
+    ];
+    List<Invoice> selectedInvoices = categorizedInvoices[_currentPage];
     savingsValue = incomeValue * 0.2;
     wishesValue = incomeValue  * 0.3;
     needsValue = incomeValue * 0.5;
@@ -533,13 +796,46 @@ class _HomePageState extends State<HomePage> {
     String currentDate = DateFormat('dd MMMM yyyy').format(DateTime.now());
     incomeYuzdesi = incomeYuzdesi*10;
 
+    final List<String> texts = ["Abonelikler", "Faturalar", "Diğer"];
+    final List<String> formattedSums = [
+      formattedSumOfSubs,
+      formattedSumOfBills,
+      formattedSumOfOthers
+    ];
+
+    double calculateMaxFontSize(BoxConstraints constraints) {
+      double maxFontSize = 14.sp;
+      final textPainters = texts.map((text) {
+        return TextPainter(
+          text: TextSpan(
+            text: text,
+            style: GoogleFonts.montserrat(
+              fontWeight: FontWeight.normal,
+              fontSize: maxFontSize,
+            ),
+          ),
+          maxLines: 1,
+          textDirection: ui.TextDirection.ltr,
+        );
+      }).toList();
+
+      textPainters.forEach((painter) {
+        painter.layout(maxWidth: constraints.maxWidth / 3 - 20.w);
+        if (painter.didExceedMaxLines) {
+          maxFontSize = maxFontSize * (constraints.maxWidth / 3 - 20.w) / painter.size.width;
+        }
+      });
+
+      return maxFontSize;
+    }
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xfff0f0f1),
         elevation: 0,
         toolbarHeight: 50.h,
         automaticallyImplyLeading: false,
-        leadingWidth: 30,
+        leadingWidth: 30.w,
         title: Stack(
           alignment: Alignment.centerLeft,
           children: [
@@ -548,10 +844,6 @@ class _HomePageState extends State<HomePage> {
               children: [
                 IconButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => CategoryScroll()),
-                    );
                   },
                   icon: const Icon(Icons.settings, color: Colors.black), // Replace with the desired left icon
                 ),
@@ -564,7 +856,7 @@ class _HomePageState extends State<HomePage> {
             ),
             Text(
               currentDate,
-              style: GoogleFonts.montserrat(color: Colors.black, fontSize: 24.sp, fontWeight: FontWeight.normal),
+              style: GoogleFonts.montserrat(color: Colors.black, fontSize: 20.sp, fontWeight: FontWeight.normal),
             ),
           ],
         ),
@@ -575,7 +867,7 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Özet", style: GoogleFonts.montserrat(fontSize: 24.sp, fontWeight: FontWeight.bold)),
+              Text("Özet", style: GoogleFonts.montserrat(fontSize: 20.sp, fontWeight: FontWeight.bold)),
               SizedBox(height: 20.h),
               Container(
                 padding: const EdgeInsets.all(20),
@@ -601,7 +893,7 @@ class _HomePageState extends State<HomePage> {
                         Text(
                           'Kalan',
                           style: GoogleFonts.montserrat(
-                              fontSize: 18.sp,
+                              fontSize: 15.sp,
                               fontWeight: FontWeight.w600
                           ),
                           textAlign: TextAlign.center,
@@ -609,7 +901,7 @@ class _HomePageState extends State<HomePage> {
                         Text(
                           formattedProfitValue, // KALAN BİLGİSİ
                           style: GoogleFonts.montserrat(
-                            fontSize: 28.sp,
+                            fontSize: 24.sp,
                             fontWeight: FontWeight.bold,
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -633,14 +925,12 @@ class _HomePageState extends State<HomePage> {
                     ),
                     SizedBox(height: 10.h),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
                                   const CircleAvatar(
                                     radius: 13,
@@ -667,10 +957,10 @@ class _HomePageState extends State<HomePage> {
                         ),
                         Expanded(
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
                                   const CircleAvatar(
                                     radius: 13,
@@ -698,131 +988,137 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                     Divider(color: Color(0xffc6c6c7), thickness: 3, height: 30.h),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            children: [
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  "Abonelikler",
-                                  style: GoogleFonts.montserrat(
-                                    fontWeight: FontWeight.normal,
-                                    fontSize: 14.sp,
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final maxFontSize = calculateMaxFontSize(constraints);
+
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      "Abonelikler",
+                                      style: GoogleFonts.montserrat(
+                                        fontWeight: FontWeight.normal,
+                                        fontSize: maxFontSize,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ),
-                              SizedBox(height: 5.h),
-                              LinearPercentIndicator(
-                                padding: EdgeInsets.zero,
-                                backgroundColor: const Color(0xffc6c6c7),
-                                animation: true,
-                                lineHeight: 6.h,
-                                animationDuration: 1000,
-                                percent: (outcomeValue != 0) ? (sumOfSubs / outcomeValue) : 0,
-                                barRadius: const Radius.circular(10),
-                                progressColor: const Color(0xffb71a1a),
-                              ),
-                              SizedBox(height: 5.h),
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  formattedSumOfSubs,
-                                  style: GoogleFonts.montserrat(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16.sp,
+                                  SizedBox(height: 5.h),
+                                  LinearPercentIndicator(
+                                    padding: EdgeInsets.zero,
+                                    backgroundColor: const Color(0xffc6c6c7),
+                                    animation: true,
+                                    lineHeight: 6.h,
+                                    animationDuration: 1000,
+                                    percent: (outcomeValue != 0) ? (sumOfSubs / outcomeValue) : 0,
+                                    barRadius: const Radius.circular(10),
+                                    progressColor: const Color(0xffb71a1a),
                                   ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(width: 20.w),
-                        Expanded(
-                          child: Column(
-                            children: [
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  "Faturalar",
-                                  style: GoogleFonts.montserrat(
-                                    fontWeight: FontWeight.normal,
-                                    fontSize: 14.sp,
+                                  SizedBox(height: 5.h),
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      formattedSumOfSubs,
+                                      style: GoogleFonts.montserrat(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: maxFontSize,
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                ],
                               ),
-                              SizedBox(height: 5.h),
-                              LinearPercentIndicator(
-                                padding: EdgeInsets.zero,
-                                backgroundColor: const Color(0xffc6c6c7),
-                                animation: true,
-                                lineHeight: 6.h,
-                                animationDuration: 1000,
-                                percent: (outcomeValue != 0) ? (sumOfBills / outcomeValue) : 0,
-                                barRadius: const Radius.circular(10),
-                                progressColor: const Color(0xff1a9eb7),
-                              ),
-                              SizedBox(height: 5.h),
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  formattedSumOfBills,
-                                  style: GoogleFonts.montserrat(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16.sp,
+                            ),
+                            SizedBox(width: 20.w),
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      "Faturalar",
+                                      style: GoogleFonts.montserrat(
+                                        fontWeight: FontWeight.normal,
+                                        fontSize: maxFontSize,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(width: 20.w),
-                        Expanded(
-                          child: Column(
-                            children: [
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  "Diğer",
-                                  style: GoogleFonts.montserrat(
-                                    fontWeight: FontWeight.normal,
-                                    fontSize: 14.sp,
+                                  SizedBox(height: 5.h),
+                                  LinearPercentIndicator(
+                                    padding: EdgeInsets.zero,
+                                    backgroundColor: const Color(0xffc6c6c7),
+                                    animation: true,
+                                    lineHeight: 6.h,
+                                    animationDuration: 1000,
+                                    percent: (outcomeValue != 0) ? (sumOfBills / outcomeValue) : 0,
+                                    barRadius: const Radius.circular(10),
+                                    progressColor: const Color(0xff1a9eb7),
                                   ),
-                                ),
-                              ),
-                              SizedBox(height: 5.h),
-                              LinearPercentIndicator(
-                                padding: EdgeInsets.zero,
-                                backgroundColor: const Color(0xffc6c6c7),
-                                animation: true,
-                                lineHeight: 6.h,
-                                animationDuration: 1000,
-                                percent: (outcomeValue != 0) ? (sumOfOthers / outcomeValue) : 0,
-                                barRadius: const Radius.circular(10),
-                                progressColor: const Color(0xff381ab7),
-                              ),
-                              SizedBox(height: 5.h),
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  formattedSumOfOthers,
-                                  style: GoogleFonts.montserrat(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16.sp,
+                                  SizedBox(height: 5.h),
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      formattedSumOfBills,
+                                      style: GoogleFonts.montserrat(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: maxFontSize,
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                ],
                               ),
-                            ],
-                          ),
-                        ),
-                      ],
+                            ),
+                            SizedBox(width: 20.w),
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      "Diğer",
+                                      style: GoogleFonts.montserrat(
+                                        fontWeight: FontWeight.normal,
+                                        fontSize: maxFontSize,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 5.h),
+                                  LinearPercentIndicator(
+                                    padding: EdgeInsets.zero,
+                                    backgroundColor: const Color(0xffc6c6c7),
+                                    animation: true,
+                                    lineHeight: 6.h,
+                                    animationDuration: 1000,
+                                    percent: (outcomeValue != 0) ? (sumOfOthers / outcomeValue) : 0,
+                                    barRadius: const Radius.circular(10),
+                                    progressColor: const Color(0xff381ab7),
+                                  ),
+                                  SizedBox(height: 5.h),
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      formattedSumOfOthers,
+                                      style: GoogleFonts.montserrat(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: maxFontSize,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),
               ),
               SizedBox(height: 20.h),
-              Text("Faturalarım", style: GoogleFonts.montserrat(fontSize: 24.sp, fontWeight: FontWeight.bold)),
+              Text("Faturalarım", style: GoogleFonts.montserrat(fontSize: 20.sp, fontWeight: FontWeight.bold)),
               //ListView.builder(shrinkWrap: true, physics: NeverScrollableScrollPhysics(), itemCount: invoices.length,itemBuilder: (context, index) {return Text(invoices[index].toDisplayString());},),
               SizedBox(height: 20.h),
               Container(
@@ -850,27 +1146,29 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    CarouselSlider.builder(
-                      carouselController: _carouselController,
-                      options: CarouselOptions(
-                        height: 347.h,
-                        viewportFraction: 1.0,
-                        enableInfiniteScroll: true,
-                        onPageChanged: (index, reason) {
-                          setState(() {
-                            _currentPage = index;
-                          });
-                        },
-                      ),
-                      itemCount: 5,
-                      itemBuilder: (context, index, realIndex) {
-                        print("itemBuilder index : ${index}");
-                        return buildInvoiceListView(context, getCurrentPageInvoices(_currentPage));
-                      },
-                    ),
+                    SizedBox(
+                      height: 282.h,
+                        child: selectedInvoices.isEmpty
+                        ? Center(child: Text('${getTitleForIndex(_currentPage)} sınıfına ait bir fatura bulunmuyor.'))
+                        : ListView(
+                            scrollDirection: Axis.horizontal,
+                            children: selectedInvoices.map((invoice) {
+                              return Padding(
+                                padding: EdgeInsets.fromLTRB(10.w, 0, 10.w, 0),
+                                child: Container(
+                                  child: InvoiceCard(
+                                    invoice: invoice,
+                                    onDelete: () => payInvoice(invoice, invoice.id, invoice.periodDate, invoice.dueDate!),
+                                    onEdit: () => showEditInvoice(invoice.id, invoice.periodDate, invoice.dueDate!)
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                            ),
+                        ),
                     const SizedBox(height: 20),
                     buildIndicator(5, _currentPage),
-                  ],
+                  ]
                 ),
               ),
               const SizedBox(height: 20)
@@ -927,7 +1225,7 @@ class _HomePageState extends State<HomePage> {
                       color: const Color.fromARGB(125, 26, 183, 56), // Background color
                       borderRadius: BorderRadius.circular(20), // Rounded corners
                     ),
-                    child: const Icon(Icons.home, size: 30),
+                    child: Icon(Icons.home, size: 30.sp),
                   ),
                 ),
                 label: 'Ana Sayfa',
@@ -960,18 +1258,17 @@ class _HomePageState extends State<HomePage> {
 }
 
 class InvoiceCard extends StatelessWidget {
-  final List<Invoice> invoices;
-  Invoice invoice;
+  final Invoice invoice;
   final VoidCallback onDelete;
+  final VoidCallback onEdit;
 
   InvoiceCard({super.key,
-    required this.invoices,
     required this.invoice,
     required this.onDelete,
+    required this.onEdit
   }) {
     faturaDonemi = DateTime.parse(invoice.periodDate);
     if (invoice.dueDate != null){
-      print("dueDate:${invoice.dueDate!}");
       sonOdeme = DateTime.parse(invoice.dueDate!);
     }
   }
@@ -980,7 +1277,7 @@ class InvoiceCard extends StatelessWidget {
   DateTime sonOdeme = DateTime.now();
   bool isPaidActive = false;
 
-  String getDaysRemainingMessage() {
+  String getDaysRemainingMessage2() {
     final currentDate = DateTime.now();
     final formattedCurrentDate = DateFormat('yyyy-MM-dd').format(currentDate);
     final formattedPeriodDate = DateFormat('yyyy-MM-dd').format(faturaDonemi);
@@ -1007,7 +1304,7 @@ class InvoiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final daysRemainingMessage = getDaysRemainingMessage();
+    final daysRemainingMessage = getDaysRemainingMessage2();
     return IntrinsicWidth(
       child: Container(
         width: 200.w,
@@ -1018,6 +1315,7 @@ class InvoiceCard extends StatelessWidget {
         child: Column(
           children: [
             ListTile(
+              dense: true,
               title: Text(
                 invoice.name,
                 style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18.sp, fontWeight: FontWeight.w600),
@@ -1027,8 +1325,9 @@ class InvoiceCard extends StatelessWidget {
                 style: GoogleFonts.montserrat(color: Colors.black, fontSize: 14.sp, fontWeight: FontWeight.normal),
               ),
             ),
-            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20.h),
+            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 10.h),
             ListTile(
+              dense: true,
               title: Text(
                 "Fatura Dönemi",
                 style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16.sp, fontWeight: FontWeight.w600),
@@ -1039,6 +1338,7 @@ class InvoiceCard extends StatelessWidget {
               ),
             ),
             ListTile(
+              dense: true,
               title: Text(
                 "Son Ödeme Tarihi",
                 style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16.sp, fontWeight: FontWeight.w600),
@@ -1048,37 +1348,59 @@ class InvoiceCard extends StatelessWidget {
                 style: GoogleFonts.montserrat(color: Colors.black, fontSize: 14.sp, fontWeight: FontWeight.normal),
               ),
             ),
-            ListTile(
-              title: Text(
-                daysRemainingMessage,
-                style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16.sp, fontWeight: FontWeight.normal),
+            Container(
+              constraints: BoxConstraints(
+                minHeight: 70.h,
               ),
-              subtitle: daysRemainingMessage != "Ödeme dönemi" ? Text(
-                invoice.difference,
-                style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18.sp, fontWeight: FontWeight.bold),
-              ) : null,
+              child: ListTile(
+                title: Text(
+                  daysRemainingMessage,
+                  style: GoogleFonts.montserrat(color: Colors.black, fontSize: 14.sp, fontWeight: FontWeight.normal),
+                ),
+                subtitle: daysRemainingMessage != "Ödeme dönemi" ? Text(
+                  invoice.difference,
+                  style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18.sp, fontWeight: FontWeight.bold),
+                ) : null,
+              ),
             ),
-            SizedBox(height: 12.h),
-            InkWell(
-              onTap: isPaidActive ? onDelete : null,
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  ),
-                  color: isPaidActive ? Colors.black : Colors.grey,
+            Container(
+              padding: const EdgeInsets.all(10),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
                 ),
-                child: Center(
-                  child: Text(
-                    'Ödendi',
-                    style: GoogleFonts.montserrat(fontSize: 18.sp, color: Colors.white),
-                  ),
-                ),
+                color: isPaidActive ? Colors.black : Colors.grey,
               ),
-            )
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Center(
+                    child: SizedBox(
+                      width: 22.h,
+                      height: 22.h,
+                      child: IconButton(
+                        padding: EdgeInsets.zero, // Remove the default padding
+                        onPressed: onDelete,
+                        icon: Icon(Icons.done_rounded, size: 24),
+                      ),
+                    ),
+                  ),
+                  Center(
+                    child: SizedBox(
+                      width: 22.h,
+                      height: 22.h,
+                      child: IconButton(
+                        padding: EdgeInsets.zero, // Remove the default padding
+                        onPressed: onEdit,
+                        icon: Icon(Icons.edit_rounded, size: 24),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
