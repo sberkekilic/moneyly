@@ -4,13 +4,13 @@ import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_inset_box_shadow/flutter_inset_box_shadow.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fluttericon/font_awesome_icons.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 
 class InvestmentPage extends StatefulWidget {
   const InvestmentPage({Key? key}) : super(key: key);
@@ -20,8 +20,15 @@ class InvestmentPage extends StatefulWidget {
 }
 
 class _InvestmentPageState extends State<InvestmentPage> {
+  InvestmentService investmentService = InvestmentService();
+  List<Investment> investmentList = [];
+  List<Investment> exchangeList = [];
+  List<Investment> cashList = [];
+  List<Investment> realEstateList = [];
+  List<Investment> carList = [];
+  List<Investment> electronicList = [];
+  List<Investment> otherList = [];
   List<String> itemList = ["Döviz", "Nakit", "Gayrimenkül", "Araba", "Elektronik", "Diğer"];
-
   List<FaIcon> itemIcons = [
     FaIcon(FontAwesomeIcons.dollarSign, size: 20.sp, color: Colors.black,),
     FaIcon(FontAwesomeIcons.moneyBill, size: 20.sp),
@@ -51,6 +58,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
   String ananim = "";
   String formattedsavingsValue = "";
   String formattedSumOfSavingValue = "";
+  DateTime? selectedDeadline;
 
   Future<void> togglePopupVisibility(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
@@ -405,7 +413,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
     return Column(
       children:
       selectedCategories.map((category) {
-        TextEditingController textController = TextEditingController();
+        TextEditingController amountController = TextEditingController();
+        TextEditingController nameController = TextEditingController();
         final isCategoryAdded = categoryValues.containsKey(category);
         double? goal = categoryValues[category];
         double sum = 0.0;
@@ -532,7 +541,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                           ),
                                           const SizedBox(height: 10),
                                           TextFormField(
-                                            controller: textController, // Assign the TextEditingController
+                                            controller: amountController, // Assign the TextEditingController
                                             keyboardType: TextInputType.number,
                                             decoration: const InputDecoration(
                                               labelText: 'Enter a number',
@@ -543,7 +552,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                             onPressed: () async {
                                               final prefs = await SharedPreferences.getInstance();
                                               setState(() {
-                                                String inputText = textController.text; // Get the input text
+                                                String inputText = amountController.text; // Get the input text
                                                 investValue = double.tryParse(inputText);
                                                 if (investValue != null) {
                                                   exchangeDepot.add(investValue!);
@@ -656,7 +665,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                           ),
                                           const SizedBox(height: 10),
                                           TextFormField(
-                                            controller: textController, // Assign the TextEditingController
+                                            controller: amountController, // Assign the TextEditingController
                                             keyboardType: TextInputType.number,
                                             decoration: const InputDecoration(
                                               labelText: 'Enter a number',
@@ -667,7 +676,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                             onPressed: () async {
                                               final prefs = await SharedPreferences.getInstance();
                                               setState(() {
-                                                String inputText = textController.text; // Get the input text
+                                                String inputText = amountController.text; // Get the input text
                                                 investValue = double.tryParse(inputText);
                                                 if (investValue != null) {
                                                   cashDepot.add(investValue!);
@@ -780,7 +789,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                           ),
                                           const SizedBox(height: 10),
                                           TextFormField(
-                                            controller: textController, // Assign the TextEditingController
+                                            controller: amountController, // Assign the TextEditingController
                                             keyboardType: TextInputType.number,
                                             decoration: const InputDecoration(
                                               labelText: 'Enter a number',
@@ -791,7 +800,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                             onPressed: () async {
                                               final prefs = await SharedPreferences.getInstance();
                                               setState(() {
-                                                String inputText = textController.text; // Get the input text
+                                                String inputText = amountController.text; // Get the input text
                                                 investValue = double.tryParse(inputText);
                                                 if (investValue != null) {
                                                   realEstateDepot.add(investValue!);
@@ -904,7 +913,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                           ),
                                           const SizedBox(height: 10),
                                           TextFormField(
-                                            controller: textController, // Assign the TextEditingController
+                                            controller: amountController, // Assign the TextEditingController
                                             keyboardType: TextInputType.number,
                                             decoration: const InputDecoration(
                                               labelText: 'Enter a number',
@@ -915,7 +924,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                             onPressed: () async {
                                               final prefs = await SharedPreferences.getInstance();
                                               setState(() {
-                                                String inputText = textController.text; // Get the input text
+                                                String inputText = amountController.text; // Get the input text
                                                 investValue = double.tryParse(inputText);
                                                 if (investValue != null) {
                                                   carDepot.add(investValue!);
@@ -1028,7 +1037,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                           ),
                                           const SizedBox(height: 10),
                                           TextFormField(
-                                            controller: textController, // Assign the TextEditingController
+                                            controller: amountController, // Assign the TextEditingController
                                             keyboardType: TextInputType.number,
                                             decoration: const InputDecoration(
                                               labelText: 'Enter a number',
@@ -1039,7 +1048,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                             onPressed: () async {
                                               final prefs = await SharedPreferences.getInstance();
                                               setState(() {
-                                                String inputText = textController.text; // Get the input text
+                                                String inputText = amountController.text; // Get the input text
                                                 investValue = double.tryParse(inputText);
                                                 if (investValue != null) {
                                                   electronicDepot.add(investValue!);
@@ -1152,7 +1161,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                           ),
                                           const SizedBox(height: 10),
                                           TextFormField(
-                                            controller: textController, // Assign the TextEditingController
+                                            controller: amountController, // Assign the TextEditingController
                                             keyboardType: TextInputType.number,
                                             decoration: const InputDecoration(
                                               labelText: 'Enter a number',
@@ -1163,7 +1172,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                             onPressed: () async {
                                               final prefs = await SharedPreferences.getInstance();
                                               setState(() {
-                                                String inputText = textController.text; // Get the input text
+                                                String inputText = amountController.text; // Get the input text
                                                 investValue = double.tryParse(inputText);
                                                 if (investValue != null) {
                                                   otherDepot.add(investValue!);
@@ -1233,65 +1242,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                 showModalBottomSheet(
                                   context: context,
                                   isScrollControlled: true,
-                                  builder: (context) {
-                                    double? enteredValue;
-                                    return Container(
-                                      height: MediaQuery.of(context).size.height * 0.6,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white, // Background color
-                                        borderRadius: BorderRadius.only(
-                                          topLeft: Radius.circular(10),
-                                          topRight: Radius.circular(10),
-                                        ),
-                                      ),
-                                      child: Padding(
-                                        padding:  EdgeInsets.fromLTRB(20,20,20,MediaQuery.of(context).viewInsets.bottom+20),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Text(
-                                              '$category hedefin için tutar belirle.',
-                                              style: const TextStyle(fontSize: 18),
-                                            ),
-                                            SizedBox(height: 20.h),
-                                            TextFormField(
-                                              controller: textController,
-                                              keyboardType: TextInputType.number,
-                                              decoration: const InputDecoration(
-                                                border: OutlineInputBorder(),
-                                                labelText: 'Tutar',
-                                              ),
-                                            ),
-                                            Expanded(child: Container()), // Create a space to push ElevatedButton to bottom.
-                                            Align(
-                                              alignment: Alignment.bottomCenter,
-                                              child: ElevatedButton(
-                                                style: ElevatedButton.styleFrom(
-                                                  shape: RoundedRectangleBorder(
-                                                      borderRadius: BorderRadius.circular(12)),
-                                                  backgroundColor: Colors.black,
-                                                  minimumSize: Size(double.infinity, 40),
-                                                ),
-                                                clipBehavior: Clip.hardEdge,
-                                                onPressed: () {
-                                                  setState(() {
-                                                    String inputText = textController.text;
-                                                    enteredValue = double.parse(inputText);
-                                                    if (enteredValue != null) {
-                                                      addCategoryValue(category, enteredValue ?? 0, sum);
-                                                      Navigator.pop(context); // Close the form
-                                                    }
-                                                  });
-                                                },
-                                                child: const Text('Add'),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
+                                  builder: (context) => _addInvestmentBottomSheet(context, category, amountController, nameController),
                                 );
                               },
                               icon: const Icon(Icons.add_circle_outline)
@@ -1323,10 +1274,293 @@ class _InvestmentPageState extends State<InvestmentPage> {
     );
   }
 
+  void _saveInvestment(int id, String name, String category, DateTime deadline, String amount) async {
+    Investment newInvestment = Investment(
+      id: id,
+      name: name,
+      category: category,
+      deadline: deadline,
+      amount: amount
+    );
+
+    InvestmentService investmentService = InvestmentService();
+    await investmentService.saveInvestment(newInvestment);
+
+    setState(() {
+      investmentList.add(newInvestment);
+    });
+
+    print('New investment added: ${newInvestment.toMap()}');
+  }
+
+  void _clearInvestments() async {
+    InvestmentService investmentService = InvestmentService();
+    await investmentService.clearInvestments();
+    setState(() {
+      investmentList.clear();
+    });
+  }
+
+  void _removeInvestment(int id) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    setState(() {
+      int index = investmentList.indexWhere((investment) => investment.id == id);
+      if (index != -1){
+        setState(() {
+          investmentList.removeAt(index);
+        });
+      } else{
+
+      }
+      });
+
+    final investmentMap = investmentList.map((investment) => investment.toMap()).toList();
+    await prefs.setStringList('investments', investmentMap.map((investment) => jsonEncode(investment)).toList());
+  }
+
+  Widget _addInvestmentBottomSheet(BuildContext context, String category, TextEditingController amountController, TextEditingController nameController){
+    DateTime? selectedDeadline;
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.6,
+      decoration: BoxDecoration(
+        color: Colors.white, // Background color
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(10),
+          topRight: Radius.circular(10),
+        ),
+      ),
+      child: Padding(
+        padding:  EdgeInsets.fromLTRB(20,20,20,MediaQuery.of(context).viewInsets.bottom+20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '$category hedefin için tutar belirle.',
+              style: const TextStyle(fontSize: 18),
+            ),
+            SizedBox(height: 20.h),
+            TextFormField(
+              controller: nameController,
+              keyboardType: TextInputType.name,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'İsim',
+              ),
+            ),
+            SizedBox(height: 20.h),
+            TextFormField(
+              controller: amountController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'Tutar',
+              ),
+            ),
+            SizedBox(height: 20.h),
+            ElevatedButton(
+              onPressed: () async {
+                final DateTime? deadline = await showDialog<DateTime>(
+                  context: context,
+                  builder: (context) {
+                    return Dialog(
+                      child: Container(
+                        height: 400, // Adjust the height as needed
+                        child: Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                'Select a Deadline',
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: SfDateRangePicker(
+                                  onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
+                                    if (args.value is DateTime) {
+                                      selectedDeadline = args.value;
+                                    }
+                                  },
+                                  backgroundColor: Colors.white,
+                                  selectionMode: DateRangePickerSelectionMode.single,
+                                  monthViewSettings: DateRangePickerMonthViewSettings(
+                                    dayFormat: 'EEE',
+                                    viewHeaderStyle: DateRangePickerViewHeaderStyle(
+                                      textStyle: TextStyle(
+                                        fontSize: 14, // Custom font size for day names
+                                        fontWeight: FontWeight.bold, // Custom font weight for day names
+                                        color: Colors.black, // Custom color for day names
+                                      ),
+                                    ),
+                                  ),
+                                  monthCellStyle: DateRangePickerMonthCellStyle(
+                                    todayTextStyle: TextStyle(
+                                          fontStyle: FontStyle.italic,
+                                          fontWeight: FontWeight.w400,
+                                          fontSize: 12,
+                                          color: Colors.red
+                                      ),
+                                    todayCellDecoration: BoxDecoration(
+                                        color: Colors.pink,
+                                        border: Border.all(color: const Color(0xFF2B732F),
+                                            width: 1),
+                                        shape: BoxShape.circle),
+                                      blackoutDateTextStyle: TextStyle(
+                                          fontStyle: FontStyle.italic,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 18,
+                                          color: Colors.black54),
+                                    blackoutDatesDecoration: BoxDecoration(
+                                        color: Colors.amber,
+                                        border: Border.all(color: const Color(0xFF2B732F),
+                                            width: 1),
+                                        shape: BoxShape.circle),
+                                    cellDecoration: BoxDecoration(
+                                        color: Colors.blueGrey.withOpacity(0.4),
+                                        border: Border.all(color: const Color(0xFF2B732F),
+                                            width: 1),
+                                        shape: BoxShape.circle),
+                                      textStyle: TextStyle(
+                                          fontStyle: FontStyle.normal,
+                                          fontWeight: FontWeight.w400,
+                                          fontSize: 12,
+                                          color: Colors.blue
+                                      )
+                                  ),
+                                  selectionTextStyle: TextStyle(
+                                    color: Colors.white, // Color of selected day text
+                                    fontSize: 16, // Font size of selected day text
+                                    fontWeight: FontWeight.bold, // Font weight of selected day text
+                                  ),
+                                  selectionColor: Colors.blue, // Color of the selected date's background
+                                  todayHighlightColor: Colors.red, // Highlight color for today's date
+                                  showTodayButton: false, // Optionally hide the "Today" button
+                                  headerHeight: 80,
+                                  headerStyle: DateRangePickerHeaderStyle(
+                                    textAlign: TextAlign.left,
+                                    textStyle: TextStyle(
+                                      color: Colors.blue,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                    backgroundColor: Colors.transparent,
+                                  ),
+                                  showNavigationArrow: true,
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(context, selectedDeadline);
+                                },
+                                child: Text('Confirm Deadline'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+                setState(() {
+                  selectedDeadline = deadline ;
+                });
+              },
+              child: Text(
+                selectedDeadline != null
+                    ? 'Deadline: ${DateFormat('yyyy-MM-dd').format(selectedDeadline!)}'
+                    : 'Select Deadline',
+              ),
+            ),
+            SizedBox(height: 10),
+            Text(
+              selectedDeadline != null
+                  ? 'Selected Deadline: ${DateFormat('yyyy-MM-dd').format(selectedDeadline!)}'
+                  : 'No Deadline Selected',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+            Expanded(child: Container()), // Create a space to push ElevatedButton to bottom.
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  backgroundColor: Colors.black,
+                  minimumSize: Size(double.infinity, 40),
+                ),
+                clipBehavior: Clip.hardEdge,
+                onPressed: () async {
+                  int maxId = 0;
+                  for (var i in investmentList){
+                    if (i.id > maxId) {
+                      maxId = i.id;
+                    }
+                  }
+                  int newId = maxId + 1;
+                  String amountText = amountController.text;
+                  String nameText = nameController.text;
+                  if (amountText.isNotEmpty && nameText.isNotEmpty) {
+                    _saveInvestment(newId, nameText, category, selectedDeadline!, amountText, );
+                    //addCategoryValue(category, enteredValue ?? 0, sum);
+                    Navigator.pop(context); // Close the form
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Please select a deadline')),
+                    );
+                  }
+                },
+                child: const Text('Add'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void categorizeInvestments(List<Investment> investments) {
+    for (var investment in investments) {
+      switch (investment.category) {
+        case 'Döviz':
+          exchangeList.add(investment);
+          break;
+        case 'Cash':
+          cashList.add(investment);
+          break;
+        case 'Real Estate':
+          realEstateList.add(investment);
+          break;
+        case 'Car':
+          carList.add(investment);
+          break;
+        case 'Electronic':
+          electronicList.add(investment);
+          break;
+        case 'Other':
+          otherList.add(investment);
+          break;
+      // Add more cases for additional categories
+        default:
+        // Handle uncategorized investments if necessary
+          break;
+      }
+    }
+  }
+
+
   @override
   void initState() {
     super.initState();
     _load();
+    categorizeInvestments(investmentList);
   }
 
   double sumOfSavingValue = 0.0;
@@ -1336,6 +1570,9 @@ class _InvestmentPageState extends State<InvestmentPage> {
   double result = 0.0;
 
   void _load() async {
+    InvestmentService investmentService = InvestmentService();
+    List<Investment> investments = await investmentService.getInvestments();
+    //await investmentService.clearInvestments();
     final prefs = await SharedPreferences.getInstance();
     final ab1 = prefs.getDouble('sumInvestValue') ?? 0.0;
     final ab2 = prefs.getDouble('totalInvestValue') ?? 0.0;
@@ -1354,6 +1591,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
     final jsonMap4 = prefs.getString('cashDepot') ?? "";
 
     setState(() {
+      investmentList = investments;
+      print("investmentList:${investmentList}");
       sumInvestValue = ab1;
       totalInvestValue = ab2;
       selectedCategories = ab3;
@@ -1381,14 +1620,12 @@ class _InvestmentPageState extends State<InvestmentPage> {
         }).toList();
       }
 
-      print("sumList EX : $sumList");
       if (jsonMap3.isNotEmpty) {
         try {
           final ab14 = jsonDecode(jsonMap3) as List<dynamic>;
           if (ab14.every((element) => element is double)) {
             setState(() {
               sumList = ab14.cast<double>().toList();
-              print("sumList ED : $sumList");
             });
           }
         } catch (e) {
@@ -1409,11 +1646,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
         }
       }
 
-      print("categoryValues LOAD : $categoryValues");
-      print("exchangeDepot LOAD : $exchangeDepot");
     });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -1464,8 +1698,6 @@ class _InvestmentPageState extends State<InvestmentPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("Hedefler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.normal)),
-                        const SizedBox(height: 10),
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
@@ -1483,37 +1715,21 @@ class _InvestmentPageState extends State<InvestmentPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text("Birikim Hedefi", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 19, fontWeight: FontWeight.normal)),
-                              const SizedBox(height: 10),
-                              Text("$formattedSumOfSavingValue / $formattedsavingsValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 19, fontWeight: FontWeight.normal)),
-                              SizedBox(
-                                child: LinearPercentIndicator(
-                                  padding: const EdgeInsets.only(right: 10),
-                                  backgroundColor: const Color(0xffc6c6c7),
-                                  animation: true,
-                                  lineHeight: 7.h,
-                                  animationDuration: 1000,
-                                  percent: result,
-                                  trailing: Text("%${((result)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.normal)),
-                                  barRadius: const Radius.circular(10),
-                                  progressColor: Colors.lightBlue,
-                                ),
-                              ),
-                              const SizedBox(height: 5),
-                              Text("Birikimlerinizi buraya ekleyin.", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 14, fontWeight: FontWeight.normal)),
-                              const SizedBox(height: 5),
+                              Text("Hedefler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.normal)),
+                              Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                              //Text("Birikimlerinizi buraya ekleyin.", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 14, fontWeight: FontWeight.normal)),
                               SizedBox(
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text("Birikim Ekle", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.normal)),
-                                    IconButton(
-                                      onPressed: () {
+                                    InkWell(
+                                      onTap: () {
                                         setState(() {
                                           togglePopupVisibility(context);
                                         });
                                       },
-                                      icon: const Icon(Icons.add_circle),
+                                      child: const Icon(Icons.add_circle),
                                     )
                                   ],
                                 ),
@@ -1540,14 +1756,32 @@ class _InvestmentPageState extends State<InvestmentPage> {
                             );
                           },
                         ),
-                        Text("result : $result"),
-                        Text("electronic $electronicDepot"),
-                        Text("exchange $exchangeDepot"),
-                        Text("savingsValue : $savingsValue"),
-                        Text("sumOfSavingValue : $sumOfSavingValue"),
-                        Text("sumInvestValue : $sumInvestValue"),
-                        Text("sumList : $sumList"),
-                        Text("formattedSumOfSavingValue : $formattedSumOfSavingValue")
+                        SizedBox(
+                          height: 300,
+                          child: investmentList.isEmpty
+                              ? Center(child: Text('No investments found.'))
+                              : ListView.builder(
+                            itemCount: investmentList.length,
+                            itemBuilder: (context, index) {
+                              Investment investment = investmentList[index];
+                              return ListTile(
+                                title: Text(investment.name),
+                                subtitle: Text('Category: ${investment.category}'),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text('ID: ${investment.id}'),
+                                    SizedBox(width: 8),
+                                    InkWell(
+                                      child: FaIcon(FontAwesomeIcons.xmark),
+                                      onTap: () => _removeInvestment(investment.id),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        )
                       ],
                     ),
                   ),
@@ -1679,5 +1913,62 @@ class _InvestmentPageState extends State<InvestmentPage> {
         ],
       ),
     );
+  }
+}
+
+class Investment {
+  int id;
+  String category;
+  String name;
+  DateTime? deadline;
+  String amount;
+
+  Investment({required this.name, this.deadline, required this.id, required this.category, required this.amount});
+
+  Map<String, dynamic> toMap(){ // Convert Investment object to a map
+    return {
+      'id': id,
+      'category': category,
+      'name': name,
+      'deadline': deadline?.toIso8601String(),
+      'amount' : amount
+    };
+  }
+
+  factory Investment.fromMap(Map<String, dynamic> map){ // Create an Investment object from a map
+    return Investment(
+        id: map['id'],
+        category: map['category'],
+        name: map['name'],
+        deadline: map['deadline'] != null ? DateTime.parse(map['deadline']) : null,
+        amount: map['amount']
+    );
+  }
+}
+
+class InvestmentService {
+  final String key = 'investments';
+
+  Future<void> saveInvestment(Investment investment) async { // Save an investment to local storage
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> investments = prefs.getStringList(key) ?? [];
+    investments.add(jsonEncode(investment.toMap())); // Convert Investment object to JSON and add to the list
+    await prefs.setStringList(key, investments); // Save the updated list
+  }
+
+  Future<List<Investment>> getInvestments() async{ // Retrieve all investments from local storage
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> investments = prefs.getStringList(key) ?? [];
+    
+    return investments.map((investmentString) { // Convert JSON string back to Investment object
+      Map<String, dynamic> investmentMap = jsonDecode(investmentString);
+      return Investment.fromMap(investmentMap);
+    }).toList();
+  }
+
+  Future<void> clearInvestments() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove(key);
+    print('All investments cleared.');
   }
 }
