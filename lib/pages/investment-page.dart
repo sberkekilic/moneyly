@@ -1242,7 +1242,13 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                 showModalBottomSheet(
                                   context: context,
                                   isScrollControlled: true,
-                                  builder: (context) => _addInvestmentBottomSheet(context, category, amountController, nameController),
+                                  builder: (context) => _addInvestmentBottomSheet(
+                                      context,
+                                      category,
+                                      amountController,
+                                      nameController,
+                                      selectedDeadline,
+                                  ),
                                 );
                               },
                               icon: const Icon(Icons.add_circle_outline)
@@ -1319,9 +1325,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
     await prefs.setStringList('investments', investmentMap.map((investment) => jsonEncode(investment)).toList());
   }
 
-  Widget _addInvestmentBottomSheet(BuildContext context, String category, TextEditingController amountController, TextEditingController nameController){
-    DateTime? selectedDeadline;
-
+  Widget _addInvestmentBottomSheet(BuildContext context, String category, TextEditingController amountController, TextEditingController nameController, DateTime? tempSelectedDeadline){
     return Container(
       height: MediaQuery.of(context).size.height * 0.6,
       decoration: BoxDecoration(
@@ -1383,7 +1387,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                 child: SfDateRangePicker(
                                   onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
                                     if (args.value is DateTime) {
-                                      selectedDeadline = args.value;
+                                      tempSelectedDeadline = args.value;
+                                      print("OKEY:${args.value}");
                                     }
                                   },
                                   backgroundColor: Colors.white,
@@ -1458,7 +1463,10 @@ class _InvestmentPageState extends State<InvestmentPage> {
                               padding: const EdgeInsets.all(8.0),
                               child: ElevatedButton(
                                 onPressed: () {
-                                  Navigator.pop(context, selectedDeadline);
+                                  setState(() {
+                                    print("selectedDeadline123:${selectedDeadline}");
+                                    Navigator.pop(context, tempSelectedDeadline);
+                                  });
                                 },
                                 child: Text('Confirm Deadline'),
                               ),
@@ -1469,19 +1477,24 @@ class _InvestmentPageState extends State<InvestmentPage> {
                     );
                   },
                 );
-                setState(() {
-                  selectedDeadline = deadline ;
-                });
+                if (deadline != null) {
+                  print("CODE123:${deadline}");
+                  setState(() {
+                    selectedDeadline = deadline;
+                  });
+                } else {
+                  // Optionally handle case when no deadline is selected
+                }
               },
               child: Text(
-                selectedDeadline != null
+                tempSelectedDeadline != null
                     ? 'Deadline: ${DateFormat('yyyy-MM-dd').format(selectedDeadline!)}'
                     : 'Select Deadline',
               ),
             ),
             SizedBox(height: 10),
             Text(
-              selectedDeadline != null
+              tempSelectedDeadline != null
                   ? 'Selected Deadline: ${DateFormat('yyyy-MM-dd').format(selectedDeadline!)}'
                   : 'No Deadline Selected',
               style: TextStyle(fontSize: 16, color: Colors.grey),
@@ -1585,6 +1598,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
     final ab9 = prefs.getBool('hasOtherGoalSelected') ?? false;
     final ab10 = prefs.getString('ananim') ?? "";
     final ab11 = prefs.getBool('isPopupVisible') ?? false;
+    final ab12 = prefs.getString('selectedDeadline');
     final jsonMap = prefs.getString('categoryValues') ?? "";
     final jsonMap2 = prefs.getString('exchangeDepot') ?? "";
     final jsonMap3 = prefs.getString('sumList') ?? "";
@@ -1644,6 +1658,12 @@ class _InvestmentPageState extends State<InvestmentPage> {
         } catch (e) {
           // Handle any other JSON decoding errors here
         }
+      }
+
+      if (ab12 != null){
+        setState(() {
+          selectedDeadline = DateTime.parse(ab12);
+        });
       }
 
     });
