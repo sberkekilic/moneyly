@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class AppLocalizations {
-  static List<String> supportedLanguages = ['en', 'tr', 'fr'];
+  static List<String> supportedLanguages = ['en', 'tr'];
 
   late Locale locale;
   late Map<String, String> _valueText;

@@ -5,8 +5,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:moneyly/blocs/settings/settings-cubit.dart';
+import 'package:moneyly/blocs/settings/settings-page.dart';
 import 'package:moneyly/blocs/settings/settings-state.dart';
 import 'package:moneyly/form-data-provider.dart';
+import 'package:moneyly/localization.dart';
 import 'package:moneyly/pages/abonelikler.dart';
 import 'package:moneyly/pages/diger-giderler.dart';
 import 'package:moneyly/pages/faturalar.dart';
@@ -19,13 +21,15 @@ import 'package:moneyly/pages/page5.dart';
 import 'package:moneyly/pages/wishes-page.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'deneme.dart';
+import 'pages/page6.dart';
 import 'pages/selection.dart';
+import 'themes/themes.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  // // Initialize the Turkish locale data
   Intl.defaultLocale = 'tr_TR';
   initializeDateFormatting('tr_TR', null).then((_) {
     runApp(
@@ -40,7 +44,6 @@ void main() {
     );
   });
 }
-
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -58,10 +61,20 @@ class MyApp extends StatelessWidget {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
               final allKeysHaveValues = snapshot.data ?? false;
-              final initialRoute = allKeysHaveValues ? 'ana-sayfa' : '/';
+              final initialRoute = allKeysHaveValues ? 'page6' : '/';
               return ScreenUtilInit(
                 designSize: const Size(360, 640),
                 builder: (context, child) => MaterialApp(
+                  locale: Locale(state.language, ""),
+                  localizationsDelegates: [
+                    AppLocalizations.delegate,
+                    GlobalMaterialLocalizations.delegate,
+                    GlobalWidgetsLocalizations.delegate,
+                    GlobalCupertinoLocalizations.delegate
+                  ],
+                  supportedLocales: AppLocalizations.supportedLanguages
+                  .map((lang) => Locale(lang, ''))
+                  .toList(),
                   initialRoute: initialRoute,
                   routes: {
                     '/': (context) => MyHomePage(),
@@ -70,18 +83,19 @@ class MyApp extends StatelessWidget {
                     'faturalar': (context) => Bills(),
                     'diger-giderler': (context) => OtherExpenses(),
                     'page5': (context) => Page5(),
+                    'page6': (context) => Page6(),
                     'ana-sayfa': (context) => HomePage(),
                     'income-page': (context) => IncomePage(),
                     'outcome-page': (context) => OutcomePage(),
                     'investment-page': (context) => InvestmentPage(),
-                    'wishes-page': (context) => WishesPage()
+                    'wishes-page': (context) => WishesPage(),
+                    'settings' : (context) => SettingsScreen()
                   },
                   debugShowCheckedModeBanner: false,
-                  title: 'Flutter Demo',
-                  theme: ThemeData(
-                    primarySwatch: Colors.blue,
-                    scaffoldBackgroundColor: Color(0xfff0f0f1),
-                  ),
+                  title: 'Moneyly',
+                  themeMode: state.darkMode ? ThemeMode.dark : ThemeMode.light,
+                  theme: Themes.lightTheme,
+                  darkTheme: Themes.darkTheme,
                 ),
               );
             } else {

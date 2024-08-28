@@ -994,40 +994,6 @@ class _OutcomePageState extends State<OutcomePage> {
     String currentDate = DateFormat('dd MMMM yyyy').format(DateTime.now());
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xfff0f0f1),
-        elevation: 0,
-        toolbarHeight: 50.h,
-        automaticallyImplyLeading: false,
-        leadingWidth: 30.w,
-        title: Stack(
-          alignment: Alignment.centerLeft,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                IconButton(
-                  onPressed: () async {
-                    SharedPreferences prefs = await SharedPreferences.getInstance();
-                    await prefs.clear();
-                    Navigator.pushNamed(context, '/');
-                  },
-                  icon: const Icon(Icons.settings, color: Colors.black), // Replace with the desired left icon
-                ),
-                IconButton(
-                  onPressed: () {
-                  },
-                  icon: const Icon(Icons.person, color: Colors.black), // Replace with the desired right icon
-                ),
-              ],
-            ),
-            Text(
-              currentDate,
-              style: GoogleFonts.montserrat(color: Colors.black, fontSize: 20.sp, fontWeight: FontWeight.normal),
-            ),
-          ],
-        ),
-      ),
       body: SingleChildScrollView(
         child: Container(
           padding: const EdgeInsets.fromLTRB(20,0,20,20),
@@ -2977,83 +2943,6 @@ class _OutcomePageState extends State<OutcomePage> {
                   ],
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.5),
-                spreadRadius: 5,
-                blurRadius: 5,
-                offset: const Offset(0, 2),
-              ),
-            ],
-            borderRadius: BorderRadius.circular(10)
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: BottomNavigationBar(
-            type: BottomNavigationBarType.fixed, // Set the type to shifting
-            selectedItemColor: const Color.fromARGB(255, 26, 183, 56),
-            selectedLabelStyle: GoogleFonts.montserrat(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold),
-            unselectedLabelStyle: GoogleFonts.montserrat(color: const Color.fromARGB(255, 26, 183, 56), fontSize: 11, fontWeight: FontWeight.w600),
-            currentIndex: 2,
-            onTap: (int index) {
-              switch (index) {
-                case 0:
-                  Navigator.pushNamed(context, 'ana-sayfa');
-                  break;
-                case 1:
-                  Navigator.pushNamed(context, 'income-page');
-                  break;
-                case 2:
-                  Navigator.pushNamed(context, 'outcome-page');
-                  break;
-                case 3:
-                  Navigator.pushNamed(context, 'investment-page');
-                  break;
-                case 4:
-                  Navigator.pushNamed(context, 'wishes-page');
-                  break;
-              }
-            },
-            items: [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home, size: 30),
-                label: 'Ana Sayfa',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.attach_money, size: 30),
-                label: 'Gelir',
-              ),
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(left: 5,right: 5),
-                  child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: const Color.fromARGB(125, 26, 183, 56), // Background color
-                        borderRadius: BorderRadius.circular(20), // Rounded corners
-                      ),
-                      child: Icon(Icons.money_off_sharp, size: 30)
-                  ),
-                ),
-                label: 'Gider',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.trending_up, size: 30),
-                label: 'Yatırım',
-              ),
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: const EdgeInsets.only(top: 5,bottom: 5),
-                  child: Icon(FontAwesome.bank, size: 20),
-                ),
-                label: 'İstekler',
-              )
             ],
           ),
         ),

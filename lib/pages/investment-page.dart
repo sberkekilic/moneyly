@@ -2,12 +2,15 @@ import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_inset_box_shadow/flutter_inset_box_shadow.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttericon/font_awesome_icons.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:moneyly/blocs/settings/settings-cubit.dart';
+import 'package:moneyly/blocs/settings/settings-state.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
@@ -58,7 +61,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
   String ananim = "";
   String formattedsavingsValue = "";
   String formattedSumOfSavingValue = "";
-  DateTime? selectedDeadline;
+  DateTime? _savedDate;
 
   Future<void> togglePopupVisibility(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
@@ -1240,16 +1243,21 @@ class _InvestmentPageState extends State<InvestmentPage> {
                           IconButton(
                               onPressed: () {
                                 showModalBottomSheet(
-                                  context: context,
                                   isScrollControlled: true,
-                                  builder: (context) => _addInvestmentBottomSheet(
+                                  context: context,
+                                  builder: (context) {
+                                    return _addInvestmentBottomSheet(
                                       context,
                                       category,
                                       amountController,
                                       nameController,
-                                      selectedDeadline,
-                                  ),
-                                );
+                                    );
+                                  }
+                                ).whenComplete(() {
+                                  amountController.clear();
+                                  nameController.clear();
+                                  _deleteSavedDate();
+                                });
                               },
                               icon: const Icon(Icons.add_circle_outline)
                           ),
@@ -1325,217 +1333,103 @@ class _InvestmentPageState extends State<InvestmentPage> {
     await prefs.setStringList('investments', investmentMap.map((investment) => jsonEncode(investment)).toList());
   }
 
-  Widget _addInvestmentBottomSheet(BuildContext context, String category, TextEditingController amountController, TextEditingController nameController, DateTime? tempSelectedDeadline){
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.6,
-      decoration: BoxDecoration(
-        color: Colors.white, // Background color
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(10),
-          topRight: Radius.circular(10),
-        ),
-      ),
-      child: Padding(
-        padding:  EdgeInsets.fromLTRB(20,20,20,MediaQuery.of(context).viewInsets.bottom+20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '$category hedefin için tutar belirle.',
-              style: const TextStyle(fontSize: 18),
+  Widget _addInvestmentBottomSheet(BuildContext context, String category, TextEditingController amountController, TextEditingController nameController){
+    return StatefulBuilder(
+      builder: (BuildContext context, StateSetter setModalState) {
+        return Container(
+          height: 500.h,
+          decoration: BoxDecoration(
+            color: Colors.white, // Background color
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(10),
+              topRight: Radius.circular(10),
             ),
-            SizedBox(height: 20.h),
-            TextFormField(
-              controller: nameController,
-              keyboardType: TextInputType.name,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: 'İsim',
-              ),
-            ),
-            SizedBox(height: 20.h),
-            TextFormField(
-              controller: amountController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: 'Tutar',
-              ),
-            ),
-            SizedBox(height: 20.h),
-            ElevatedButton(
-              onPressed: () async {
-                final DateTime? deadline = await showDialog<DateTime>(
-                  context: context,
-                  builder: (context) {
-                    return Dialog(
-                      child: Container(
-                        height: 400, // Adjust the height as needed
-                        child: Column(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text(
-                                'Select a Deadline',
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: SfDateRangePicker(
-                                  onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
-                                    if (args.value is DateTime) {
-                                      tempSelectedDeadline = args.value;
-                                      print("OKEY:${args.value}");
-                                    }
-                                  },
-                                  backgroundColor: Colors.white,
-                                  selectionMode: DateRangePickerSelectionMode.single,
-                                  monthViewSettings: DateRangePickerMonthViewSettings(
-                                    dayFormat: 'EEE',
-                                    viewHeaderStyle: DateRangePickerViewHeaderStyle(
-                                      textStyle: TextStyle(
-                                        fontSize: 14, // Custom font size for day names
-                                        fontWeight: FontWeight.bold, // Custom font weight for day names
-                                        color: Colors.black, // Custom color for day names
-                                      ),
-                                    ),
-                                  ),
-                                  monthCellStyle: DateRangePickerMonthCellStyle(
-                                    todayTextStyle: TextStyle(
-                                          fontStyle: FontStyle.italic,
-                                          fontWeight: FontWeight.w400,
-                                          fontSize: 12,
-                                          color: Colors.red
-                                      ),
-                                    todayCellDecoration: BoxDecoration(
-                                        color: Colors.pink,
-                                        border: Border.all(color: const Color(0xFF2B732F),
-                                            width: 1),
-                                        shape: BoxShape.circle),
-                                      blackoutDateTextStyle: TextStyle(
-                                          fontStyle: FontStyle.italic,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 18,
-                                          color: Colors.black54),
-                                    blackoutDatesDecoration: BoxDecoration(
-                                        color: Colors.amber,
-                                        border: Border.all(color: const Color(0xFF2B732F),
-                                            width: 1),
-                                        shape: BoxShape.circle),
-                                    cellDecoration: BoxDecoration(
-                                        color: Colors.blueGrey.withOpacity(0.4),
-                                        border: Border.all(color: const Color(0xFF2B732F),
-                                            width: 1),
-                                        shape: BoxShape.circle),
-                                      textStyle: TextStyle(
-                                          fontStyle: FontStyle.normal,
-                                          fontWeight: FontWeight.w400,
-                                          fontSize: 12,
-                                          color: Colors.blue
-                                      )
-                                  ),
-                                  selectionTextStyle: TextStyle(
-                                    color: Colors.white, // Color of selected day text
-                                    fontSize: 16, // Font size of selected day text
-                                    fontWeight: FontWeight.bold, // Font weight of selected day text
-                                  ),
-                                  selectionColor: Colors.blue, // Color of the selected date's background
-                                  todayHighlightColor: Colors.red, // Highlight color for today's date
-                                  showTodayButton: false, // Optionally hide the "Today" button
-                                  headerHeight: 80,
-                                  headerStyle: DateRangePickerHeaderStyle(
-                                    textAlign: TextAlign.left,
-                                    textStyle: TextStyle(
-                                      color: Colors.blue,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                    backgroundColor: Colors.transparent,
-                                  ),
-                                  showNavigationArrow: true,
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  setState(() {
-                                    print("selectedDeadline123:${selectedDeadline}");
-                                    Navigator.pop(context, tempSelectedDeadline);
-                                  });
-                                },
-                                child: Text('Confirm Deadline'),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                );
-                if (deadline != null) {
-                  print("CODE123:${deadline}");
-                  setState(() {
-                    selectedDeadline = deadline;
-                  });
-                } else {
-                  // Optionally handle case when no deadline is selected
-                }
-              },
-              child: Text(
-                tempSelectedDeadline != null
-                    ? 'Deadline: ${DateFormat('yyyy-MM-dd').format(selectedDeadline!)}'
-                    : 'Select Deadline',
-              ),
-            ),
-            SizedBox(height: 10),
-            Text(
-              tempSelectedDeadline != null
-                  ? 'Selected Deadline: ${DateFormat('yyyy-MM-dd').format(selectedDeadline!)}'
-                  : 'No Deadline Selected',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-            Expanded(child: Container()), // Create a space to push ElevatedButton to bottom.
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  backgroundColor: Colors.black,
-                  minimumSize: Size(double.infinity, 40),
+          ),
+          child: Padding(
+            padding:  EdgeInsets.fromLTRB(20,20,20,MediaQuery.of(context).viewInsets.bottom+50),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '$category hedefin için tutar belirle.',
+                  style: TextStyle(fontSize: 18.sp),
                 ),
-                clipBehavior: Clip.hardEdge,
-                onPressed: () async {
-                  int maxId = 0;
-                  for (var i in investmentList){
-                    if (i.id > maxId) {
-                      maxId = i.id;
-                    }
-                  }
-                  int newId = maxId + 1;
-                  String amountText = amountController.text;
-                  String nameText = nameController.text;
-                  if (amountText.isNotEmpty && nameText.isNotEmpty) {
-                    _saveInvestment(newId, nameText, category, selectedDeadline!, amountText, );
-                    //addCategoryValue(category, enteredValue ?? 0, sum);
-                    Navigator.pop(context); // Close the form
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Please select a deadline')),
-                    );
-                  }
-                },
-                child: const Text('Add'),
-              ),
+                SizedBox(height: 20.h),
+                TextFormField(
+                  controller: nameController,
+                  keyboardType: TextInputType.name,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Hedef İsmi',
+                  ),
+                ),
+                SizedBox(height: 20.h),
+                TextFormField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Tutar',
+                  ),
+                ),
+                SizedBox(height: 20.h),
+                GestureDetector(
+                  onTap: () {
+                    _openDatePicker(setModalState);
+                  },
+                  child: AbsorbPointer(
+                    child: TextFormField(
+                      decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: _savedDate == null
+                              ? 'Tap to choose a date'
+                              : '${DateFormat('yyyy-MM-dd').format(_savedDate!)}'
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(child: Container()), // Create a space to push ElevatedButton to bottom.
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      backgroundColor: Colors.black,
+                      minimumSize: Size(double.infinity, 40),
+                    ),
+                    clipBehavior: Clip.hardEdge,
+                    onPressed: () async {
+                      int maxId = 0;
+                      for (var i in investmentList){
+                        if (i.id > maxId) {
+                          maxId = i.id;
+                        }
+                      }
+                      int newId = maxId + 1;
+                      String amountText = amountController.text;
+                      String nameText = nameController.text;
+                      if (amountText.isNotEmpty && nameText.isNotEmpty) {
+                        _saveInvestment(newId, nameText, category, _savedDate!, amountText, );
+                        //addCategoryValue(category, enteredValue ?? 0, sum);
+                        Navigator.pop(context); // Close the form
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Please select a deadline')),
+                        );
+                      }
+                      _savedDate;
+                      _deleteSavedDate();
+                    },
+                    child: const Text('Add'),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -1568,6 +1462,38 @@ class _InvestmentPageState extends State<InvestmentPage> {
     }
   }
 
+  void _deleteSavedDate() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove('selectedDate');
+    setState(() {
+      _savedDate = null;
+    });
+  }
+
+  void _openDatePicker(StateSetter setModalState) async {
+    DateTime? selectedDate = await showDialog<DateTime>(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          insetPadding: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: ChooseDateBottomSheet(
+            onDateSelected: (date) {
+              _savedDate = date;
+            },
+          ),
+        );
+      },
+    );
+
+    if (selectedDate != null) {
+      setModalState(() {
+        _savedDate = selectedDate;
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -1598,7 +1524,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
     final ab9 = prefs.getBool('hasOtherGoalSelected') ?? false;
     final ab10 = prefs.getString('ananim') ?? "";
     final ab11 = prefs.getBool('isPopupVisible') ?? false;
-    final ab12 = prefs.getString('selectedDeadline');
+    final ab12 = prefs.getString('selectedDate');
     final jsonMap = prefs.getString('categoryValues') ?? "";
     final jsonMap2 = prefs.getString('exchangeDepot') ?? "";
     final jsonMap3 = prefs.getString('sumList') ?? "";
@@ -1662,7 +1588,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
 
       if (ab12 != null){
         setState(() {
-          selectedDeadline = DateTime.parse(ab12);
+          _savedDate = DateTime.parse(ab12);
         });
       }
 
@@ -1681,37 +1607,6 @@ class _InvestmentPageState extends State<InvestmentPage> {
       child: Stack(
         children: [
               Scaffold(
-                appBar: AppBar(
-                  backgroundColor: const Color(0xfff0f0f1),
-                  elevation: 0,
-                  toolbarHeight: 50.h,
-                  automaticallyImplyLeading: false,
-                  leadingWidth: 30.w,
-                  title: Stack(
-                    alignment: Alignment.centerLeft,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          IconButton(
-                            onPressed: () {
-                            },
-                            icon: const Icon(Icons.settings, color: Colors.black), // Replace with the desired left icon
-                          ),
-                          IconButton(
-                            onPressed: () {
-                            },
-                            icon: const Icon(Icons.person, color: Colors.black), // Replace with the desired right icon
-                          ),
-                        ],
-                      ),
-                      Text(
-                        currentDate,
-                        style: GoogleFonts.montserrat(color: Colors.black, fontSize: 20.sp, fontWeight: FontWeight.normal),
-                      ),
-                    ],
-                  ),
-                ),
                 body: SingleChildScrollView(
                   child: Container(
                     padding: const EdgeInsets.all(20),
@@ -1785,7 +1680,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                             itemBuilder: (context, index) {
                               Investment investment = investmentList[index];
                               return ListTile(
-                                title: Text(investment.name),
+                                title: Text(investment.name+investment.amount+DateFormat('yyyy-MM-dd').format(investment.deadline!)),
                                 subtitle: Text('Category: ${investment.category}'),
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -1806,83 +1701,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                     ),
                   ),
                 ),
-                bottomNavigationBar: Container(
-                  decoration: BoxDecoration(
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.5),
-                          spreadRadius: 5,
-                          blurRadius: 5,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                      borderRadius: BorderRadius.circular(10)
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: BottomNavigationBar(
-                      type: BottomNavigationBarType.fixed, // Set the type to shifting
-                      selectedItemColor: const Color.fromARGB(255, 26, 183, 56),
-                      selectedLabelStyle: GoogleFonts.montserrat(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold),
-                      unselectedLabelStyle: GoogleFonts.montserrat(color: const Color.fromARGB(255, 26, 183, 56), fontSize: 11, fontWeight: FontWeight.w600),
-                      currentIndex: 3,
-                      onTap: (int index) {
-                        switch (index) {
-                          case 0:
-                            Navigator.pushNamed(context, 'ana-sayfa');
-                            break;
-                          case 1:
-                            Navigator.pushNamed(context, 'income-page');
-                            break;
-                          case 2:
-                            Navigator.pushNamed(context, 'outcome-page');
-                            break;
-                          case 3:
-                            Navigator.pushNamed(context, 'investment-page');
-                            break;
-                          case 4:
-                            Navigator.pushNamed(context, 'wishes-page');
-                            break;
-                        }
-                      },
-                      items: [
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.home, size: 30),
-                          label: 'Ana Sayfa',
-                        ),
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.attach_money, size: 30),
-                          label: 'Gelir',
-                        ),
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.money_off, size: 30),
-                          label: 'Gider',
-                        ),
-                        BottomNavigationBarItem(
-                          icon: Padding(
-                            padding: EdgeInsets.only(left: 5,right: 5),
-                            child: Container(
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: const Color.fromARGB(125, 26, 183, 56), // Background color
-                                  borderRadius: BorderRadius.circular(20), // Rounded corners
-                                ),
-                                child: Icon(Icons.trending_up_sharp, size: 30)
-                            ),
-                          ),
-                          label: 'Yatırım',
-                        ),
-                        BottomNavigationBarItem(
-                          icon: Padding(
-                            padding: const EdgeInsets.only(top: 5,bottom: 5),
-                            child: Icon(FontAwesome.bank, size: 20),
-                          ),
-                          label: 'İstekler',
-                        )
-                      ],
-                    ),
-                  ),
-                ),
+
               ),
           AnimatedPositioned(
             duration: const Duration(milliseconds: 500), // Duration for the animation
@@ -1934,6 +1753,157 @@ class _InvestmentPageState extends State<InvestmentPage> {
       ),
     );
   }
+}
+
+class ChooseDateBottomSheet extends StatefulWidget{
+  final Function(DateTime) onDateSelected;
+
+  ChooseDateBottomSheet({required this.onDateSelected});
+
+  @override
+  _ChooseDateBottomSheetState createState() => _ChooseDateBottomSheetState();
+}
+
+class _ChooseDateBottomSheetState extends State<ChooseDateBottomSheet>{
+  DateTime? _selectedDate;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSelectedDate();
+  }
+
+  void _loadSelectedDate() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? dateString = prefs.getString('selectedDate');
+    if (dateString != null){
+      setState(() {
+        _selectedDate = DateTime.parse(dateString);
+      });
+    } else {
+      setState(() {
+        _selectedDate = DateTime.now();
+      });
+    }
+  }
+
+  void _onSelectionChanged(DateRangePickerSelectionChangedArgs args){
+    setState(() {
+      _selectedDate = args.value;
+      _saveDate();
+    });
+  }
+  
+  void _saveDate() async {
+    if (_selectedDate != null){
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('selectedDate', _selectedDate!.toIso8601String());
+      widget.onDateSelected(_selectedDate!);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height*0.6,
+      width: MediaQuery.of(context).size.width*0.9,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10)
+      ),
+      padding: EdgeInsets.all(16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(height: 20),
+          Align(child: Text("Hedef Tarihi", style: TextStyle(fontSize: 24.sp)), alignment: Alignment.bottomLeft,),
+          SizedBox(height: 20),
+          BlocBuilder<SettingsCubit, SettingsState>(
+            builder: (context, state) {
+              return SfDateRangePicker(
+                onSelectionChanged: _onSelectionChanged,
+                backgroundColor: Colors.white,
+                selectionColor: Colors.blue,
+                todayHighlightColor: Colors.red,
+                selectionMode: DateRangePickerSelectionMode.single,
+                selectionTextStyle: TextStyle(
+                  color: Colors.white, // Color of selected day text
+                  fontSize: 18.sp, // Font size of selected day text
+                  fontWeight: FontWeight.bold, // Font weight of selected day text
+                ),
+                monthViewSettings: DateRangePickerMonthViewSettings(
+                  dayFormat: 'EEE',
+                  viewHeaderStyle: DateRangePickerViewHeaderStyle(
+                    textStyle: TextStyle(
+                      fontSize: 12.sp, // Custom font size for day names
+                      fontWeight: FontWeight.bold, // Custom font weight for day names
+                      color: Colors.black, // Custom color for day names
+                    ),
+                  ),
+                ),
+                monthCellStyle: DateRangePickerMonthCellStyle(
+                  disabledDatesTextStyle: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 18.sp,
+                      color: Colors.black54),
+                    blackoutDateTextStyle: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 18.sp,
+                        color: Colors.black54),
+                    blackoutDatesDecoration: BoxDecoration(
+                        color: Colors.amber,
+                        shape: BoxShape.circle),
+                    cellDecoration: BoxDecoration(
+                        color: Colors.transparent,
+                        shape: BoxShape.circle,
+                      border: Border.all(color: Colors.transparent, width: 8), // add some gap between cells
+                    ),
+                    textStyle: TextStyle(
+                        fontStyle: FontStyle.normal,
+                        fontWeight: FontWeight.w400,
+                        fontSize: 18.sp,
+                        color: Colors.blue
+                    )
+                ),
+                initialSelectedDate: _selectedDate != null
+                  ? DateTime(_selectedDate!.year, _selectedDate!.month, _selectedDate!.day)
+                : DateTime.now(),
+                minDate: DateTime.now(),
+                showTodayButton: false,
+                showNavigationArrow: true,
+                headerHeight: 60,
+                headerStyle: DateRangePickerHeaderStyle(
+                  textAlign: TextAlign.left,
+                  textStyle: TextStyle(
+                    color: Colors.blue,
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  backgroundColor: Colors.transparent,
+                ),
+              );
+            },
+          ),
+          Expanded(child: Container()), // Create a space to push ElevatedButton to bottom.
+          ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                backgroundColor: Colors.black,
+                minimumSize: Size(double.infinity, 40),
+              ),
+              onPressed: () {
+                setState(() {
+                  Navigator.of(context).pop(_selectedDate);
+                });
+              },
+              child: Text('Tamam')
+          )
+        ],
+      ),
+    );
+  }
+
 }
 
 class Investment {

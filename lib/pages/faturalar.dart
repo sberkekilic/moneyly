@@ -57,26 +57,41 @@ class Invoice {
     );
   }
 
-  String updateDifference(Invoice invoice, String faturaDonemi, String sonOdeme) {
+  String updateDifference(Invoice invoice, String faturaDonemi, String? sonOdeme) {
     final currentDate = DateTime.now();
     final formattedDate = DateFormat('yyyy-MM-dd').format(currentDate);
-    final dueDateKnown = invoice.dueDate != null;
 
-    if (currentDate.isBefore(DateTime.parse(faturaDonemi))) {
-      invoice.difference = (DateTime.parse(faturaDonemi).difference(currentDate).inDays + 1).toString();
+    DateTime? faturaDonemiDate;
+    DateTime? sonOdemeDate;
+
+    try {
+      faturaDonemiDate = DateTime.parse(faturaDonemi);
+    } catch (e) {
+      // Handle parsing error
+      return "error1";
+    }
+
+    try {
+      if (sonOdeme != null) {
+        sonOdemeDate = DateTime.parse(sonOdeme);
+      }
+    } catch (e) {
+      // Handle parsing error
+      return "error2";
+    }
+
+    // Compare the current date with faturaDonemi
+    if (currentDate.isBefore(faturaDonemiDate)) {
+      invoice.difference = (faturaDonemiDate.difference(currentDate).inDays + 1).toString();
       return invoice.difference;
-    } else if (formattedDate == faturaDonemi || sonOdeme ==formattedDate) {
+    } else if (formattedDate == faturaDonemi || sonOdeme == formattedDate) {
       invoice.difference = "0";
       return invoice.difference;
-    } else if (dueDateKnown) {
-      if (sonOdeme != null && currentDate.isAfter(DateTime.parse(faturaDonemi))) {
-        invoice.difference = (DateTime.parse(sonOdeme!).difference(currentDate).inDays + 1).toString();
-        return invoice.difference;
-      } else {
-        return "error1";
-      }
+    } else if (sonOdemeDate != null && currentDate.isAfter(faturaDonemiDate)) {
+      invoice.difference = (sonOdemeDate.difference(currentDate).inDays + 1).toString();
+      return invoice.difference;
     } else {
-      return "error2";
+      return "error3"; // Handle other cases
     }
   }
 

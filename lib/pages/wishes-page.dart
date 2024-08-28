@@ -552,9 +552,11 @@ class _WishesPageState extends State<WishesPage> {
                         onTap: (value) {
                           setState(() {
                             selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))] = currencyList[value];
+                            dropDownValue = selectedTabList[0];
                             bankData['selectedSymbol'] = getSelectedSymbol(selectedTab);
                             print("selectedTabList : $selectedTabList");
-                            print("sumMap for onChange : $sumMap");
+                            print("dropDownValue : $dropDownValue");
+                            print("newSelectedTab : $newSelectedTab");
                           });
                         },
                       ),
@@ -672,27 +674,6 @@ class _WishesPageState extends State<WishesPage> {
                     ),
                   ],
                 ),
-              if(bankData['isAddButtonActive'] == true)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    DropdownButton(
-                      value: dropDownValue,
-                      icon:const Icon(Icons.keyboard_arrow_down),
-                      items: currencyList.map((String items) {
-                        return DropdownMenuItem(
-                          value: items,
-                          child: Text(items),
-                        );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          dropDownValue = newValue!;
-                        });
-                      },
-                    ),
-                  ],
-                ),
               if(bankData['isAddButtonActive'] == true && assetController != null)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -702,7 +683,8 @@ class _WishesPageState extends State<WishesPage> {
                         controller: assetController,
                         keyboardType: TextInputType.numberWithOptions(signed: false, decimal: true),
                         decoration: const InputDecoration(
-                          border: InputBorder.none,
+
+                          border: OutlineInputBorder(),
                           hintText: 'Asset',
                         ),
                       ),
@@ -712,11 +694,11 @@ class _WishesPageState extends State<WishesPage> {
                         IconButton(
                           onPressed: () {
                             double price = double.tryParse(assetController?.text.trim() ?? '0.3') ?? 0.3;
-                            String newName = nameController.text;
+                            String bankName = nameController.text;
                             setState(() {
                               final text = assetController?.text.trim() ?? '';
                               if (text.isNotEmpty && text != "0") {
-                                updateBankData(bankData['id'], newName, bankData['percent'], price, dropDownValue , bankData['selectedSymbol'], false);
+                                updateBankData(bankData['id'], bankName, bankData['percent'], price, dropDownValue , bankData['selectedSymbol'], false);
                                 assetController?.clear();
                               } else {
                                 assetController?.clear();
@@ -741,37 +723,6 @@ class _WishesPageState extends State<WishesPage> {
     double totalCurrencySum = calculateTotalSumForCurrency("Türk Lirası");
     String currentDate = DateFormat('dd MMMM yyyy').format(DateTime.now());
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xfff0f0f1),
-        elevation: 0,
-        toolbarHeight: 50.h,
-        automaticallyImplyLeading: false,
-        leadingWidth: 30.w,
-        title: Stack(
-          alignment: Alignment.centerLeft,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                IconButton(
-                  onPressed: () {
-                  },
-                  icon: const Icon(Icons.settings, color: Colors.black), // Replace with the desired left icon
-                ),
-                IconButton(
-                  onPressed: () {
-                  },
-                  icon: const Icon(Icons.person, color: Colors.black), // Replace with the desired right icon
-                ),
-              ],
-            ),
-            Text(
-              currentDate,
-              style: GoogleFonts.montserrat(color: Colors.black, fontSize: 20.sp, fontWeight: FontWeight.normal),
-            ),
-          ],
-        ),
-      ),
       body: SingleChildScrollView(
         child: Container(
           padding: const EdgeInsets.all(20),
@@ -847,83 +798,6 @@ class _WishesPageState extends State<WishesPage> {
                     buildBankCategories(context, bankData),
                 ],
               ),
-            ],
-          ),
-        ),
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.5),
-                spreadRadius: 5,
-                blurRadius: 5,
-                offset: const Offset(0, 2),
-              ),
-            ],
-            borderRadius: BorderRadius.circular(10)
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: BottomNavigationBar(
-            type: BottomNavigationBarType.fixed, // Set the type to shifting
-            selectedItemColor: const Color.fromARGB(255, 26, 183, 56),
-            selectedLabelStyle: GoogleFonts.montserrat(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold),
-            unselectedLabelStyle: GoogleFonts.montserrat(color: const Color.fromARGB(255, 26, 183, 56), fontSize: 11, fontWeight: FontWeight.w600),
-            currentIndex: 4,
-            onTap: (int index) {
-              switch (index) {
-                case 0:
-                  Navigator.pushNamed(context, 'ana-sayfa');
-                  break;
-                case 1:
-                  Navigator.pushNamed(context, 'income-page');
-                  break;
-                case 2:
-                  Navigator.pushNamed(context, 'outcome-page');
-                  break;
-                case 3:
-                  Navigator.pushNamed(context, 'investment-page');
-                  break;
-                case 4:
-                  Navigator.pushNamed(context, 'wishes-page');
-                  break;
-              }
-            },
-            items: [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home, size: 30),
-                label: 'Ana Sayfa',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.attach_money, size: 30),
-                label: 'Gelir',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.money_off, size: 30),
-                label: 'Gider',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.trending_up, size: 30),
-                label: 'Yatırım',
-              ),
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(left: 5,right: 5),
-                  child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: const Color.fromARGB(125, 26, 183, 56), // Background color
-                        borderRadius: BorderRadius.circular(20), // Rounded corners
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 5,bottom: 5),
-                        child: Icon(FontAwesome.bank, size: 20),
-                      )
-                  ),
-                ),
-                label: 'İstekler',
-              )
             ],
           ),
         ),

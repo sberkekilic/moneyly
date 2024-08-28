@@ -2,14 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ui' as ui;
 
-import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttericon/font_awesome_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:moneyly/pages/page6.dart';
 import 'package:moneyly/pages/selection.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -335,8 +333,15 @@ class _HomePageState extends State<HomePage> {
           invoices = savedInvoicesJson.map((json) => Invoice.fromJson(jsonDecode(json))).toList();
           setState(() {
             invoices.forEach((invoice) {
-              invoice.updateDifference(invoice, invoice.periodDate, invoice.dueDate!);
+              final dueDate = invoice.dueDate; // Safe access to dueDate
+              if (dueDate != null) {
+                invoice.updateDifference(invoice, invoice.periodDate, dueDate);
+              } else {
+                // Handle the case where dueDate is null, e.g., log a message or set a default value
+                print('Due date is null for invoice: ${invoice.id}');
+              }
             });
+
 
             invoices.sort((a, b) {
               int differenceA = int.parse(a.difference);
@@ -793,7 +798,6 @@ class _HomePageState extends State<HomePage> {
       bolum = 0; // Handle the case where incomeValue is 0
     }
     String formattedBolum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(bolum);
-    String currentDate = DateFormat('dd MMMM yyyy').format(DateTime.now());
     incomeYuzdesi = incomeYuzdesi*10;
 
     final List<String> texts = ["Abonelikler", "Faturalar", "Diğer"];
@@ -830,37 +834,6 @@ class _HomePageState extends State<HomePage> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xfff0f0f1),
-        elevation: 0,
-        toolbarHeight: 50.h,
-        automaticallyImplyLeading: false,
-        leadingWidth: 30.w,
-        title: Stack(
-          alignment: Alignment.centerLeft,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                IconButton(
-                  onPressed: () {
-                  },
-                  icon: const Icon(Icons.settings, color: Colors.black), // Replace with the desired left icon
-                ),
-                IconButton(
-                  onPressed: () {
-                  },
-                  icon: const Icon(Icons.person, color: Colors.black), // Replace with the desired right icon
-                ),
-              ],
-            ),
-            Text(
-              currentDate,
-              style: GoogleFonts.montserrat(color: Colors.black, fontSize: 20.sp, fontWeight: FontWeight.normal),
-            ),
-          ],
-        ),
-      ),
       body: SingleChildScrollView(
         child: Container(
           padding: const EdgeInsets.all(20),
@@ -1147,7 +1120,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     const SizedBox(height: 20),
                     SizedBox(
-                      height: 282.h,
+                      height: 270.h,
                         child: selectedInvoices.isEmpty
                         ? Center(child: Text('${getTitleForIndex(_currentPage)} sınıfına ait bir fatura bulunmuyor.'))
                         : ListView(
@@ -1172,83 +1145,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               const SizedBox(height: 20)
-            ],
-          ),
-        ),
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.5),
-                spreadRadius: 5,
-                blurRadius: 5,
-                offset: const Offset(0, 2),
-              ),
-            ],
-            borderRadius: BorderRadius.circular(10)
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: BottomNavigationBar(
-            type: BottomNavigationBarType.fixed, // Set the type to shifting
-            selectedItemColor: const Color.fromARGB(255, 26, 183, 56),
-            selectedLabelStyle: GoogleFonts.montserrat(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold),
-            unselectedLabelStyle: GoogleFonts.montserrat(color: const Color.fromARGB(255, 26, 183, 56), fontSize: 11, fontWeight: FontWeight.w600),
-            currentIndex: 0,
-            onTap: (int index) {
-              switch (index) {
-                case 0:
-                  Navigator.pushNamed(context, 'ana-sayfa');
-                  break;
-                case 1:
-                  Navigator.pushNamed(context, 'income-page');
-                  break;
-                case 2:
-                  Navigator.pushNamed(context, 'outcome-page');
-                  break;
-                case 3:
-                  Navigator.pushNamed(context, 'investment-page');
-                  break;
-                case 4:
-                  Navigator.pushNamed(context, 'wishes-page');
-                  break;
-              }
-            },
-            items: [
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: const EdgeInsets.only(left: 5, right: 5),
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: const Color.fromARGB(125, 26, 183, 56), // Background color
-                      borderRadius: BorderRadius.circular(20), // Rounded corners
-                    ),
-                    child: Icon(Icons.home, size: 30.sp),
-                  ),
-                ),
-                label: 'Ana Sayfa',
-              ),
-              const BottomNavigationBarItem(
-                icon: Icon(Icons.attach_money, size: 30),
-                label: 'Gelir',
-              ),
-              const BottomNavigationBarItem(
-                icon: Icon(Icons.money_off, size: 30),
-                label: 'Gider',
-              ),
-              const BottomNavigationBarItem(
-                icon: Icon(Icons.trending_up, size: 30),
-                label: 'Yatırım',
-              ),
-              const BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(top: 5, bottom: 5),
-                  child: Icon(FontAwesome.bank, size: 20),
-                ),
-                label: 'İstekler',
-              ),
             ],
           ),
         ),

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -159,8 +160,11 @@ class _SubscriptionsState extends State<Subscriptions> {
       buffer.write('$key: $value\n');
     }
 
+    // Get the directory for the application's documents
+    final directory = await getApplicationDocumentsDirectory();
+
     // Define the file path where you want to save the text file
-    const filePath = '/data/user/0/com.example.moneyly/app_flutter/preferences.txt';
+    final filePath = '${directory.path}/preferences.txt';
 
     // Write the data to the file
     final file = File(filePath);
@@ -1222,8 +1226,11 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                                     category: "Abonelikler",
                                                                     name: text,
                                                                     periodDate: formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                                                                    dueDate: _selectedDueDay != null || _selectedBillingMonth != null
-                                                                        ? formatDueDate(_selectedDueDay!, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!))
+                                                                    dueDate: _selectedDueDay != null && _selectedBillingDay != null && _selectedBillingMonth != null
+                                                                        ? formatDueDate(
+                                                                        _selectedDueDay!,
+                                                                        formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!)
+                                                                    )
                                                                         : null,
                                                                     difference: "abo2",
                                                                   );
