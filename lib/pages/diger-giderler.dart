@@ -219,7 +219,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
     Navigator.pop(context);
   }
   void goToNextPage() {
-    Navigator.pushNamed(context, 'ana-sayfa');
+    Navigator.pushNamed(context, 'page6');
   }
 
   void _showEditDialog(BuildContext context, int index, int orderIndex, int id) {

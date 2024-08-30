@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
+import 'package:moneyly/blocs/settings/selected-index-cubit.dart';
 import 'package:moneyly/blocs/settings/settings-cubit.dart';
 import 'package:moneyly/blocs/settings/settings-page.dart';
 import 'package:moneyly/blocs/settings/settings-state.dart';
@@ -29,24 +31,33 @@ import 'pages/selection.dart';
 import 'themes/themes.dart';
 
 void main() {
+  final PageController pageController = PageController();
+  final SelectedIndexCubit _selectedIndexCubit = SelectedIndexCubit(pageController);
   WidgetsFlutterBinding.ensureInitialized();
   Intl.defaultLocale = 'tr_TR';
   initializeDateFormatting('tr_TR', null).then((_) {
     runApp(
-        MultiProvider(
+        MultiBlocProvider(
             providers: [
+              BlocProvider(
+                  create: (context) => SettingsCubit(SettingsState()),
+              ),
+              BlocProvider(
+                create: (context) => _selectedIndexCubit,
+              ),
               ChangeNotifierProvider(create: (context) => IncomeSelections()),
               ChangeNotifierProvider(create: (context) => FormDataProvider()),
               ChangeNotifierProvider(create: (context) => FormDataProvider2()),
             ],
-            child: MyApp()
+            child: MyApp(pageController: pageController)
         )
     );
   });
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final PageController pageController;
+  MyApp({required this.pageController});
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +67,19 @@ class MyApp extends StatelessWidget {
     return BlocProvider(
       create: (context) => SettingsCubit(SettingsState()),
       child: BlocBuilder<SettingsCubit, SettingsState>(builder: (context, state) {
+        SystemChrome.setSystemUIOverlayStyle(
+          state.darkMode
+              ? SystemUiOverlayStyle.light.copyWith(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.light,
+            statusBarBrightness: Brightness.dark
+          )
+          : SystemUiOverlayStyle.dark.copyWith(
+           statusBarColor: Colors.transparent,
+           statusBarIconBrightness: Brightness.dark,
+           statusBarBrightness: Brightness.light
+        )
+        );
         return FutureBuilder<bool>(
           future: checkIfAllKeysHaveValues(actualDesiredKeys),
           builder: (context, snapshot) {
@@ -83,9 +107,9 @@ class MyApp extends StatelessWidget {
                     'faturalar': (context) => Bills(),
                     'diger-giderler': (context) => OtherExpenses(),
                     'page5': (context) => Page5(),
-                    'page6': (context) => Page6(),
+                    'page6': (context) => Page6(pageController: pageController,),
                     'ana-sayfa': (context) => HomePage(),
-                    'income-page': (context) => IncomePage(),
+                    'income-page': (context) => IncomePage(pageController: pageController,),
                     'outcome-page': (context) => OutcomePage(),
                     'investment-page': (context) => InvestmentPage(),
                     'wishes-page': (context) => WishesPage(),

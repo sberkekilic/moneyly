@@ -843,7 +843,7 @@ class _HomePageState extends State<HomePage> {
               Text("Özet", style: GoogleFonts.montserrat(fontSize: 20.sp, fontWeight: FontWeight.bold)),
               SizedBox(height: 20.h),
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   color: Colors.white,
@@ -859,234 +859,278 @@ class _HomePageState extends State<HomePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Kalan',
-                          style: GoogleFonts.montserrat(
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.w600
-                          ),
-                          textAlign: TextAlign.center,
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        color: Color.fromARGB(125, 155, 228, 242),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Kalan',
+                              style: GoogleFonts.montserrat(
+                                  fontSize: 15.sp,
+                                  fontWeight: FontWeight.w600
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            Text(
+                              formattedProfitValue, // KALAN BİLGİSİ
+                              style: GoogleFonts.montserrat(
+                                fontSize: 24.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                            LinearPercentIndicator(
+                              padding: const EdgeInsets.only(right: 10),
+                              backgroundColor: const Color(0xffc6c6c7),
+                              animation: true,
+                              lineHeight: 7.h,
+                              animationDuration: 1000,
+                              percent: bolum/100,
+                              trailing: Text("%${((bolum/100)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(
+                                  color: Colors.black,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold)),
+                              barRadius: const Radius.circular(10),
+                              progressColor: const Color(0xff017b94),
+                            ),
+                          ],
                         ),
-                        Text(
-                          formattedProfitValue, // KALAN BİLGİSİ
-                          style: GoogleFonts.montserrat(
-                            fontSize: 24.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                      ],
+                      ),
                     ),
-                    LinearPercentIndicator(
-                      padding: const EdgeInsets.only(right: 10),
-                      backgroundColor: const Color(0xffc6c6c7),
-                      animation: true,
-                      lineHeight: 7.h,
-                      animationDuration: 1000,
-                      percent: bolum/100,
-                      trailing: Text("%${((bolum/100)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(
-                          color: Colors.black,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold)),
-                      barRadius: const Radius.circular(10),
-                      progressColor: const Color(0xff1ab738),
-                    ),
-                    SizedBox(height: 10.h),
+                    SizedBox(height: 10),
                     Row(
                       children: [
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  const CircleAvatar(
-                                    radius: 13,
-                                    backgroundColor: Color.fromARGB(255, 184, 248, 197),
-                                    child: Icon(Icons.arrow_upward, color: Colors.black, size: 16),
-                                  ),
-                                  SizedBox(width: 5.w),
-                                  Text("Gelir", style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w500,)),
-                                ],
-                              ),
-                              SizedBox(height: 7.h),
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  formattedIncomeValue, // GELİR BİLGİSİ
-                                  style: GoogleFonts.montserrat(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 20.sp,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Color.fromARGB(120, 152, 255, 170),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            padding: EdgeInsets.all(10),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const CircleAvatar(
+                                      radius: 13,
+                                      backgroundColor: Color.fromARGB(255, 152, 255, 170),
+                                      child: Icon(Icons.arrow_upward, color: Colors.black, size: 16),
+                                    ),
+                                    SizedBox(width: 5.w),
+                                    Text("Gelir", style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w500,)),
+                                  ],
+                                ),
+                                SizedBox(height: 7.h),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    formattedIncomeValue, // GELİR BİLGİSİ
+                                    style: GoogleFonts.montserrat(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20.sp,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
+                        SizedBox(width: 10),
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  const CircleAvatar(
-                                    radius: 13,
-                                    backgroundColor: Color.fromARGB(255, 184, 248, 197),
-                                    child: Icon(Icons.arrow_downward, color: Colors.black, size: 16),
-                                  ),
-                                  SizedBox(width: 5.w),
-                                  Text("Gider", style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w500)),
-                                ],
-                              ),
-                              SizedBox(height: 7.h),
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  formattedOutcomeValue, // GİDER BİLGİSİ
-                                  style: GoogleFonts.montserrat(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 20.sp,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Color.fromARGB(120, 152, 255, 170),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            padding: const EdgeInsets.all(10),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    const CircleAvatar(
+                                      radius: 13,
+                                      backgroundColor: Color.fromARGB(255, 152, 255, 170),
+                                      child: Icon(Icons.arrow_downward, color: Colors.black, size: 16),
+                                    ),
+                                    SizedBox(width: 5.w),
+                                    Text("Gider", style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w500)),
+                                  ],
+                                ),
+                                SizedBox(height: 7.h),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    formattedOutcomeValue, // GİDER BİLGİSİ
+                                    style: GoogleFonts.montserrat(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20.sp,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         )
                       ],
                     ),
-                    Divider(color: Color(0xffc6c6c7), thickness: 3, height: 30.h),
+                    SizedBox(height: 10),
                     LayoutBuilder(
-                      builder: (context, constraints) {
-                        final maxFontSize = calculateMaxFontSize(constraints);
-
-                        return Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                children: [
-                                  FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    child: Text(
-                                      "Abonelikler",
-                                      style: GoogleFonts.montserrat(
-                                        fontWeight: FontWeight.normal,
-                                        fontSize: maxFontSize,
-                                      ),
+                          builder: (context, constraints) {
+                            final maxFontSize = calculateMaxFontSize(constraints);
+                            return Row(
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(10),
+                                      color: Color.fromARGB(125, 255, 204, 178)
+                                    ),
+                                    padding: EdgeInsets.all(10),
+                                    child: Column(
+                                      children: [
+                                        FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            "Abonelikler",
+                                            style: GoogleFonts.montserrat(
+                                              fontWeight: FontWeight.normal,
+                                              fontSize: maxFontSize,
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(height: 5.h),
+                                        LinearPercentIndicator(
+                                          padding: EdgeInsets.zero,
+                                          backgroundColor: const Color(0xffc6c6c7),
+                                          animation: true,
+                                          lineHeight: 6.h,
+                                          animationDuration: 1000,
+                                          percent: (outcomeValue != 0) ? (sumOfSubs / outcomeValue) : 0,
+                                          barRadius: const Radius.circular(10),
+                                          progressColor: const Color.fromARGB(125, 230, 230, 250)
+                                        ),
+                                        SizedBox(height: 5.h),
+                                        FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            formattedSumOfSubs,
+                                            style: GoogleFonts.montserrat(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: maxFontSize,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  SizedBox(height: 5.h),
-                                  LinearPercentIndicator(
-                                    padding: EdgeInsets.zero,
-                                    backgroundColor: const Color(0xffc6c6c7),
-                                    animation: true,
-                                    lineHeight: 6.h,
-                                    animationDuration: 1000,
-                                    percent: (outcomeValue != 0) ? (sumOfSubs / outcomeValue) : 0,
-                                    barRadius: const Radius.circular(10),
-                                    progressColor: const Color(0xffb71a1a),
-                                  ),
-                                  SizedBox(height: 5.h),
-                                  FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    child: Text(
-                                      formattedSumOfSubs,
-                                      style: GoogleFonts.montserrat(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: maxFontSize,
-                                      ),
+                                ),
+                                SizedBox(width: 10),
+                                Expanded(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(10),
+                                        color: Color.fromARGB(125, 255, 204, 178)
+                                    ),
+                                    padding: EdgeInsets.all(10),
+                                    child: Column(
+                                      children: [
+                                        FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            "Faturalar",
+                                            style: GoogleFonts.montserrat(
+                                              fontWeight: FontWeight.normal,
+                                              fontSize: maxFontSize,
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(height: 5.h),
+                                        LinearPercentIndicator(
+                                          padding: EdgeInsets.zero,
+                                          backgroundColor: const Color(0xffc6c6c7),
+                                          animation: true,
+                                          lineHeight: 6.h,
+                                          animationDuration: 1000,
+                                          percent: (outcomeValue != 0) ? (sumOfBills / outcomeValue) : 0,
+                                          barRadius: const Radius.circular(10),
+                                          progressColor: const Color.fromARGB(125, 186, 255, 228)
+                                        ),
+                                        SizedBox(height: 5.h),
+                                        FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            formattedSumOfBills,
+                                            style: GoogleFonts.montserrat(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: maxFontSize,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(width: 20.w),
-                            Expanded(
-                              child: Column(
-                                children: [
-                                  FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    child: Text(
-                                      "Faturalar",
-                                      style: GoogleFonts.montserrat(
-                                        fontWeight: FontWeight.normal,
-                                        fontSize: maxFontSize,
-                                      ),
+                                ),
+                                SizedBox(width: 10),
+                                Expanded(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(10),
+                                        color: Color.fromARGB(125, 255, 204, 178)
+                                    ),
+                                    padding: EdgeInsets.all(10),
+                                    child: Column(
+                                      children: [
+                                        FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            "Diğer",
+                                            style: GoogleFonts.montserrat(
+                                              fontWeight: FontWeight.normal,
+                                              fontSize: maxFontSize,
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(height: 5.h),
+                                        LinearPercentIndicator(
+                                          padding: EdgeInsets.zero,
+                                          backgroundColor: const Color(0xffc6c6c7),
+                                          animation: true,
+                                          lineHeight: 6.h,
+                                          animationDuration: 1000,
+                                          percent: (outcomeValue != 0) ? (sumOfOthers / outcomeValue) : 0,
+                                          barRadius: const Radius.circular(10),
+                                          progressColor: const Color.fromARGB(125, 255, 250, 240)
+                                        ),
+                                        SizedBox(height: 5.h),
+                                        FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            formattedSumOfOthers,
+                                            style: GoogleFonts.montserrat(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: maxFontSize,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  SizedBox(height: 5.h),
-                                  LinearPercentIndicator(
-                                    padding: EdgeInsets.zero,
-                                    backgroundColor: const Color(0xffc6c6c7),
-                                    animation: true,
-                                    lineHeight: 6.h,
-                                    animationDuration: 1000,
-                                    percent: (outcomeValue != 0) ? (sumOfBills / outcomeValue) : 0,
-                                    barRadius: const Radius.circular(10),
-                                    progressColor: const Color(0xff1a9eb7),
-                                  ),
-                                  SizedBox(height: 5.h),
-                                  FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    child: Text(
-                                      formattedSumOfBills,
-                                      style: GoogleFonts.montserrat(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: maxFontSize,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(width: 20.w),
-                            Expanded(
-                              child: Column(
-                                children: [
-                                  FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    child: Text(
-                                      "Diğer",
-                                      style: GoogleFonts.montserrat(
-                                        fontWeight: FontWeight.normal,
-                                        fontSize: maxFontSize,
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(height: 5.h),
-                                  LinearPercentIndicator(
-                                    padding: EdgeInsets.zero,
-                                    backgroundColor: const Color(0xffc6c6c7),
-                                    animation: true,
-                                    lineHeight: 6.h,
-                                    animationDuration: 1000,
-                                    percent: (outcomeValue != 0) ? (sumOfOthers / outcomeValue) : 0,
-                                    barRadius: const Radius.circular(10),
-                                    progressColor: const Color(0xff381ab7),
-                                  ),
-                                  SizedBox(height: 5.h),
-                                  FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    child: Text(
-                                      formattedSumOfOthers,
-                                      style: GoogleFonts.montserrat(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: maxFontSize,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
                   ],
                 ),
               ),
@@ -1120,7 +1164,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     const SizedBox(height: 20),
                     SizedBox(
-                      height: 270.h,
+                      height: 260.h,
                         child: selectedInvoices.isEmpty
                         ? Center(child: Text('${getTitleForIndex(_currentPage)} sınıfına ait bir fatura bulunmuyor.'))
                         : ListView(
@@ -1132,7 +1176,7 @@ class _HomePageState extends State<HomePage> {
                                   child: InvoiceCard(
                                     invoice: invoice,
                                     onDelete: () => payInvoice(invoice, invoice.id, invoice.periodDate, invoice.dueDate!),
-                                    onEdit: () => showEditInvoice(invoice.id, invoice.periodDate, invoice.dueDate!)
+                                    onEdit: () => showEditInvoice(invoice.id, invoice.periodDate, invoice.dueDate)
                                   ),
                                 ),
                               );
@@ -1210,18 +1254,23 @@ class InvoiceCard extends StatelessWidget {
         ),
         child: Column(
           children: [
-            ListTile(
-              dense: true,
-              title: Text(
-                invoice.name,
-                style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18.sp, fontWeight: FontWeight.w600),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: Color.fromARGB(125, 70, 181, 255),
               ),
-              subtitle: Text(
-                invoice.category,
-                style: GoogleFonts.montserrat(color: Colors.black, fontSize: 14.sp, fontWeight: FontWeight.normal),
+              child: ListTile(
+                dense: true,
+                title: Text(
+                  invoice.name,
+                  style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18.sp, fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(
+                  invoice.category,
+                  style: GoogleFonts.montserrat(color: Colors.black, fontSize: 14.sp, fontWeight: FontWeight.normal),
+                ),
               ),
             ),
-            Divider(color: Color(0xffc6c6c7), thickness: 2, height: 10.h),
             ListTile(
               dense: true,
               title: Text(
@@ -1263,10 +1312,7 @@ class InvoiceCard extends StatelessWidget {
               padding: const EdgeInsets.all(10),
               width: double.infinity,
               decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(20),
-                  bottomRight: Radius.circular(20),
-                ),
+                borderRadius: BorderRadius.circular(20),
                 color: isPaidActive ? Colors.black : Colors.grey,
               ),
               child: Row(

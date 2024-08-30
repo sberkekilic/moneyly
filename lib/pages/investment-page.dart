@@ -9,6 +9,7 @@ import 'package:fluttericon/font_awesome_icons.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:keyboard_actions/keyboard_actions.dart';
 import 'package:moneyly/blocs/settings/settings-cubit.dart';
 import 'package:moneyly/blocs/settings/settings-state.dart';
 import 'package:percent_indicator/percent_indicator.dart';
@@ -62,6 +63,47 @@ class _InvestmentPageState extends State<InvestmentPage> {
   String formattedsavingsValue = "";
   String formattedSumOfSavingValue = "";
   DateTime? _savedDate;
+
+  final FocusNode _nodeText1 = FocusNode();
+  final FocusNode _nodeText2 = FocusNode();
+
+  KeyboardActionsConfig _buildConfig(BuildContext context) {
+    return KeyboardActionsConfig(
+      keyboardActionsPlatform: KeyboardActionsPlatform.ALL,
+      keyboardBarColor: Colors.grey[200],
+      nextFocus: true,
+      actions: [
+        KeyboardActionsItem(
+          focusNode: _nodeText1,
+            toolbarButtons: [
+                  (node) {
+                return GestureDetector(
+                  onTap: () => node.unfocus(),
+                  child: Padding(
+                    padding: EdgeInsets.only(right:20),
+                    child: Text('Done'),
+                  ),
+                );
+              }
+            ]
+        ),
+        KeyboardActionsItem(
+            focusNode: _nodeText2,
+          toolbarButtons: [
+            (node) {
+             return GestureDetector(
+               onTap: () => node.unfocus(),
+               child: Padding(
+                 padding: EdgeInsets.only(right:20),
+                 child: Text('Done'),
+               ),
+             );
+            }
+          ]
+        )
+      ]
+    );
+  }
 
   Future<void> togglePopupVisibility(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
@@ -1333,99 +1375,119 @@ class _InvestmentPageState extends State<InvestmentPage> {
     await prefs.setStringList('investments', investmentMap.map((investment) => jsonEncode(investment)).toList());
   }
 
-  Widget _addInvestmentBottomSheet(BuildContext context, String category, TextEditingController amountController, TextEditingController nameController){
+  Widget _addInvestmentBottomSheet(
+      BuildContext context,
+      String category,
+      TextEditingController amountController,
+      TextEditingController nameController
+      ) {
     return StatefulBuilder(
       builder: (BuildContext context, StateSetter setModalState) {
         return Container(
           height: 500.h,
           decoration: BoxDecoration(
-            color: Colors.white, // Background color
+            color: Colors.white,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(10),
               topRight: Radius.circular(10),
             ),
           ),
           child: Padding(
-            padding:  EdgeInsets.fromLTRB(20,20,20,MediaQuery.of(context).viewInsets.bottom+50),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '$category hedefin için tutar belirle.',
-                  style: TextStyle(fontSize: 18.sp),
-                ),
-                SizedBox(height: 20.h),
-                TextFormField(
-                  controller: nameController,
-                  keyboardType: TextInputType.name,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Hedef İsmi',
-                  ),
-                ),
-                SizedBox(height: 20.h),
-                TextFormField(
-                  controller: amountController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Tutar',
-                  ),
-                ),
-                SizedBox(height: 20.h),
-                GestureDetector(
-                  onTap: () {
-                    _openDatePicker(setModalState);
-                  },
-                  child: AbsorbPointer(
-                    child: TextFormField(
-                      decoration: InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: _savedDate == null
-                              ? 'Tap to choose a date'
-                              : '${DateFormat('yyyy-MM-dd').format(_savedDate!)}'
+            padding: EdgeInsets.all(20),
+            child: KeyboardActions(
+              config: _buildConfig(context),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '$category hedefin için tutar belirle.',
+                      style: TextStyle(fontSize: 18.sp),
+                    ),
+                    SizedBox(height: 20.h),
+                    TextFormField(
+                      controller: nameController,
+                      keyboardType: TextInputType.name,
+                      focusNode: _nodeText1,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: 'Hedef İsmi',
                       ),
                     ),
-                  ),
-                ),
-                Expanded(child: Container()), // Create a space to push ElevatedButton to bottom.
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      backgroundColor: Colors.black,
-                      minimumSize: Size(double.infinity, 40),
+                    SizedBox(height: 20.h),
+                    TextFormField(
+                      controller: amountController,
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      focusNode: _nodeText2,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: 'Tutar',
+                      ),
                     ),
-                    clipBehavior: Clip.hardEdge,
-                    onPressed: () async {
-                      int maxId = 0;
-                      for (var i in investmentList){
-                        if (i.id > maxId) {
-                          maxId = i.id;
-                        }
-                      }
-                      int newId = maxId + 1;
-                      String amountText = amountController.text;
-                      String nameText = nameController.text;
-                      if (amountText.isNotEmpty && nameText.isNotEmpty) {
-                        _saveInvestment(newId, nameText, category, _savedDate!, amountText, );
-                        //addCategoryValue(category, enteredValue ?? 0, sum);
-                        Navigator.pop(context); // Close the form
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Please select a deadline')),
-                        );
-                      }
-                      _savedDate;
-                      _deleteSavedDate();
-                    },
-                    child: const Text('Add'),
-                  ),
+                    SizedBox(height: 20.h),
+                    GestureDetector(
+                      onTap: () {
+                        _openDatePicker(setModalState);
+                      },
+                      child: AbsorbPointer(
+                        child: TextFormField(
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(),
+                            labelText: _savedDate == null
+                                ? 'Tap to choose a date'
+                                : '${DateFormat('yyyy-MM-dd').format(_savedDate!)}',
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 20.h),
+                    // Spacer widget to push button to the bottom
+                    SizedBox(height: 60.h), // Adjust size as needed
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          backgroundColor: Colors.black,
+                          minimumSize: Size(double.infinity, 40),
+                        ),
+                        clipBehavior: Clip.hardEdge,
+                        onPressed: () async {
+                          int maxId = 0;
+                          for (var i in investmentList) {
+                            if (i.id > maxId) {
+                              maxId = i.id;
+                            }
+                          }
+                          int newId = maxId + 1;
+                          String amountText = amountController.text;
+                          String nameText = nameController.text;
+                          if (amountText.isNotEmpty && nameText.isNotEmpty) {
+                            _saveInvestment(
+                              newId,
+                              nameText,
+                              category,
+                              _savedDate!,
+                              amountText,
+                            );
+                            Navigator.pop(context); // Close the form
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Please select a deadline')),
+                            );
+                          }
+                          _savedDate; // Ensure _savedDate is used properly
+                          _deleteSavedDate(); // Ensure _deleteSavedDate is called properly
+                        },
+                        child: const Text('Add'),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         );

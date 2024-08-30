@@ -3,17 +3,18 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:fluttericon/font_awesome_icons.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:moneyly/pages/selection.dart';
 import 'package:percent_indicator/percent_indicator.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../blocs/settings/selected-index-cubit.dart';
+
 class IncomePage extends StatefulWidget {
-  const IncomePage({Key? key}) : super(key: key);
+  final PageController pageController;
+  IncomePage({required this.pageController});
 
   @override
   State<IncomePage> createState() => _IncomePageState();
@@ -761,20 +762,25 @@ class _IncomePageState extends State<IncomePage> {
                         style: GoogleFonts.montserrat(
                             fontSize: 14, fontWeight: FontWeight.normal)),
                     Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
-                    InkWell(
-                      onTap: () {
-                        Navigator.pushNamed(context, 'investment-page');
+                    BlocBuilder<SelectedIndexCubit, int>(
+                      builder: (context, selectedIndex) {
+                        return InkWell(
+                          onTap: () {
+                            print("selectedIndex:${selectedIndex}");
+                            widget.pageController.jumpToPage(3);
+                          },
+                          child: SizedBox(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Text("Yatırım Sayfasına Git", style: GoogleFonts
+                                    .montserrat(
+                                    fontSize: 16, fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                          ),
+                        );
                       },
-                      child: SizedBox(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            Text("Yatırım Sayfasına Git", style: GoogleFonts
-                                .montserrat(
-                                fontSize: 16, fontWeight: FontWeight.w600)),
-                          ],
-                        ),
-                      ),
                     )
                   ],
                 ),
