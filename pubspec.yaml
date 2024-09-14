@@ -46,6 +46,9 @@ dependencies:
   flex_color_scheme: ^7.3.1
   path_provider: ^2.1.4
   equatable: ^2.0.5
+  pull_down_button: ^0.10.1
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.4.1
 
 dev_dependencies:
   flutter_test:
@@ -60,6 +63,15 @@ dev_dependencies:
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/moneyly.png"
+
+flutter_native_splash:
+  color: "#ffffff"
+  image: assets/icon/moneyly.png
 
 # The following section is specific to Flutter packages.
 flutter:
@@ -78,6 +90,7 @@ flutter:
     - assets/car.svg
     - assets/electronic.svg
     - assets/chevron-down.svg
+    - assets/icon/moneyly.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
@@ -90,6 +103,10 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
+  fonts:
+    - family: Keep Calm
+      fonts:
+        - asset: assets/fonts/KeepCalm-Medium.ttf
   # fonts:
   #   - family: Schyler
   #     fonts:

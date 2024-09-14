@@ -1675,6 +1675,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        SizedBox(height: 80.h),
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(

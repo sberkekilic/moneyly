@@ -840,6 +840,7 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              SizedBox(height: 80.h),
               Text("Özet", style: GoogleFonts.montserrat(fontSize: 20.sp, fontWeight: FontWeight.bold)),
               SizedBox(height: 20.h),
               Container(
@@ -1018,7 +1019,7 @@ class _HomePageState extends State<HomePage> {
                                           animationDuration: 1000,
                                           percent: (outcomeValue != 0) ? (sumOfSubs / outcomeValue) : 0,
                                           barRadius: const Radius.circular(10),
-                                          progressColor: const Color.fromARGB(125, 230, 230, 250)
+                                          progressColor: const Color(0xFFFF8C00),
                                         ),
                                         SizedBox(height: 5.h),
                                         FittedBox(
@@ -1064,7 +1065,7 @@ class _HomePageState extends State<HomePage> {
                                           animationDuration: 1000,
                                           percent: (outcomeValue != 0) ? (sumOfBills / outcomeValue) : 0,
                                           barRadius: const Radius.circular(10),
-                                          progressColor: const Color.fromARGB(125, 186, 255, 228)
+                                          progressColor: const Color(0xFFFFA500),
                                         ),
                                         SizedBox(height: 5.h),
                                         FittedBox(
@@ -1110,7 +1111,7 @@ class _HomePageState extends State<HomePage> {
                                           animationDuration: 1000,
                                           percent: (outcomeValue != 0) ? (sumOfOthers / outcomeValue) : 0,
                                           barRadius: const Radius.circular(10),
-                                          progressColor: const Color.fromARGB(125, 255, 250, 240)
+                                          progressColor: const Color(0xFFFFD700),
                                         ),
                                         SizedBox(height: 5.h),
                                         FittedBox(
@@ -1175,7 +1176,7 @@ class _HomePageState extends State<HomePage> {
                                 child: Container(
                                   child: InvoiceCard(
                                     invoice: invoice,
-                                    onDelete: () => payInvoice(invoice, invoice.id, invoice.periodDate, invoice.dueDate!),
+                                    onDelete: () => payInvoice(invoice, invoice.id, invoice.periodDate, invoice.dueDate),
                                     onEdit: () => showEditInvoice(invoice.id, invoice.periodDate, invoice.dueDate)
                                   ),
                                 ),
@@ -1313,7 +1314,8 @@ class InvoiceCard extends StatelessWidget {
               width: double.infinity,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                color: isPaidActive ? Colors.black : Colors.grey,
+                color: Color.fromARGB(125, 173, 198, 255)
+                ,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,

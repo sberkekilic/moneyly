@@ -32,19 +32,14 @@ import 'themes/themes.dart';
 
 void main() {
   final PageController pageController = PageController();
-  final SelectedIndexCubit _selectedIndexCubit = SelectedIndexCubit(pageController);
   WidgetsFlutterBinding.ensureInitialized();
   Intl.defaultLocale = 'tr_TR';
   initializeDateFormatting('tr_TR', null).then((_) {
     runApp(
         MultiBlocProvider(
             providers: [
-              BlocProvider(
-                  create: (context) => SettingsCubit(SettingsState()),
-              ),
-              BlocProvider(
-                create: (context) => _selectedIndexCubit,
-              ),
+              BlocProvider(create: (context) => SettingsCubit(SettingsState())),
+              BlocProvider(create: (context) => SelectedIndexCubit(pageController)),
               ChangeNotifierProvider(create: (context) => IncomeSelections()),
               ChangeNotifierProvider(create: (context) => FormDataProvider()),
               ChangeNotifierProvider(create: (context) => FormDataProvider2()),
@@ -61,127 +56,89 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    List<String> actualDesiredKeys = [
-      'selected_option', 'incomeMap', 'invoices'
-    ];
-    return BlocProvider(
-      create: (context) => SettingsCubit(SettingsState()),
-      child: BlocBuilder<SettingsCubit, SettingsState>(builder: (context, state) {
-        SystemChrome.setSystemUIOverlayStyle(
-          state.darkMode
-              ? SystemUiOverlayStyle.light.copyWith(
-            statusBarColor: Colors.transparent,
-            statusBarIconBrightness: Brightness.light,
-            statusBarBrightness: Brightness.dark
-          )
-          : SystemUiOverlayStyle.dark.copyWith(
-           statusBarColor: Colors.transparent,
-           statusBarIconBrightness: Brightness.dark,
-           statusBarBrightness: Brightness.light
+    List<String> actualDesiredKeys = ['selected_option', 'incomeMap', 'invoices'];
+    return BlocBuilder<SettingsCubit, SettingsState>(builder: (context, state) {
+      SystemChrome.setSystemUIOverlayStyle(
+        state.darkMode
+            ? SystemUiOverlayStyle.light.copyWith(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
         )
-        );
-        return FutureBuilder<bool>(
-          future: checkIfAllKeysHaveValues(actualDesiredKeys),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              final allKeysHaveValues = snapshot.data ?? false;
-              final initialRoute = allKeysHaveValues ? 'page6' : '/';
-              return ScreenUtilInit(
-                designSize: const Size(360, 640),
-                builder: (context, child) => MaterialApp(
-                  locale: Locale(state.language, ""),
-                  localizationsDelegates: [
-                    AppLocalizations.delegate,
-                    GlobalMaterialLocalizations.delegate,
-                    GlobalWidgetsLocalizations.delegate,
-                    GlobalCupertinoLocalizations.delegate
-                  ],
-                  supportedLocales: AppLocalizations.supportedLanguages
-                  .map((lang) => Locale(lang, ''))
-                  .toList(),
-                  initialRoute: initialRoute,
-                  routes: {
-                    '/': (context) => MyHomePage(),
-                    'gelir-ekle': (context) => AddIncome(),
-                    'abonelikler': (context) => Subscriptions(),
-                    'faturalar': (context) => Bills(),
-                    'diger-giderler': (context) => OtherExpenses(),
-                    'page5': (context) => Page5(),
-                    'page6': (context) => Page6(pageController: pageController,),
-                    'ana-sayfa': (context) => HomePage(),
-                    'income-page': (context) => IncomePage(pageController: pageController,),
-                    'outcome-page': (context) => OutcomePage(),
-                    'investment-page': (context) => InvestmentPage(),
-                    'wishes-page': (context) => WishesPage(),
-                    'settings' : (context) => SettingsScreen()
-                  },
-                  debugShowCheckedModeBanner: false,
-                  title: 'Moneyly',
-                  themeMode: state.darkMode ? ThemeMode.dark : ThemeMode.light,
-                  theme: Themes.lightTheme,
-                  darkTheme: Themes.darkTheme,
-                ),
-              );
-            } else {
-              // You can show a loading indicator here if needed.
-              return CircularProgressIndicator();
-            }
-          },
-        );
-      }),
-    );
+            : SystemUiOverlayStyle.dark.copyWith(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
+      );
+
+      return FutureBuilder<bool>(
+        future: checkIfAllKeysHaveValues(actualDesiredKeys),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            final allKeysHaveValues = snapshot.data ?? false;
+            final initialRoute = allKeysHaveValues ? 'page6' : 'gelir-ekle';
+            return ScreenUtilInit(
+              designSize: const Size(360, 640),
+              builder: (context, child) => MaterialApp(
+                locale: Locale(state.language, ""),
+                localizationsDelegates: [
+                  AppLocalizations.delegate,
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
+                supportedLocales: AppLocalizations.supportedLanguages
+                    .map((lang) => Locale(lang, ''))
+                    .toList(),
+                initialRoute: initialRoute,
+                routes: {
+                  'gelir-ekle': (context) => AddIncome(),
+                  'abonelikler': (context) => Subscriptions(),
+                  'faturalar': (context) => Bills(),
+                  'diger-giderler': (context) => OtherExpenses(),
+                  'page5': (context) => Page5(),
+                  'page6': (context) => Page6(pageController: pageController),
+                  'ana-sayfa': (context) => HomePage(),
+                  'income-page': (context) => IncomePage(pageController: pageController),
+                  'outcome-page': (context) => OutcomePage(),
+                  'investment-page': (context) => InvestmentPage(),
+                  'wishes-page': (context) => WishesPage(),
+                  'settings': (context) => SettingsScreen(),
+                },
+                debugShowCheckedModeBanner: false,
+                title: 'Moneyly',
+                themeMode: state.darkMode ? ThemeMode.dark : ThemeMode.light,
+                theme: Themes.lightTheme,
+                darkTheme: Themes.darkTheme,
+              ),
+            );
+          } else {
+            return CircularProgressIndicator();
+          }
+        },
+      );
+    });
   }
 
   Future<bool> checkIfAllKeysHaveValues(List<String> desiredKeys) async {
     final prefs = await SharedPreferences.getInstance();
-
     for (var key in desiredKeys) {
       final value = prefs.get(key);
-
       if (value == null) {
-        return false; // If any key is empty, return false
+        return false;
       }
-
       if (key == 'invoices') {
-        // Check if 'invoices' has at least 3 instances
         try {
           List<dynamic> invoices = json.decode(value.toString());
           if (invoices.length < 3) {
-            return false; // If 'invoices' has less than 3 instances, return false
+            return false;
           }
         } catch (e) {
-          return false; // If there's an error decoding 'invoices', return false
+          return false;
         }
       }
     }
-
-    return true; // All keys have values
-  }
-
-}
-
-class MyHomePage extends StatelessWidget {
-  const MyHomePage({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Hoş Geldiniz!',
-              style: TextStyle(fontSize: 32),
-            ),
-            ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, 'gelir-ekle');
-                },
-                child: Text("İlerle")
-            )
-          ],
-        ),
-      ),
-    );
+    return true;
   }
 }

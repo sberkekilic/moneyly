@@ -1,4 +1,4 @@
-
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -6,6 +6,7 @@ import 'package:fluttericon/font_awesome_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:moneyly/blocs/settings/selected-index-cubit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'home-page.dart';
 import 'income-page.dart';
@@ -30,6 +31,7 @@ class _Page6State extends State<Page6> {
     super.initState();
     _pages = List.generate(5, (index) => _createPage(index));
   }
+
   String currentDate = DateFormat('dd MMMM yyyy').format(DateTime.now());
 
   Widget _createPage(int index) {
@@ -61,12 +63,22 @@ class _Page6State extends State<Page6> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: const Color(0xffa7a7a7),
+        backgroundColor: Color.fromARGB(125, 183, 255, 217),
+        centerTitle: true,
         elevation: 0,
-        toolbarHeight: 50.h,
+        toolbarHeight: 40.h,
         automaticallyImplyLeading: false,
         leadingWidth: 30.w,
+        flexibleSpace: ClipRRect(
+          child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX:3, sigmaY: 3),
+            child: Container(
+              color: Colors.transparent,
+            ),
+          ),
+        ),
         title: Stack(
           alignment: Alignment.centerLeft,
           children: [
@@ -80,7 +92,11 @@ class _Page6State extends State<Page6> {
                   icon: const Icon(Icons.settings, color: Colors.black),
                 ),
                 IconButton(
-                  onPressed: () {},
+                  onPressed: () async {
+                    SharedPreferences prefs = await SharedPreferences.getInstance();
+                    await prefs.clear();
+                    Navigator.pushNamed(context, 'gelir-ekle');
+                  },
                   icon: const Icon(Icons.person, color: Colors.black),
                 ),
               ],
@@ -125,8 +141,8 @@ class _Page6State extends State<Page6> {
               borderRadius: BorderRadius.circular(10),
               child: Theme(
                 data: ThemeData(
-                    splashColor: Colors.transparent,
-                    highlightColor: Colors.transparent
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
                 ),
                 child: BottomNavigationBar(
                   type: BottomNavigationBarType.fixed,
@@ -237,5 +253,3 @@ class _Page6State extends State<Page6> {
     );
   }
 }
-
-

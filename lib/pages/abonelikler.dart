@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dropdown_button2/dropdown_button2.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -9,6 +10,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:provider/provider.dart';
+import 'package:pull_down_button/pull_down_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../deneme.dart';
 import 'faturalar.dart';
@@ -90,6 +92,7 @@ class _SubscriptionsState extends State<Subscriptions> {
   String faturaDonemi = "";
   String? sonOdeme;
   bool isPromptOK = true;
+  final ScrollController _scrollController = ScrollController();
 
   List<int> daysList = List.generate(31, (index) => index + 1);
   List<int> monthsList = List.generate(12, (index) => index + 1);
@@ -708,7 +711,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                 ),
                 IconButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/');
+                    Navigator.pushNamed(context, 'gelir-ekle');
                   },
                   icon: const Icon(Icons.clear, color: Colors.black), // Replace with the desired right icon
                 ),
@@ -1014,34 +1017,44 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                 child: Column(
                                                   crossAxisAlignment: CrossAxisAlignment.start,
                                                   children: [
-                                                    Text("Fatura Adı"),
+                                                    Text("Fatura Adı",style: GoogleFonts.montserrat(fontSize: 15.sp)),
                                                     SizedBox(height: 5.h),
                                                     TextFormField(
                                                       controller: textController,
                                                       decoration: InputDecoration(
                                                         isDense: true,
-                                                        contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
-                                                        filled: true,
-                                                        hoverColor: Colors.blue,
+                                                        contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
+                                                        focusedBorder: OutlineInputBorder(
+                                                          borderRadius: BorderRadius.circular(5),
+                                                          borderSide: BorderSide(
+                                                            color: Colors.black,
+                                                            width: 3
+                                                          )
+                                                        ),
                                                         border: OutlineInputBorder(
-                                                          borderRadius: BorderRadius.circular(10),
+                                                          borderRadius: BorderRadius.circular(5),
                                                         ),
                                                         hintText: 'ABA',
                                                       ),
                                                     ),
                                                     SizedBox(height: 10.h),
-                                                    Text("Tutar"),
+                                                    Text("Tutar",style: GoogleFonts.montserrat(fontSize: 15.sp)),
                                                     SizedBox(height: 5.h),
                                                     TextFormField(
                                                       controller: platformPriceController,
                                                       keyboardType: TextInputType.number, // Show numeric keyboard
                                                       decoration: InputDecoration(
                                                         isDense: true,
-                                                        contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
-                                                        filled: true,
-                                                        hoverColor: Colors.blue,
+                                                        contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
+                                                        focusedBorder: OutlineInputBorder(
+                                                            borderRadius: BorderRadius.circular(5),
+                                                            borderSide: BorderSide(
+                                                                color: Colors.black,
+                                                                width: 3
+                                                            )
+                                                        ),
                                                         border: OutlineInputBorder(
-                                                          borderRadius: BorderRadius.circular(10),
+                                                          borderRadius: BorderRadius.circular(5),
                                                         ),
                                                         hintText: 'GAG',
                                                       ),
@@ -1053,152 +1066,110 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                           child: Column(
                                                             crossAxisAlignment: CrossAxisAlignment.start,
                                                             children: [
-                                                              Text("Başlangıç Tarihi"),
+                                                              Text("Başlangıç Tarihi",style: GoogleFonts.montserrat(fontSize: 15.sp)),
                                                               SizedBox(height: 5.h),
                                                               Row(
                                                                 children: [
                                                                   Expanded(
-                                                                    child: DropdownButtonFormField2<int>(
-                                                                      value: _selectedBillingDay,
-                                                                      onChanged: (value) {
-                                                                        setState(() {
-                                                                          _selectedBillingDay = value;
-                                                                        });
-                                                                      },
-                                                                      isExpanded: true,
-                                                                      decoration: InputDecoration(
-                                                                        contentPadding: const EdgeInsets.fromLTRB(0, 5, 0, 0),
-                                                                        isDense: true,
-                                                                        border: OutlineInputBorder(
-                                                                          borderRadius: BorderRadius.circular(10),
+                                                                    child: PullDownButton(
+                                                                      scrollController: _scrollController,
+                                                                      itemBuilder: (context) => daysList
+                                                                      .map(
+                                                                        (day) => PullDownMenuItem(
+                                                                            onTap: () {
+                                                                              setState(() {
+                                                                                _selectedBillingDay = day;
+                                                                              });
+                                                                            },
+                                                                            title: day.toString()
                                                                         ),
+                                                                      ).toList(),
+                                                                      buttonBuilder: (context, showMenu) => ElevatedButton(
+                                                                          onPressed: showMenu,
+                                                                          child: Row(
+                                                                            mainAxisSize: MainAxisSize.min,
+                                                                            children: [
+                                                                              Text(_selectedBillingDay.toString()),
+                                                                              Icon(Icons.arrow_drop_down)
+                                                                            ],
+                                                                          ),
                                                                       ),
-                                                                      hint: const Text(
-                                                                        'Gün',
-                                                                        style: TextStyle(fontSize: 14),
-                                                                      ),
-                                                                      buttonStyleData: const ButtonStyleData(
-                                                                        padding: EdgeInsets.only(right: 8),
-                                                                      ),
-                                                                      iconStyleData: const IconStyleData(
-                                                                        icon: Icon(
-                                                                          Icons.arrow_drop_down,
-                                                                          color: Colors.black45,
-                                                                        ),
-                                                                        iconSize: 24,
-                                                                      ),
-                                                                      dropdownStyleData: DropdownStyleData(
-                                                                        decoration: BoxDecoration(
-                                                                          borderRadius: BorderRadius.circular(15),
-                                                                        ),
-                                                                      ),
-                                                                      menuItemStyleData: const MenuItemStyleData(
-                                                                        padding: EdgeInsets.symmetric(horizontal: 16),
-                                                                      ),
-                                                                      items: daysList.map((day) {
-                                                                        return DropdownMenuItem<int>(
-                                                                          value: day,
-                                                                          child: Text(day.toString()),
-                                                                        );
-                                                                      }).toList(),
-                                                                    ),
+                                                                    )
                                                                   ),
                                                                   SizedBox(width: 10),
                                                                   Expanded(
-                                                                    child: DropdownButtonFormField2<int>(
-                                                                      value: _selectedBillingMonth,
-                                                                      onChanged: (value) {
-                                                                        setState(() {
-                                                                          _selectedBillingMonth = value;
-                                                                        });
-                                                                      },
-                                                                      isExpanded: true,
-                                                                      decoration: InputDecoration(
-                                                                        contentPadding: const EdgeInsets.fromLTRB(0, 5, 0, 0),
-                                                                        isDense: true,
-                                                                        border: OutlineInputBorder(
-                                                                          borderRadius: BorderRadius.circular(10),
+                                                                    child: PullDownButton(
+                                                                      scrollController: _scrollController,
+                                                                      itemBuilder: (context) => monthsList
+                                                                          .map(
+                                                                            (month) => PullDownMenuItem(
+                                                                            onTap: () {
+                                                                              setState(() {
+                                                                                _selectedBillingMonth = month;
+                                                                              });
+                                                                            },
+                                                                            title: month.toString()
+                                                                        ),
+                                                                      ).toList(),
+                                                                      buttonBuilder: (context, showMenu) => ElevatedButton(
+                                                                        onPressed: showMenu,
+                                                                        child: Row(
+                                                                          mainAxisSize: MainAxisSize.min,
+                                                                          children: [
+                                                                            Text(_selectedBillingMonth.toString()),
+                                                                            Icon(Icons.arrow_drop_down)
+                                                                          ],
                                                                         ),
                                                                       ),
-                                                                      hint: const Text(
-                                                                        'Ay',
-                                                                        style: TextStyle(fontSize: 14),
-                                                                      ),
-                                                                      buttonStyleData: const ButtonStyleData(
-                                                                        padding: EdgeInsets.only(right: 8),
-                                                                      ),
-                                                                      iconStyleData: const IconStyleData(
-                                                                        icon: Icon(
-                                                                          Icons.arrow_drop_down,
-                                                                          color: Colors.black45,
-                                                                        ),
-                                                                        iconSize: 24,
-                                                                      ),
-                                                                      dropdownStyleData: DropdownStyleData(
-                                                                        decoration: BoxDecoration(
-                                                                          borderRadius: BorderRadius.circular(15),
-                                                                        ),
-                                                                      ),
-                                                                      menuItemStyleData: const MenuItemStyleData(
-                                                                        padding: EdgeInsets.symmetric(horizontal: 16),
-                                                                      ),
-                                                                      items: monthsList.map((month) {
-                                                                        return DropdownMenuItem<int>(
-                                                                          value: month,
-                                                                          child: Text(month.toString()),
-                                                                        );
-                                                                      }).toList(),
-                                                                    ),
+                                                                    )
                                                                   ),
                                                                 ],
                                                               ),
                                                               SizedBox(height: 10.h),
-                                                              Text("Son Ödeme Tarihi"),
+                                                              Text("Son Ödeme Tarihi",style: GoogleFonts.montserrat(fontSize: 15.sp)),
                                                               SizedBox(height: 5.h),
-                                                              DropdownButtonFormField2<int>(
-                                                                value: _selectedDueDay,
-                                                                onChanged: (value) {
-                                                                  setState(() {
-                                                                    _selectedDueDay = value;
-                                                                  });
-                                                                },
-                                                                isExpanded: true,
-                                                                decoration: InputDecoration(
-                                                                  contentPadding: const EdgeInsets.fromLTRB(0, 5, 0, 0),
-                                                                  isDense: true,
-                                                                  border: OutlineInputBorder(
-                                                                    borderRadius: BorderRadius.circular(10),
+                                                              PullDownButton(
+                                                                scrollController: _scrollController,
+                                                                itemBuilder: (context) => daysList
+                                                                    .map(
+                                                                      (day) => PullDownMenuItem(
+                                                                      onTap: () {
+                                                                        setState(() {
+                                                                          _selectedDueDay = day;
+                                                                        });
+                                                                      },
+                                                                      title: day.toString()
+                                                                  ),
+                                                                ).toList(),
+                                                                buttonBuilder: (context, showMenu) => ElevatedButton(
+                                                                  onPressed: showMenu,
+                                                                  style: ButtonStyle(
+                                                                    padding: WidgetStateProperty.all(
+                                                                        EdgeInsets.all(10)
+                                                                    ),
+                                                                    backgroundColor: WidgetStateProperty.all(
+                                                                      Platform.isIOS ? CupertinoColors.systemGrey : Colors.blue
+                                                                    ),
+                                                                    shape: WidgetStateProperty.all(
+                                                                      RoundedRectangleBorder(
+                                                                        borderRadius: BorderRadius.circular(5),
+                                                                        side: BorderSide(
+                                                                          color: Colors.black,
+                                                                          width: 3
+                                                                        )
+                                                                      )
+                                                                    ),
+                                                                    elevation: WidgetStateProperty.all(0)// Removes shadow
+                                                                  ),
+                                                                  child: Row(
+                                                                    mainAxisSize: MainAxisSize.min,
+                                                                    children: [
+                                                                      Text(_selectedDueDay.toString()),
+                                                                      Icon(Icons.arrow_drop_down)
+                                                                    ],
                                                                   ),
                                                                 ),
-                                                                hint: const Text(
-                                                                  'Gün',
-                                                                  style: TextStyle(fontSize: 14),
-                                                                ),
-                                                                buttonStyleData: const ButtonStyleData(
-                                                                  padding: EdgeInsets.only(right: 8),
-                                                                ),
-                                                                iconStyleData: const IconStyleData(
-                                                                  icon: Icon(
-                                                                    Icons.arrow_drop_down,
-                                                                    color: Colors.black45,
-                                                                  ),
-                                                                  iconSize: 24,
-                                                                ),
-                                                                dropdownStyleData: DropdownStyleData(
-                                                                  decoration: BoxDecoration(
-                                                                    borderRadius: BorderRadius.circular(15),
-                                                                  ),
-                                                                ),
-                                                                menuItemStyleData: const MenuItemStyleData(
-                                                                  padding: EdgeInsets.symmetric(horizontal: 16),
-                                                                ),
-                                                                items: daysList.map((day) {
-                                                                  return DropdownMenuItem<int>(
-                                                                    value: day,
-                                                                    child: Text(day.toString()),
-                                                                  );
-                                                                }).toList(),
-                                                              ),
+                                                              )
                                                             ],
                                                           ),
                                                         ),

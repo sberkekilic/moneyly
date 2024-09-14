@@ -729,6 +729,7 @@ class _WishesPageState extends State<WishesPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              SizedBox(height: 80.h),
               Text("Bankalarım",
                   style: GoogleFonts.montserrat(
                       color: Colors.black,

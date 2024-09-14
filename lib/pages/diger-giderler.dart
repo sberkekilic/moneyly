@@ -793,7 +793,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                   ),
                   IconButton(
                     onPressed: () {
-                      Navigator.pushNamed(context, '/');
+                      Navigator.pushNamed(context, 'gelir-ekle');
                     },
                     icon: Icon(Icons.clear, color: Colors.black), // Replace with the desired right icon
                   ),
