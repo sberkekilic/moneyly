@@ -1,10 +1,9 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class AppLocalizations {
-  static List<String> supportedLanguages = ['en', 'tr'];
+  static List<String> supportedLanguages = ['en', 'tr', 'fr'];
 
   late Locale locale;
   late Map<String, String> _valueText;
@@ -60,6 +59,11 @@ class AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
 
 Locale? localeResolutionCallback(
     Locale? deviceLocale, Iterable<Locale> supportedLocales) {
+  // return deviceLocale != null &&
+  //         ['en', 'ar', 'tr', 'fa', 'fr', 'es']
+  //             .contains(deviceLocale.languageCode)
+  //     ? deviceLocale
+  //     : supportedLocales.first;
   for (var supportedLocale in supportedLocales) {
     if (supportedLocale.languageCode == deviceLocale?.languageCode &&
         supportedLocale.countryCode == deviceLocale?.countryCode) {

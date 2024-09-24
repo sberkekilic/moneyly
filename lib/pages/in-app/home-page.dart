@@ -5,14 +5,14 @@ import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:fluttericon/font_awesome_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:moneyly/pages/selection.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'faturalar.dart';
+
+import '../../blocs/income-selections.dart';
+import '../add-expense/faturalar.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -331,6 +331,7 @@ class _HomePageState extends State<HomePage> {
       if (savedInvoicesJson != null) {
         setState(() {
           invoices = savedInvoicesJson.map((json) => Invoice.fromJson(jsonDecode(json))).toList();
+          print("HOME-PAGE 3| invoices:${invoices}");
           setState(() {
             invoices.forEach((invoice) {
               final dueDate = invoice.dueDate; // Safe access to dueDate
@@ -370,6 +371,30 @@ class _HomePageState extends State<HomePage> {
     if (year % 100 != 0) return true;
     return year % 400 == 0;
   }
+
+  String? calculateNewDiff(String? dueDate, String periodDate){
+    final diff;
+    final currentDate = DateTime.now();
+    final formattedDate = DateFormat('yyyy-MM-dd').format(currentDate);
+    final dueDateKnown = dueDate != null;
+    if (currentDate.isBefore(DateTime.parse(periodDate))) {
+      diff = (DateTime.parse(periodDate).difference(currentDate).inDays + 1).toString();
+      return diff;
+    } else if (formattedDate == periodDate) {
+      diff = "0";
+      return diff;
+    } else if (dueDateKnown) {
+      if (dueDate != null && currentDate.isAfter(DateTime.parse(periodDate))) {
+        diff = (DateTime.parse(dueDate!).difference(currentDate).inDays + 1).toString();
+        return diff;
+      } else {
+        return "error1";
+      }
+    } else {
+      return "error2";
+    }
+  }
+
   String getDaysRemainingMessage(Invoice invoice) {
     final currentDate = DateTime.now();
     final formattedDate = DateFormat('yyyy-MM-dd').format(currentDate);
@@ -673,8 +698,10 @@ class _HomePageState extends State<HomePage> {
             TextButton(
               child: const Text("Yes"),
               onPressed: () {
-                confirmDelete = true;
-                Navigator.of(context).pop();
+                setState(() {
+                  confirmDelete = true;
+                  Navigator.of(context).pop();
+                });
               },
             ),
           ],
@@ -713,7 +740,8 @@ class _HomePageState extends State<HomePage> {
           DateTime newDueDate = incrementMonth(originalDueDate);
           stringDueDate = DateFormat('yyyy-MM-dd').format(newDueDate);
         }
-        String diff = getDaysRemainingMessage(invoice);
+        String? diff = calculateNewDiff(stringDueDate, stringPeriodDate);
+        print("The delete has been confirmed. Current diff is : ${diff} while period date is now : ${stringPeriodDate}");
         final updatedInvoice = Invoice(
             id: invoice.id,
             price: invoice.price,
@@ -722,7 +750,7 @@ class _HomePageState extends State<HomePage> {
             name: invoice.name,
             periodDate: stringPeriodDate,
             dueDate: stringDueDate,
-            difference: diff
+            difference: diff!
         );
         invoices[index] = updatedInvoice;
         saveInvoices();
@@ -1165,7 +1193,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     const SizedBox(height: 20),
                     SizedBox(
-                      height: 260.h,
+                      height: 277.h,
                         child: selectedInvoices.isEmpty
                         ? Center(child: Text('${getTitleForIndex(_currentPage)} sınıfına ait bir fatura bulunmuyor.'))
                         : ListView(

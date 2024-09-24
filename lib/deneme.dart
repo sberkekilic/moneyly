@@ -340,8 +340,12 @@ class FormDataProvider2 with ChangeNotifier{
     notifyListeners();
   }
 
-  void calculateSumOfTV(double sum) async {
+  void calculateSumOfTV(List<String> list) async {
     final prefs = await SharedPreferences.getInstance();
+    double sum = 0.0;
+    for (String price in list){
+      sum += double.tryParse(price) ?? 0.0;
+    }
     await prefs.setDouble('sumOfTV2', sum);// Update the sumOfTV property
     notifyListeners();
   }
