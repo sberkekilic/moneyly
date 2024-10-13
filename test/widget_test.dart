@@ -12,10 +12,9 @@ import 'package:moneyly/main.dart';
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Create a valid PageController for the test.
-    final PageController pageController = PageController();
 
     // Build the app and pass the PageController.
-    await tester.pumpWidget(MyApp(pageController: pageController));
+    await tester.pumpWidget(MyApp());
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);

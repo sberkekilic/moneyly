@@ -920,7 +920,7 @@ class _HomePageState extends State<HomePage> {
                               padding: const EdgeInsets.only(right: 10),
                               backgroundColor: const Color(0xffc6c6c7),
                               animation: true,
-                              lineHeight: 7.h,
+                              lineHeight: 12.h,
                               animationDuration: 1000,
                               percent: bolum/100,
                               trailing: Text("%${((bolum/100)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(
@@ -1043,7 +1043,7 @@ class _HomePageState extends State<HomePage> {
                                           padding: EdgeInsets.zero,
                                           backgroundColor: const Color(0xffc6c6c7),
                                           animation: true,
-                                          lineHeight: 6.h,
+                                          lineHeight: 9.h,
                                           animationDuration: 1000,
                                           percent: (outcomeValue != 0) ? (sumOfSubs / outcomeValue) : 0,
                                           barRadius: const Radius.circular(10),
@@ -1089,7 +1089,7 @@ class _HomePageState extends State<HomePage> {
                                           padding: EdgeInsets.zero,
                                           backgroundColor: const Color(0xffc6c6c7),
                                           animation: true,
-                                          lineHeight: 6.h,
+                                          lineHeight: 9.h,
                                           animationDuration: 1000,
                                           percent: (outcomeValue != 0) ? (sumOfBills / outcomeValue) : 0,
                                           barRadius: const Radius.circular(10),
@@ -1135,7 +1135,7 @@ class _HomePageState extends State<HomePage> {
                                           padding: EdgeInsets.zero,
                                           backgroundColor: const Color(0xffc6c6c7),
                                           animation: true,
-                                          lineHeight: 6.h,
+                                          lineHeight: 9.h,
                                           animationDuration: 1000,
                                           percent: (outcomeValue != 0) ? (sumOfOthers / outcomeValue) : 0,
                                           barRadius: const Radius.circular(10),
@@ -1193,7 +1193,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     const SizedBox(height: 20),
                     SizedBox(
-                      height: 277.h,
+                      height: 327.h,
                         child: selectedInvoices.isEmpty
                         ? Center(child: Text('${getTitleForIndex(_currentPage)} sınıfına ait bir fatura bulunmuyor.'))
                         : ListView(

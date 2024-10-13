@@ -1084,7 +1084,6 @@ class _OutcomePageState extends State<OutcomePage> {
                                 ),
                               ],
                             )
-
                             //Text("$percentages", style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold)), DEBUG FOR PERCENTAGES
                           ],
                         ),
@@ -1977,7 +1976,7 @@ class _OutcomePageState extends State<OutcomePage> {
                               color: Color.fromARGB(120, 152, 255, 170),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            padding: EdgeInsets.all(10),
+                            padding: EdgeInsets.only(left: 20,right: 20),
                             child: SizedBox(
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

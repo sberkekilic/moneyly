@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:custom_sliding_segmented_control/custom_sliding_segmented_control.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -25,6 +26,9 @@ class _IncomePageState extends State<IncomePage> {
   String newSelectedOption = "";
   double incomeValue = 0.0;
   String formattedIncomeValue = "";
+  String formattedWorkValue = "";
+  String formattedScholarshipValue = "";
+  String formattedPensionValue = "";
   String formattedSavingsValue = "";
   String formattedWishesValue = "";
   String formattedNeedsValue = "";
@@ -54,11 +58,9 @@ class _IncomePageState extends State<IncomePage> {
     final ab1 = prefs.getInt('selected_option') ?? SelectedOption.None.index;
     final ab2 = prefs.getString('incomeMap') ?? "0";
     final ab3 = prefs.getDouble('sumInvestValue') ?? 0.0;
-    final ab4 = prefs.getDouble('totalInvestValue') ?? 0.0;
     setState(() {
       selectedTitle = labelForOption(SelectedOption.values[ab1]);
       sumInvestValue = ab3;
-      totalInvestValue = ab4;
       if (ab2.isNotEmpty) {
         final decodedData = json.decode(ab2);
         if (decodedData is Map<String, dynamic>) {
@@ -102,7 +104,7 @@ class _IncomePageState extends State<IncomePage> {
   TextEditingController valueController = TextEditingController();
 
 // Function to handle editing
-  void editIncome(String key, String value, int index) async {
+  void editIncome(String key, String value) async {
     keyController.text = key;
     valueController.text = value;
 
@@ -137,7 +139,7 @@ class _IncomePageState extends State<IncomePage> {
                                 locale: 'tr_TR', symbol: '', decimalDigits: 2)
                             .format(NumberFormat.decimalPattern('tr_TR')
                                 .parse(newValue) as double);
-                        incomeMap[key]![index] = newValue;
+                        incomeMap[key]![0] = newValue;
 
                         // Save the modified incomeMap to SharedPreferences
                         prefs.setString('incomeMap', jsonEncode(incomeMap));
@@ -179,7 +181,7 @@ class _IncomePageState extends State<IncomePage> {
 
                       if (confirm == true) {
                         // Remove the old value at the specified index
-                        incomeMap[key]!.removeAt(index);
+                        incomeMap[key]!.removeAt(0);
                         if (incomeMap[key]!.isEmpty) {
                           incomeMap.remove(key);
                         }
@@ -226,24 +228,60 @@ class _IncomePageState extends State<IncomePage> {
       (count, list) => count + list.length,
     );
     sumOfSavingValue = sumInvestValue.isNaN ? 0.0 : sumInvestValue;
-    savingsValue = totalInvestValue.isNaN ? 0.0 : totalInvestValue;
-    result = (savingsValue == 0.0) ? 0.0 : sumOfSavingValue / savingsValue;
-    formattedsavingsValue =
-        NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2)
-            .format(savingsValue);
-    formattedSumOfSavingValue =
-        NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2)
-            .format(sumOfSavingValue);
-    savingsValue = incomeValue * 0.2;
-    formattedIncomeValue =
-        NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2)
-            .format(incomeValue);
-    formattedSavingsValue =
-        NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2)
-            .format(savingsValue);
     nameController.text = formattedIncomeValue;
     String firstKey = "";
     List<double> valuesOfFirstKey = [];
+    List<String> workValue = incomeMap['İş'] ?? ['0'];
+    List<String> scholarshipValue = incomeMap['Burs'] ?? ['0'];
+    List<String> pensionValue = incomeMap['Emekli'] ?? ['0'];
+    double workDoubleValue =
+        NumberFormat.decimalPattern('tr_TR').parse(workValue[0]) as double;
+    double scholarshipDoubleValue = NumberFormat.decimalPattern('tr_TR')
+        .parse(scholarshipValue[0]) as double;
+    double pensionDoubleValue =
+        NumberFormat.decimalPattern('tr_TR').parse(pensionValue[0]) as double;
+    formattedWorkValue =
+        NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2)
+            .format(workDoubleValue);
+    formattedScholarshipValue =
+        NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2)
+            .format(scholarshipDoubleValue);
+    formattedPensionValue =
+        NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2)
+            .format(pensionDoubleValue);
+    int workPercent = (incomeValue != 0)
+        ? ((workDoubleValue / incomeValue) * 100).round()
+        : 0;
+    int scholarshipPercent = (incomeValue != 0)
+        ? ((scholarshipDoubleValue / incomeValue) * 100).round()
+        : 0;
+    int pensionPercent = (incomeValue != 0)
+        ? ((pensionDoubleValue / incomeValue) * 100).round()
+        : 0;
+    List<double> percentages = [
+      workPercent.isNaN ? 0.0 : (workPercent.toDouble() / 100),
+      scholarshipPercent.isNaN ? 0.0 : (scholarshipPercent.toDouble() / 100),
+      pensionPercent.isNaN ? 0.0 : (pensionPercent.toDouble() / 100),
+    ];
+    print("İLK percentages:$percentages");
+    Map<String, double> variableMap = {
+      'workPercent': workPercent.toDouble(),
+      'scholarshipPercent': scholarshipPercent.toDouble(),
+      'pensionPercent': pensionPercent.toDouble(),
+    };
+    percentages.sort();
+    List<String> variableNames = variableMap.keys.toList()
+      ..sort(
+          (a, b) => (variableMap[a] ?? 0.0).compareTo(variableMap[b] ?? 0.0));
+    String smallestVariable = variableNames[0];
+    String mediumVariable = variableNames[1];
+    String largestVariable = variableNames[2];
+    percentages.sort(
+      (a, b) => b.compareTo(a),
+    );
+    percentages[0] = 1.0;
+    print(
+        "son percentages:$percentages, smallestVariable:$smallestVariable, mediumVariable:$mediumVariable, largestVariable:$largestVariable");
     double sumOfFirstKey = 0.0;
     String formattedValueOfFirstKey = "";
     if (incomeMap.keys.isNotEmpty) {
@@ -292,7 +330,8 @@ class _IncomePageState extends State<IncomePage> {
                     ],
                   ),
                   child: (incomeMap[selectedTitle] != null && totalValues == 1)
-                      ? Stack(
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Container(
                               decoration: BoxDecoration(
@@ -309,65 +348,119 @@ class _IncomePageState extends State<IncomePage> {
                                             fontWeight: FontWeight.bold)),
                                     Text("$incomeMap"),
                                     SizedBox(height: 10),
-                                    GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          setState(() {
-                                            isEditing = !isEditing;
-                                          });
-                                        });
-                                        nameController.selection =
-                                            TextSelection.fromPosition(
-                                          TextPosition(
-                                              offset:
-                                                  nameController.text.length),
-                                        );
-                                        focusNode.requestFocus();
-                                        SystemChannels.textInput
-                                            .invokeMethod('TextInput.show');
-                                      },
-                                      child: SizedBox(
-                                        width: double.maxFinite,
-                                        child: isEditing
-                                            ? EditableText(
-                                                controller: nameController,
-                                                focusNode: focusNode,
-                                                style: GoogleFonts.montserrat(
-                                                    fontSize: 28,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.black),
-                                                cursorColor: Colors.black,
-                                                backgroundCursorColor:
-                                                    Colors.black,
-                                                keyboardType:
-                                                    TextInputType.text,
-                                                onChanged: (newName) {
-                                                  // You can update the name in real-time if needed
-                                                },
-                                                onEditingComplete: () async {
-                                                  final prefs =
-                                                      await SharedPreferences
-                                                          .getInstance();
-                                                  setState(() {
-                                                    String newName =
-                                                        nameController.text;
-                                                    if (incomeValue !=
-                                                        newName) {
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        SizedBox(
+                                          width: 200,
+                                          child: isEditing
+                                              ? EditableText(
+                                                  controller: nameController,
+                                                  focusNode: focusNode,
+                                                  style: GoogleFonts.montserrat(
+                                                      fontSize: 28,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Colors.black),
+                                                  cursorColor: Colors.black,
+                                                  backgroundCursorColor:
+                                                      Colors.black,
+                                                  keyboardType:
+                                                      TextInputType.text,
+                                                  onEditingComplete: () async {
+                                                    final prefs =
+                                                        await SharedPreferences
+                                                            .getInstance();
+                                                    setState(() {
+                                                      String newName =
+                                                          nameController.text;
+                                                      if (newSelectedOption
+                                                          .isEmpty) {
+                                                        // Get the first key from the incomeMap if newSelectedOption is empty
+                                                        newSelectedOption =
+                                                            incomeMap
+                                                                .keys.first;
+                                                      }
+                                                      if (incomeMap.containsKey(
+                                                          newSelectedOption)) {
+                                                        // Update the existing value
+                                                        incomeMap[
+                                                            newSelectedOption] = [
+                                                          newName
+                                                        ];
+                                                      } else {
+                                                        incomeMap[
+                                                            newSelectedOption] = [
+                                                          newName
+                                                        ];
+                                                      }
                                                       prefs.setString(
-                                                          'income_value',
-                                                          newName);
-                                                    }
-                                                    isEditing = false;
-                                                    _load();
-                                                  });
-                                                },
-                                              )
-                                            : Text(formattedIncomeValue,
-                                                style: GoogleFonts.montserrat(
-                                                    fontSize: 25,
-                                                    fontWeight:
-                                                        FontWeight.bold)),
-                                      ),
+                                                          'incomeMap',
+                                                          jsonEncode(
+                                                              incomeMap));
+                                                      nameController.clear();
+                                                      isEditing = false;
+                                                      _load();
+                                                    });
+                                                  },
+                                                )
+                                              : Text(formattedIncomeValue,
+                                                  style: GoogleFonts.montserrat(
+                                                      fontSize: 25,
+                                                      fontWeight:
+                                                          FontWeight.bold)),
+                                        ),
+                                        SizedBox(width: 20.w),
+                                        GestureDetector(
+                                            onTap: isEditing
+                                                ? () async {
+                                                    final prefs =
+                                                        await SharedPreferences
+                                                            .getInstance();
+                                                    setState(() {
+                                                      String newName =
+                                                          nameController.text;
+                                                      if (newSelectedOption
+                                                          .isEmpty) {
+                                                        // Get the first key from the incomeMap if newSelectedOption is empty
+                                                        newSelectedOption =
+                                                            incomeMap
+                                                                .keys.first;
+                                                      }
+                                                      if (incomeMap.containsKey(
+                                                          newSelectedOption)) {
+                                                        // Update the existing value
+                                                        incomeMap[
+                                                            newSelectedOption] = [
+                                                          newName
+                                                        ];
+                                                      } else {
+                                                        incomeMap[
+                                                            newSelectedOption] = [
+                                                          newName
+                                                        ];
+                                                      }
+                                                      prefs.setString(
+                                                          'incomeMap',
+                                                          jsonEncode(
+                                                              incomeMap));
+                                                      nameController.clear();
+                                                      isEditing = false;
+                                                      focusNode.unfocus();
+                                                      _load();
+                                                    });
+                                                  }
+                                                : () {
+                                                    setState(() {
+                                                      isEditing = true;
+                                                      focusNode.requestFocus();
+                                                    });
+                                                  },
+                                            child: isEditing
+                                                ? Icon(Icons.done_rounded)
+                                                : Icon(Icons.edit_rounded)),
+                                      ],
                                     ),
                                     SizedBox(
                                       child: LinearPercentIndicator(
@@ -392,97 +485,115 @@ class _IncomePageState extends State<IncomePage> {
                                         style: GoogleFonts.montserrat(
                                             fontSize: 12.sp,
                                             fontWeight: FontWeight.normal)),
-                                    SizedBox(height: 50.h),
                                   ],
                                 ),
                               ),
                             ),
-                            Positioned(
-                              bottom: 0,
-                                left: 0,
-                                right: 0,
-                                child: Container(
+                            SizedBox(height: 10),
+                            Container(
                               decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(10),
                                   color: Color(0x7D005A93)),
-                              child:Column(
+                              child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   if (!isIncomeAdding)
                                     Container(
                                       decoration: BoxDecoration(
-                                        color: Color.fromARGB(120, 152, 255, 170),
+                                        color:
+                                            Color.fromARGB(120, 152, 255, 170),
                                         borderRadius: BorderRadius.circular(10),
                                       ),
-                                      padding: EdgeInsets.all(10),
+                                      padding:
+                                          EdgeInsets.only(left: 20, right: 20),
                                       child: SizedBox(
                                         child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
                                           children: [
                                             Text("Gelir Ekle",
-                                                style:
-                                                GoogleFonts.montserrat(
+                                                style: GoogleFonts.montserrat(
                                                     fontSize: 16,
                                                     fontWeight:
-                                                    FontWeight
-                                                        .w600)),
+                                                        FontWeight.w600)),
                                             IconButton(
                                                 onPressed: () async {
                                                   setState(() {
                                                     isIncomeAdding = true;
                                                   });
                                                 },
-                                                icon:
-                                                Icon(Icons.add_circle))
+                                                icon: Icon(Icons.add_circle))
                                           ],
                                         ),
                                       ),
                                     ),
                                   if (isIncomeAdding)
-                                    SizedBox(
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color:
+                                            Color.fromARGB(120, 152, 255, 170),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      padding: EdgeInsets.all(20),
                                       child: Column(
                                         crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          Text("Gelir Türü",
-                                              style: GoogleFonts.montserrat(
-                                                  fontSize: 18,
-                                                  fontWeight:
-                                                  FontWeight.bold)),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text("Gelir Türü",
+                                                  style: GoogleFonts.montserrat(
+                                                      fontSize: 18,
+                                                      fontWeight:
+                                                          FontWeight.bold)),
+                                              GestureDetector(
+                                                child: Icon(Icons.cancel,
+                                                    size: 26),
+                                                onTap: () {
+                                                  setState(() {
+                                                    isIncomeAdding =
+                                                        !isIncomeAdding;
+                                                  });
+                                                },
+                                              )
+                                            ],
+                                          ),
                                           SizedBox(height: 10),
                                           Row(
                                             mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                                MainAxisAlignment.center,
                                             children: [
                                               Expanded(
                                                 child:
-                                                CupertinoSlidingSegmentedControl<
-                                                    int>(
-                                                  groupValue:
-                                                  segmentControlGroupValue,
+                                                CustomSlidingSegmentedControl<int>(
+                                                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.red),
+                                                  thumbDecoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.amber),
                                                   children: {
                                                     0: buildSegment('İş'),
                                                     1: buildSegment('Burs'),
                                                     2: buildSegment('Emekli'),
                                                   },
+                                                  isStretch: true,
                                                   onValueChanged:
                                                       (segmentControlGroupValue) {
                                                     setState(() {
                                                       this.segmentControlGroupValue =
                                                           segmentControlGroupValue;
                                                       switch (
-                                                      segmentControlGroupValue) {
+                                                          segmentControlGroupValue) {
                                                         case 0:
                                                           newSelectedOption =
-                                                          "İş";
+                                                              "İş";
                                                           break;
                                                         case 1:
                                                           newSelectedOption =
-                                                          "Burs";
+                                                              "Burs";
                                                           break;
                                                         case 2:
                                                           newSelectedOption =
-                                                          "Emekli";
+                                                              "Emekli";
                                                           break;
                                                       }
                                                     });
@@ -495,8 +606,7 @@ class _IncomePageState extends State<IncomePage> {
                                           Text("Gelir Miktarı",
                                               style: GoogleFonts.montserrat(
                                                   fontSize: 18,
-                                                  fontWeight:
-                                                  FontWeight.bold)),
+                                                  fontWeight: FontWeight.bold)),
                                           SizedBox(height: 10),
                                           GestureDetector(
                                             onTap: () {
@@ -505,66 +615,109 @@ class _IncomePageState extends State<IncomePage> {
                                               });
                                               incomeController.selection =
                                                   TextSelection.fromPosition(
-                                                    TextPosition(
-                                                        offset: incomeController
-                                                            .text.length),
-                                                  );
+                                                TextPosition(
+                                                    offset: incomeController
+                                                        .text.length),
+                                              );
                                               focusNode.requestFocus();
                                               SystemChannels.textInput
                                                   .invokeMethod(
-                                                  'TextInput.show');
+                                                      'TextInput.show');
                                             },
-                                            child: Container(
-                                              padding: EdgeInsets.all(10),
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                BorderRadius.circular(10),
-                                                border: Border.all(
-                                                  color: Colors.black,
-                                                  width: 3.0,
+                                            child: Row(
+                                              children: [
+                                                Expanded(
+                                                  child: TextFormField(
+                                                    maxLines: 1,
+                                                    controller:
+                                                        incomeController,
+                                                    decoration: InputDecoration(
+                                                        filled: true,
+                                                        isDense: true,
+                                                        fillColor: Colors.white,
+                                                        contentPadding:
+                                                            EdgeInsets.fromLTRB(
+                                                                10, 20, 20, 0),
+                                                        enabledBorder:
+                                                            OutlineInputBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(15),
+                                                          borderSide:
+                                                              BorderSide(
+                                                                  color: Colors
+                                                                      .amber,
+                                                                  width: 3),
+                                                        ),
+                                                        focusedBorder:
+                                                            OutlineInputBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(15),
+                                                          borderSide:
+                                                              BorderSide(
+                                                                  color: Colors
+                                                                      .black,
+                                                                  width: 3),
+                                                        ),
+                                                        border:
+                                                            OutlineInputBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(15),
+                                                        ),
+                                                        hintText: 'GAG',
+                                                        hintStyle: TextStyle(
+                                                            color:
+                                                                Colors.black)),
+                                                    keyboardType:
+                                                        TextInputType.number,
+                                                  ),
                                                 ),
-                                              ),
-                                              child: EditableText(
-                                                controller: incomeController,
-                                                focusNode: focusNode,
-                                                style: GoogleFonts.montserrat(
-                                                    fontSize: 25,
-                                                    fontWeight:
-                                                    FontWeight.bold,
-                                                    color: Colors.black),
-                                                cursorColor: Colors.black,
-                                                backgroundCursorColor:
-                                                Colors.black,
-                                                keyboardType:
-                                                TextInputType.text,
-                                                onChanged: (newName) {
-                                                  // You can update the name in real-time if needed
-                                                },
-                                                onEditingComplete: () async {
-                                                  final prefs =
-                                                  await SharedPreferences
-                                                      .getInstance();
-                                                  setState(() {
-                                                    String newName =
-                                                        incomeController.text;
-                                                    if (!incomeMap.containsKey(
-                                                        newSelectedOption)) {
+                                                SizedBox(width: 20.w),
+                                                ElevatedButton(
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        Colors.white,
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10),
+                                                    ),
+                                                  ),
+                                                  onPressed: () async {
+                                                    final prefs =
+                                                        await SharedPreferences
+                                                            .getInstance();
+                                                    setState(() {
+                                                      String newName =
+                                                          incomeController.text;
+                                                      if (!incomeMap.containsKey(
+                                                          newSelectedOption)) {
+                                                        incomeMap[
+                                                                newSelectedOption] =
+                                                            []; // Initialize the list if it doesn't exist
+                                                      }
                                                       incomeMap[
-                                                      newSelectedOption] =
-                                                      []; // Initialize the list if it doesn't exist
-                                                    }
-                                                    incomeMap[
-                                                    newSelectedOption]!
-                                                        .add(newName);
-                                                    prefs.setString(
-                                                        'incomeMap',
-                                                        jsonEncode(
-                                                            incomeMap));
-                                                    isIncomeAdding = false;
-                                                    _load();
-                                                  });
-                                                },
-                                              ),
+                                                              newSelectedOption]!
+                                                          .add(newName);
+                                                      prefs.setString(
+                                                          'incomeMap',
+                                                          jsonEncode(
+                                                              incomeMap));
+                                                      isIncomeAdding = false;
+                                                      incomeController.clear();
+                                                      _load();
+                                                    });
+                                                  },
+                                                  child: Icon(
+                                                      Icons.check_circle,
+                                                      size: 26,
+                                                      color: Colors.black),
+                                                )
+                                              ],
                                             ),
                                           ),
                                         ],
@@ -573,325 +726,231 @@ class _IncomePageState extends State<IncomePage> {
                                 ],
                               ),
                             )
-                            )
                           ],
                         )
                       : Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("Tüm Gelir",
-                                style: GoogleFonts.montserrat(
-                                    fontSize: 19, fontWeight: FontWeight.bold)),
-                            Text("$incomeMap"),
-                            SizedBox(height: 10),
-                            Text(formattedIncomeValue,
-                                style: GoogleFonts.montserrat(
-                                    fontSize: 25, fontWeight: FontWeight.bold)),
-                            Divider(
-                                color: Color(0xffc6c6c7),
-                                thickness: 2,
-                                height: 30),
-                            if (!isIncomeAdding)
-                              SizedBox(
+                            Container(
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10),
+                                  color: Color(0xFFF0EAD6)),
+                              child: Padding(
+                                padding: const EdgeInsets.all(20),
                                 child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    ListView(
-                                      shrinkWrap: true,
-                                      physics: NeverScrollableScrollPhysics(),
-                                      // Prevent scrolling of the inner ListView
-                                      children: incomeMap.keys.expand((key) {
-                                        final values = incomeMap[key];
-                                        List<Widget> valueWidgets = [];
-                                        for (int i = 0;
-                                            i < values!.length;
-                                            i++) {
-                                          double doubledValue =
-                                              NumberFormat.decimalPattern(
-                                                      'tr_TR')
-                                                  .parse(values[i]) as double;
-                                          String formattedValue =
-                                              NumberFormat.currency(
-                                                      locale: 'tr_TR',
-                                                      symbol: '',
-                                                      decimalDigits: 2)
-                                                  .format(doubledValue);
-                                          valueWidgets.add(
-                                            Column(
-                                              children: [
-                                                Row(
-                                                  children: [
-                                                    CircularPercentIndicator(
-                                                      radius: 30,
-                                                      lineWidth: 7.0,
-                                                      percent: doubledValue /
-                                                          incomeValue,
-                                                      center: Text(
-                                                          "%${((doubledValue / incomeValue) * 100).toStringAsFixed(0)}",
-                                                          style: GoogleFonts
-                                                              .montserrat(
-                                                                  color: Colors
-                                                                      .black,
-                                                                  fontSize: 16,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w600)),
-                                                      progressColor:
-                                                          Colors.blue,
-                                                    ),
-                                                    const SizedBox(width: 10),
-                                                    Flexible(
-                                                      flex: 2,
-                                                      fit: FlexFit.tight,
-                                                      child: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          Text(key,
-                                                              style: GoogleFonts.montserrat(
-                                                                  color: Colors
-                                                                      .black,
-                                                                  fontSize: 16,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w600)),
-                                                          Text(
-                                                              "$formattedValue / $formattedIncomeValue",
-                                                              style: GoogleFonts.montserrat(
-                                                                  color: Colors
-                                                                      .black,
-                                                                  fontSize: 16,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w600))
-                                                        ],
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 10),
-                                                    Flexible(
-                                                      flex: 1,
-                                                      fit: FlexFit.tight,
-                                                      child: IconButton(
-                                                          onPressed: () {
-                                                            setState(() {
-                                                              editIncome(
-                                                                  key,
-                                                                  formattedValue,
-                                                                  i);
-                                                            });
-                                                          },
-                                                          icon:
-                                                              Icon(Icons.edit)),
-                                                    )
-                                                  ],
-                                                ),
-                                                const Divider(
-                                                    color: Color(0xffc6c6c7),
-                                                    thickness: 2,
-                                                    height: 30),
-                                              ],
-                                            ),
-                                          );
-                                        }
-
-                                        return valueWidgets;
-                                      }).toList(),
-                                    ),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
+                                    Text("Tüm Gelir",
+                                        style: GoogleFonts.montserrat(
+                                            fontSize: 19,
+                                            fontWeight: FontWeight.bold)),
+                                    Text("$incomeMap"),
+                                    SizedBox(height: 10),
+                                    Text(formattedIncomeValue,
+                                        style: GoogleFonts.montserrat(
+                                            fontSize: 25,
+                                            fontWeight: FontWeight.bold)),
+                                    const SizedBox(height: 10),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      // Stretch column to take full width
                                       children: [
-                                        Text("Gelir Ekle",
-                                            style: GoogleFonts.montserrat(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w600)),
-                                        IconButton(
-                                            onPressed: () async {
-                                              final prefs =
-                                                  await SharedPreferences
-                                                      .getInstance();
-                                              setState(() {
-                                                isIncomeAdding = true;
-                                              });
-                                            },
-                                            icon: Icon(Icons.add_circle))
+                                        Stack(
+                                          children: [
+                                            LinearPercentIndicator(
+                                              padding: EdgeInsets.zero,
+                                              percent: percentages[0],
+                                              backgroundColor:
+                                                  Colors.transparent,
+                                              progressColor:
+                                                  const Color(0xFFFF8C00),
+                                              lineHeight: 15.h,
+                                              barRadius:
+                                                  const Radius.circular(10),
+                                            ),
+                                            LinearPercentIndicator(
+                                              padding: EdgeInsets.zero,
+                                              percent: percentages[1] +
+                                                  percentages[2],
+                                              progressColor:
+                                                  const Color(0xFFFFA500),
+                                              backgroundColor:
+                                                  Colors.transparent,
+                                              lineHeight: 15.h,
+                                              barRadius:
+                                                  const Radius.circular(10),
+                                            ),
+                                            LinearPercentIndicator(
+                                              padding: EdgeInsets.zero,
+                                              percent: percentages[2],
+                                              progressColor:
+                                                  const Color(0xFFFFD700),
+                                              backgroundColor:
+                                                  Colors.transparent,
+                                              lineHeight: 15.h,
+                                              barRadius:
+                                                  const Radius.circular(10),
+                                            ),
+                                          ],
+                                        ),
                                       ],
                                     ),
                                   ],
                                 ),
                               ),
-                            if (isIncomeAdding)
-                              SizedBox(
-                                child: Column(
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceEvenly,
+                            ),
+                            SizedBox(height: 10),
+                            Column(
+                              children: [
+                                for (int i = 0; i < incomeMap.values.length; i++)
+                                  if (i < incomeMap.values.length - 1)
+                                    Column(
                                       children: [
                                         Container(
-                                          child: TextButton(
-                                            child: Text("İş"),
-                                            onPressed: () {
-                                              setState(() {
-                                                newSelectedOption = "İş";
-                                              });
-                                            },
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(10),
+                                            color: Color(0x7D67C5FF),
+                                          ),
+                                          padding: EdgeInsets.all(10),
+                                          child: Column(
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  CircularPercentIndicator(
+                                                    radius: 30,
+                                                    lineWidth: 7.0,
+                                                    percent: (NumberFormat.decimalPattern('tr_TR').parse(incomeMap.values.toList()[i][0]) as double) / incomeValue,
+                                                    center: Text(
+                                                      "%${(((NumberFormat.decimalPattern('tr_TR').parse(incomeMap.values.toList()[i][0]) as double) / incomeValue) * 100).toStringAsFixed(0)}",
+                                                      style: GoogleFonts.montserrat(
+                                                        color: Colors.black,
+                                                        fontSize: 16,
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                    progressColor: Colors.blue,
+                                                  ),
+                                                  const SizedBox(width: 10),
+                                                  Flexible(
+                                                    flex: 2,
+                                                    fit: FlexFit.tight,
+                                                    child: Column(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      children: [
+                                                        Text(
+                                                          incomeMap.keys.toList()[i],
+                                                          style: GoogleFonts.montserrat(
+                                                            color: Colors.black,
+                                                            fontSize: 16,
+                                                            fontWeight: FontWeight.w600,
+                                                          ),
+                                                        ),
+                                                        Text(
+                                                          "${incomeMap.values.toList()[i][0]}",
+                                                          style: GoogleFonts.montserrat(
+                                                            color: Colors.black,
+                                                            fontSize: 16,
+                                                            fontWeight: FontWeight.w600,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 10),
+                                                  Flexible(
+                                                    flex: 1,
+                                                    fit: FlexFit.tight,
+                                                    child: IconButton(
+                                                      onPressed: () {
+                                                        setState(() {
+                                                          editIncome(incomeMap.keys.toList()[i], incomeMap.values.toList()[i][0]);
+                                                        });
+                                                      },
+                                                      icon: Icon(Icons.edit),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                        Container(
-                                          child: TextButton(
-                                            child: Text("Burs"),
-                                            onPressed: () {
-                                              setState(() {
-                                                newSelectedOption = "Burs";
-                                              });
-                                            },
-                                          ),
-                                        ),
-                                        Container(
-                                          child: TextButton(
-                                            child: Text("Emekli"),
-                                            onPressed: () {
-                                              setState(() {
-                                                newSelectedOption = "Emekli";
-                                              });
-                                            },
-                                          ),
-                                        ),
+                                        SizedBox(height: 10), // Add a gap of 10 units
                                       ],
-                                    ),
-                                    GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          setState(() {});
-                                        });
-                                        incomeController.selection =
-                                            TextSelection.fromPosition(
-                                          TextPosition(
-                                              offset:
-                                                  incomeController.text.length),
-                                        );
-                                        focusNode.requestFocus();
-                                        SystemChannels.textInput
-                                            .invokeMethod('TextInput.show');
-                                      },
-                                      child: EditableText(
-                                        controller: incomeController,
-                                        focusNode: focusNode,
-                                        style: const TextStyle(
-                                          // Maintain text style
-                                          color: Colors.black,
-                                          fontSize: 25,
-                                          fontWeight: FontWeight.normal,
-                                        ),
-                                        cursorColor: Colors.black,
-                                        backgroundCursorColor: Colors.black,
-                                        keyboardType: TextInputType.text,
-                                        onChanged: (newName) {
-                                          // You can update the name in real-time if needed
-                                        },
-                                        onEditingComplete: () async {
-                                          final prefs = await SharedPreferences
-                                              .getInstance();
-                                          setState(() {
-                                            String newName =
-                                                incomeController.text;
-                                            if (!incomeMap.containsKey(
-                                                newSelectedOption)) {
-                                              incomeMap[newSelectedOption] =
-                                                  []; // Initialize the list if it doesn't exist
-                                            }
-                                            incomeMap[newSelectedOption]!
-                                                .add(newName);
-                                            prefs.setString('incomeMap',
-                                                jsonEncode(incomeMap));
-                                            isIncomeAdding = false;
-                                            _load();
-                                          });
-                                        },
+                                    )
+                                  else
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10),
+                                        color: Color(0x7D67C5FF),
+                                      ),
+                                      padding: EdgeInsets.all(10),
+                                      child: Column(
+                                        children: [
+                                          Row(
+                                            children: [
+                                              CircularPercentIndicator(
+                                                radius: 30,
+                                                lineWidth: 7.0,
+                                                percent: (NumberFormat.decimalPattern('tr_TR').parse(incomeMap.values.toList()[i][0]) as double) / incomeValue,
+                                                center: Text(
+                                                  "%${(((NumberFormat.decimalPattern('tr_TR').parse(incomeMap.values.toList()[i][0]) as double) / incomeValue) * 100).toStringAsFixed(0)}",
+                                                  style: GoogleFonts.montserrat(
+                                                    color: Colors.black,
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                progressColor: Colors.blue,
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Flexible(
+                                                flex: 2,
+                                                fit: FlexFit.tight,
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      incomeMap.keys.toList()[i],
+                                                      style: GoogleFonts.montserrat(
+                                                        color: Colors.black,
+                                                        fontSize: 16,
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      "${incomeMap.values.toList()[i][0]}",
+                                                      style: GoogleFonts.montserrat(
+                                                        color: Colors.black,
+                                                        fontSize: 16,
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Flexible(
+                                                flex: 1,
+                                                fit: FlexFit.tight,
+                                                child: IconButton(
+                                                  onPressed: () {
+                                                    setState(() {
+                                                      editIncome(incomeMap.keys.toList()[i], incomeMap.values.toList()[i][0]);
+                                                    });
+                                                  },
+                                                  icon: Icon(Icons.edit),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                  ],
-                                ),
-                              )
+                              ],
+                            )
                           ],
                         )),
-              SizedBox(height: 20),
-              Text("Birikim",
-                  style: GoogleFonts.montserrat(
-                      fontSize: 22, fontWeight: FontWeight.bold)),
-              SizedBox(height: 10),
-              Container(
-                padding: EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.5),
-                      spreadRadius: 5,
-                      blurRadius: 7,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Birikim Hedefi",
-                        style: GoogleFonts.montserrat(
-                            fontSize: 19, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 10),
-                    Text("$formattedSumOfSavingValue / $formattedsavingsValue",
-                        style: GoogleFonts.montserrat(
-                            fontSize: 19, fontWeight: FontWeight.bold)),
-                    SizedBox(
-                      child: LinearPercentIndicator(
-                        padding: EdgeInsets.only(right: 10),
-                        backgroundColor: Color(0xffc6c6c7),
-                        animation: true,
-                        lineHeight: 10,
-                        animationDuration: 1000,
-                        percent: result,
-                        trailing: Text(
-                            "%${((result) * 100).toStringAsFixed(0)}",
-                            style: GoogleFonts.montserrat(
-                                color: Colors.black,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600)),
-                        barRadius: Radius.circular(10),
-                        progressColor: Colors.lightBlue,
-                      ),
-                    ),
-                    SizedBox(height: 5),
-                    Text("Birikimlerinizi buraya ekleyin.",
-                        style: GoogleFonts.montserrat(
-                            fontSize: 14, fontWeight: FontWeight.normal)),
-                    Divider(color: Color(0xffc6c6c7), thickness: 2, height: 30),
-                    BlocBuilder<SelectedIndexCubit, int>(
-                      builder: (context, selectedIndex) {
-                        return InkWell(
-                          onTap: () {
-                            print("selectedIndex:${selectedIndex}");
-                            context.read<SelectedIndexCubit>().setIndex(3);
-                          },
-                          child: SizedBox(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                Text("Yatırım Sayfasına Git",
-                                    style: GoogleFonts.montserrat(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600)),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    )
-                  ],
-                ),
-              ),
               SizedBox(height: 20),
             ],
           ),
@@ -900,10 +959,10 @@ class _IncomePageState extends State<IncomePage> {
     );
   }
 
-  Widget buildSegment(String text) => Container(
-        padding: EdgeInsets.all(10),
+  Widget buildSegment(String text) => Padding(
+        padding: EdgeInsets.all(5),
         child: Text(text,
             style: GoogleFonts.montserrat(
-                fontSize: 18, fontWeight: FontWeight.bold)),
+                fontSize: 14, fontWeight: FontWeight.bold)),
       );
 }

@@ -18,16 +18,20 @@ Future<String> getInitialLocation() async {
 
   for (var key in actualDesiredKeys) {
     final value = prefs.get(key);
+
     if (value == null) {
       return '/'; // Default route if key is not present
     }
+
+    // Special handling for the 'invoices' key
     if (key == 'invoices') {
       try {
         List<dynamic> invoices = json.decode(value.toString());
         if (invoices.length < 3) {
-          return '/'; // Default route if condition is not met
+          return '/'; // Default route if there are fewer than 3 invoices
         }
       } catch (e) {
+        print("Error decoding 'invoices': $e"); // Log the error
         return '/'; // Default route on error
       }
     }
@@ -51,9 +55,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => SettingsCubit(SettingsState()),
-      child:
-      BlocBuilder<SettingsCubit, SettingsState>(builder: (context, state) {
+      child: BlocBuilder<SettingsCubit, SettingsState>(builder: (context, state) {
         return ScreenUtilInit(
+          designSize: const Size(360, 780),
           child: MaterialApp.router(
             title: 'Isar Starter Project',
             debugShowCheckedModeBanner: false,

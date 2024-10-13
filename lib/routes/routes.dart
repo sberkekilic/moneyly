@@ -13,7 +13,6 @@ import 'package:moneyly/pages/in-app/income-page.dart';
 import 'package:moneyly/pages/in-app/investment-page.dart';
 import 'package:moneyly/pages/in-app/outcome-page.dart';
 import 'package:moneyly/pages/page6.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../blocs/form-bloc.dart';
 import '../blocs/income-selections.dart';

@@ -1,11 +1,12 @@
 import 'dart:convert';
+import 'dart:math';
 import 'dart:ui';
+import 'package:custom_sliding_segmented_control/custom_sliding_segmented_control.dart';
 import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_inset_box_shadow/flutter_inset_box_shadow.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:fluttericon/font_awesome_icons.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -15,6 +16,8 @@ import 'package:moneyly/blocs/settings/settings-state.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
+
+import '../../blocs/settings/selected-index-cubit.dart';
 
 class InvestmentPage extends StatefulWidget {
   const InvestmentPage({Key? key}) : super(key: key);
@@ -34,15 +37,17 @@ class _InvestmentPageState extends State<InvestmentPage> {
   List<Investment> otherList = [];
   List<String> itemList = ["Döviz", "Nakit", "Gayrimenkül", "Araba", "Elektronik", "Diğer"];
   List<FaIcon> itemIcons = [
-    FaIcon(FontAwesomeIcons.dollarSign, size: 20.sp, color: Colors.black,),
-    FaIcon(FontAwesomeIcons.moneyBill, size: 20.sp),
-    FaIcon(FontAwesomeIcons.handHoldingDollar, size: 20.sp),
-    FaIcon(FontAwesomeIcons.carSide, size: 20.sp),
-    FaIcon(FontAwesomeIcons.mobile, size: 20.sp),
-    FaIcon(FontAwesomeIcons.chevronDown, size: 20.sp),
+    FaIcon(FontAwesomeIcons.dollarSign, size: 26.sp),
+    FaIcon(FontAwesomeIcons.moneyBill, size: 26.sp),
+    FaIcon(FontAwesomeIcons.handHoldingDollar, size: 26.sp),
+    FaIcon(FontAwesomeIcons.carSide, size: 26.sp),
+    FaIcon(FontAwesomeIcons.mobile, size: 26.sp),
+    FaIcon(FontAwesomeIcons.chevronDown, size: 26.sp),
   ];
   String selectedInvestmentType = "";
+  String currencyType = "";
   Map<String, double?> categoryValues = {};
+  Map<String, double?> totalInvestValue = {};
   List<String> selectedItems = [];
   List<String> selectedCategories = [];
   List<double> exchangeDepot = [];
@@ -60,7 +65,11 @@ class _InvestmentPageState extends State<InvestmentPage> {
   bool hasOtherGoalSelected = false;
   bool isPopupVisible = false;
   String ananim = "";
-  String formattedsavingsValue = "";
+  String currencySymbol = r'₺';
+  String formattedTotal = "";
+  String formattedDollarTotal = "";
+  String formattedEuroTotal = "";
+  String formattedLiraTotal = "";
   String formattedSumOfSavingValue = "";
   DateTime? _savedDate;
 
@@ -116,33 +125,37 @@ class _InvestmentPageState extends State<InvestmentPage> {
     });
   }
 
-  Future<void> addCategoryValue(String category, double value, double sum) async {
+  Future<void> addCategoryValue(String category, String currency, double value, double sum) async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
+      print("category:${category} and value:${value}");
       categoryValues[category] = value;
-      totalInvestValue += value;
+      totalInvestValue[currency] = value;
+      print("categoryValues is at that point:${categoryValues}");
       ananim = value.toString();
-      prefs.setDouble('totalInvestValue', totalInvestValue);
       prefs.setString('ananim', ananim);
-      final jsonMap = jsonEncode(categoryValues);
-      prefs.setString('categoryValues', jsonMap);
+      final jsonMapCategory = jsonEncode(categoryValues);
+      prefs.setString('categoryValues', jsonMapCategory);
+      final jsonMapCurrency = jsonEncode(totalInvestValue);
+      prefs.setString('totalInvestValue', jsonMapCurrency);
     });
   }
 
-  Future<void> removeCategory(String category, double value, double sum) async {
+  Future<void> removeCategory(String category, String currency, double value, double sum) async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      totalInvestValue -= value;
       print("sumInvestValue 1: before removeCategory ${sumInvestValue}");
       sumInvestValue -= sum;
       print("sumInvestValue 2: after removeCategory ${sumInvestValue}");
       selectedCategories.remove(category);
       categoryValues.remove(category);
-      prefs.setDouble('totalInvestValue', totalInvestValue);
+      totalInvestValue.remove(category);
       prefs.setDouble('sumInvestValue', sumInvestValue);
       prefs.setStringList('selectedCategories', selectedCategories);
-      final jsonMap = jsonEncode(categoryValues);
-      prefs.setString('categoryValues', jsonMap);
+      final jsonMapCategory = jsonEncode(categoryValues);
+      prefs.setString('categoryValues', jsonMapCategory);
+      final jsonMapCurrency = jsonEncode(totalInvestValue);
+      prefs.setString('totalInvestValue', jsonMapCurrency);
     });
   }
 
@@ -152,6 +165,24 @@ class _InvestmentPageState extends State<InvestmentPage> {
         a.remove(value);
       }
     }
+  }
+
+  String getInitials(String title) {
+    List<String> words = title.split(" ");
+    String initials = words.length > 1
+        ? "${words[0][0]}${words[1][0]}"
+        : words[0][0];
+    return initials.toUpperCase();
+  }
+
+  Color getRandomColor() {
+    final Random random = Random();
+    return Color.fromARGB(
+      255, // Full opacity
+      random.nextInt(256), // Red (0-255)
+      random.nextInt(256), // Green (0-255)
+      random.nextInt(256), // Blue (0-255)
+    );
   }
 
   Future<void> selectCategory(String category) async {
@@ -182,7 +213,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
               children: [
                 Center(
                   child: CircleAvatar(
-                    radius: 16.sp,
+                    radius: 20.sp,
                     backgroundColor: Colors.white,
                     child: iconAsset
                   )
@@ -192,7 +223,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                   category,
                   style: GoogleFonts.montserrat(
                     color: Colors.white,
-                    fontSize: 20.sp,
+                    fontSize: 22.sp,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -461,8 +492,11 @@ class _InvestmentPageState extends State<InvestmentPage> {
         TextEditingController amountController = TextEditingController();
         TextEditingController nameController = TextEditingController();
         final isCategoryAdded = categoryValues.containsKey(category);
+        print("exchangeDepot da bu:${exchangeDepot.join(', ')}");
+        print("buildSelectedCategories ÇALIŞTI ve category:${category} ve isCategoryAdded:${isCategoryAdded}");
         double? goal = categoryValues[category];
         double sum = 0.0;
+        String currency = "bi";
         if(category == "Döviz"){
           sum = exchangeDepot.isNotEmpty ? exchangeDepot.reduce((a, b) => a + b) : 0.0;
         } else if(category == "Nakit"){
@@ -480,793 +514,1000 @@ class _InvestmentPageState extends State<InvestmentPage> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 20),
-            Text(category, style: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.bold)),
+            Text(
+            category,
+            style: GoogleFonts.montserrat(
+                fontSize: 22,
+                fontWeight: FontWeight.bold
+            )
+        ),
             const SizedBox(height: 10),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.5),
-                    spreadRadius: 5,
-                    blurRadius: 7,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
+                borderRadius: BorderRadius.circular(20),
+                color: Color(0xFFD7CDCD),
               ),
               child: isCategoryAdded
-                  ?
-              Column(
+                  ? Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("$sum / ${categoryValues[category]}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 19, fontWeight: FontWeight.normal)),
-                  SizedBox(
-                    child: LinearPercentIndicator(
-                      padding: const EdgeInsets.only(right: 10),
-                      backgroundColor: const Color(0xffc6c6c7),
-                      animation: true,
-                      lineHeight: 7.h,
-                      animationDuration: 1000,
-                      percent: sum / goal!,
-                      trailing: Text("%${((sum / goal)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.normal)),
-                      barRadius: const Radius.circular(10),
-                      progressColor: Colors.lightBlue,
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      color: Color(0xFFFDD99E),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(15),
+                      child: Row(
+                        children: [
+                          CircularPercentIndicator(
+                            radius: 30,
+                            lineWidth: 7.0,
+                            percent: result,
+                            center: Text(
+                                "%${((result) * 100).toStringAsFixed(0)}",
+                                style: GoogleFonts.montserrat(
+                                    color: Colors.black,
+                                    fontSize: (result) * 100 == 100
+                                        ? 12
+                                        : 16,
+                                    fontWeight: FontWeight.w600
+                                )
+                            ),
+                            progressColor: Colors.amber,
+                          ),
+                          SizedBox(width: 20.w),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                  "${category == 'Döviz' ? 'Döviz Hedefi' : category == 'Nakit' ? 'Nakit Hedefi' : 'Diğer Kategori Hedefi'}",
+                                  style: GoogleFonts.montserrat(
+                                      fontSize: 15.sp, fontWeight: FontWeight.bold)
+                              ),
+                              Text(
+                                  "$sum / ${categoryValues[category]}",
+                                  style: GoogleFonts.montserrat(
+                                      fontSize: 25.sp, fontWeight: FontWeight.bold)
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 5),
-                  ListView(
-                    physics: const NeverScrollableScrollPhysics(),
-                    shrinkWrap: true,
-                    children: [
-                      if(category == "Döviz")
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                            ListView.builder(
-                              physics: const NeverScrollableScrollPhysics(),
-                              shrinkWrap: true,
-                              itemCount: exchangeDepot.length + 1,
-                              itemBuilder: (context, index) {
-                                if (index < exchangeDepot.length) {
-                                  return Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Flexible(
-                                            flex: 1,
-                                            fit: FlexFit.tight,
-                                            child: Text(
-                                              exchangeDepot[index].toString(),
-                                              style: GoogleFonts.montserrat(fontSize: 20),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 20),
-                                          IconButton(
-                                            splashRadius: 0.0001,
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                            icon: const Icon(Icons.edit, size: 21),
-                                            onPressed: () {
-                                              showEditDialog(category, 1, index);
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                      const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                    ],
-                                  );
-                                }
-                                return null;
-                              },
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                showModalBottomSheet(
-                                  context: context,
-                                  isScrollControlled: true,
-                                  builder: (context) {
-                                    double? investValue;
-                                    return Padding(
-                                      padding: EdgeInsets.fromLTRB(20,20,20,MediaQuery.of(context).viewInsets.bottom+20),
-                                      child: Column(
+                  SizedBox(height: 10),
+                  CustomSlidingSegmentedControl<int>(
+                    initialValue: 2,
+                    isStretch: true,
+                    children: const {
+                      0: Text(
+                        'Dolar',
+                        textAlign: TextAlign.center,
+                      ),
+                      1: Text(
+                        'Euro',
+                        textAlign: TextAlign.center,
+                      ),
+                      2: Text(
+                        'Türk Lirası',
+                        textAlign: TextAlign.center,
+                      ),
+                    },
+                    innerPadding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [],
+                    ),
+                    thumbDecoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [],
+                    ),
+                    onValueChanged: (v) {
+                      setState(() {
+                        if (v == 0) {
+                          currencySymbol = r'$';
+                          formattedTotal = formattedDollarTotal;
+                        } else if (v == 1) {
+                          currencySymbol = r'€';
+                          formattedTotal = formattedEuroTotal;
+                        } else if (v == 2) {
+                          currencySymbol = r'₺';
+                          formattedTotal = formattedLiraTotal;
+                        }
+                      });
+                    },
+                  ),
+                  SizedBox(height: 10),
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      color: Color(0xFFEED5D5),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: ListView(
+                        padding: EdgeInsets.zero,
+                        physics: const NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        children: [
+                          if(category == "Döviz")
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ListView.builder(
+                                  padding: EdgeInsets.zero,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  shrinkWrap: true,
+                                  itemCount: exchangeList.length,
+                                  itemBuilder: (context, index) {
+                                    Investment investment = exchangeList[index];
+                                    if (index < exchangeList.length) {
+                                      return Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Text(
-                                            '$category için birikim hedefi',
-                                            style: const TextStyle(fontSize: 18),
-                                          ),
-                                          const SizedBox(height: 10),
-                                          TextFormField(
-                                            controller: amountController, // Assign the TextEditingController
-                                            keyboardType: TextInputType.number,
-                                            decoration: const InputDecoration(
-                                              labelText: 'Enter a number',
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(20),
+                                              color: Color(0xFFFDD99E),
+                                            ),
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(15),
+                                              child: Row(
+                                                children: [
+                                                  buildMonogram(investment.name),
+                                                  SizedBox(width: 20.w),
+                                                  Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                          investment.name,
+                                                          style: GoogleFonts.montserrat(
+                                                              fontSize: 15.sp, fontWeight: FontWeight.bold)
+                                                      ),
+                                                      Text(
+                                                          investment.amount,
+                                                          style: GoogleFonts.montserrat(
+                                                              fontSize: 25.sp, fontWeight: FontWeight.bold)
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
                                             ),
                                           ),
-                                          const SizedBox(height: 10),
-                                          ElevatedButton(
-                                            onPressed: () async {
-                                              final prefs = await SharedPreferences.getInstance();
-                                              setState(() {
-                                                String inputText = amountController.text; // Get the input text
-                                                investValue = double.tryParse(inputText);
-                                                if (investValue != null) {
-                                                  exchangeDepot.add(investValue!);
-                                                  final exchangeDepotJson = jsonEncode(exchangeDepot);
-                                                  prefs.setString('exchangeDepot', exchangeDepotJson);
-                                                  sumList.add(investValue!);
-                                                  final sumListJson = jsonEncode(sumList);
-                                                  prefs.setString('sumList', sumListJson);
-                                                  sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
-                                                  prefs.setDouble('sumInvestValue', sumInvestValue);
-                                                  Navigator.pop(context); // Close the form
-                                                }
-                                              });
-                                            },
-                                            child: const Text('Add'),
+                                          SizedBox(height: 10),
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(20),
+                                              color: Color(0x7D67C5FF),
+                                            ),
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(15),
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                      "$sum / ${investment.amount}",
+                                                      style: GoogleFonts.montserrat(
+                                                          fontSize: 20.sp, fontWeight: FontWeight.bold)
+                                                  ),
+                                                  SizedBox(height: 10),
+                                                  LinearPercentIndicator(
+                                                    padding: const EdgeInsets.only(right: 10),
+                                                    backgroundColor: const Color(0xffc6c6c7),
+                                                    animation: true,
+                                                    lineHeight: 14.h,
+                                                    animationDuration: 1000,
+                                                    percent: sum/double.parse(investment.amount),
+                                                    trailing: Text("%${((sum/double.parse(investment.amount))*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(
+                                                        color: Colors.black,
+                                                        fontSize: 18,
+                                                        fontWeight: FontWeight.bold)),
+                                                    barRadius: const Radius.circular(10),
+                                                    progressColor: const Color(0xff017b94),
+                                                  ),
+                                                  SizedBox(height: 10),
+                                                  Row(
+                                                    children: [
+                                                      Expanded(
+                                                        flex: 32,
+                                                        child: Container(
+                                                            padding: const EdgeInsets.all(10),
+                                                          decoration: BoxDecoration(
+                                                            color: Color.fromARGB(120, 152, 255, 170),
+                                                            borderRadius: BorderRadius.circular(20),
+                                                          ),
+                                                          child: InkWell(
+                                                            onTap: () {
+                                                              setState(() {
+                                                        
+                                                              });
+                                                            },
+                                                            child: const Text("Ekle", textAlign: TextAlign.center),
+                                                          )
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 10),
+                                                      Expanded(
+                                                        flex: 32,
+                                                        child: Container(
+                                                            padding: const EdgeInsets.all(10),
+                                                            decoration: BoxDecoration(
+                                                              color: Color.fromARGB(120, 152, 255, 170),
+                                                              borderRadius: BorderRadius.circular(20),
+                                                            ),
+                                                            child: InkWell(
+                                                              onTap: () {
+                                                                setState(() {
+                                                        
+                                                                });
+                                                              },
+                                                              child: const Text("Çıkart",textAlign: TextAlign.center),
+                                                            )
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 10),
+                                                      Expanded(
+                                                        flex: 19,
+                                                        child: Container(
+                                                            padding: const EdgeInsets.all(10),
+                                                            decoration: BoxDecoration(
+                                                              color: Color.fromARGB(120, 152, 255, 170),
+                                                              borderRadius: BorderRadius.circular(20),
+                                                            ),
+                                                            child: InkWell(
+                                                              onTap: () {
+                                                                setState(() {
+                                                        
+                                                                });
+                                                              },
+                                                              child: Icon(Icons.delete, size: 20.sp),
+                                                            )
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  )
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Flexible(
+                                                flex: 1,
+                                                fit: FlexFit.tight,
+                                                child: Text(
+                                                  investment.name,
+                                                  style: GoogleFonts.montserrat(fontSize: 20),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 20),
+                                              IconButton(
+                                                splashRadius: 0.0001,
+                                                padding: EdgeInsets.zero,
+                                                constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                                icon: const Icon(Icons.edit, size: 21),
+                                                onPressed: () {
+                                                  showEditDialog(category, 1, index);
+                                                },
+                                              ),
+                                            ],
                                           ),
                                         ],
-                                      ),
+                                      );
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      builder: (context) {
+                                        double? investValue;
+                                        return Padding(
+                                          padding: EdgeInsets.fromLTRB(20,20,20,MediaQuery.of(context).viewInsets.bottom+20),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                '$category için birikim hedefi',
+                                                style: const TextStyle(fontSize: 18),
+                                              ),
+                                              const SizedBox(height: 10),
+                                              TextFormField(
+                                                controller: amountController, // Assign the TextEditingController
+                                                keyboardType: TextInputType.number,
+                                                decoration: const InputDecoration(
+                                                  labelText: 'Enter a number',
+                                                ),
+                                              ),
+                                              const SizedBox(height: 10),
+                                              ElevatedButton(
+                                                onPressed: () async {
+                                                  final prefs = await SharedPreferences.getInstance();
+                                                  setState(() {
+                                                    String inputText = amountController.text; // Get the input text
+                                                    investValue = double.tryParse(inputText);
+                                                    if (investValue != null) {
+                                                      exchangeDepot.add(investValue!);
+                                                      final exchangeDepotJson = jsonEncode(exchangeDepot);
+                                                      prefs.setString('exchangeDepot', exchangeDepotJson);
+                                                      sumList.add(investValue!);
+                                                      final sumListJson = jsonEncode(sumList);
+                                                      prefs.setString('sumList', sumListJson);
+                                                      sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
+                                                      prefs.setDouble('sumInvestValue', sumInvestValue);
+                                                      Navigator.pop(context); // Close the form
+                                                    }
+                                                  });
+                                                },
+                                                child: const Text('Add'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
                                     );
                                   },
-                                );
-                              },
-                              child: Row(
-                                children: [
-                                  Text(
-                                    "Biriktir",
-                                    style: GoogleFonts.montserrat(fontSize: 20),
-                                  ),
-                                  IconButton(
-                                      onPressed: () async{
-                                        final prefs = await SharedPreferences.getInstance();
-                                        setState(()  {
-                                          removeCategory(category, goal, sum);
-                                          removeValues(sumList, exchangeDepot);
-                                          exchangeDepot = [];
-                                          final sumListJson = jsonEncode(sumList);
-                                          final exchangeDepotJson = jsonEncode(exchangeDepot);
-                                          prefs.setString('sumList', sumListJson);
-                                          prefs.setString('exchangeDepot', exchangeDepotJson);
-                                        });
-                                      },
-                                      icon: const Icon(Icons.remove_circle_outline)
-                                  )
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      if(category == "Nakit")
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                            ListView.builder(
-                              physics: const NeverScrollableScrollPhysics(),
-                              shrinkWrap: true,
-                              itemCount: cashDepot.length + 1,
-                              itemBuilder: (context, index) {
-                                if (index < cashDepot.length) {
-                                  return Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                  child: Row(
                                     children: [
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Flexible(
-                                            flex: 1,
-                                            fit: FlexFit.tight,
-                                            child: Text(
-                                              cashDepot[index].toString(),
-                                              style: GoogleFonts.montserrat(fontSize: 20),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 20),
-                                          IconButton(
-                                            splashRadius: 0.0001,
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                            icon: const Icon(Icons.edit, size: 21),
-                                            onPressed: () {
-                                              showEditDialog(category, 2, index);
-                                            },
-                                          ),
-                                        ],
+                                      Text(
+                                        "Biriktir",
+                                        style: GoogleFonts.montserrat(fontSize: 20),
                                       ),
-                                      const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                      IconButton(
+                                          onPressed: () async{
+                                            final prefs = await SharedPreferences.getInstance();
+                                            setState(()  {
+                                              removeCategory(category, currency, goal!, sum);
+                                              removeValues(sumList, exchangeDepot);
+                                              exchangeDepot = [];
+                                              final sumListJson = jsonEncode(sumList);
+                                              final exchangeDepotJson = jsonEncode(exchangeDepot);
+                                              prefs.setString('sumList', sumListJson);
+                                              prefs.setString('exchangeDepot', exchangeDepotJson);
+                                            });
+                                          },
+                                          icon: const Icon(Icons.remove_circle_outline)
+                                      )
                                     ],
-                                  );
-                                }
-                                return null;
-                              },
+                                  ),
+                                ),
+                              ],
                             ),
-                            TextButton(
-                              onPressed: () {
-                                showModalBottomSheet(
-                                  isScrollControlled: true,
-                                  context: context,
-                                  builder: (context) {
-                                    double? investValue;
-                                    return Padding(
-                                      padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom+20),
-                                      child: Column(
+                          if(category == "Nakit")
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                ListView.builder(
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  shrinkWrap: true,
+                                  itemCount: cashDepot.length + 1,
+                                  itemBuilder: (context, index) {
+                                    if (index < cashDepot.length) {
+                                      return Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Text(
-                                            '$category için birikim hedefi',
-                                            style: const TextStyle(fontSize: 18),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Flexible(
+                                                flex: 1,
+                                                fit: FlexFit.tight,
+                                                child: Text(
+                                                  cashDepot[index].toString(),
+                                                  style: GoogleFonts.montserrat(fontSize: 20),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 20),
+                                              IconButton(
+                                                splashRadius: 0.0001,
+                                                padding: EdgeInsets.zero,
+                                                constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                                icon: const Icon(Icons.edit, size: 21),
+                                                onPressed: () {
+                                                  showEditDialog(category, 2, index);
+                                                },
+                                              ),
+                                            ],
                                           ),
-                                          const SizedBox(height: 10),
-                                          TextFormField(
-                                            controller: amountController, // Assign the TextEditingController
-                                            keyboardType: TextInputType.number,
-                                            decoration: const InputDecoration(
-                                              labelText: 'Enter a number',
-                                            ),
-                                          ),
-                                          const SizedBox(height: 10),
-                                          ElevatedButton(
-                                            onPressed: () async {
-                                              final prefs = await SharedPreferences.getInstance();
-                                              setState(() {
-                                                String inputText = amountController.text; // Get the input text
-                                                investValue = double.tryParse(inputText);
-                                                if (investValue != null) {
-                                                  cashDepot.add(investValue!);
-                                                  final cashDepotJson = jsonEncode(cashDepot);
-                                                  prefs.setString('cashDepot', cashDepotJson);
-                                                  sumList.add(investValue!);
-                                                  final sumListJson = jsonEncode(sumList);
-                                                  prefs.setString('sumList', sumListJson);
-                                                  sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
-                                                  prefs.setDouble('sumInvestValue', sumInvestValue);
-                                                  Navigator.pop(context); // Close the form
-                                                }
-                                              });
-                                            },
-                                            child: const Text('Add'),
-                                          ),
+                                          const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                                         ],
-                                      ),
+                                      );
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    showModalBottomSheet(
+                                      isScrollControlled: true,
+                                      context: context,
+                                      builder: (context) {
+                                        double? investValue;
+                                        return Padding(
+                                          padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom+20),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                '$category için birikim hedefi',
+                                                style: const TextStyle(fontSize: 18),
+                                              ),
+                                              const SizedBox(height: 10),
+                                              TextFormField(
+                                                controller: amountController, // Assign the TextEditingController
+                                                keyboardType: TextInputType.number,
+                                                decoration: const InputDecoration(
+                                                  labelText: 'Enter a number',
+                                                ),
+                                              ),
+                                              const SizedBox(height: 10),
+                                              ElevatedButton(
+                                                onPressed: () async {
+                                                  final prefs = await SharedPreferences.getInstance();
+                                                  setState(() {
+                                                    String inputText = amountController.text; // Get the input text
+                                                    investValue = double.tryParse(inputText);
+                                                    if (investValue != null) {
+                                                      cashDepot.add(investValue!);
+                                                      final cashDepotJson = jsonEncode(cashDepot);
+                                                      prefs.setString('cashDepot', cashDepotJson);
+                                                      sumList.add(investValue!);
+                                                      final sumListJson = jsonEncode(sumList);
+                                                      prefs.setString('sumList', sumListJson);
+                                                      sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
+                                                      prefs.setDouble('sumInvestValue', sumInvestValue);
+                                                      Navigator.pop(context); // Close the form
+                                                    }
+                                                  });
+                                                },
+                                                child: const Text('Add'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
                                     );
                                   },
-                                );
-                              },
-                              child: Row(
-                                children: [
-                                  Text(
-                                    "Biriktir",
-                                    style: GoogleFonts.montserrat(fontSize: 20),
-                                  ),
-                                  IconButton(
-                                      onPressed: () async{
-                                        final prefs = await SharedPreferences.getInstance();
-                                        setState(()  {
-                                          removeCategory(category, goal, sum);
-                                          removeValues(sumList, cashDepot);
-                                          cashDepot = [];
-                                          final sumListJson = jsonEncode(sumList);
-                                          final cashDepotJson = jsonEncode(cashDepot);
-                                          prefs.setString('sumList', sumListJson);
-                                          prefs.setString('cashDepot', cashDepotJson);
-                                        });
-                                      },
-                                      icon: const Icon(Icons.remove_circle_outline)
-                                  )
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      if(category == "Gayrimenkül")
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                            ListView.builder(
-                              physics: const NeverScrollableScrollPhysics(),
-                              shrinkWrap: true,
-                              itemCount: realEstateDepot.length + 1,
-                              itemBuilder: (context, index) {
-                                if (index < realEstateDepot.length) {
-                                  return Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                  child: Row(
                                     children: [
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Flexible(
-                                            flex: 1,
-                                            fit: FlexFit.tight,
-                                            child: Text(
-                                              realEstateDepot[index].toString(),
-                                              style: GoogleFonts.montserrat(fontSize: 20),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 20),
-                                          IconButton(
-                                            splashRadius: 0.0001,
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                            icon: const Icon(Icons.edit, size: 21),
-                                            onPressed: () {
-                                              showEditDialog(category, 3, index);
-                                            },
-                                          ),
-                                        ],
+                                      Text(
+                                        "Biriktir",
+                                        style: GoogleFonts.montserrat(fontSize: 20),
                                       ),
-                                      const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                      IconButton(
+                                          onPressed: () async{
+                                            final prefs = await SharedPreferences.getInstance();
+                                            setState(()  {
+                                              removeCategory(category, currency, goal!, sum);
+                                              removeValues(sumList, cashDepot);
+                                              cashDepot = [];
+                                              final sumListJson = jsonEncode(sumList);
+                                              final cashDepotJson = jsonEncode(cashDepot);
+                                              prefs.setString('sumList', sumListJson);
+                                              prefs.setString('cashDepot', cashDepotJson);
+                                            });
+                                          },
+                                          icon: const Icon(Icons.remove_circle_outline)
+                                      )
                                     ],
-                                  );
-                                }
-                                return null;
-                              },
+                                  ),
+                                ),
+                              ],
                             ),
-                            TextButton(
-                              onPressed: () {
-                                showModalBottomSheet(
-                                  isScrollControlled: true,
-                                  context: context,
-                                  builder: (context) {
-                                    double? investValue;
-                                    return Padding(
-                                      padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom+20),
-                                      child: Column(
+                          if(category == "Gayrimenkül")
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                ListView.builder(
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  shrinkWrap: true,
+                                  itemCount: realEstateDepot.length + 1,
+                                  itemBuilder: (context, index) {
+                                    if (index < realEstateDepot.length) {
+                                      return Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Text(
-                                            '$category için birikim hedefi',
-                                            style: const TextStyle(fontSize: 18),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Flexible(
+                                                flex: 1,
+                                                fit: FlexFit.tight,
+                                                child: Text(
+                                                  realEstateDepot[index].toString(),
+                                                  style: GoogleFonts.montserrat(fontSize: 20),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 20),
+                                              IconButton(
+                                                splashRadius: 0.0001,
+                                                padding: EdgeInsets.zero,
+                                                constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                                icon: const Icon(Icons.edit, size: 21),
+                                                onPressed: () {
+                                                  showEditDialog(category, 3, index);
+                                                },
+                                              ),
+                                            ],
                                           ),
-                                          const SizedBox(height: 10),
-                                          TextFormField(
-                                            controller: amountController, // Assign the TextEditingController
-                                            keyboardType: TextInputType.number,
-                                            decoration: const InputDecoration(
-                                              labelText: 'Enter a number',
-                                            ),
-                                          ),
-                                          const SizedBox(height: 10),
-                                          ElevatedButton(
-                                            onPressed: () async {
-                                              final prefs = await SharedPreferences.getInstance();
-                                              setState(() {
-                                                String inputText = amountController.text; // Get the input text
-                                                investValue = double.tryParse(inputText);
-                                                if (investValue != null) {
-                                                  realEstateDepot.add(investValue!);
-                                                  final realEstateDepotJson = jsonEncode(realEstateDepot);
-                                                  prefs.setString('realEstateDepot', realEstateDepotJson);
-                                                  sumList.add(investValue!);
-                                                  final sumListJson = jsonEncode(sumList);
-                                                  prefs.setString('sumList', sumListJson);
-                                                  sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
-                                                  prefs.setDouble('sumInvestValue', sumInvestValue);
-                                                  Navigator.pop(context); // Close the form
-                                                }
-                                              });
-                                            },
-                                            child: const Text('Add'),
-                                          ),
+                                          const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                                         ],
-                                      ),
+                                      );
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    showModalBottomSheet(
+                                      isScrollControlled: true,
+                                      context: context,
+                                      builder: (context) {
+                                        double? investValue;
+                                        return Padding(
+                                          padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom+20),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                '$category için birikim hedefi',
+                                                style: const TextStyle(fontSize: 18),
+                                              ),
+                                              const SizedBox(height: 10),
+                                              TextFormField(
+                                                controller: amountController, // Assign the TextEditingController
+                                                keyboardType: TextInputType.number,
+                                                decoration: const InputDecoration(
+                                                  labelText: 'Enter a number',
+                                                ),
+                                              ),
+                                              const SizedBox(height: 10),
+                                              ElevatedButton(
+                                                onPressed: () async {
+                                                  final prefs = await SharedPreferences.getInstance();
+                                                  setState(() {
+                                                    String inputText = amountController.text; // Get the input text
+                                                    investValue = double.tryParse(inputText);
+                                                    if (investValue != null) {
+                                                      realEstateDepot.add(investValue!);
+                                                      final realEstateDepotJson = jsonEncode(realEstateDepot);
+                                                      prefs.setString('realEstateDepot', realEstateDepotJson);
+                                                      sumList.add(investValue!);
+                                                      final sumListJson = jsonEncode(sumList);
+                                                      prefs.setString('sumList', sumListJson);
+                                                      sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
+                                                      prefs.setDouble('sumInvestValue', sumInvestValue);
+                                                      Navigator.pop(context); // Close the form
+                                                    }
+                                                  });
+                                                },
+                                                child: const Text('Add'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
                                     );
                                   },
-                                );
-                              },
-                              child: Row(
-                                children: [
-                                  Text(
-                                    "Biriktir",
-                                    style: GoogleFonts.montserrat(fontSize: 20),
-                                  ),
-                                  IconButton(
-                                      onPressed: () async{
-                                        final prefs = await SharedPreferences.getInstance();
-                                        setState(()  {
-                                          removeCategory(category, goal, sum);
-                                          removeValues(sumList, realEstateDepot);
-                                          realEstateDepot = [];
-                                          final sumListJson = jsonEncode(sumList);
-                                          final realEstateDepotJson = jsonEncode(realEstateDepot);
-                                          prefs.setString('sumList', sumListJson);
-                                          prefs.setString('realEstateDepot', realEstateDepotJson);
-                                        });
-                                      },
-                                      icon: const Icon(Icons.remove_circle_outline)
-                                  )
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      if(category == "Araba")
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                            ListView.builder(
-                              physics: const NeverScrollableScrollPhysics(),
-                              shrinkWrap: true,
-                              itemCount: carDepot.length + 1,
-                              itemBuilder: (context, index) {
-                                if (index < carDepot.length) {
-                                  return Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                  child: Row(
                                     children: [
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Flexible(
-                                            flex: 1,
-                                            fit: FlexFit.tight,
-                                            child: Text(
-                                              carDepot[index].toString(),
-                                              style: GoogleFonts.montserrat(fontSize: 20),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 20),
-                                          IconButton(
-                                            splashRadius: 0.0001,
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                            icon: const Icon(Icons.edit, size: 21),
-                                            onPressed: () {
-                                              showEditDialog(category, 4, index);
-                                            },
-                                          ),
-                                        ],
+                                      Text(
+                                        "Biriktir",
+                                        style: GoogleFonts.montserrat(fontSize: 20),
                                       ),
-                                      const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                      IconButton(
+                                          onPressed: () async{
+                                            final prefs = await SharedPreferences.getInstance();
+                                            setState(()  {
+                                              removeCategory(category, currency, goal!, sum);
+                                              removeValues(sumList, realEstateDepot);
+                                              realEstateDepot = [];
+                                              final sumListJson = jsonEncode(sumList);
+                                              final realEstateDepotJson = jsonEncode(realEstateDepot);
+                                              prefs.setString('sumList', sumListJson);
+                                              prefs.setString('realEstateDepot', realEstateDepotJson);
+                                            });
+                                          },
+                                          icon: const Icon(Icons.remove_circle_outline)
+                                      )
                                     ],
-                                  );
-                                }
-                                return null;
-                              },
+                                  ),
+                                ),
+                              ],
                             ),
-                            TextButton(
-                              onPressed: () {
-                                showModalBottomSheet(
-                                  isScrollControlled: true,
-                                  context: context,
-                                  builder: (context) {
-                                    double? investValue;
-                                    return Padding(
-                                      padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom+20),
-                                      child: Column(
+                          if(category == "Araba")
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                ListView.builder(
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  shrinkWrap: true,
+                                  itemCount: carDepot.length + 1,
+                                  itemBuilder: (context, index) {
+                                    if (index < carDepot.length) {
+                                      return Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Text(
-                                            '$category için birikim hedefi',
-                                            style: const TextStyle(fontSize: 18),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Flexible(
+                                                flex: 1,
+                                                fit: FlexFit.tight,
+                                                child: Text(
+                                                  carDepot[index].toString(),
+                                                  style: GoogleFonts.montserrat(fontSize: 20),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 20),
+                                              IconButton(
+                                                splashRadius: 0.0001,
+                                                padding: EdgeInsets.zero,
+                                                constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                                icon: const Icon(Icons.edit, size: 21),
+                                                onPressed: () {
+                                                  showEditDialog(category, 4, index);
+                                                },
+                                              ),
+                                            ],
                                           ),
-                                          const SizedBox(height: 10),
-                                          TextFormField(
-                                            controller: amountController, // Assign the TextEditingController
-                                            keyboardType: TextInputType.number,
-                                            decoration: const InputDecoration(
-                                              labelText: 'Enter a number',
-                                            ),
-                                          ),
-                                          const SizedBox(height: 10),
-                                          ElevatedButton(
-                                            onPressed: () async {
-                                              final prefs = await SharedPreferences.getInstance();
-                                              setState(() {
-                                                String inputText = amountController.text; // Get the input text
-                                                investValue = double.tryParse(inputText);
-                                                if (investValue != null) {
-                                                  carDepot.add(investValue!);
-                                                  final carDepotJson = jsonEncode(carDepot);
-                                                  prefs.setString('carDepot', carDepotJson);
-                                                  sumList.add(investValue!);
-                                                  final sumListJson = jsonEncode(sumList);
-                                                  prefs.setString('sumList', sumListJson);
-                                                  sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
-                                                  prefs.setDouble('sumInvestValue', sumInvestValue);
-                                                  Navigator.pop(context); // Close the form
-                                                }
-                                              });
-                                            },
-                                            child: const Text('Add'),
-                                          ),
+                                          const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                                         ],
-                                      ),
+                                      );
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    showModalBottomSheet(
+                                      isScrollControlled: true,
+                                      context: context,
+                                      builder: (context) {
+                                        double? investValue;
+                                        return Padding(
+                                          padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom+20),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                '$category için birikim hedefi',
+                                                style: const TextStyle(fontSize: 18),
+                                              ),
+                                              const SizedBox(height: 10),
+                                              TextFormField(
+                                                controller: amountController, // Assign the TextEditingController
+                                                keyboardType: TextInputType.number,
+                                                decoration: const InputDecoration(
+                                                  labelText: 'Enter a number',
+                                                ),
+                                              ),
+                                              const SizedBox(height: 10),
+                                              ElevatedButton(
+                                                onPressed: () async {
+                                                  final prefs = await SharedPreferences.getInstance();
+                                                  setState(() {
+                                                    String inputText = amountController.text; // Get the input text
+                                                    investValue = double.tryParse(inputText);
+                                                    if (investValue != null) {
+                                                      carDepot.add(investValue!);
+                                                      final carDepotJson = jsonEncode(carDepot);
+                                                      prefs.setString('carDepot', carDepotJson);
+                                                      sumList.add(investValue!);
+                                                      final sumListJson = jsonEncode(sumList);
+                                                      prefs.setString('sumList', sumListJson);
+                                                      sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
+                                                      prefs.setDouble('sumInvestValue', sumInvestValue);
+                                                      Navigator.pop(context); // Close the form
+                                                    }
+                                                  });
+                                                },
+                                                child: const Text('Add'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
                                     );
                                   },
-                                );
-                              },
-                              child: Row(
-                                children: [
-                                  Text(
-                                    "Biriktir",
-                                    style: GoogleFonts.montserrat(fontSize: 20),
-                                  ),
-                                  IconButton(
-                                      onPressed: () async{
-                                        final prefs = await SharedPreferences.getInstance();
-                                        setState(()  {
-                                          removeCategory(category, goal, sum);
-                                          removeValues(sumList, carDepot);
-                                          carDepot = [];
-                                          final sumListJson = jsonEncode(sumList);
-                                          final carDepotJson = jsonEncode(carDepot);
-                                          prefs.setString('sumList', sumListJson);
-                                          prefs.setString('carDepot', carDepotJson);
-                                        });
-                                      },
-                                      icon: const Icon(Icons.remove_circle_outline)
-                                  )
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      if(category == "Elektronik")
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                            ListView.builder(
-                              physics: const NeverScrollableScrollPhysics(),
-                              shrinkWrap: true,
-                              itemCount: electronicDepot.length + 1,
-                              itemBuilder: (context, index) {
-                                if (index < electronicDepot.length) {
-                                  return Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                  child: Row(
                                     children: [
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Flexible(
-                                            flex: 1,
-                                            fit: FlexFit.tight,
-                                            child: Text(
-                                              electronicDepot[index].toString(),
-                                              style: GoogleFonts.montserrat(fontSize: 20),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 20),
-                                          IconButton(
-                                            splashRadius: 0.0001,
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                            icon: const Icon(Icons.edit, size: 21),
-                                            onPressed: () {
-                                              showEditDialog(category, 5, index);
-                                            },
-                                          ),
-                                        ],
+                                      Text(
+                                        "Biriktir",
+                                        style: GoogleFonts.montserrat(fontSize: 20),
                                       ),
-                                      const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                      IconButton(
+                                          onPressed: () async{
+                                            final prefs = await SharedPreferences.getInstance();
+                                            setState(()  {
+                                              removeCategory(category, currency, goal!, sum);
+                                              removeValues(sumList, carDepot);
+                                              carDepot = [];
+                                              final sumListJson = jsonEncode(sumList);
+                                              final carDepotJson = jsonEncode(carDepot);
+                                              prefs.setString('sumList', sumListJson);
+                                              prefs.setString('carDepot', carDepotJson);
+                                            });
+                                          },
+                                          icon: const Icon(Icons.remove_circle_outline)
+                                      )
                                     ],
-                                  );
-                                }
-                                return null;
-                              },
+                                  ),
+                                ),
+                              ],
                             ),
-                            TextButton(
-                              onPressed: () {
-                                showModalBottomSheet(
-                                  isScrollControlled: true,
-                                  context: context,
-                                  builder: (context) {
-                                    double? investValue;
-                                    return Padding(
-                                      padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom+20),
-                                      child: Column(
+                          if(category == "Elektronik")
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                ListView.builder(
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  shrinkWrap: true,
+                                  itemCount: electronicDepot.length + 1,
+                                  itemBuilder: (context, index) {
+                                    if (index < electronicDepot.length) {
+                                      return Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Text(
-                                            '$category için birikim hedefi',
-                                            style: const TextStyle(fontSize: 18),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Flexible(
+                                                flex: 1,
+                                                fit: FlexFit.tight,
+                                                child: Text(
+                                                  electronicDepot[index].toString(),
+                                                  style: GoogleFonts.montserrat(fontSize: 20),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 20),
+                                              IconButton(
+                                                splashRadius: 0.0001,
+                                                padding: EdgeInsets.zero,
+                                                constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                                icon: const Icon(Icons.edit, size: 21),
+                                                onPressed: () {
+                                                  showEditDialog(category, 5, index);
+                                                },
+                                              ),
+                                            ],
                                           ),
-                                          const SizedBox(height: 10),
-                                          TextFormField(
-                                            controller: amountController, // Assign the TextEditingController
-                                            keyboardType: TextInputType.number,
-                                            decoration: const InputDecoration(
-                                              labelText: 'Enter a number',
-                                            ),
-                                          ),
-                                          const SizedBox(height: 10),
-                                          ElevatedButton(
-                                            onPressed: () async {
-                                              final prefs = await SharedPreferences.getInstance();
-                                              setState(() {
-                                                String inputText = amountController.text; // Get the input text
-                                                investValue = double.tryParse(inputText);
-                                                if (investValue != null) {
-                                                  electronicDepot.add(investValue!);
-                                                  final electronicDepotJson = jsonEncode(electronicDepot);
-                                                  prefs.setString('electronicDepot', electronicDepotJson);
-                                                  sumList.add(investValue!);
-                                                  final sumListJson = jsonEncode(sumList);
-                                                  prefs.setString('sumList', sumListJson);
-                                                  sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
-                                                  prefs.setDouble('sumInvestValue', sumInvestValue);
-                                                  Navigator.pop(context); // Close the form
-                                                }
-                                              });
-                                            },
-                                            child: const Text('Add'),
-                                          ),
+                                          const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                                         ],
-                                      ),
+                                      );
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    showModalBottomSheet(
+                                      isScrollControlled: true,
+                                      context: context,
+                                      builder: (context) {
+                                        double? investValue;
+                                        return Padding(
+                                          padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom+20),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                '$category için birikim hedefi',
+                                                style: const TextStyle(fontSize: 18),
+                                              ),
+                                              const SizedBox(height: 10),
+                                              TextFormField(
+                                                controller: amountController, // Assign the TextEditingController
+                                                keyboardType: TextInputType.number,
+                                                decoration: const InputDecoration(
+                                                  labelText: 'Enter a number',
+                                                ),
+                                              ),
+                                              const SizedBox(height: 10),
+                                              ElevatedButton(
+                                                onPressed: () async {
+                                                  final prefs = await SharedPreferences.getInstance();
+                                                  setState(() {
+                                                    String inputText = amountController.text; // Get the input text
+                                                    investValue = double.tryParse(inputText);
+                                                    if (investValue != null) {
+                                                      electronicDepot.add(investValue!);
+                                                      final electronicDepotJson = jsonEncode(electronicDepot);
+                                                      prefs.setString('electronicDepot', electronicDepotJson);
+                                                      sumList.add(investValue!);
+                                                      final sumListJson = jsonEncode(sumList);
+                                                      prefs.setString('sumList', sumListJson);
+                                                      sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
+                                                      prefs.setDouble('sumInvestValue', sumInvestValue);
+                                                      Navigator.pop(context); // Close the form
+                                                    }
+                                                  });
+                                                },
+                                                child: const Text('Add'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
                                     );
                                   },
-                                );
-                              },
-                              child: Row(
-                                children: [
-                                  Text(
-                                    "Biriktir",
-                                    style: GoogleFonts.montserrat(fontSize: 20),
-                                  ),
-                                  IconButton(
-                                      onPressed: () async{
-                                        final prefs = await SharedPreferences.getInstance();
-                                        setState(()  {
-                                          removeCategory(category, goal, sum);
-                                          removeValues(sumList, electronicDepot);
-                                          electronicDepot = [];
-                                          final sumListJson = jsonEncode(sumList);
-                                          final electronicDepotJson = jsonEncode(electronicDepot);
-                                          prefs.setString('sumList', sumListJson);
-                                          prefs.setString('electronicDepot', electronicDepotJson);
-                                        });
-                                      },
-                                      icon: const Icon(Icons.remove_circle_outline)
-                                  )
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      if(category == "Diğer")
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                            ListView.builder(
-                              physics: const NeverScrollableScrollPhysics(),
-                              shrinkWrap: true,
-                              itemCount: otherDepot.length + 1,
-                              itemBuilder: (context, index) {
-                                if (index < otherDepot.length) {
-                                  return Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                  child: Row(
                                     children: [
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Flexible(
-                                            flex: 1,
-                                            fit: FlexFit.tight,
-                                            child: Text(
-                                              otherDepot[index].toString(),
-                                              style: GoogleFonts.montserrat(fontSize: 20),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 20),
-                                          IconButton(
-                                            splashRadius: 0.0001,
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                            icon: const Icon(Icons.edit, size: 21),
-                                            onPressed: () {
-                                              showEditDialog(category, 6, index);
-                                            },
-                                          ),
-                                        ],
+                                      Text(
+                                        "Biriktir",
+                                        style: GoogleFonts.montserrat(fontSize: 20),
                                       ),
-                                      const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                      IconButton(
+                                          onPressed: () async{
+                                            final prefs = await SharedPreferences.getInstance();
+                                            setState(()  {
+                                              removeCategory(category, currency, goal!, sum);
+                                              removeValues(sumList, electronicDepot);
+                                              electronicDepot = [];
+                                              final sumListJson = jsonEncode(sumList);
+                                              final electronicDepotJson = jsonEncode(electronicDepot);
+                                              prefs.setString('sumList', sumListJson);
+                                              prefs.setString('electronicDepot', electronicDepotJson);
+                                            });
+                                          },
+                                          icon: const Icon(Icons.remove_circle_outline)
+                                      )
                                     ],
-                                  );
-                                }
-                                return null;
-                              },
+                                  ),
+                                ),
+                              ],
                             ),
-                            TextButton(
-                              onPressed: () {
-                                showModalBottomSheet(
-                                  isScrollControlled: true,
-                                  context: context,
-                                  builder: (context) {
-                                    double? investValue;
-                                    return Padding(
-                                      padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom+20),
-                                      child: Column(
+                          if(category == "Diğer")
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
+                                ListView.builder(
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  shrinkWrap: true,
+                                  itemCount: otherDepot.length + 1,
+                                  itemBuilder: (context, index) {
+                                    if (index < otherDepot.length) {
+                                      return Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Text(
-                                            '$category için birikim hedefi',
-                                            style: const TextStyle(fontSize: 18),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Flexible(
+                                                flex: 1,
+                                                fit: FlexFit.tight,
+                                                child: Text(
+                                                  otherDepot[index].toString(),
+                                                  style: GoogleFonts.montserrat(fontSize: 20),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 20),
+                                              IconButton(
+                                                splashRadius: 0.0001,
+                                                padding: EdgeInsets.zero,
+                                                constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                                icon: const Icon(Icons.edit, size: 21),
+                                                onPressed: () {
+                                                  showEditDialog(category, 6, index);
+                                                },
+                                              ),
+                                            ],
                                           ),
-                                          const SizedBox(height: 10),
-                                          TextFormField(
-                                            controller: amountController, // Assign the TextEditingController
-                                            keyboardType: TextInputType.number,
-                                            decoration: const InputDecoration(
-                                              labelText: 'Enter a number',
-                                            ),
-                                          ),
-                                          const SizedBox(height: 10),
-                                          ElevatedButton(
-                                            onPressed: () async {
-                                              final prefs = await SharedPreferences.getInstance();
-                                              setState(() {
-                                                String inputText = amountController.text; // Get the input text
-                                                investValue = double.tryParse(inputText);
-                                                if (investValue != null) {
-                                                  otherDepot.add(investValue!);
-                                                  final otherDepotJson = jsonEncode(otherDepot);
-                                                  prefs.setString('otherDepot', otherDepotJson);
-                                                  sumList.add(investValue!);
-                                                  final sumListJson = jsonEncode(sumList);
-                                                  prefs.setString('sumList', sumListJson);
-                                                  sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
-                                                  prefs.setDouble('sumInvestValue', sumInvestValue);
-                                                  Navigator.pop(context); // Close the form
-                                                }
-                                              });
-                                            },
-                                            child: const Text('Add'),
-                                          ),
+                                          const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                                         ],
-                                      ),
+                                      );
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    showModalBottomSheet(
+                                      isScrollControlled: true,
+                                      context: context,
+                                      builder: (context) {
+                                        double? investValue;
+                                        return Padding(
+                                          padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom+20),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                '$category için birikim hedefi',
+                                                style: const TextStyle(fontSize: 18),
+                                              ),
+                                              const SizedBox(height: 10),
+                                              TextFormField(
+                                                controller: amountController, // Assign the TextEditingController
+                                                keyboardType: TextInputType.number,
+                                                decoration: const InputDecoration(
+                                                  labelText: 'Enter a number',
+                                                ),
+                                              ),
+                                              const SizedBox(height: 10),
+                                              ElevatedButton(
+                                                onPressed: () async {
+                                                  final prefs = await SharedPreferences.getInstance();
+                                                  setState(() {
+                                                    String inputText = amountController.text; // Get the input text
+                                                    investValue = double.tryParse(inputText);
+                                                    if (investValue != null) {
+                                                      otherDepot.add(investValue!);
+                                                      final otherDepotJson = jsonEncode(otherDepot);
+                                                      prefs.setString('otherDepot', otherDepotJson);
+                                                      sumList.add(investValue!);
+                                                      final sumListJson = jsonEncode(sumList);
+                                                      prefs.setString('sumList', sumListJson);
+                                                      sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
+                                                      prefs.setDouble('sumInvestValue', sumInvestValue);
+                                                      Navigator.pop(context); // Close the form
+                                                    }
+                                                  });
+                                                },
+                                                child: const Text('Add'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
                                     );
                                   },
-                                );
-                              },
-                              child: Row(
-                                children: [
-                                  Text(
-                                    "Biriktir",
-                                    style: GoogleFonts.montserrat(fontSize: 20),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        "Biriktir",
+                                        style: GoogleFonts.montserrat(fontSize: 20),
+                                      ),
+                                      IconButton(
+                                          onPressed: () async{
+                                            final prefs = await SharedPreferences.getInstance();
+                                            setState(()  {
+                                              removeCategory(category, currency, goal!, sum);
+                                              removeValues(sumList, otherDepot);
+                                              otherDepot = [];
+                                              final sumListJson = jsonEncode(sumList);
+                                              final otherDepotJson = jsonEncode(otherDepot);
+                                              prefs.setString('sumList', sumListJson);
+                                              prefs.setString('otherDepot', otherDepotJson);
+                                            });
+                                          },
+                                          icon: const Icon(Icons.remove_circle_outline)
+                                      )
+                                    ],
                                   ),
-                                  IconButton(
-                                      onPressed: () async{
-                                        final prefs = await SharedPreferences.getInstance();
-                                        setState(()  {
-                                          removeCategory(category, goal, sum);
-                                          removeValues(sumList, otherDepot);
-                                          otherDepot = [];
-                                          final sumListJson = jsonEncode(sumList);
-                                          final otherDepotJson = jsonEncode(otherDepot);
-                                          prefs.setString('sumList', sumListJson);
-                                          prefs.setString('otherDepot', otherDepotJson);
-                                        });
-                                      },
-                                      icon: const Icon(Icons.remove_circle_outline)
-                                  )
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                    ],
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               )
@@ -1307,7 +1548,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                               onPressed: () async {
                                 final prefs = await SharedPreferences.getInstance();
                                 setState(() {
-                                  removeCategory(category, 0, 0);
+                                  removeCategory(category, currency, 0, 0);
                                   final sumListJson = jsonEncode(sumList);
                                   final realEstateDepotJson = jsonEncode(realEstateDepot);
                                   prefs.setString('sumList', sumListJson);
@@ -1330,11 +1571,33 @@ class _InvestmentPageState extends State<InvestmentPage> {
     );
   }
 
-  void _saveInvestment(int id, String name, String category, DateTime deadline, String amount) async {
+  Widget buildMonogram(String title) {
+    return Container(
+      width: 70.r,
+      height: 70.r,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: getRandomColor(),
+      ),
+      child: Center(
+        child: Text(
+          getInitials(title),
+          style: TextStyle(
+            color: Colors.white, // Text color
+            fontSize: 20.0, // Font size
+            fontWeight: FontWeight.bold, // Font weight
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _saveInvestment(int id, String name, String category, String currency, DateTime deadline, String amount) async {
     Investment newInvestment = Investment(
       id: id,
       name: name,
       category: category,
+      currency : currency,
       deadline: deadline,
       amount: amount
     );
@@ -1346,7 +1609,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
       investmentList.add(newInvestment);
     });
 
-    print('New investment added: ${newInvestment.toMap()}');
+    print('_saveInvestment (New investment added): ${newInvestment.toMap()}');
   }
 
   void _clearInvestments() async {
@@ -1375,18 +1638,13 @@ class _InvestmentPageState extends State<InvestmentPage> {
     await prefs.setStringList('investments', investmentMap.map((investment) => jsonEncode(investment)).toList());
   }
 
-  Widget _addInvestmentBottomSheet(
-      BuildContext context,
-      String category,
-      TextEditingController amountController,
-      TextEditingController nameController
-      ) {
+  Widget _addInvestmentBottomSheet(BuildContext context, String category, TextEditingController amountController, TextEditingController nameController) {
     return StatefulBuilder(
       builder: (BuildContext context, StateSetter setModalState) {
         return Container(
-          height: 500.h,
+          height: 600.h,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Color(0xffD7CECE),
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(10),
               topRight: Radius.circular(10),
@@ -1396,97 +1654,205 @@ class _InvestmentPageState extends State<InvestmentPage> {
             padding: EdgeInsets.all(20),
             child: KeyboardActions(
               config: _buildConfig(context),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '$category hedefin için tutar belirle.',
-                      style: TextStyle(fontSize: 18.sp),
-                    ),
-                    SizedBox(height: 20.h),
-                    TextFormField(
-                      controller: nameController,
-                      keyboardType: TextInputType.name,
-                      focusNode: _nodeText1,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        labelText: 'Hedef İsmi',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Döviz Cinsi',
+                    style: TextStyle(fontSize: 18.sp),
+                  ),
+                  SizedBox(height: 10.h),
+                  CustomSlidingSegmentedControl<int>(
+                    initialValue: 2,
+                    isStretch: true,
+                    children: const {
+                      0: Text(
+                        'Dolar',
+                        textAlign: TextAlign.center,
                       ),
-                    ),
-                    SizedBox(height: 20.h),
-                    TextFormField(
-                      controller: amountController,
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
-                      focusNode: _nodeText2,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        labelText: 'Tutar',
+                      1: Text(
+                        'Euro',
+                        textAlign: TextAlign.center,
                       ),
+                      2: Text(
+                        'Türk Lirası',
+                        textAlign: TextAlign.center,
+                      ),
+                    },
+                    innerPadding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    SizedBox(height: 20.h),
-                    GestureDetector(
-                      onTap: () {
-                        _openDatePicker(setModalState);
-                      },
-                      child: AbsorbPointer(
-                        child: TextFormField(
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(),
+                    thumbDecoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    onValueChanged: (value) {
+                      print("onValueChanged çalıştı, value:${value}");
+                      if(value == 0){
+                        setState(() {
+                          currencyType = 'Dolar';
+                          print("value 0, currencyType:${currencyType}");
+                        });
+                      }
+                      if(value == 1){
+                        setState(() {
+                          currencyType = 'Euro';
+                          print("value 1, currencyType:${currencyType}");
+                        });
+                      }
+                      if(value == 2){
+                        setState(() {
+                          currencyType = 'Türk Lirası';
+                          print("value 2, currencyType:${currencyType}");
+                        });
+                      }
+                    },
+                  ),
+                  SizedBox(height: 10.h),
+                  Text(
+                    'Hedef İsmi',
+                    style: TextStyle(fontSize: 18.sp),
+                  ),
+                  SizedBox(height: 10.h),
+                  TextFormField(
+                    controller: nameController,
+                    keyboardType: TextInputType.name,
+                    focusNode: _nodeText1,
+                    decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white,
+                        isDense: true,
+                        contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: BorderSide(color: Colors.white, width: 3),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: BorderSide(color: Colors.black, width: 3),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        hintStyle: TextStyle(color: Colors.black)
+                    ),
+                  ),
+                  SizedBox(height: 10.h),
+                  Text(
+                    'Hedef Miktarı',
+                    style: TextStyle(fontSize: 18.sp),
+                  ),
+                  SizedBox(height: 10.h),
+                  TextFormField(
+                    controller: amountController,
+                    keyboardType: TextInputType.numberWithOptions(decimal: true),
+                    focusNode: _nodeText2,
+                    decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white,
+                        isDense: true,
+                        contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: BorderSide(color: Colors.white, width: 3),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: BorderSide(color: Colors.black, width: 3),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        hintStyle: TextStyle(color: Colors.black)
+                    ),
+                  ),
+                  SizedBox(height: 10.h),
+                  Text(
+                    'Hedef Tarihi',
+                    style: TextStyle(fontSize: 18.sp),
+                  ),
+                  SizedBox(height: 10.h),
+                  GestureDetector(
+                    onTap: () {
+                      _openDatePicker(setModalState);
+                    },
+                    child: AbsorbPointer(
+                      child: TextFormField(
+                        decoration: InputDecoration(
                             labelText: _savedDate == null
-                                ? 'Tap to choose a date'
+                                ? ''
                                 : '${DateFormat('yyyy-MM-dd').format(_savedDate!)}',
-                          ),
+                            filled: true,
+                            fillColor: Colors.white,
+                            isDense: true,
+                            contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              borderSide: BorderSide(color: Colors.white, width: 3),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              borderSide: BorderSide(color: Colors.black, width: 3),
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            hintStyle: TextStyle(color: Colors.black)
                         ),
                       ),
                     ),
-                    SizedBox(height: 20.h),
-                    // Spacer widget to push button to the bottom
-                    SizedBox(height: 60.h), // Adjust size as needed
-                    Align(
-                      alignment: Alignment.bottomCenter,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          backgroundColor: Colors.black,
-                          minimumSize: Size(double.infinity, 40),
+                  ),
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                        clipBehavior: Clip.hardEdge,
-                        onPressed: () async {
-                          int maxId = 0;
-                          for (var i in investmentList) {
-                            if (i.id > maxId) {
-                              maxId = i.id;
-                            }
-                          }
-                          int newId = maxId + 1;
-                          String amountText = amountController.text;
-                          String nameText = nameController.text;
-                          if (amountText.isNotEmpty && nameText.isNotEmpty) {
-                            _saveInvestment(
-                              newId,
-                              nameText,
-                              category,
-                              _savedDate!,
-                              amountText,
-                            );
-                            Navigator.pop(context); // Close the form
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Please select a deadline')),
-                            );
-                          }
-                          _savedDate; // Ensure _savedDate is used properly
-                          _deleteSavedDate(); // Ensure _deleteSavedDate is called properly
-                        },
-                        child: const Text('Add'),
+                        backgroundColor: Colors.black,
+                        minimumSize: Size(double.infinity, 40),
                       ),
+                      clipBehavior: Clip.hardEdge,
+                      onPressed: () async {
+                        int maxId = 0;
+                        for (var i in investmentList) {
+                          if (i.id > maxId) {
+                            maxId = i.id;
+                          }
+                        }
+                        int newId = maxId + 1;
+                        String amountText = amountController.text;
+                        double enteredValue = double.parse(amountText);
+                        String nameText = nameController.text;
+                        if (amountText.isNotEmpty && nameText.isNotEmpty) {
+                          print("currencyType at _saveInvestment:${currencyType}");
+                          _saveInvestment(
+                            newId,
+                            nameText,
+                            category,
+                            currencyType,
+                            _savedDate!,
+                            amountText,
+                          );
+                          Navigator.pop(context); // Close the form
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Please select a deadline')),
+                          );
+                        }
+                        _savedDate; // Ensure _savedDate is used properly
+                        _deleteSavedDate(); // Ensure _deleteSavedDate is called properly
+                        if (enteredValue != null) {
+                          addCategoryValue(category, currencyType, enteredValue, 0);
+                        }
+                      },
+                      child: const Text('Add'),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -1496,6 +1862,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
   }
 
   void categorizeInvestments(List<Investment> investments) {
+    print("categorizeInvestments ÇALIŞTI VE investments:${investments.map((investment) => 'ID: ${investment.id}, Category: ${investment.category}, Name: ${investment.name}, Deadline: ${investment.deadline}, Amount: ${investment.amount}').join('\n')} ");
     for (var investment in investments) {
       switch (investment.category) {
         case 'Döviz':
@@ -1557,18 +1924,31 @@ class _InvestmentPageState extends State<InvestmentPage> {
     }
   }
 
+  double calculateTotalInvestmentForCurrency(String currency) {
+    double total = 0.0;
+    for (var investment in investmentList) {
+      if (investment.currency == currency) {
+        print("Adding: ${investment.amount} from investment ID: ${investment.id}");
+        total += double.parse(investment.amount);
+      }
+    }
+    print("Total $currency Amount: $total");
+    return total;
+  }
+
   @override
   void initState() {
     super.initState();
     _load();
-    categorizeInvestments(investmentList);
   }
 
   double sumOfSavingValue = 0.0;
   double savingsValue = 0.0;
-  double totalInvestValue = 0.0;
   double sumInvestValue = 0.0;
   double result = 0.0;
+  double dollarTotal = 0.0;
+  double euroTotal = 0.0;
+  double liraTotal = 0.0;
 
   void _load() async {
     InvestmentService investmentService = InvestmentService();
@@ -1576,7 +1956,6 @@ class _InvestmentPageState extends State<InvestmentPage> {
     //await investmentService.clearInvestments();
     final prefs = await SharedPreferences.getInstance();
     final ab1 = prefs.getDouble('sumInvestValue') ?? 0.0;
-    final ab2 = prefs.getDouble('totalInvestValue') ?? 0.0;
     final ab3 = prefs.getStringList('selectedCategories') ?? [];
     final ab4 = prefs.getBool('hasExchangeGoalSelected') ?? false;
     final ab5 = prefs.getBool('hasCashGoalSelected') ?? false;
@@ -1591,12 +1970,29 @@ class _InvestmentPageState extends State<InvestmentPage> {
     final jsonMap2 = prefs.getString('exchangeDepot') ?? "";
     final jsonMap3 = prefs.getString('sumList') ?? "";
     final jsonMap4 = prefs.getString('cashDepot') ?? "";
+    final jsonMap5 = prefs.getString('totalInvestValue') ?? "";
 
     setState(() {
       investmentList = investments;
-      print("investmentList:${investmentList}");
+      dollarTotal = calculateTotalInvestmentForCurrency('Dolar');
+      print("investmentList:${
+        investmentList
+            .map((investment) =>
+                'ID: ${investment.id}, '
+                    'Category: ${investment.category}, '
+                    'Currency: ${investment.currency}, '
+                    'Name: ${investment.name}, '
+                    'Deadline: ${investment.deadline}, '
+                    'Amount: ${investment.amount}'
+        )
+            .join('\n')
+      }");
+      categorizeInvestments(investmentList);
+      print("categoryValues:${categoryValues.entries.map((entry) => '${entry.key}: ${entry.value}').join('\n')}");
+      print("exchangeList:${exchangeList.map((investment) => 'ID: ${investment.id}, Category: ${investment.category}, Name: ${investment.name}, Deadline: ${investment.deadline}, Amount: ${investment.amount}')
+      .join('\n')
+      }");
       sumInvestValue = ab1;
-      totalInvestValue = ab2;
       selectedCategories = ab3;
       hasExchangeGoalSelected = ab4;
       hasCashGoalSelected = ab5;
@@ -1648,22 +2044,31 @@ class _InvestmentPageState extends State<InvestmentPage> {
         }
       }
 
+      if (jsonMap5.isNotEmpty) {
+        final decodedMap = jsonDecode(jsonMap5) as Map<String, dynamic>;
+        totalInvestValue = Map<String, double>.from(decodedMap.map((key, value) {
+          return MapEntry(key, value is double ? value : 0.0); // Ensure it's a double
+        }));
+      }
+
       if (ab12 != null){
         setState(() {
           _savedDate = DateTime.parse(ab12);
         });
       }
 
+
+
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    String currentDate = DateFormat('dd MMMM yyyy').format(DateTime.now());
     sumOfSavingValue = sumInvestValue.isNaN ? 0.0 : sumInvestValue;
-    savingsValue = totalInvestValue.isNaN ? 0.0 : totalInvestValue;
     result = (savingsValue == 0.0) ? 0.0 : sumOfSavingValue / savingsValue;
-    formattedsavingsValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(savingsValue);
+    formattedDollarTotal = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(dollarTotal);
+    formattedEuroTotal = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(euroTotal);
+    formattedLiraTotal = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(liraTotal);
     formattedSumOfSavingValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfSavingValue);
     return Material(
       child: Stack(
@@ -1676,63 +2081,193 @@ class _InvestmentPageState extends State<InvestmentPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(height: 80.h),
+                        Text("Birikim",
+                            style: GoogleFonts.montserrat(
+                                fontSize: 22, fontWeight: FontWeight.bold)),
+                        SizedBox(height: 10),
                         Container(
-                          padding: const EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            color: Colors.white,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.5),
-                                spreadRadius: 5,
-                                blurRadius: 7,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
+                            borderRadius: BorderRadius.circular(20),
+                            color: Color(0xFFD7CDCD),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text("Hedefler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.normal)),
-                              Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                              //Text("Birikimlerinizi buraya ekleyin.", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 14, fontWeight: FontWeight.normal)),
-                              SizedBox(
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text("Birikim Ekle", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.normal)),
-                                    InkWell(
-                                      onTap: () {
-                                        setState(() {
-                                          togglePopupVisibility(context);
-                                        });
-                                      },
-                                      child: const Icon(Icons.add_circle),
-                                    )
-                                  ],
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(20),
+                                        color: Color(0xFFFDD99E),
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(15),
+                                        child: Text("Toplam Birikim Hedefi(${currencySymbol})\n${formattedTotal}",
+                                            style: GoogleFonts.montserrat(
+                                                fontSize: 16.sp, fontWeight: FontWeight.bold)),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 10),
+                              CustomSlidingSegmentedControl<int>(
+                                initialValue: 2,
+                                isStretch: true,
+                                children: const {
+                                  0: Text(
+                                    'Dolar',
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  1: Text(
+                                    'Euro',
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  2: Text(
+                                    'Türk Lirası',
+                                    textAlign: TextAlign.center,
+                                  ),
+                                },
+                                innerPadding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[200],
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [],
+                                ),
+                                thumbDecoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [],
+                                ),
+                                onValueChanged: (v) {
+                                  setState(() {
+                                    if (v == 0) {
+                                      currencySymbol = r'$';
+                                      formattedTotal = formattedDollarTotal;
+                                    } else if (v == 1) {
+                                      currencySymbol = r'€';
+                                      formattedTotal = formattedEuroTotal;
+                                    } else if (v == 2) {
+                                      currencySymbol = r'₺';
+                                      formattedTotal = formattedLiraTotal;
+                                    }
+                                  });
+                                },
+                              ),
+                              SizedBox(height: 10),
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  color: Color(0xFFEED5D5),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(20),
+                                  child: Row(
+                                    children: [
+                                      CircularPercentIndicator(
+                                        radius: 30,
+                                        lineWidth: 7.0,
+                                        percent: result,
+                                        center: Text(
+                                            "%${((result) * 100).toStringAsFixed(0)}",
+                                            style: GoogleFonts.montserrat(
+                                                color: Colors.black,
+                                                fontSize: (result) * 100 == 100
+                                                    ? 12
+                                                    : 16,
+                                                fontWeight: FontWeight.w600
+                                            )
+                                        ),
+                                        progressColor: Colors.amber,
+                                      ),
+                                      SizedBox(width: 20.w),
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                              "${currencySymbol == r'$' ? 'Dolar Hedefi' : currencySymbol == '€' ? 'Euro Hedefi' : 'Türk Lirası Hedefi'}",
+                                              style: GoogleFonts.montserrat(
+                                              fontSize: 15.sp, fontWeight: FontWeight.bold)
+                                          ),
+                                          Text(
+                                              "${currencySymbol == r'$' ? formattedDollarTotal : currencySymbol == formattedEuroTotal ? 'Euro Hedefi' : formattedLiraTotal}",
+                                              style: GoogleFonts.montserrat(
+                                                  fontSize: 25.sp, fontWeight: FontWeight.bold)
+                                          ),
+                                        ],
+                                      )
+                                    ],
+                                  )
+                                ),
+                              ),
+                              SizedBox(height: 5),
+                              Text("Birikimlerinizi buraya ekleyin.",
+                                  style: GoogleFonts.montserrat(
+                                      fontSize: 14, fontWeight: FontWeight.normal)
+                              ),
+                              SizedBox(height: 10),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Color.fromARGB(120, 152, 255, 170),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(15),
+                                  child: SizedBox(
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text("Birikim Ekle", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.normal)),
+                                        InkWell(
+                                          onTap: () {
+                                            setState(() {
+                                              togglePopupVisibility(context);
+                                            });
+                                          },
+                                          child: const Icon(Icons.add_circle),
+                                        )
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
+                        SizedBox(height: 20),
+                        Text("investmentList",
+                            style: GoogleFonts.montserrat(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
+                        Text(
+                          investmentList
+                              .map((investment) => 'ID: ${investment.id}, Category: ${investment.category}, Currency: ${investment.currency}, Name: ${investment.name}, Deadline: ${investment.deadline}, Amount: ${investment.amount}')
+                              .join('\n'),
+                        ),
+                        Text("exchangeList",
+                            style: GoogleFonts.montserrat(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
+                        Text(
+                          exchangeList
+                              .map((investment) => 'ID: ${investment.id}, Category: ${investment.category}, Currency: ${investment.currency}, Name: ${investment.name}, Deadline: ${investment.deadline}, Amount: ${investment.amount}')
+                              .join('\n'),
+                        ),
+                        Text("cashList",
+                            style: GoogleFonts.montserrat(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
+                        Text(
+                          cashList
+                              .map((investment) => 'ID: ${investment.id}, Category: ${investment.category}, Currency: ${investment.currency}, Name: ${investment.name}, Deadline: ${investment.deadline}, Amount: ${investment.amount}')
+                              .join('\n'),
+                        ),
                         ListView(
+                          padding: EdgeInsets.zero,
                           physics: const NeverScrollableScrollPhysics(),
                           shrinkWrap: true,
                           children: [
                             buildSelectedCategories(),
                           ],
-                        ),
-                        ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: categoryValues.length,
-                          itemBuilder: (context, index) {
-                            final key = categoryValues.keys.elementAt(index);
-                            final value = categoryValues[key];
-                            return ListTile(
-                              title: Text('$key'),
-                              subtitle: Text('Value: ${value.toString()}'),
-                            );
-                          },
                         ),
                         SizedBox(
                           height: 300,
@@ -1759,7 +2294,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                               );
                             },
                           ),
-                        )
+                        ),
                       ],
                     ),
                   ),
@@ -1818,6 +2353,34 @@ class _InvestmentPageState extends State<InvestmentPage> {
   }
 }
 
+class MonogramCircleAvatar extends StatelessWidget {
+  final String name;
+
+  MonogramCircleAvatar({required this.name});
+
+  String _getInitials(String name) {
+    // Split the name by spaces and take the first letter of the first and last word
+    List<String> nameParts = name.split(" ");
+    if (nameParts.length > 1) {
+      return nameParts[0][0] + nameParts[1][0]; // Initials from first and last names
+    } else {
+      return nameParts[0][0]; // Single name case
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CircleAvatar(
+      backgroundColor: Colors.blueAccent,
+      radius: 40,
+      child: Text(
+        _getInitials(name).toUpperCase(), // Convert initials to uppercase
+        style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+}
+
 class ChooseDateBottomSheet extends StatefulWidget{
   final Function(DateTime) onDateSelected;
 
@@ -1856,7 +2419,7 @@ class _ChooseDateBottomSheetState extends State<ChooseDateBottomSheet>{
       _saveDate();
     });
   }
-  
+
   void _saveDate() async {
     if (_selectedDate != null){
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -1868,7 +2431,7 @@ class _ChooseDateBottomSheetState extends State<ChooseDateBottomSheet>{
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height*0.6,
+      height: MediaQuery.of(context).size.height*0.7,
       width: MediaQuery.of(context).size.width*0.9,
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1972,26 +2535,29 @@ class _ChooseDateBottomSheetState extends State<ChooseDateBottomSheet>{
 class Investment {
   int id;
   String category;
+  String currency;
   String name;
   DateTime? deadline;
   String amount;
 
-  Investment({required this.name, this.deadline, required this.id, required this.category, required this.amount});
+  Investment({required this.name, this.deadline, required this.id, required this.category, required this.amount, required this.currency});
 
   Map<String, dynamic> toMap(){ // Convert Investment object to a map
     return {
       'id': id,
       'category': category,
+      'currency' : currency,
       'name': name,
       'deadline': deadline?.toIso8601String(),
       'amount' : amount
     };
   }
 
-  factory Investment.fromMap(Map<String, dynamic> map){ // Create an Investment object from a map
+  factory Investment.fromMap(Map<String, dynamic> map){
     return Investment(
         id: map['id'],
         category: map['category'],
+        currency: map['currency'],
         name: map['name'],
         deadline: map['deadline'] != null ? DateTime.parse(map['deadline']) : null,
         amount: map['amount']
@@ -2012,7 +2578,7 @@ class InvestmentService {
   Future<List<Investment>> getInvestments() async{ // Retrieve all investments from local storage
     SharedPreferences prefs = await SharedPreferences.getInstance();
     List<String> investments = prefs.getStringList(key) ?? [];
-    
+
     return investments.map((investmentString) { // Convert JSON string back to Investment object
       Map<String, dynamic> investmentMap = jsonDecode(investmentString);
       return Investment.fromMap(investmentMap);
