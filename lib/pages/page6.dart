@@ -114,7 +114,7 @@ class _Page6State extends State<Page6> {
     final ab17 = prefs.getStringList('invoices') ?? [];
     setState(() {
       selectedTitle = labelForOption(SelectedOption.values[ab1]);
-      incomeValue = NumberFormat.decimalPattern('tr_TR').parse(ab2) as double;
+      //incomeValue = NumberFormat.decimalPattern('tr_TR').parse(ab2) as double;
       sumOfTV = ab3;
       sumOfGame = ab4;
       sumOfMusic = ab5;

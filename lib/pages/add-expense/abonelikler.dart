@@ -1069,7 +1069,6 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                                     SizedBox(width: 20.w),
                                                                     Expanded(
                                                                         child: PullDownButton(
-                                                                          scrollController: _scrollController,
                                                                           itemBuilder: (context) => monthsList
                                                                               .map(
                                                                                 (month) => PullDownMenuItem(
