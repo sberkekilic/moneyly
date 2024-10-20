@@ -2,6 +2,7 @@
 
 import 'dart:convert';
 
+import 'package:custom_sliding_segmented_control/custom_sliding_segmented_control.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -423,7 +424,7 @@ class _WishesPageState extends State<WishesPage> {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(20),
             color: Colors.white,
             boxShadow: [
               BoxShadow(
@@ -519,50 +520,56 @@ class _WishesPageState extends State<WishesPage> {
                 ),
               ),
               const SizedBox(height: 5),
-              DefaultTabController(
-                length: currencyList.length,
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                ),
                 child: Column(
                   children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10.0),
-                      ),
-                      child: TabBar(
-                        isScrollable: true, // Set this to true if you have many currencies
-                        indicator: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          color: const Color(0xffc6c6c7),
-                        ),
-                        labelColor: Colors.blue, // Color for the selected tab text
-                        unselectedLabelColor: Colors.grey, // Color for unselected tab text
-                        tabs: currencyList.map((currency) {
-                          return Tab(
-                            child: Container(
-                              padding: const EdgeInsets.all(8.0), // Adjust padding as needed
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle, // Circular background for each tab
-                              ),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: CustomSlidingSegmentedControl<int>(
+                        initialValue: 0, // You can set the initial value dynamically if needed
+                        isStretch: false, // To scroll horizontally
+                        children: {
+                          for (int i = 0; i < currencyList.length; i++)
+                            i: Container(
+                              width: 100, // Set a specific width for each tab
+                              alignment: Alignment.center, // Center the text within the container)
                               child: Text(
-                                currency,
+                                currencyList[i],
+                                textAlign: TextAlign.center,
                                 style: GoogleFonts.montserrat(fontSize: 14, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                        onTap: (value) {
+                              ),)
+
+                        },
+                        innerPadding: const EdgeInsets.all(4), // Padding inside the segmented control
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [],
+                        ),
+                        thumbDecoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [],
+                        ),
+                        onValueChanged: (value) {
                           setState(() {
                             selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))] = currencyList[value];
                             dropDownValue = selectedTabList[0];
-                            bankData['selectedSymbol'] = getSelectedSymbol(selectedTab);
+                            bankData['selectedSymbol'] = getSelectedSymbol(selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))]);
                             print("selectedTabList : $selectedTabList");
                             print("dropDownValue : $dropDownValue");
-                            print("newSelectedTab : $newSelectedTab");
                           });
                         },
                       ),
                     ),
+
                     const SizedBox(height: 10),
+
                     ListView(
+                      padding: EdgeInsets.zero,
                       physics: const NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
                       children: [
@@ -570,14 +577,19 @@ class _WishesPageState extends State<WishesPage> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))], style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                              Text(
+                                selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))],
+                                style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+                              ),
                               const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
                               ListView.builder(
+                                padding: EdgeInsets.zero,
                                 physics: const NeverScrollableScrollPhysics(),
                                 shrinkWrap: true,
                                 itemCount: sumMap[bankData['id']]?[selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))]]?.length ?? 0 + 1,
                                 itemBuilder: (context, index) {
-                                  if (index < sumMap[bankData['id']]![selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))]]!.length && sumMap[bankData['id']]![selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))]]![index] != 0.0) {
+                                  if (index < sumMap[bankData['id']]![selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))]]!.length &&
+                                      sumMap[bankData['id']]![selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))]]![index] != 0.0) {
                                     return Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -601,7 +613,15 @@ class _WishesPageState extends State<WishesPage> {
                                               icon: const Icon(Icons.delete, size: 21),
                                               onPressed: () {
                                                 setState(() {
-                                                  deleteValueById(bankData['id'], index, bankData['bankName'], bankData['percent'], selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))], bankData['selectedSymbol'], false);
+                                                  deleteValueById(
+                                                    bankData['id'],
+                                                    index,
+                                                    bankData['bankName'],
+                                                    bankData['percent'],
+                                                    selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))],
+                                                    bankData['selectedSymbol'],
+                                                    false,
+                                                  );
                                                 });
                                               },
                                             ),
@@ -739,7 +759,7 @@ class _WishesPageState extends State<WishesPage> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(20),
                   color: Colors.white,
                   boxShadow: [
                     BoxShadow(
@@ -791,6 +811,7 @@ class _WishesPageState extends State<WishesPage> {
                 ),
               ),
               ListView(
+                padding: EdgeInsets.zero,
                 physics: const NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
                 children: [

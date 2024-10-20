@@ -506,7 +506,7 @@ class _HomePageState extends State<HomePage> {
         builder: (BuildContext context) {
           return AlertDialog(
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10)
+                borderRadius: BorderRadius.circular(20)
             ),
             title: Text('Edit ${invoice.category}',style: const TextStyle(fontSize: 20)),
             content: Column(
@@ -519,11 +519,11 @@ class _HomePageState extends State<HomePage> {
                   decoration: InputDecoration(
                     isDense: true,
                     focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(20),
                         borderSide: const BorderSide(width: 3, color: Colors.black)
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(20),
                       borderSide: const BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
                     ),
                     contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
@@ -538,11 +538,11 @@ class _HomePageState extends State<HomePage> {
                   decoration: InputDecoration(
                     isDense: true,
                     focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(20),
                         borderSide: const BorderSide(width: 3, color: Colors.black)
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(20),
                       borderSide: const BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
                     ),
                     contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
@@ -874,7 +874,7 @@ class _HomePageState extends State<HomePage> {
               Container(
                 padding: EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(20),
                   color: Colors.white,
                   boxShadow: [
                     BoxShadow(
@@ -890,7 +890,7 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(20),
                         color: Color.fromARGB(125, 155, 228, 242),
                       ),
                       child: Padding(
@@ -941,7 +941,7 @@ class _HomePageState extends State<HomePage> {
                           child: Container(
                             decoration: BoxDecoration(
                               color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.all(10),
                             child: Column(
@@ -978,7 +978,7 @@ class _HomePageState extends State<HomePage> {
                           child: Container(
                             decoration: BoxDecoration(
                               color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: const EdgeInsets.all(10),
                             child: Column(
@@ -1022,14 +1022,14 @@ class _HomePageState extends State<HomePage> {
                                 Expanded(
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(20),
                                       color: Color.fromARGB(125, 255, 204, 178)
                                     ),
                                     padding: EdgeInsets.all(10),
                                     child: Column(
                                       children: [
                                         FittedBox(
-                                          fit: BoxFit.scaleDown,
+                                          fit: BoxFit.contain,
                                           child: Text(
                                             "Abonelikler",
                                             style: GoogleFonts.montserrat(
@@ -1068,7 +1068,7 @@ class _HomePageState extends State<HomePage> {
                                 Expanded(
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(20),
                                         color: Color.fromARGB(125, 255, 204, 178)
                                     ),
                                     padding: EdgeInsets.all(10),
@@ -1114,7 +1114,7 @@ class _HomePageState extends State<HomePage> {
                                 Expanded(
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(20),
                                         color: Color.fromARGB(125, 255, 204, 178)
                                     ),
                                     padding: EdgeInsets.all(10),
@@ -1171,7 +1171,7 @@ class _HomePageState extends State<HomePage> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(20),
                   color: Colors.white,
                   boxShadow: [
                     BoxShadow(

@@ -633,7 +633,7 @@ class _OutcomePageState extends State<OutcomePage> {
         builder: (BuildContext context) {
           return AlertDialog(
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10)
+                borderRadius: BorderRadius.circular(20)
             ),
             title: Text('Edit $caterogyName',style: const TextStyle(fontSize: 20)),
             content: Column(
@@ -646,11 +646,11 @@ class _OutcomePageState extends State<OutcomePage> {
                   decoration: InputDecoration(
                     isDense: true,
                     focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(20),
                         borderSide: const BorderSide(width: 3, color: Colors.black)
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(20),
                       borderSide: const BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
                     ),
                     contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
@@ -665,11 +665,11 @@ class _OutcomePageState extends State<OutcomePage> {
                   decoration: InputDecoration(
                     isDense: true,
                     focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(20),
                         borderSide: const BorderSide(width: 3, color: Colors.black)
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(20),
                       borderSide: const BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
                     ),
                     contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
@@ -978,7 +978,7 @@ class _OutcomePageState extends State<OutcomePage> {
               Container(
                 padding: EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(20),
                   color: Colors.white,
                   boxShadow: [
                     BoxShadow(
@@ -994,7 +994,7 @@ class _OutcomePageState extends State<OutcomePage> {
                   children: [
                     Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(20),
                         color: Color(0xFFF0EAD6)
                       ),
                       child: Padding(
@@ -1059,7 +1059,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                     Expanded(
                                       flex: (percentages[2] * 100).toInt(),
                                       child: Text(
-                                        (percentages[2] * 100).toString(),
+                                        "%${(percentages[2] * 100).toStringAsFixed(0)}",
                                         textAlign: TextAlign.center,
                                         style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold),
                                       ),
@@ -1067,7 +1067,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                     Expanded(
                                       flex: (percentages[1] * 100).toInt(),
                                       child: Text(
-                                        (percentages[1] * 100).toString(),
+                                        "%${(percentages[1] * 100).toStringAsFixed(0)}",
                                         textAlign: TextAlign.center,
                                         style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold),
                                       ),
@@ -1075,7 +1075,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                     Expanded(
                                       flex: ((percentages[2] * 100)+(percentages[1] * 100)).toInt(),
                                       child: Text(
-                                        ((percentages[2] * 100)+(percentages[1] * 100)).toString(),
+                                        "%${((percentages[2] * 100)+(percentages[1] * 100)).toStringAsFixed(0)}",
                                         textAlign: TextAlign.center,
                                         style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold),
                                       ),
@@ -1097,7 +1097,7 @@ class _OutcomePageState extends State<OutcomePage> {
                           Container(
                             decoration: BoxDecoration(
                               color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.all(10),
                             child: Row(
@@ -1124,7 +1124,7 @@ class _OutcomePageState extends State<OutcomePage> {
                           Container(
                             decoration: BoxDecoration(
                               color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.all(10),
                             child: Row(
@@ -1151,7 +1151,7 @@ class _OutcomePageState extends State<OutcomePage> {
                           Container(
                             decoration: BoxDecoration(
                               color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.all(10),
                             child: Row(
@@ -1183,7 +1183,7 @@ class _OutcomePageState extends State<OutcomePage> {
                           Container(
                             decoration: BoxDecoration(
                               color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.all(10),
                             child: Row(
@@ -1210,7 +1210,7 @@ class _OutcomePageState extends State<OutcomePage> {
                           Container(
                             decoration: BoxDecoration(
                               color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.all(10),
                             child: Row(
@@ -1237,7 +1237,7 @@ class _OutcomePageState extends State<OutcomePage> {
                           Container(
                             decoration: BoxDecoration(
                               color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.all(10),
                             child: Row(
@@ -1269,7 +1269,7 @@ class _OutcomePageState extends State<OutcomePage> {
                           Container(
                             decoration: BoxDecoration(
                               color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.all(10),
                             child: Row(
@@ -1296,7 +1296,7 @@ class _OutcomePageState extends State<OutcomePage> {
                           Container(
                             decoration: BoxDecoration(
                               color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.all(10),
                             child: Row(
@@ -1323,7 +1323,7 @@ class _OutcomePageState extends State<OutcomePage> {
                           Container(
                             decoration: BoxDecoration(
                               color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.all(10),
                             child: Row(
@@ -1355,7 +1355,7 @@ class _OutcomePageState extends State<OutcomePage> {
                           Container(
                             decoration: BoxDecoration(
                               color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.all(10),
                             child: Row(
@@ -1382,7 +1382,7 @@ class _OutcomePageState extends State<OutcomePage> {
                           Container(
                             decoration: BoxDecoration(
                               color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.all(10),
                             child: Row(
@@ -1409,7 +1409,7 @@ class _OutcomePageState extends State<OutcomePage> {
                           Container(
                             decoration: BoxDecoration(
                               color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.all(10),
                             child: Row(
@@ -1441,7 +1441,7 @@ class _OutcomePageState extends State<OutcomePage> {
                           Container(
                             decoration: BoxDecoration(
                               color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.all(10),
                             child: Row(
@@ -1468,7 +1468,7 @@ class _OutcomePageState extends State<OutcomePage> {
                           Container(
                             decoration: BoxDecoration(
                               color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.all(10),
                             child: Row(
@@ -1495,7 +1495,7 @@ class _OutcomePageState extends State<OutcomePage> {
                           Container(
                             decoration: BoxDecoration(
                               color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.all(10),
                             child: Row(
@@ -1527,7 +1527,7 @@ class _OutcomePageState extends State<OutcomePage> {
                           Container(
                             decoration: BoxDecoration(
                               color: smallestSoftColor,
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.all(10),
                             child: Row(
@@ -1583,7 +1583,7 @@ class _OutcomePageState extends State<OutcomePage> {
                           Container(
                             decoration: BoxDecoration(
                               color: mediumSoftColor,
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.all(10),
                             child: Row(
@@ -1610,7 +1610,7 @@ class _OutcomePageState extends State<OutcomePage> {
                           Container(
                             decoration: BoxDecoration(
                               color: biggestSoftColor,
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.all(10),
                             child: Row(
@@ -1642,7 +1642,7 @@ class _OutcomePageState extends State<OutcomePage> {
                           Container(
                             decoration: BoxDecoration(
                               color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.all(10),
                             child: Row(
@@ -1669,7 +1669,7 @@ class _OutcomePageState extends State<OutcomePage> {
                           Container(
                             decoration: BoxDecoration(
                               color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.all(10),
                             child: Row(
@@ -1696,7 +1696,7 @@ class _OutcomePageState extends State<OutcomePage> {
                           Container(
                             decoration: BoxDecoration(
                               color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.all(10),
                             child: Row(
@@ -1732,7 +1732,7 @@ class _OutcomePageState extends State<OutcomePage> {
               Container(
                 padding: EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(20),
                   color: Colors.white,
                   boxShadow: [
                     BoxShadow(
@@ -1748,7 +1748,7 @@ class _OutcomePageState extends State<OutcomePage> {
                   children: [
                     Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(20),
                         color: Color.fromARGB(125, 155, 228, 242),
                       ),
                       child: Padding(
@@ -1785,7 +1785,7 @@ class _OutcomePageState extends State<OutcomePage> {
                           Container(
                             decoration: BoxDecoration(
                               color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.all(10),
                             child: Column(
@@ -1805,7 +1805,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                       return Container(
                                         decoration: BoxDecoration(
                                           color: Color.fromARGB(120, 152, 255, 170),
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(20),
                                         ),
                                         padding: EdgeInsets.all(10),
                                         child: Row(
@@ -1974,7 +1974,7 @@ class _OutcomePageState extends State<OutcomePage> {
                           Container(
                             decoration: BoxDecoration(
                               color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.only(left: 20,right: 20),
                             child: SizedBox(
@@ -1998,7 +1998,7 @@ class _OutcomePageState extends State<OutcomePage> {
                           Container(
                             decoration: BoxDecoration(
                               color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.all(10),
                             child: Column(
@@ -2024,7 +2024,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: Colors.amber,
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(10),
+                                            borderRadius: BorderRadius.circular(20),
                                           ),
                                         ),
                                         icon: const Icon(Icons.keyboard_arrow_down),
@@ -2164,7 +2164,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                                     style: ElevatedButton.styleFrom(
                                                       backgroundColor: Colors.white,
                                                       shape: RoundedRectangleBorder(
-                                                        borderRadius: BorderRadius.circular(10),
+                                                        borderRadius: BorderRadius.circular(20),
                                                       ),
                                                     ),
                                                     child: Row(
@@ -2205,7 +2205,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                                     style: ElevatedButton.styleFrom(
                                                       backgroundColor: Colors.white,
                                                       shape: RoundedRectangleBorder(
-                                                        borderRadius: BorderRadius.circular(10),
+                                                        borderRadius: BorderRadius.circular(20),
                                                       ),
                                                     ),
                                                     onPressed: showMenu,
@@ -2255,7 +2255,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                                       style: ElevatedButton.styleFrom(
                                                         backgroundColor: Colors.white,
                                                         shape: RoundedRectangleBorder(
-                                                          borderRadius: BorderRadius.circular(10),
+                                                          borderRadius: BorderRadius.circular(20),
                                                         ),
                                                       ),
                                                       child: Row(
@@ -2281,7 +2281,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                                   style: ElevatedButton.styleFrom(
                                                     backgroundColor: Colors.white,
                                                     shape: RoundedRectangleBorder(
-                                                      borderRadius: BorderRadius.circular(10),
+                                                      borderRadius: BorderRadius.circular(20),
                                                     ),
                                                   ),
                                                   onPressed: () async {
@@ -2369,7 +2369,7 @@ class _OutcomePageState extends State<OutcomePage> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(20),
                   color: Colors.white,
                   boxShadow: [
                     BoxShadow(
@@ -2827,7 +2827,7 @@ class _OutcomePageState extends State<OutcomePage> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(20),
                   color: Colors.white,
                   boxShadow: [
                     BoxShadow(

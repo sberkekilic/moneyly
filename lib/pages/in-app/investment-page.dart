@@ -68,7 +68,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
   String ananim = "";
   String currencySymbol = r'₺';
   String exchangeCurrencySymbol = r'₺';
-  String exchangeCurrency = 'Türk Lirası';
+  String exchangeCurrency = 'Dolar';
   String cashCurrencySymbol = r'₺';
   String realEstateCurrencySymbol = r'₺';
   String carCurrencySymbol = r'₺';
@@ -244,58 +244,82 @@ class _InvestmentPageState extends State<InvestmentPage> {
       );
   }
 
-  void showEditDialog(String category, int categoryIndex, int index){
-
-    TextEditingController selectedEditController = TextEditingController();
+  void showEditDialog(int index, int categoryIndex){
+    TextEditingController nameEditController = TextEditingController();
+    TextEditingController amountEditController = TextEditingController();
 
     switch (categoryIndex){
       case 1:
-        TextEditingController editController = TextEditingController(text: exchangeDepot[index].toString());
-        selectedEditController = editController;
+        List<Investment> filteredList = exchangeList.where((investment) => investment.category == 'Döviz').toList();
+        Investment investment = filteredList[index];
+        List<InvestmentModel> filteredList2 = exchangeDollarList.where((investment) => investment.id == filteredList[index].id).toList();
+        InvestmentModel investmentModel = filteredList2[index];
+        TextEditingController nameController = TextEditingController(text: investment.name);
+        TextEditingController editController = TextEditingController(text: investmentModel.amount.toString());
+        amountEditController = editController;
+        nameEditController = nameController;
         break;
       case 2:
         TextEditingController editController = TextEditingController(text: cashDepot[index].toString());
-        selectedEditController = editController;
+        amountEditController = editController;
         break;
       case 3:
         TextEditingController editController = TextEditingController(text: realEstateDepot[index].toString());
-        selectedEditController = editController;
+        amountEditController = editController;
         break;
       case 4:
         TextEditingController editController = TextEditingController(text: carDepot[index].toString());
-        selectedEditController = editController;
+        amountEditController = editController;
         break;
       case 5:
         TextEditingController editController = TextEditingController(text: electronicDepot[index].toString());
-        selectedEditController = editController;
+        amountEditController = editController;
         break;
       case 6:
         TextEditingController editController = TextEditingController(text: otherDepot[index].toString());
-        selectedEditController = editController;
+        amountEditController = editController;
         break;
     }
 
     showDialog(context: context, builder: (BuildContext context) {
       return AlertDialog(
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10)
+            borderRadius: BorderRadius.circular(20)
         ),
-        title: Text('Edit $category',style: const TextStyle(fontSize: 20)),
+        title: Text('Edit category',style: const TextStyle(fontSize: 20)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Align(alignment: Alignment.centerLeft,child: Text("Invest Amount", style: TextStyle(fontSize: 18),),),
+            const Align(alignment: Alignment.centerLeft,child: Text("Invest Name", style: TextStyle(fontSize: 18),),),
             const SizedBox(height: 10),
             TextFormField(
-              controller: selectedEditController,
+              controller: nameEditController,
               decoration: InputDecoration(
                 isDense: true,
                 focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(20),
                     borderSide: const BorderSide(width: 3, color: Colors.black)
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide: const BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
+                ),
+                contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
+              ),
+              style: const TextStyle(fontSize: 20),
+            ),
+            const Align(alignment: Alignment.centerLeft,child: Text("Invest Amount", style: TextStyle(fontSize: 18),),),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: amountEditController,
+              decoration: InputDecoration(
+                isDense: true,
+                focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: const BorderSide(width: 3, color: Colors.black)
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
                   borderSide: const BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
                 ),
                 contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
@@ -319,9 +343,9 @@ class _InvestmentPageState extends State<InvestmentPage> {
                     case 1:
                       int indexToChange = sumList.indexOf(exchangeDepot[index]);
                       if(indexToChange != -1){
-                        sumList[indexToChange] = double.parse(selectedEditController.text);
+                        sumList[indexToChange] = double.parse(amountEditController.text);
                       }
-                      exchangeDepot[index] = double.parse(selectedEditController.text);
+                      exchangeDepot[index] = double.parse(amountEditController.text);
                       sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
                       final exchangeDepotJson = jsonEncode(exchangeDepot);
                       prefs.setDouble('sumInvestValue', sumInvestValue);
@@ -332,9 +356,9 @@ class _InvestmentPageState extends State<InvestmentPage> {
                     case 2:
                       int indexToChange = sumList.indexOf(cashDepot[index]);
                       if(indexToChange != -1){
-                        sumList[indexToChange] = double.parse(selectedEditController.text);
+                        sumList[indexToChange] = double.parse(amountEditController.text);
                       }
-                      cashDepot[index] = double.parse(selectedEditController.text);
+                      cashDepot[index] = double.parse(amountEditController.text);
                       sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
                       final cashDepotJson = jsonEncode(cashDepot);
                       prefs.setDouble('sumInvestValue', sumInvestValue);
@@ -345,9 +369,9 @@ class _InvestmentPageState extends State<InvestmentPage> {
                     case 3:
                       int indexToChange = sumList.indexOf(realEstateDepot[index]);
                       if(indexToChange != -1){
-                        sumList[indexToChange] = double.parse(selectedEditController.text);
+                        sumList[indexToChange] = double.parse(amountEditController.text);
                       }
-                      realEstateDepot[index] = double.parse(selectedEditController.text);
+                      realEstateDepot[index] = double.parse(amountEditController.text);
                       sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
                       final realEstateDepotJson = jsonEncode(realEstateDepot);
                       prefs.setDouble('sumInvestValue', sumInvestValue);
@@ -358,9 +382,9 @@ class _InvestmentPageState extends State<InvestmentPage> {
                     case 4:
                       int indexToChange = sumList.indexOf(carDepot[index]);
                       if(indexToChange != -1){
-                        sumList[indexToChange] = double.parse(selectedEditController.text);
+                        sumList[indexToChange] = double.parse(amountEditController.text);
                       }
-                      carDepot[index] = double.parse(selectedEditController.text);
+                      carDepot[index] = double.parse(amountEditController.text);
                       sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
                       final carDepotJson = jsonEncode(carDepot);
                       prefs.setDouble('sumInvestValue', sumInvestValue);
@@ -371,9 +395,9 @@ class _InvestmentPageState extends State<InvestmentPage> {
                     case 5:
                       int indexToChange = sumList.indexOf(electronicDepot[index]);
                       if(indexToChange != -1){
-                        sumList[indexToChange] = double.parse(selectedEditController.text);
+                        sumList[indexToChange] = double.parse(amountEditController.text);
                       }
-                      electronicDepot[index] = double.parse(selectedEditController.text);
+                      electronicDepot[index] = double.parse(amountEditController.text);
                       sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
                       final electronicDepotJson = jsonEncode(electronicDepot);
                       prefs.setDouble('sumInvestValue', sumInvestValue);
@@ -384,9 +408,9 @@ class _InvestmentPageState extends State<InvestmentPage> {
                     case 6:
                       int indexToChange = sumList.indexOf(otherDepot[index]);
                       if(indexToChange != -1){
-                        sumList[indexToChange] = double.parse(selectedEditController.text);
+                        sumList[indexToChange] = double.parse(amountEditController.text);
                       }
-                      otherDepot[index] = double.parse(selectedEditController.text);
+                      otherDepot[index] = double.parse(amountEditController.text);
                       sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
                       final otherDepotJson = jsonEncode(otherDepot);
                       prefs.setDouble('sumInvestValue', sumInvestValue);
@@ -534,7 +558,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
             const SizedBox(height: 10),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(15),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 color: Color(0xFFD7CDCD),
@@ -697,7 +721,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                                   constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                                   icon: const Icon(Icons.edit, size: 21),
                                                   onPressed: () {
-                                                    showEditDialog(category, 1, index);
+                                                    showEditDialog(index, 1);
                                                   },
                                                 ),
                                               ],
@@ -979,7 +1003,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                               constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                               icon: const Icon(Icons.edit, size: 21),
                                               onPressed: () {
-                                                showEditDialog(category, 2, index);
+                                                showEditDialog(index, 2);
                                               },
                                             ),
                                           ],
@@ -1103,7 +1127,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                               constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                               icon: const Icon(Icons.edit, size: 21),
                                               onPressed: () {
-                                                showEditDialog(category, 3, index);
+                                                showEditDialog(index, 3);
                                               },
                                             ),
                                           ],
@@ -1227,7 +1251,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                               constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                               icon: const Icon(Icons.edit, size: 21),
                                               onPressed: () {
-                                                showEditDialog(category, 4, index);
+                                                showEditDialog(index, 4);
                                               },
                                             ),
                                           ],
@@ -1351,7 +1375,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                               constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                               icon: const Icon(Icons.edit, size: 21),
                                               onPressed: () {
-                                                showEditDialog(category, 5, index);
+                                                showEditDialog(index, 5);
                                               },
                                             ),
                                           ],
@@ -1475,7 +1499,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                               constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                               icon: const Icon(Icons.edit, size: 21),
                                               onPressed: () {
-                                                showEditDialog(category, 6, index);
+                                                showEditDialog(index, 6);
                                               },
                                             ),
                                           ],
@@ -1766,226 +1790,232 @@ class _InvestmentPageState extends State<InvestmentPage> {
   Widget _addInvestmentBottomSheet(BuildContext context, String category, TextEditingController amountController, TextEditingController nameController) {
     return StatefulBuilder(
       builder: (BuildContext context, StateSetter setModalState) {
-        return Container(
-          height: 600.h,
-          decoration: BoxDecoration(
-            color: Color(0xffD7CECE),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(10),
-              topRight: Radius.circular(10),
-            ),
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom, // Padding for keyboard overlap
           ),
-          child: Padding(
-            padding: EdgeInsets.all(20),
-            child: KeyboardActions(
-              config: _buildConfig(context),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Döviz Cinsi',
-                    style: TextStyle(fontSize: 18.sp),
-                  ),
-                  SizedBox(height: 10.h),
-                  CustomSlidingSegmentedControl<int>(
-                    initialValue: 2,
-                    isStretch: true,
-                    children: const {
-                      0: Text(
-                        'Dolar',
-                        textAlign: TextAlign.center,
-                      ),
-                      1: Text(
-                        'Euro',
-                        textAlign: TextAlign.center,
-                      ),
-                      2: Text(
-                        'Türk Lirası',
-                        textAlign: TextAlign.center,
-                      ),
-                    },
-                    innerPadding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [],
+          child: Container(
+            height: MediaQuery.of(context).size.height * 0.6,
+            decoration: BoxDecoration(
+              color: Color(0xffD7CECE),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(10),
+                topRight: Radius.circular(10),
+              ),
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: KeyboardActions(
+                config: _buildConfig(context),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Döviz Cinsi',
+                      style: TextStyle(fontSize: 18.sp),
                     ),
-                    thumbDecoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [],
-                    ),
-                    onValueChanged: (value) {
-                      print("onValueChanged çalıştı, value:${value}");
-                      if(value == 0){
-                        setState(() {
-                          currencyType = 'Dolar';
-                          print("value 0, currencyType:${currencyType}");
-                        });
-                      }
-                      if(value == 1){
-                        setState(() {
-                          currencyType = 'Euro';
-                          print("value 1, currencyType:${currencyType}");
-                        });
-                      }
-                      if(value == 2){
-                        setState(() {
-                          currencyType = 'Türk Lirası';
-                          print("value 2, currencyType:${currencyType}");
-                        });
-                      }
-                    },
-                  ),
-                  SizedBox(height: 10.h),
-                  Text(
-                    'Hedef İsmi',
-                    style: TextStyle(fontSize: 18.sp),
-                  ),
-                  SizedBox(height: 10.h),
-                  TextFormField(
-                    controller: nameController,
-                    keyboardType: TextInputType.name,
-                    focusNode: _nodeText1,
-                    decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Colors.white,
-                        isDense: true,
-                        contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: BorderSide(color: Colors.white, width: 3),
+                    SizedBox(height: 10.h),
+                    CustomSlidingSegmentedControl<int>(
+                      initialValue: 2,
+                      isStretch: true,
+                      children: const {
+                        0: Text(
+                          'Dolar',
+                          textAlign: TextAlign.center,
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: BorderSide(color: Colors.black, width: 3),
+                        1: Text(
+                          'Euro',
+                          textAlign: TextAlign.center,
                         ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
+                        2: Text(
+                          'Türk Lirası',
+                          textAlign: TextAlign.center,
                         ),
-                        hintStyle: TextStyle(color: Colors.black)
-                    ),
-                  ),
-                  SizedBox(height: 10.h),
-                  Text(
-                    'Hedef Miktarı',
-                    style: TextStyle(fontSize: 18.sp),
-                  ),
-                  SizedBox(height: 10.h),
-                  TextFormField(
-                    controller: amountController,
-                    keyboardType: TextInputType.numberWithOptions(decimal: true),
-                    focusNode: _nodeText2,
-                    decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Colors.white,
-                        isDense: true,
-                        contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: BorderSide(color: Colors.white, width: 3),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: BorderSide(color: Colors.black, width: 3),
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        hintStyle: TextStyle(color: Colors.black)
-                    ),
-                  ),
-                  SizedBox(height: 10.h),
-                  Text(
-                    'Hedef Tarihi',
-                    style: TextStyle(fontSize: 18.sp),
-                  ),
-                  SizedBox(height: 10.h),
-                  GestureDetector(
-                    onTap: () {
-                      _openDatePicker(setModalState);
-                    },
-                    child: AbsorbPointer(
-                      child: TextFormField(
-                        decoration: InputDecoration(
-                            labelText: _savedDate == null
-                                ? ''
-                                : '${DateFormat('yyyy-MM-dd').format(_savedDate!)}',
-                            filled: true,
-                            fillColor: Colors.white,
-                            isDense: true,
-                            contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(20),
-                              borderSide: BorderSide(color: Colors.white, width: 3),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(20),
-                              borderSide: BorderSide(color: Colors.black, width: 3),
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            hintStyle: TextStyle(color: Colors.black)
-                        ),
+                      },
+                      innerPadding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [],
                       ),
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.bottomCenter,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        backgroundColor: Colors.black,
-                        minimumSize: Size(double.infinity, 40),
+                      thumbDecoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [],
                       ),
-                      clipBehavior: Clip.hardEdge,
-                      onPressed: () async {
-                        int maxId = 0;
-                        for (var i in investmentList) {
-                          if (i.id > maxId) {
-                            maxId = i.id;
-                          }
+                      onValueChanged: (value) {
+                        print("onValueChanged çalıştı, value:${value}");
+                        if(value == 0){
+                          setState(() {
+                            currencyType = 'Dolar';
+                            print("value 0, currencyType:${currencyType}");
+                          });
                         }
-                        int newId = maxId + 1;
-                        String amountText = amountController.text;
-                        double enteredValue = double.parse(amountText);
-                        String nameText = nameController.text;
-                        if (amountText.isNotEmpty && nameText.isNotEmpty) {
-                          print("currencyType at _saveInvestment:${currencyType}");
-                          _saveInvestment(
-                            newId,
-                            nameText,
-                            category,
-                            currencyType,
-                            _savedDate!,
-                            amountText,
-                          );
-                          _saveInvestmentModel(
-                              newId,
-                              latestValue,
-                              amountText,
-                              category
-                          );
-                          Navigator.pop(context); // Close the form
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Please select a deadline')),
-                          );
+                        if(value == 1){
+                          setState(() {
+                            currencyType = 'Euro';
+                            print("value 1, currencyType:${currencyType}");
+                          });
                         }
-                        _savedDate; // Ensure _savedDate is used properly
-                        _deleteSavedDate(); // Ensure _deleteSavedDate is called properly
-                        if (enteredValue != null) {
-                          addCategoryValue(category, currencyType, enteredValue, 0);
+                        if(value == 2){
+                          setState(() {
+                            currencyType = 'Türk Lirası';
+                            print("value 2, currencyType:${currencyType}");
+                          });
                         }
                       },
-                      child: const Text('Add'),
                     ),
-                  ),
-                ],
+                    SizedBox(height: 10.h),
+                    Text(
+                      'Hedef İsmi',
+                      style: TextStyle(fontSize: 18.sp),
+                    ),
+                    SizedBox(height: 10.h),
+                    TextFormField(
+                      controller: nameController,
+                      keyboardType: TextInputType.name,
+                      focusNode: _nodeText1,
+                      decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
+                          isDense: true,
+                          contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(color: Colors.white, width: 3),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(color: Colors.black, width: 3),
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          hintStyle: TextStyle(color: Colors.black)
+                      ),
+                    ),
+                    SizedBox(height: 10.h),
+                    Text(
+                      'Hedef Miktarı',
+                      style: TextStyle(fontSize: 18.sp),
+                    ),
+                    SizedBox(height: 10.h),
+                    TextFormField(
+                      controller: amountController,
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      focusNode: _nodeText2,
+                      decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
+                          isDense: true,
+                          contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(color: Colors.white, width: 3),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(color: Colors.black, width: 3),
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          hintStyle: TextStyle(color: Colors.black)
+                      ),
+                    ),
+                    SizedBox(height: 10.h),
+                    Text(
+                      'Hedef Tarihi',
+                      style: TextStyle(fontSize: 18.sp),
+                    ),
+                    SizedBox(height: 10.h),
+                    GestureDetector(
+                      onTap: () {
+                        _openDatePicker(setModalState);
+                      },
+                      child: AbsorbPointer(
+                        child: TextFormField(
+                          decoration: InputDecoration(
+                              labelText: _savedDate == null
+                                  ? ''
+                                  : '${DateFormat('yyyy-MM-dd').format(_savedDate!)}',
+                              filled: true,
+                              fillColor: Colors.white,
+                              isDense: true,
+                              contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(20),
+                                borderSide: BorderSide(color: Colors.white, width: 3),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(20),
+                                borderSide: BorderSide(color: Colors.black, width: 3),
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              hintStyle: TextStyle(color: Colors.black)
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 20.h),
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          backgroundColor: Colors.black,
+                          minimumSize: Size(double.infinity, 40),
+                        ),
+                        clipBehavior: Clip.hardEdge,
+                        onPressed: () async {
+                          int maxId = 0;
+                          for (var i in investmentList) {
+                            if (i.id > maxId) {
+                              maxId = i.id;
+                            }
+                          }
+                          int newId = maxId + 1;
+                          String amountText = amountController.text;
+                          double enteredValue = double.parse(amountText);
+                          String nameText = nameController.text;
+                          if (amountText.isNotEmpty && nameText.isNotEmpty) {
+                            print("currencyType at _saveInvestment:${currencyType}");
+                            _saveInvestment(
+                              newId,
+                              nameText,
+                              category,
+                              currencyType,
+                              _savedDate!,
+                              amountText,
+                            );
+                            _saveInvestmentModel(
+                                newId,
+                                latestValue,
+                                amountText,
+                                category
+                            );
+                            Navigator.pop(context); // Close the form
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Please select a deadline')),
+                            );
+                          }
+                          _savedDate; // Ensure _savedDate is used properly
+                          _deleteSavedDate(); // Ensure _deleteSavedDate is called properly
+                          if (enteredValue != null) {
+                            addCategoryValue(category, currencyType, enteredValue, 0);
+                          }
+                        },
+                        child: const Text('Add'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -2044,7 +2074,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
         return Dialog(
           insetPadding: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(20),
           ),
           child: ChooseDateBottomSheet(
             onDateSelected: (date) {
@@ -2094,6 +2124,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
     List<InvestmentModel> investmentModel = await investmentService.getInvestmentModels();
     //await investmentService.clearInvestments();
     final prefs = await SharedPreferences.getInstance();
+    //prefs.setStringList('exchangeDollarList', []);
+    //prefs.setString('categoryValues', '');
     final ab1 = prefs.getDouble('sumInvestValue') ?? 0.0;
     final ab3 = prefs.getStringList('selectedCategories') ?? [];
     final ab4 = prefs.getBool('hasExchangeGoalSelected') ?? false;
@@ -2372,6 +2404,40 @@ class _InvestmentPageState extends State<InvestmentPage> {
                           ),
                         ),
                         SizedBox(height: 20),
+                        ListView(
+                          padding: EdgeInsets.zero,
+                          physics: const NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          children: [
+                            buildSelectedCategories(),
+                          ],
+                        ),
+                        SizedBox(
+                          height: 300,
+                          child: investmentList.isEmpty
+                              ? Center(child: Text('No investments found.'))
+                              : ListView.builder(
+                            itemCount: investmentList.length,
+                            itemBuilder: (context, index) {
+                              Investment investment = investmentList[index];
+                              return ListTile(
+                                title: Text(investment.name+investment.amount+DateFormat('yyyy-MM-dd').format(investment.deadline!)),
+                                subtitle: Text('Category: ${investment.category}'),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text('ID: ${investment.id}'),
+                                    SizedBox(width: 8),
+                                    InkWell(
+                                      child: FaIcon(FontAwesomeIcons.xmark),
+                                      onTap: () => _removeInvestment(investment.id),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                         Text("investmentList",
                             style: GoogleFonts.montserrat(
                                 fontSize: 16, fontWeight: FontWeight.bold)),
@@ -2410,40 +2476,6 @@ class _InvestmentPageState extends State<InvestmentPage> {
                         Text("selectedCategories:${selectedCategories}",
                             style: GoogleFonts.montserrat(
                                 fontSize: 16, fontWeight: FontWeight.bold)),
-                        ListView(
-                          padding: EdgeInsets.zero,
-                          physics: const NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          children: [
-                            buildSelectedCategories(),
-                          ],
-                        ),
-                        SizedBox(
-                          height: 300,
-                          child: investmentList.isEmpty
-                              ? Center(child: Text('No investments found.'))
-                              : ListView.builder(
-                            itemCount: investmentList.length,
-                            itemBuilder: (context, index) {
-                              Investment investment = investmentList[index];
-                              return ListTile(
-                                title: Text(investment.name+investment.amount+DateFormat('yyyy-MM-dd').format(investment.deadline!)),
-                                subtitle: Text('Category: ${investment.category}'),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text('ID: ${investment.id}'),
-                                    SizedBox(width: 8),
-                                    InkWell(
-                                      child: FaIcon(FontAwesomeIcons.xmark),
-                                      onTap: () => _removeInvestment(investment.id),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -2580,17 +2612,16 @@ class _ChooseDateBottomSheetState extends State<ChooseDateBottomSheet>{
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height*0.7,
+      height: MediaQuery.of(context).size.height*0.5,
       width: MediaQuery.of(context).size.width*0.9,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10)
+        borderRadius: BorderRadius.circular(20)
       ),
       padding: EdgeInsets.all(16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(height: 20),
           Align(child: Text("Hedef Tarihi", style: TextStyle(fontSize: 24.sp)), alignment: Alignment.bottomLeft,),
           SizedBox(height: 20),
           BlocBuilder<SettingsCubit, SettingsState>(
@@ -2659,11 +2690,10 @@ class _ChooseDateBottomSheetState extends State<ChooseDateBottomSheet>{
               );
             },
           ),
-          Expanded(child: Container()), // Create a space to push ElevatedButton to bottom.
           ElevatedButton(
               style: ElevatedButton.styleFrom(
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(20)),
                 backgroundColor: Colors.black,
                 minimumSize: Size(double.infinity, 40),
               ),

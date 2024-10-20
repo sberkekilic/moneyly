@@ -20,6 +20,9 @@ class SettingsScreen extends StatelessWidget {
               return SwitchListTile(
                 title: Text('Dark Mode'),
                 value: state.darkMode,
+                activeColor: Theme.of(context).primaryColor, // Primary color for the active state
+                inactiveThumbColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.grey,
+                inactiveTrackColor: Theme.of(context).brightness == Brightness.dark ? Colors.white.withOpacity(0.5) : Colors.grey.withOpacity(0.5),
                 onChanged: (value) {
                   // Update the dark mode state in the cubit
                   context.read<SettingsCubit>().changeDarkMode(value);

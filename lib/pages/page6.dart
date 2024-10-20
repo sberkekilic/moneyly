@@ -4,8 +4,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:fluttericon/font_awesome_icons.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:moneyly/blocs/settings/settings-page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -155,7 +157,7 @@ class _Page6State extends State<Page6> {
         backgroundColor: Color.fromARGB(125, 183, 255, 217),
         centerTitle: true,
         elevation: 0,
-        toolbarHeight: 40.h,
+        toolbarHeight: 60.h,
         automaticallyImplyLeading: false,
         leadingWidth: 30.w,
         flexibleSpace: ClipRRect(
@@ -211,19 +213,140 @@ class _Page6State extends State<Page6> {
       ),
       bottomNavigationBar: BlocBuilder<SelectedIndexCubit, int>(
         builder: (context, selectedIndex) {
-          return BottomNavigationBar(
-            type: BottomNavigationBarType.fixed,
-            currentIndex: selectedIndex,
-            onTap: (index) {
-              context.read<SelectedIndexCubit>().setIndex(index); // Update the index when tapped
-            },
-            items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-              BottomNavigationBarItem(icon: Icon(Icons.attach_money), label: 'Income'),
-              BottomNavigationBarItem(icon: Icon(Icons.money_off), label: 'Outcome'),
-              BottomNavigationBarItem(icon: Icon(Icons.trending_up), label: 'Investment'),
-              BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Wishes'),
-            ],
+          return Container(
+            decoration: BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.5),
+                  spreadRadius: 5,
+                  blurRadius: 5,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(10),
+                topRight: Radius.circular(10),
+                bottomLeft: Radius.zero, // No radius for bottom left
+                bottomRight: Radius.zero, // No radius for bottom right
+              ),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(10),
+                topRight: Radius.circular(10),
+                bottomLeft: Radius.zero, // No radius for bottom left
+                bottomRight: Radius.zero, // No radius for bottom right
+              ),
+              child: Theme(
+                data: ThemeData(
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                ),
+                child: BottomNavigationBar(
+                  type: BottomNavigationBarType.fixed,
+                  selectedItemColor: const Color.fromARGB(255, 26, 183, 56),
+                  selectedLabelStyle: GoogleFonts.montserrat(
+                    color: Colors.black,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  unselectedLabelStyle: GoogleFonts.montserrat(
+                    color: const Color.fromARGB(255, 26, 183, 56),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  currentIndex: selectedIndex,
+                  onTap: (index) {
+                    context.read<SelectedIndexCubit>().setIndex(index); // Update the index when tapped
+                  },
+                  items: [
+                    BottomNavigationBarItem(
+                      icon: Padding(
+                        padding: const EdgeInsets.only(left: 5, right: 5),
+                        child: Container(
+                          width: double.infinity,
+                          decoration: selectedIndex == 0
+                              ? BoxDecoration(
+                            color: const Color.fromARGB(125, 26, 183, 56),
+                            borderRadius: BorderRadius.circular(20),
+                          )
+                              : null,
+                          child: Icon(Icons.home, size: 30.sp),
+                        ),
+                      ),
+                      label: 'Ana Sayfa',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Padding(
+                        padding: const EdgeInsets.only(left: 5, right: 5),
+                        child: Container(
+                          width: double.infinity,
+                          decoration: selectedIndex == 1
+                              ? BoxDecoration(
+                            color: const Color.fromARGB(125, 26, 183, 56),
+                            borderRadius: BorderRadius.circular(20),
+                          )
+                              : null,
+                          child: const Icon(Icons.attach_money, size: 30),
+                        ),
+                      ),
+                      label: 'Gelir',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Padding(
+                        padding: const EdgeInsets.only(left: 5, right: 5),
+                        child: Container(
+                          width: double.infinity,
+                          decoration: selectedIndex == 2
+                              ? BoxDecoration(
+                            color: const Color.fromARGB(125, 26, 183, 56),
+                            borderRadius: BorderRadius.circular(20),
+                          )
+                              : null,
+                          child: const Icon(Icons.money_off, size: 30),
+                        ),
+                      ),
+                      label: 'Gider',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Padding(
+                        padding: const EdgeInsets.only(left: 5, right: 5),
+                        child: Container(
+                          width: double.infinity,
+                          decoration: selectedIndex == 3
+                              ? BoxDecoration(
+                            color: const Color.fromARGB(125, 26, 183, 56),
+                            borderRadius: BorderRadius.circular(20),
+                          )
+                              : null,
+                          child: const Icon(Icons.trending_up, size: 30),
+                        ),
+                      ),
+                      label: 'Yatırım',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Padding(
+                        padding: const EdgeInsets.only(left: 5, right: 5),
+                        child: Container(
+                          width: double.infinity,
+                          decoration: selectedIndex == 4
+                              ? BoxDecoration(
+                            color: const Color.fromARGB(125, 26, 183, 56),
+                            borderRadius: BorderRadius.circular(20),
+                          )
+                              : null,
+                          child: const Padding(
+                            padding: EdgeInsets.only(top: 5, bottom: 5),
+                            child: Icon(FontAwesome.bank, size: 20),
+                          ),
+                        ),
+                      ),
+                      label: 'İstekler',
+                    ),
+                  ],
+                ),
+              ),
+            ),
           );
         },
       ),
