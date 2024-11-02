@@ -107,57 +107,26 @@ class _WishesPageState extends State<WishesPage> {
   }
   Future<void> updateBankData(int id, String bankName, double percent, double sum, String currency, String selectedSymbol, bool addButton) async {
     final prefs = await SharedPreferences.getInstance();
-    final Map<String, dynamic> serializableSumMap = {};
     final index = bankDataList.indexWhere((bank) => bank['id'] == id);
-    if (!sumMap.containsKey(id)) {
-      sumMap[id] = {currency: []};
-    }
-    final sumValues = sumMap[id]?[currency] ?? [];
+
     if (index != -1) {
-      if (bankDataList[index]['bankName'] != bankName){
-        double totalSum = sum;
-        final bankData = {
-          'id': id,
-          'bankName': bankName,
-          'percent': percent,
-          'sum': totalSum,
-          'selectedTab': currency,
-          'selectedSymbol': selectedSymbol,
-          'isEditing': false,
-          'isAddButtonActive' : addButton
-        };
-        bankDataList[index] = bankData;
-        setState(() {});
-      } else {
-        sumValues.add(sum);
-        sumMap[id]?[currency] = sumValues;
-        double totalSum = calculateSum(id);
-        final bankData = {
-          'id': id,
-          'bankName': bankName,
-          'selectedTab': currency,
-          'selectedSymbol': selectedSymbol,
-          'percent': percent,
-          'sum': totalSum,
-          'isEditing': false,
-          'isAddButtonActive' : addButton
-        };
-        bankDataList[index] = bankData;
-      }
+      final bankData = {
+        'id': id,
+        'bankName': bankName,
+        'percent': percent,
+        'sum': sum, // Set sum to the new entered value
+        'selectedTab': currency,
+        'selectedSymbol': selectedSymbol,
+        'isEditing': false,
+        'isAddButtonActive': addButton,
+      };
+      bankDataList[index] = bankData;
+      setState(() {}); // Update the UI to reflect changes
     }
-    setState(() {
-      String bankDataListJson = jsonEncode(bankDataList);
-      prefs.setString('bankDataList', bankDataListJson);
-      sumMap.forEach((key, value) {
-        final innerMap = <String, List<double>>{};
-        value.forEach((innerKey, innerValue) {
-          innerMap[innerKey] = innerValue;
-        });
-        serializableSumMap[key.toString()] = innerMap;
-      });
-      final sumMapJson = jsonEncode(serializableSumMap);
-      prefs.setString('sumMap', sumMapJson);
-    });
+
+    // Save the updated bankDataList to preferences
+    String bankDataListJson = jsonEncode(bankDataList);
+    await prefs.setString('bankDataList', bankDataListJson);
   }
   Future<void> deleteValueById(int id, int index, String bankName, double percent, String currency, String selectedSymbol, bool addButton) async {
     final prefs = await SharedPreferences.getInstance();
@@ -308,6 +277,33 @@ class _WishesPageState extends State<WishesPage> {
     map.clear();
     map.addAll(newMap);
   }
+  String getInitials(String title) {
+    List<String> words = title.split(" ");
+    String initials = words.length > 1
+        ? "${words[0][0]}${words[1][0]}"
+        : words[0][0];
+    return initials.toUpperCase();
+  }
+  Widget buildMonogram(String title) {
+    return Container(
+      width: 70.r,
+      height: 70.r,
+      decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.grey
+      ),
+      child: Center(
+        child: Text(
+          getInitials(title),
+          style: TextStyle(
+            color: Colors.white, // Text color
+            fontSize: 20.0, // Font size
+            fontWeight: FontWeight.bold, // Font weight
+          ),
+        ),
+      ),
+    );
+  }
   List<double> getSumList(int id, String currency) {
     // Get the list of doubles for the bank with the given ID.
     final sumValues = sumMap[id]?[currency] ?? [];
@@ -422,278 +418,219 @@ class _WishesPageState extends State<WishesPage> {
       children: [
         const SizedBox(height: 20),
         Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.5),
-                spreadRadius: 5,
-                blurRadius: 7,
-                offset: const Offset(0, 3),
-              ),
-            ],
+              color: Color(0xFFD5E1F5)
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    setState(() {
-                      bankData['isEditing'] = !bankData['isEditing'];
-                    });
-                  });
-                  // Set the cursor position to the end of the text
-                  nameController.selection = TextSelection.fromPosition(
-                    TextPosition(offset: nameController.text.length),
-                  );
-                  focusNode.requestFocus();
-                  SystemChannels.textInput.invokeMethod('TextInput.show');
-                },
-                child: SizedBox(
-                  width: double.maxFinite, // Set a fixed width to match the Text widget
-                  child: bankData['isEditing']
-                      ? EditableText(
-                    controller: nameController,
-                    focusNode: focusNode,
-                    style: const TextStyle(
-                      // Maintain text style
-                      color: Colors.black,
-                      fontSize: 25,
-                      fontWeight: FontWeight.normal,
-                    ),
-                    cursorColor: Colors.black,
-                    backgroundCursorColor: Colors.black,
-                    keyboardType: TextInputType.text,
-                    onChanged: (newName) {
-                      // You can update the name in real-time if needed
-                    },
-                    onEditingComplete: () {
-                      // Save changes when editing is complete
-                      String newName = nameController.text;
-                      if(bankData['bankName'] != newName){
-                        updateBankData(bankData['id'], newName, bankData['percent'], bankData['sum'], dropDownValue, bankData['selectedSymbol'], false);
-                      }
-                      setState(() {
-                        bankData['isEditing'] = false; // Exit editing mode
-                      });
-                    },
-                  )
-                      : Text(
-                    bankData['bankName'],
-                    style: const TextStyle(
-                      // Maintain text style
-                      color: Colors.black,
-                      fontSize: 19,
-                      fontWeight: FontWeight.normal,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                "${sumForCurrency.toString()}$selectedSymbol",
-                style: GoogleFonts.montserrat(
-                    color: Colors.black,
-                    fontSize: 19,
-                    fontWeight: FontWeight.normal),
-              ),
-              SizedBox(
-                child: LinearPercentIndicator(
-                  padding: const EdgeInsets.only(right: 10),
-                  backgroundColor: const Color(0xffc6c6c7),
-                  animation: true,
-                  lineHeight: 10,
-                  animationDuration: 1000,
-                  percent: division,
-                  trailing: Text(
-                    "%${((division)*100).toStringAsFixed(0)}",
-                    style: GoogleFonts.montserrat(
-                        color: Colors.black,
-                        fontSize: 16,
-                        fontWeight: FontWeight.normal),
-                  ),
-                  barRadius: const Radius.circular(10),
-                  progressColor: Colors.lightBlue,
-                ),
-              ),
-              const SizedBox(height: 5),
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
+                  color: Color(0xFF70B8FF),
                 ),
-                child: Column(
-                  children: [
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: CustomSlidingSegmentedControl<int>(
-                        initialValue: 0, // You can set the initial value dynamically if needed
-                        isStretch: false, // To scroll horizontally
-                        children: {
-                          for (int i = 0; i < currencyList.length; i++)
-                            i: Container(
-                              width: 100, // Set a specific width for each tab
-                              alignment: Alignment.center, // Center the text within the container)
-                              child: Text(
-                                currencyList[i],
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.montserrat(fontSize: 14, fontWeight: FontWeight.bold),
-                              ),)
-
-                        },
-                        innerPadding: const EdgeInsets.all(4), // Padding inside the segmented control
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [],
-                        ),
-                        thumbDecoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [],
-                        ),
-                        onValueChanged: (value) {
-                          setState(() {
-                            selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))] = currencyList[value];
-                            dropDownValue = selectedTabList[0];
-                            bankData['selectedSymbol'] = getSelectedSymbol(selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))]);
-                            print("selectedTabList : $selectedTabList");
-                            print("dropDownValue : $dropDownValue");
-                          });
-                        },
-                      ),
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    ListView(
-                      padding: EdgeInsets.zero,
-                      physics: const NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      children: [
-                        if (sumMap[bankData['id']]?[selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))]] != null)
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))],
-                                style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
-                              ),
-                              const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                              ListView.builder(
-                                padding: EdgeInsets.zero,
-                                physics: const NeverScrollableScrollPhysics(),
-                                shrinkWrap: true,
-                                itemCount: sumMap[bankData['id']]?[selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))]]?.length ?? 0 + 1,
-                                itemBuilder: (context, index) {
-                                  if (index < sumMap[bankData['id']]![selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))]]!.length &&
-                                      sumMap[bankData['id']]![selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))]]![index] != 0.0) {
-                                    return Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Flexible(
-                                              flex: 1,
-                                              fit: FlexFit.tight,
-                                              child: Text(
-                                                sumMap[bankData['id']]![selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))]]![index].toString(),
-                                                style: GoogleFonts.montserrat(fontSize: 20),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 20),
-                                            IconButton(
-                                              splashRadius: 0.0001,
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                              icon: const Icon(Icons.delete, size: 21),
-                                              onPressed: () {
-                                                setState(() {
-                                                  deleteValueById(
-                                                    bankData['id'],
-                                                    index,
-                                                    bankData['bankName'],
-                                                    bankData['percent'],
-                                                    selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))],
-                                                    bankData['selectedSymbol'],
-                                                    false,
-                                                  );
-                                                });
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                        const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                      ],
+                child: Padding(
+                  padding: const EdgeInsets.all(15),
+                  child: Row(
+                    children: [
+                      buildMonogram(bankData['bankName']),
+                      SizedBox(width: 20.w),
+                      Expanded( // Wrap Column in Expanded
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  bankData['isEditing'] = !bankData['isEditing'];
+                                });
+                                // Set the cursor position to the end of the text
+                                nameController.selection = TextSelection.fromPosition(
+                                  TextPosition(offset: nameController.text.length),
+                                );
+                                focusNode.requestFocus();
+                                SystemChannels.textInput.invokeMethod('TextInput.show');
+                              },
+                              child: bankData['isEditing']
+                                  ? EditableText(
+                                controller: nameController,
+                                focusNode: focusNode,
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 25,
+                                  fontWeight: FontWeight.normal,
+                                ),
+                                cursorColor: Colors.black,
+                                backgroundCursorColor: Colors.black,
+                                keyboardType: TextInputType.text,
+                                onChanged: (newName) {
+                                  // You can update the name in real-time if needed
+                                },
+                                onEditingComplete: () {
+                                  String newName = nameController.text;
+                                  if (bankData['bankName'] != newName) {
+                                    updateBankData(
+                                      bankData['id'],
+                                      newName,
+                                      bankData['percent'],
+                                      bankData['sum'],
+                                      dropDownValue,
+                                      bankData['selectedSymbol'],
+                                      false,
                                     );
                                   }
-                                  return const SizedBox.shrink();
+                                  setState(() {
+                                    bankData['isEditing'] = false; // Exit editing mode
+                                  });
                                 },
                               )
-                            ],
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              if(bankData['isAddButtonActive'] == false)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          bankData['isAddButtonActive'] = true;
-                        });
-                      },
-                      child: Text(
-                        "Varlık Ekle",
-                        style: GoogleFonts.montserrat(
-                          color: Colors.black,
-                          fontSize: 16,
-                          fontWeight: FontWeight.normal,
+                                  : Text(
+                                bankData['bankName'],
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.normal,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              "${bankData['sum']}$selectedSymbol",
+                              style: GoogleFonts.montserrat(
+                                color: Colors.black,
+                                fontSize: 19,
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+                    ],
+                  )
+                ),
+              ),
+              SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200], // Background color
+                    borderRadius: BorderRadius.circular(20), // Rounded corners
+                  ),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: CustomSlidingSegmentedControl<int>(
+                      initialValue: 0,
+                      isStretch: false,
+                      children: {
+                        for (int i = 0; i < currencyList.length; i++)
+                          i: Container(
+                            width: 100,
+                            alignment: Alignment.center,
+                            child: Text(
+                              currencyList[i],
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.montserrat(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      },
+                      innerPadding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [],
+                      ),
+                      thumbDecoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20), // Match the border radius for thumb
+                        boxShadow: [],
+                      ),
+                      onValueChanged: (value) {
+                        setState(() {
+                          selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))] = currencyList[value];
+                          dropDownValue = selectedTabList[0];
+                          bankData['selectedSymbol'] = getSelectedSymbol(selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))]);
+                          print("selectedTabList : $selectedTabList");
+                          print("dropDownValue : $dropDownValue");
+                        });
+                      },
                     ),
-                    CupertinoButton(
-                      onPressed: () {
-                        showCupertinoDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return CupertinoAlertDialog(
-                              title: const Text("Are you sure?"),
-                              content: const Text("Do you want to delete this item?"),
-                              actions: [
-                                CupertinoDialogAction(
-                                  onPressed: () {
-                                    // Close the dialog
-                                    Navigator.of(context).pop();
-                                  },
-                                  child: const Text("Cancel"),
-                                ),
-                                CupertinoDialogAction(
-                                  onPressed: () {
-                                    setState(() {
-                                      deleteBankData(bankData['id']);
-                                      Navigator.of(context).pop();
-                                    });
-                                  },
-                                  child: const Text("Delete"),
-                                ),
-                              ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 32,
+                    child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Color(0xFF70B7FE),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              bankData['isAddButtonActive'] = true;
+                            });
+                          },
+                          child: const Text("Düzenle", textAlign: TextAlign.center),
+                        )
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    flex: 32,
+                    child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Color(0xFF70B7FE),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: InkWell(
+                          onTap: () {
+                            showCupertinoDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return CupertinoAlertDialog(
+                                  title: const Text("Are you sure?"),
+                                  content: const Text("Do you want to delete this item?"),
+                                  actions: [
+                                    CupertinoDialogAction(
+                                      onPressed: () {
+                                        // Close the dialog
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: const Text("Cancel"),
+                                    ),
+                                    CupertinoDialogAction(
+                                      onPressed: () {
+                                        setState(() {
+                                          deleteBankData(bankData['id']);
+                                          Navigator.of(context).pop();
+                                        });
+                                      },
+                                      child: const Text("Delete"),
+                                    ),
+                                  ],
+                                );
+                              },
                             );
                           },
-                        );
-                      },
-                      child: const Icon(CupertinoIcons.delete),
+                          child: Text("Kaldır", textAlign: TextAlign.center),
+                        )
                     ),
-                  ],
-                ),
+                  ),
+                ],
+              ),
+              if(bankData['isAddButtonActive'] == true && assetController != null)
+                SizedBox(height: 10),
               if(bankData['isAddButtonActive'] == true && assetController != null)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -701,34 +638,71 @@ class _WishesPageState extends State<WishesPage> {
                     Expanded(
                       child: TextFormField(
                         controller: assetController,
-                        keyboardType: TextInputType.numberWithOptions(signed: false, decimal: true),
-                        decoration: const InputDecoration(
-
-                          border: OutlineInputBorder(),
+                        keyboardType: const TextInputType.numberWithOptions(signed: false, decimal: true),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.grey[200], // Light background color
                           hintText: 'Asset',
+                          hintStyle: TextStyle(color: Colors.grey[600]), // Hint color
+                          contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 20), // Padding inside the text field
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20), // 20px border radius
+                            borderSide: BorderSide.none, // Remove default border
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(color: Colors.grey[300]!, width: 1), // Light border when not focused
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(color: Colors.blueAccent, width: 2), // Blue border when focused
+                          ),
+                          prefixIcon: Icon(Icons.attach_money, color: Colors.blueAccent), // Optional icon
                         ),
                       ),
                     ),
-                    Wrap(
-                      children: [
-                        IconButton(
-                          onPressed: () {
-                            double price = double.tryParse(assetController?.text.trim() ?? '0.3') ?? 0.3;
-                            String bankName = nameController.text;
-                            setState(() {
-                              final text = assetController?.text.trim() ?? '';
-                              if (text.isNotEmpty && text != "0") {
-                                updateBankData(bankData['id'], bankName, bankData['percent'], price, dropDownValue , bankData['selectedSymbol'], false);
-                                assetController?.clear();
-                              } else {
-                                assetController?.clear();
-                              }
-                            });
-                          },
-                          icon: const Icon(Icons.check_circle, size: 26),
-                        )
-                      ],
-                    )
+                    const SizedBox(width: 10), // Space between TextFormField and IconButton
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.blueAccent,
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.3),
+                            spreadRadius: 2,
+                            blurRadius: 5,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        onPressed: () {
+                          String inputText = assetController?.text.trim() ?? '';
+                          double? price = double.tryParse(inputText);
+
+                          setState(() {
+                            if (price != null && price > 0) {
+                              // Valid price entered
+                              String bankName = nameController.text;
+                              updateBankData(
+                                bankData['id'],
+                                bankName,
+                                bankData['percent'],
+                                price,
+                                dropDownValue,
+                                bankData['selectedSymbol'],
+                                false,
+                              );
+                              assetController?.clear();
+                            } else {
+                              // Invalid or empty input; deactivate add button
+                              bankData['isAddButtonActive'] = false;
+                            }
+                          });
+                        },
+                        icon: Icon(Icons.check_circle, color: Colors.white, size: 28),
+                      ),
+                    ),
                   ],
                 )
             ],
@@ -741,7 +715,6 @@ class _WishesPageState extends State<WishesPage> {
   @override
   Widget build(BuildContext context) {
     double totalCurrencySum = calculateTotalSumForCurrency("Türk Lirası");
-    String currentDate = DateFormat('dd MMMM yyyy').format(DateTime.now());
     return Scaffold(
       body: SingleChildScrollView(
         child: Container(
@@ -757,58 +730,109 @@ class _WishesPageState extends State<WishesPage> {
                       fontWeight: FontWeight.normal)),
               const SizedBox(height: 10),
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.5),
-                      spreadRadius: 5,
-                      blurRadius: 7,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
+                  color: Color(0xFFD5E1F5),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Tüm Varlığım",
-                        style: GoogleFonts.montserrat(
-                            color: Colors.black,
-                            fontSize: 19,
-                            fontWeight: FontWeight.normal)),
-                    const SizedBox(height: 10),
-                    Text("${totalCurrencySum.toString()}₺",
-                        style: GoogleFonts.montserrat(
-                            color: Colors.black,
-                            fontSize: 19,
-                            fontWeight: FontWeight.normal)),
-                    const SizedBox(height: 5),
-                    SizedBox(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Container(
+                      padding: EdgeInsets.zero,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        color: Color(0xFF87CEEB),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("Banka Ekle",
-                              style: GoogleFonts.montserrat(
-                                  color: Colors.black,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.normal)),
-                          IconButton(
-                            onPressed: () {
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(15),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              color: Color(0xFF70B8FF),
+                            ),
+                            child: Text("Toplam Varlığım",
+                                style: GoogleFonts.montserrat(
+                                    color: Colors.black,
+                                    fontSize: 19,
+                                    fontWeight: FontWeight.normal)),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Türk Lirası Varlığım",
+                                    style: GoogleFonts.montserrat(
+                                        color: Colors.black,
+                                        fontSize: 19,
+                                        fontWeight: FontWeight.normal)),
+                                Text("${totalCurrencySum.toString()}₺",
+                                    style: GoogleFonts.montserrat(
+                                        color: Colors.black,
+                                        fontSize: 19,
+                                        fontWeight: FontWeight.normal)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Color(0xFF70B7FE),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(15),
+                        child: InkWell(
+                          onTap: () {
+                            setState(() {
                               // Add a new bank directly with default name and 0 percent
                               final bankName = "Bank Name ${bankDataList.length + 1}";
                               const initialPercent = 0.0;
                               print("TEK ADDBANKDATA ÇALIŞTI");
                               addBankData(bankName, initialPercent, 0.0, dropDownValue, "");
-                            },
-                            icon: const Icon(Icons.add_circle),
+                            });
+                          },
+                          child: SizedBox(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text("Banka Ekle",
+                                    style: GoogleFonts.montserrat(
+                                        color: Colors.black,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.normal)),
+                                Icon(Icons.add_circle),
+                              ],
+                            ),
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ],
                 ),
+              ),
+              Text(
+                sumMap.entries.map((outer) =>
+                "Key: ${outer.key}\n" + outer.value.entries.map((inner) =>
+                "  ${inner.key}: ${inner.value.join(", ")}"
+                ).join("\n")
+                ).join("\n\n"),
+                style: TextStyle(fontSize: 16),
+              ),
+              Text(
+                bankDataList.map((bankData) =>
+                    bankData.entries.map((entry) =>
+                    "${entry.key}: ${entry.value}"
+                    ).join(", ")
+                ).join("\n\n"),
+                style: TextStyle(fontSize: 16),
               ),
               ListView(
                 padding: EdgeInsets.zero,

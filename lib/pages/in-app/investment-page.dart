@@ -67,7 +67,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
   bool isPopupVisible = false;
   String ananim = "";
   String currencySymbol = r'₺';
-  String exchangeCurrencySymbol = r'₺';
+  String exchangeCurrencySymbol = r'$';
   String exchangeCurrency = 'Dolar';
   String cashCurrencySymbol = r'₺';
   String realEstateCurrencySymbol = r'₺';
@@ -183,16 +183,6 @@ class _InvestmentPageState extends State<InvestmentPage> {
         ? "${words[0][0]}${words[1][0]}"
         : words[0][0];
     return initials.toUpperCase();
-  }
-
-  Color getRandomColor() {
-    final Random random = Random();
-    return Color.fromARGB(
-      255, // Full opacity
-      random.nextInt(256), // Red (0-255)
-      random.nextInt(256), // Green (0-255)
-      random.nextInt(256), // Blue (0-255)
-    );
   }
 
   Future<void> selectCategory(String category) async {
@@ -530,6 +520,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
         print("buildSelectedCategories ÇALIŞTI ve category:${category} ve isCategoryAdded:${isCategoryAdded}");
         double? goal = categoryValues[category];
         double sum = 0.0;
+        String formattedSum = "";
+        String formattedGoal = "";
         String currency = "bi";
         if(category == " Döviz"){
           sum = exchangeDepot.isNotEmpty ? exchangeDepot.reduce((a, b) => a + b) : 0.0;
@@ -544,6 +536,9 @@ class _InvestmentPageState extends State<InvestmentPage> {
         } else if(category == "Diğer"){
           sum = otherDepot.isNotEmpty ? otherDepot.reduce((a, b) => a + b) : 0.0;
         }
+
+        formattedSum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum);
+        formattedGoal = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(goal);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -561,7 +556,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
               padding: const EdgeInsets.all(15),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                color: Color(0xFFD7CDCD),
+                color: Color(0xFFD5E1F5),
               ),
               child: isCategoryAdded
                   ? Column(
@@ -570,7 +565,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                   Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
-                      color: Color(0xFFFDD99E),
+                      color: Color(0xFF70B8FF),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(15),
@@ -602,7 +597,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                       fontSize: 15.sp, fontWeight: FontWeight.bold)
                               ),
                               Text(
-                                  "$sum / ${categoryValues[category]}",
+                                  "$formattedSum/${formattedGoal}${exchangeCurrencySymbol}",
                                   style: GoogleFonts.montserrat(
                                       fontSize: 25.sp, fontWeight: FontWeight.bold)
                               ),
@@ -632,7 +627,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                     },
                     innerPadding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: Colors.grey[200],
+                      color: Color(0xFF86CDEA),
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [],
                     ),
@@ -691,7 +686,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                               topLeft: Radius.circular(20),
                                               topRight: Radius.circular(20),
                                             ),
-                                            color: Color(0xFFFDD99E),
+                                            color: Color(0xFF70B8FF),
                                           ),
                                           child: Padding(
                                             padding: const EdgeInsets.all(15),
@@ -708,7 +703,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                                             fontSize: 15.sp, fontWeight: FontWeight.bold)
                                                     ),
                                                     Text(
-                                                        investment.amount,
+                                                        investment.amount + exchangeCurrencySymbol,
                                                         style: GoogleFonts.montserrat(
                                                             fontSize: 25.sp, fontWeight: FontWeight.bold)
                                                     ),
@@ -734,7 +729,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                               bottomLeft: Radius.circular(20),
                                               bottomRight: Radius.circular(20),
                                             ),
-                                            color: Color(0x7D67C5FF),
+                                            color: Color(0xFF87CEEB),
                                           ),
                                           child: Padding(
                                             padding: const EdgeInsets.all(15),
@@ -742,14 +737,14 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
                                                 Text(
-                                                    "${investmentModel.aim} / ${investmentModel.amount}",
+                                                    "${NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(investmentModel.aim)}/${NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(investmentModel.amount)}${exchangeCurrencySymbol}",
                                                     style: GoogleFonts.montserrat(
                                                         fontSize: 20.sp, fontWeight: FontWeight.bold)
                                                 ),
                                                 SizedBox(height: 10),
                                                 LinearPercentIndicator(
                                                   padding: const EdgeInsets.only(right: 10),
-                                                  backgroundColor: const Color(0xffc6c6c7),
+                                                  backgroundColor: Colors.grey[200],
                                                   animation: true,
                                                   lineHeight: 14.h,
                                                   animationDuration: 1000,
@@ -767,9 +762,9 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                                     Expanded(
                                                       flex: 32,
                                                       child: Container(
-                                                          padding: const EdgeInsets.all(5),
+                                                          padding: const EdgeInsets.all(10),
                                                           decoration: BoxDecoration(
-                                                            color: Color.fromARGB(120, 152, 255, 170),
+                                                            color: Color(0xFF70B7FE),
                                                             borderRadius: BorderRadius.circular(20),
                                                           ),
                                                           child: InkWell(
@@ -851,9 +846,9 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                                     Expanded(
                                                       flex: 32,
                                                       child: Container(
-                                                          padding: const EdgeInsets.all(5),
+                                                          padding: const EdgeInsets.all(10),
                                                           decoration: BoxDecoration(
-                                                            color: Color.fromARGB(120, 152, 255, 170),
+                                                            color: Color(0xFF70B7FE),
                                                             borderRadius: BorderRadius.circular(20),
                                                           ),
                                                           child: InkWell(
@@ -934,9 +929,9 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                                     Expanded(
                                                       flex: 19,
                                                       child: Container(
-                                                          padding: const EdgeInsets.all(5),
+                                                          padding: const EdgeInsets.all(10),
                                                           decoration: BoxDecoration(
-                                                            color: Color.fromARGB(120, 152, 255, 170),
+                                                            color: Color(0xFF70B7FE),
                                                             borderRadius: BorderRadius.circular(20),
                                                           ),
                                                           child: InkWell(
@@ -1661,7 +1656,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
       height: 70.r,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: getRandomColor(),
+        color: Colors.grey
       ),
       child: Center(
         child: Text(
@@ -2261,28 +2256,77 @@ class _InvestmentPageState extends State<InvestmentPage> {
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(20),
-                            color: Color(0xFFD7CDCD),
+                            color: Color(0xFFD5E1F5),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Container(
+                              Container(
+                                padding: EdgeInsets.zero,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  color: Color(0xFF87CEEB),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      width: double.infinity,
+                                      padding: EdgeInsets.all(15),
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(20),
-                                        color: Color(0xFFFDD99E),
+                                        color: Color(0xFF70B8FF),
                                       ),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(15),
-                                        child: Text("Toplam Birikim Hedefi(${currencySymbol})\n${formattedTotal}",
-                                            style: GoogleFonts.montserrat(
-                                                fontSize: 16.sp, fontWeight: FontWeight.bold)),
+                                      child: Text(
+                                        "Toplam Birikim Hedefi(${currencySymbol})",
+                                        textAlign: TextAlign.left, // Centers text within the container
+                                        style: GoogleFonts.montserrat(
+                                          fontSize: 18.sp,
+                                          fontWeight: FontWeight.bold,
+                                          height: 1.2, // Adjusts line height for better control
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                    Padding(
+                                        padding: const EdgeInsets.all(20),
+                                        child: Row(
+                                          children: [
+                                            CircularPercentIndicator(
+                                              radius: 35.r,
+                                              lineWidth: 7.h,
+                                              percent: result,
+                                              center: Text(
+                                                  "%${((result) * 100).toStringAsFixed(0)}",
+                                                  style: GoogleFonts.montserrat(
+                                                      color: Colors.black,
+                                                      fontSize: (result) * 100 == 100
+                                                          ? 12
+                                                          : 16,
+                                                      fontWeight: FontWeight.w600
+                                                  )
+                                              ),
+                                              progressColor: Colors.amber,
+                                            ),
+                                            SizedBox(width: 15.w),
+                                            Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                    "${currencySymbol == r'$' ? 'Dolar Hedefi ' : currencySymbol == '€' ? 'Euro Hedefi' : 'Türk Lirası Hedefi'}",
+                                                    style: GoogleFonts.montserrat(
+                                                        fontSize: 15.sp, fontWeight: FontWeight.bold)
+                                                ),
+                                                Text(
+                                                    "${currencySymbol == r'$' ? "${formattedDollarTotal}${currencySymbol}" : currencySymbol == "${formattedEuroTotal}${currencySymbol}" ? 'Euro Hedefi' : "${formattedLiraTotal}${currencySymbol}"}",
+                                                    style: GoogleFonts.montserrat(
+                                                        fontSize: 25.sp, fontWeight: FontWeight.bold)
+                                                ),
+                                              ],
+                                            )
+                                          ],
+                                        )
+                                    ),
+                                  ],
+                                ),
                               ),
                               SizedBox(height: 10),
                               CustomSlidingSegmentedControl<int>(
@@ -2304,7 +2348,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                 },
                                 innerPadding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
-                                  color: Colors.grey[200],
+                                  color: Color(0xFF86CDEA),
                                   borderRadius: BorderRadius.circular(20),
                                   boxShadow: [],
                                 ),
@@ -2331,71 +2375,25 @@ class _InvestmentPageState extends State<InvestmentPage> {
                               SizedBox(height: 10),
                               Container(
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20),
-                                  color: Color(0xFFEED5D5),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(20),
-                                  child: Row(
-                                    children: [
-                                      CircularPercentIndicator(
-                                        radius: 30,
-                                        lineWidth: 7.0,
-                                        percent: result,
-                                        center: Text(
-                                            "%${((result) * 100).toStringAsFixed(0)}",
-                                            style: GoogleFonts.montserrat(
-                                                color: Colors.black,
-                                                fontSize: (result) * 100 == 100
-                                                    ? 12
-                                                    : 16,
-                                                fontWeight: FontWeight.w600
-                                            )
-                                        ),
-                                        progressColor: Colors.amber,
-                                      ),
-                                      SizedBox(width: 20.w),
-                                      Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                              "${currencySymbol == r'$' ? 'Dolar Hedefi' : currencySymbol == '€' ? 'Euro Hedefi' : 'Türk Lirası Hedefi'}",
-                                              style: GoogleFonts.montserrat(
-                                              fontSize: 15.sp, fontWeight: FontWeight.bold)
-                                          ),
-                                          Text(
-                                              "${currencySymbol == r'$' ? formattedDollarTotal : currencySymbol == formattedEuroTotal ? 'Euro Hedefi' : formattedLiraTotal}",
-                                              style: GoogleFonts.montserrat(
-                                                  fontSize: 25.sp, fontWeight: FontWeight.bold)
-                                          ),
-                                        ],
-                                      )
-                                    ],
-                                  )
-                                ),
-                              ),
-                              SizedBox(height: 10),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Color.fromARGB(120, 152, 255, 170),
+                                  color: Color(0xFF70B7FE),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Padding(
                                   padding: const EdgeInsets.all(15),
-                                  child: SizedBox(
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text("Birikim Ekle", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.normal)),
-                                        InkWell(
-                                          onTap: () {
-                                            setState(() {
-                                              togglePopupVisibility(context);
-                                            });
-                                          },
-                                          child: const Icon(Icons.add_circle),
-                                        )
-                                      ],
+                                  child: InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        togglePopupVisibility(context);
+                                      });
+                                    },
+                                    child: SizedBox(
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text("Birikim Ekle", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.normal)),
+                                          Icon(Icons.add_circle),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),

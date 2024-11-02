@@ -1765,7 +1765,7 @@ class _OutcomePageState extends State<OutcomePage> {
                                 animation: true,
                                 lineHeight: 10,
                                 animationDuration: 1000,
-                                percent: 0,
+                                percent: sumOfSubs/outcomeValue,
                                 trailing: Text("%${((sumOfSubs/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
                                 barRadius: const Radius.circular(10),
                                 progressColor: Colors.lightBlue,
@@ -1802,47 +1802,54 @@ class _OutcomePageState extends State<OutcomePage> {
                                     int id = idsWithTVTargetCategory[index];
                                     Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
                                     if (index < idsWithTVTargetCategory.length) {
-                                      return Container(
-                                        decoration: BoxDecoration(
-                                          color: Color.fromARGB(120, 152, 255, 170),
-                                          borderRadius: BorderRadius.circular(20),
-                                        ),
-                                        padding: EdgeInsets.all(10),
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Flexible(
-                                              flex: 2,
-                                              fit: FlexFit.tight,
-                                              child: Text(
-                                                invoice.name,
-                                                style: GoogleFonts.montserrat(fontSize: 20),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
+                                      return Column(
+                                        children: [
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              color: Color.fromARGB(120, 152, 255, 170),
+                                              borderRadius: BorderRadius.circular(20),
                                             ),
-                                            Flexible(
-                                              flex: 2,
-                                              fit: FlexFit.tight,
-                                              child: Text(
-                                                textAlign: TextAlign.right,
-                                                invoice.price,
-                                                style: GoogleFonts.montserrat(fontSize: 20),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
+                                            padding: EdgeInsets.all(10),
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Flexible(
+                                                  flex: 2,
+                                                  fit: FlexFit.tight,
+                                                  child: Text(
+                                                    invoice.name,
+                                                    style: GoogleFonts.montserrat(fontSize: 20),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                                Flexible(
+                                                  flex: 2,
+                                                  fit: FlexFit.tight,
+                                                  child: Text(
+                                                    textAlign: TextAlign.right,
+                                                    invoice.price,
+                                                    style: GoogleFonts.montserrat(fontSize: 20),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 20),
+                                                IconButton(
+                                                  splashRadius: 0.0001,
+                                                  padding: EdgeInsets.zero,
+                                                  constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                                  icon: const Icon(Icons.edit, size: 21),
+                                                  onPressed: () {
+                                                    print("TV: ${context}, ${index}, ${id}");
+                                                    _showEditDialog(context, index, 1, 1, id); // Show the edit dialog
+                                                  },
+                                                ),
+                                              ],
                                             ),
-                                            const SizedBox(width: 20),
-                                            IconButton(
-                                              splashRadius: 0.0001,
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                              icon: const Icon(Icons.edit, size: 21),
-                                              onPressed: () {
-                                                print("TV: ${context}, ${index}, ${id}");
-                                                _showEditDialog(context, index, 1, 1, id); // Show the edit dialog
-                                              },
-                                            ),
-                                          ],
-                                        ),
+                                          ),
+                                          // Add 10px gap only if there is more than one item and it's not the last item
+                                          if (idsWithTVTargetCategory.length > 1 && index < idsWithTVTargetCategory.length - 1)
+                                            const SizedBox(height: 10),
+                                        ],
                                       );
                                     }
                                     return null;

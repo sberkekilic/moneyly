@@ -1193,7 +1193,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     const SizedBox(height: 20),
                     SizedBox(
-                      height: 327.h,
+                      height: 300.h,
                         child: selectedInvoices.isEmpty
                         ? Center(child: Text('${getTitleForIndex(_currentPage)} sınıfına ait bir fatura bulunmuyor.'))
                         : ListView(
