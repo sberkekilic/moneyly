@@ -31,6 +31,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
   List<Investment> investmentList = [];
   List<Investment> exchangeList = [];
   List<InvestmentModel> exchangeDollarList = [];
+  List<InvestmentModel> exchangeEuroList = [];
+  List<InvestmentModel> exchangeLiraList = [];
   List<Investment> cashList = [];
   List<Investment> realEstateList = [];
   List<Investment> carList = [];
@@ -66,7 +68,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
   bool hasOtherGoalSelected = false;
   bool isPopupVisible = false;
   String ananim = "";
-  String currencySymbol = r'₺';
+  String currencySymbol = r'$';
   String exchangeCurrencySymbol = r'$';
   String exchangeCurrency = 'Dolar';
   String cashCurrencySymbol = r'₺';
@@ -242,8 +244,10 @@ class _InvestmentPageState extends State<InvestmentPage> {
       case 1:
         List<Investment> filteredList = exchangeList.where((investment) => investment.category == 'Döviz').toList();
         Investment investment = filteredList[index];
-        List<InvestmentModel> filteredList2 = exchangeDollarList.where((investment) => investment.id == filteredList[index].id).toList();
-        InvestmentModel investmentModel = filteredList2[index];
+        InvestmentModel? investmentModel = exchangeDollarList.firstWhere(
+              (model) => model.id == investment.id,
+          orElse: () => null as InvestmentModel, // Return null if no match is found
+        );
         TextEditingController nameController = TextEditingController(text: investment.name);
         TextEditingController editController = TextEditingController(text: investmentModel.amount.toString());
         amountEditController = editController;
@@ -515,30 +519,48 @@ class _InvestmentPageState extends State<InvestmentPage> {
       selectedCategories.map((category) {
         TextEditingController amountController = TextEditingController();
         TextEditingController nameController = TextEditingController();
+
         final isCategoryAdded = categoryValues.containsKey(category);
+
+        double? goal = 0.0;
+        double sum = 0.0;
+        double result = 0.0;
+
         print("exchangeDepot da bu:${exchangeDepot.join(', ')}");
         print("buildSelectedCategories ÇALIŞTI ve category:${category} ve isCategoryAdded:${isCategoryAdded}");
-        double? goal = categoryValues[category];
-        double sum = 0.0;
+
         String formattedSum = "";
         String formattedGoal = "";
         String currency = "bi";
-        if(category == " Döviz"){
-          sum = exchangeDepot.isNotEmpty ? exchangeDepot.reduce((a, b) => a + b) : 0.0;
-        } else if(category == "Nakit"){
+        if (category == "Döviz") {
+          List<Investment> filteredList = exchangeList.where((investment) =>
+          investment.category == 'Döviz' && investment.currency == exchangeCurrency
+          ).toList();
+          goal = filteredList.fold(0.0, (acc, investment) => acc + (double.tryParse(investment.amount) ?? 0.0));
+          if (filteredList.isNotEmpty) {
+            currency = filteredList[0].currency; // Assign the currency from the first investment
+          }
+          if (exchangeCurrency == "Dolar") {
+            result = resultDollar;
+          } else if (exchangeCurrency == "Euro") {
+            result = resultEuro;
+          } else if (exchangeCurrency == "Türk Lirası"){
+            result = resultLira;
+          }
+        } else if (category == "Nakit") {
           sum = cashDepot.isNotEmpty ? cashDepot.reduce((a, b) => a + b) : 0.0;
-        } else if(category == "Gayrimenkül"){
+        } else if (category == "Gayrimenkül") {
           sum = realEstateDepot.isNotEmpty ? realEstateDepot.reduce((a, b) => a + b) : 0.0;
-        } else if(category == "Araba"){
+        } else if (category == "Araba") {
           sum = carDepot.isNotEmpty ? carDepot.reduce((a, b) => a + b) : 0.0;
-        } else if(category == "Elektronik"){
+        } else if (category == "Elektronik") {
           sum = electronicDepot.isNotEmpty ? electronicDepot.reduce((a, b) => a + b) : 0.0;
-        } else if(category == "Diğer"){
+        } else if (category == "Diğer") {
           sum = otherDepot.isNotEmpty ? otherDepot.reduce((a, b) => a + b) : 0.0;
         }
 
         formattedSum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum);
-        formattedGoal = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(goal);
+        formattedGoal = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(goal ?? 0.0);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -597,7 +619,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                       fontSize: 15.sp, fontWeight: FontWeight.bold)
                               ),
                               Text(
-                                  "$formattedSum/${formattedGoal}${exchangeCurrencySymbol}",
+                                  "${formattedGoal}${exchangeCurrencySymbol}",
                                   style: GoogleFonts.montserrat(
                                       fontSize: 25.sp, fontWeight: FontWeight.bold)
                               ),
@@ -648,6 +670,9 @@ class _InvestmentPageState extends State<InvestmentPage> {
                           exchangeCurrencySymbol = r'₺';
                           exchangeCurrency = "Türk Lirası";
                         }
+
+                        goal = categoryValues[category];
+                        formattedGoal = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(goal ?? 0.0);
                       });
                     },
                   ),
@@ -655,7 +680,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                   Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
-                      color: Color(0xFFEED5D5),
+                      color: Color(0xFFD5E1F5),
                     ),
                     child: ListView(
                       padding: EdgeInsets.zero,
@@ -674,8 +699,10 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                 itemBuilder: (context, index) {
                                   List<Investment> filteredList = exchangeList.where((investment) => investment.category == 'Döviz').toList();
                                   Investment investment = filteredList[index];
-                                  List<InvestmentModel> filteredList2 = exchangeDollarList.where((investment) => investment.id == filteredList[index].id).toList();
-                                  InvestmentModel investmentModel = filteredList2[index];
+                                  InvestmentModel? investmentModel = exchangeDollarList.firstWhere(
+                                        (model) => model.id == investment.id,
+                                    orElse: () => null as InvestmentModel, // Return null if no match is found
+                                  );
                                   if (index < exchangeList.length) {
                                     return Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -737,7 +764,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
                                                 Text(
-                                                    "${NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(investmentModel.aim)}/${NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(investmentModel.amount)}${exchangeCurrencySymbol}",
+                                                    "${NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(investmentModel.aim)}/${NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(double.parse(investment.amount))}${exchangeCurrencySymbol}",
                                                     style: GoogleFonts.montserrat(
                                                         fontSize: 20.sp, fontWeight: FontWeight.bold)
                                                 ),
@@ -801,37 +828,46 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                                                               investValue = double.tryParse(inputText);
 
                                                                               if (investValue != null) {
-                                                                                if (exchangeDollarList.isNotEmpty){
-                                                                                  InvestmentModel currentInvestment = exchangeDollarList[0];
-                                                                                  double newAim = currentInvestment.aim + investValue!;
-                                                                                  print("AJAX1: Before ${exchangeDollarList.length}");
-                                                                                  exchangeDollarList[0] = InvestmentModel(
+                                                                                if (exchangeDollarList.isNotEmpty) {
+                                                                                  // Find the current investment based on the ID
+                                                                                  InvestmentModel? currentInvestment = exchangeDollarList.firstWhere(
+                                                                                        (model) => model.id == investment.id, // Assuming 'investment' is accessible here
+                                                                                    orElse: () => null as InvestmentModel,
+                                                                                  );
+
+                                                                                  if (currentInvestment != null) {
+                                                                                    double newAim = currentInvestment.aim + investValue!;
+                                                                                    print("AJAX1: Before ${exchangeDollarList.length}");
+                                                                                    exchangeDollarList[exchangeDollarList.indexOf(currentInvestment)] = InvestmentModel(
                                                                                       id: currentInvestment.id,
                                                                                       aim: newAim,
-                                                                                      amount: double.parse(investment.amount)
-                                                                                  );
-                                                                                  print("AJAX1: After ${exchangeDollarList.length}");
-                                                                                  final exchangeDollarMap = exchangeDollarList.map((investment) => investment.toMap()).toList();
-                                                                                  prefs.setStringList('exchangeDollarList', exchangeDollarMap.map((investment) => jsonEncode(investment)).toList());
-                                                                                  prefs.setDouble('latestValue', newAim);
+                                                                                      amount: double.parse(investment.amount),
+                                                                                    );
+                                                                                    print("AJAX1: After ${exchangeDollarList.length}");
 
-                                                                                  exchangeDepot.add(investValue!);
-                                                                                  final exchangeDepotJson = jsonEncode(exchangeDepot);
-                                                                                  prefs.setString('exchangeDepot', exchangeDepotJson);
+                                                                                    final exchangeDollarMap = exchangeDollarList.map((investment) => investment.toMap()).toList();
+                                                                                    prefs.setStringList('exchangeDollarList', exchangeDollarMap.map((investment) => jsonEncode(investment)).toList());
+                                                                                    prefs.setDouble('latestValue', newAim);
 
-                                                                                  sumList.add(investValue!);
-                                                                                  final sumListJson = jsonEncode(sumList);
-                                                                                  prefs.setString('sumList', sumListJson);
+                                                                                    exchangeDepot.add(investValue!);
+                                                                                    final exchangeDepotJson = jsonEncode(exchangeDepot);
+                                                                                    prefs.setString('exchangeDepot', exchangeDepotJson);
 
-                                                                                  sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
-                                                                                  prefs.setDouble('sumInvestValue', sumInvestValue);
-                                                                                  Navigator.pop(context); // Close the form
+                                                                                    sumList.add(investValue!);
+                                                                                    final sumListJson = jsonEncode(sumList);
+                                                                                    prefs.setString('sumList', sumListJson);
+
+                                                                                    sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
+                                                                                    prefs.setDouble('sumInvestValue', sumInvestValue);
+                                                                                    Navigator.pop(context); // Close the form
+                                                                                  }
                                                                                 }
                                                                               }
                                                                             });
                                                                           },
                                                                           child: const Text('Add'),
                                                                         ),
+
                                                                       ],
                                                                     ),
                                                                   );
@@ -884,37 +920,47 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                                                               String inputText = amountController.text; // Get the input text
                                                                               investValue = double.tryParse(inputText);
                                                                               if (investValue != null) {
-                                                                                if (exchangeDollarList.isNotEmpty){
-                                                                                  InvestmentModel currentInvestment = exchangeDollarList[0];
-                                                                                  double newAim = currentInvestment.aim - investValue!;
-                                                                                  print("AJAX1: Before ${exchangeDollarList.length}");
-                                                                                  exchangeDollarList[0] = InvestmentModel(
+                                                                                if (exchangeDollarList.isNotEmpty) {
+                                                                                  // Find the current investment based on the ID
+                                                                                  InvestmentModel? currentInvestment = exchangeDollarList.firstWhere(
+                                                                                        (model) => model.id == investment.id, // Assuming 'investment' is accessible here
+                                                                                    orElse: () => null as InvestmentModel,
+                                                                                  );
+
+                                                                                  if (currentInvestment != null) {
+                                                                                    double newAim = currentInvestment.aim - investValue!;
+                                                                                    print("AJAX1: Before ${exchangeDollarList.length}");
+
+                                                                                    exchangeDollarList[exchangeDollarList.indexOf(currentInvestment)] = InvestmentModel(
                                                                                       id: currentInvestment.id,
                                                                                       aim: newAim,
-                                                                                      amount: double.parse(investment.amount)
-                                                                                  );
-                                                                                  print("AJAX1: After ${exchangeDollarList.length}");
-                                                                                  final exchangeDollarMap = exchangeDollarList.map((investment) => investment.toMap()).toList();
-                                                                                  prefs.setStringList('exchangeDollarList', exchangeDollarMap.map((investment) => jsonEncode(investment)).toList());
-                                                                                  prefs.setDouble('latestValue', newAim);
+                                                                                      amount: double.parse(investment.amount),
+                                                                                    );
 
-                                                                                  exchangeDepot.add(investValue!);
-                                                                                  final exchangeDepotJson = jsonEncode(exchangeDepot);
-                                                                                  prefs.setString('exchangeDepot', exchangeDepotJson);
+                                                                                    print("AJAX1: After ${exchangeDollarList.length}");
+                                                                                    final exchangeDollarMap = exchangeDollarList.map((investment) => investment.toMap()).toList();
+                                                                                    prefs.setStringList('exchangeDollarList', exchangeDollarMap.map((investment) => jsonEncode(investment)).toList());
+                                                                                    prefs.setDouble('latestValue', newAim);
 
-                                                                                  sumList.add(investValue!);
-                                                                                  final sumListJson = jsonEncode(sumList);
-                                                                                  prefs.setString('sumList', sumListJson);
+                                                                                    exchangeDepot.add(investValue!);
+                                                                                    final exchangeDepotJson = jsonEncode(exchangeDepot);
+                                                                                    prefs.setString('exchangeDepot', exchangeDepotJson);
 
-                                                                                  sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
-                                                                                  prefs.setDouble('sumInvestValue', sumInvestValue);
-                                                                                  Navigator.pop(context); // Close the form
+                                                                                    sumList.add(investValue!);
+                                                                                    final sumListJson = jsonEncode(sumList);
+                                                                                    prefs.setString('sumList', sumListJson);
+
+                                                                                    sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
+                                                                                    prefs.setDouble('sumInvestValue', sumInvestValue);
+                                                                                    Navigator.pop(context); // Close the form
+                                                                                  }
                                                                                 }
                                                                               }
                                                                             });
                                                                           },
                                                                           child: const Text('Remove'),
                                                                         ),
+
                                                                       ],
                                                                     ),
                                                                   );
@@ -935,18 +981,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                                             borderRadius: BorderRadius.circular(20),
                                                           ),
                                                           child: InkWell(
-                                                            onTap: () async{
-                                                              final prefs = await SharedPreferences.getInstance();
-                                                              setState(()  {
-                                                                removeCategory(category, currency, goal!, sum);
-                                                                removeValues(sumList, exchangeDepot);
-                                                                exchangeDepot = [];
-                                                                final sumListJson = jsonEncode(sumList);
-                                                                final exchangeDepotJson = jsonEncode(exchangeDepot);
-                                                                prefs.setString('sumList', sumListJson);
-                                                                prefs.setString('exchangeDepot', exchangeDepotJson);
-                                                              });
-                                                            },
+                                                            onTap: () => _removeInvestment(investment.id, category, currency),
                                                             child: Icon(Icons.delete, size: 20.sp),
                                                           )
                                                       ),
@@ -957,11 +992,52 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                             ),
                                           ),
                                         ),
+                                        if (exchangeList.where((investment) => investment.currency == exchangeCurrency).length > 1 && index < exchangeList.where((investment) => investment.currency == exchangeCurrency).length - 1)
+                                          SizedBox(height: 10)
                                       ],
                                     );
                                   }
                                   return null;
                                 },
+                              ),
+                              SizedBox(height: 10),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Color(0xFF70B7FE),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(15),
+                                  child: InkWell(
+                                    onTap: () {
+                                      showModalBottomSheet(
+                                          isScrollControlled: true,
+                                          context: context,
+                                          builder: (context) {
+                                            return _addInvestmentBottomSheet(
+                                              context,
+                                              category,
+                                              amountController,
+                                              nameController,
+                                            );
+                                          }
+                                      ).whenComplete(() {
+                                        amountController.clear();
+                                        nameController.clear();
+                                        _deleteSavedDate();
+                                      });
+                                    },
+                                    child: SizedBox(
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text("Döviz Ekle", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.normal)),
+                                          Icon(Icons.add_circle),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -1764,22 +1840,69 @@ class _InvestmentPageState extends State<InvestmentPage> {
     });
   }
 
-  void _removeInvestment(int id) async {
+  double calculateTotalInvestment(String category, String currency) {
+    double total = 0.0;
+
+    // Assuming investmentList is a list of Investment objects with a `category` and a `value`
+    for (var investment in investmentList) {
+      if (investment.category == category && investment.currency == currency) {
+        total += double.parse(investment.amount); // Update this based on your Investment model
+      }
+    }
+
+    return total;
+  }
+
+  void _removeInvestment(int id, String category, String currency) async {
     final prefs = await SharedPreferences.getInstance();
 
-    setState(() {
-      int index = investmentList.indexWhere((investment) => investment.id == id);
-      if (index != -1){
-        setState(() {
-          investmentList.removeAt(index);
-        });
-      } else{
+    // Perform asynchronous work outside of setState
+    int index = investmentList.indexWhere((investment) => investment.id == id);
+    int indexExchange = exchangeList.indexWhere((investment) => investment.id == id);
+    int indexDollar = exchangeDollarList.indexWhere((investment) => investment.id == id);
 
+    // Only remove if the index is valid
+    if (index != -1) {
+      // Perform the removals
+      investmentList.removeAt(index);
+      exchangeList.removeAt(indexExchange);
+      exchangeDollarList.removeAt(indexDollar);
+      // Remove the category from selectedCategories and update totals
+      if (currency == 'Dolar' && exchangeDollarList.length == 0) {
+        print("AXAJ1");
+        selectedCategories.remove(category);
+        categoryValues.remove(category);
+        totalInvestValue.remove(category);
+      } else if (currency == 'Euro' && exchangeEuroList.length == 0) {
+        print("AXAJ");
+        selectedCategories.remove(category);
+        categoryValues.remove(category);
+        totalInvestValue.remove(category);
+      } else if (currency == 'Türk Lirası' && exchangeLiraList.length == 0) {
+        print("AXAJ3");
+        selectedCategories.remove(category);
+        categoryValues.remove(category);
+        totalInvestValue.remove(category);
       }
-      });
 
-    final investmentMap = investmentList.map((investment) => investment.toMap()).toList();
-    await prefs.setStringList('investments', investmentMap.map((investment) => jsonEncode(investment)).toList());
+      // Update total values
+      totalInvestValue[category] = calculateTotalInvestment(category, currency);
+
+      // Save the updates to SharedPreferences
+      await prefs.setStringList('selectedCategories', selectedCategories);
+      final jsonMapCategory = jsonEncode(categoryValues);
+      await prefs.setString('categoryValues', jsonMapCategory);
+      final jsonMapCurrency = jsonEncode(totalInvestValue);
+      await prefs.setString('totalInvestValue', jsonMapCurrency);
+
+      final investmentMap = investmentList.map((investment) => investment.toMap()).toList();
+      await prefs.setStringList('investments', investmentMap.map((investment) => jsonEncode(investment)).toList());
+      final exchangeDollarMap = exchangeDollarList.map((investment) => investment.toMap()).toList();
+      await prefs.setStringList('exchangeDollarList', exchangeDollarMap.map((investment) => jsonEncode(investment)).toList());
+
+      // Update the state after all operations are done
+      setState(() {});
+    }
   }
 
   Widget _addInvestmentBottomSheet(BuildContext context, String category, TextEditingController amountController, TextEditingController nameController) {
@@ -1968,43 +2091,45 @@ class _InvestmentPageState extends State<InvestmentPage> {
                         ),
                         clipBehavior: Clip.hardEdge,
                         onPressed: () async {
-                          int maxId = 0;
-                          for (var i in investmentList) {
-                            if (i.id > maxId) {
-                              maxId = i.id;
+                          setState(() {
+                            int maxId = 0;
+                            for (var i in investmentList) {
+                              if (i.id > maxId) {
+                                maxId = i.id;
+                              }
                             }
-                          }
-                          int newId = maxId + 1;
-                          String amountText = amountController.text;
-                          double enteredValue = double.parse(amountText);
-                          String nameText = nameController.text;
-                          if (amountText.isNotEmpty && nameText.isNotEmpty) {
-                            print("currencyType at _saveInvestment:${currencyType}");
-                            _saveInvestment(
-                              newId,
-                              nameText,
-                              category,
-                              currencyType,
-                              _savedDate!,
-                              amountText,
-                            );
-                            _saveInvestmentModel(
+                            int newId = maxId + 1;
+                            String amountText = amountController.text;
+                            double enteredValue = double.parse(amountText);
+                            String nameText = nameController.text;
+                            if (amountText.isNotEmpty && nameText.isNotEmpty) {
+                              print("currencyType at _saveInvestment:${currencyType}");
+                              _saveInvestment(
                                 newId,
-                                latestValue,
+                                nameText,
+                                category,
+                                currencyType,
+                                _savedDate!,
                                 amountText,
-                                category
-                            );
-                            Navigator.pop(context); // Close the form
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Please select a deadline')),
-                            );
-                          }
-                          _savedDate; // Ensure _savedDate is used properly
-                          _deleteSavedDate(); // Ensure _deleteSavedDate is called properly
-                          if (enteredValue != null) {
-                            addCategoryValue(category, currencyType, enteredValue, 0);
-                          }
+                              );
+                              _saveInvestmentModel(
+                                  newId,
+                                  latestValue,
+                                  amountText,
+                                  category
+                              );
+                              Navigator.pop(context); // Close the form
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Please select a deadline')),
+                              );
+                            }
+                            _savedDate; // Ensure _savedDate is used properly
+                            _deleteSavedDate(); // Ensure _deleteSavedDate is called properly
+                            if (enteredValue != null) {
+                              addCategoryValue(category, currencyType, enteredValue, 0);
+                            }
+                          });
                         },
                         child: const Text('Add'),
                       ),
@@ -2099,6 +2224,12 @@ class _InvestmentPageState extends State<InvestmentPage> {
     return total;
   }
 
+
+  double sumAims(List<InvestmentModel> investments) {
+    // Use map to extract the aim values and then fold to sum them
+    return investments.map((investment) => investment.aim).fold(0.0, (a, b) => a + b);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -2108,7 +2239,9 @@ class _InvestmentPageState extends State<InvestmentPage> {
   double sumOfSavingValue = 0.0;
   double savingsValue = 0.0;
   double sumInvestValue = 0.0;
-  double result = 0.0;
+  double resultDollar = 0.0;
+  double resultEuro = 0.0;
+  double resultLira = 0.0;
   double dollarTotal = 0.0;
   double euroTotal = 0.0;
   double liraTotal = 0.0;
@@ -2120,6 +2253,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
     //await investmentService.clearInvestments();
     final prefs = await SharedPreferences.getInstance();
     //prefs.setStringList('exchangeDollarList', []);
+    //prefs.setStringList('selectedCategories', []);
     //prefs.setString('categoryValues', '');
     final ab1 = prefs.getDouble('sumInvestValue') ?? 0.0;
     final ab3 = prefs.getStringList('selectedCategories') ?? [];
@@ -2144,6 +2278,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
       exchangeDollarList = investmentModel;
       print("AJAX4: After ${exchangeDollarList.length}");
       dollarTotal = calculateTotalInvestmentForCurrency('Dolar');
+      liraTotal = calculateTotalInvestmentForCurrency('Türk Lirası');
+      euroTotal = calculateTotalInvestmentForCurrency('Euro');
       print("investmentList:${
         investmentList
             .map((investment) =>
@@ -2231,11 +2367,20 @@ class _InvestmentPageState extends State<InvestmentPage> {
 
   @override
   Widget build(BuildContext context) {
+    double totalDollarAim = sumAims(exchangeDollarList);
+    double totalEuroAim = sumAims(exchangeEuroList);
+    double totalLiraAim = sumAims(exchangeLiraList);
+    double totalDollar = calculateTotalInvestmentForCurrency('Dolar');
+    double totalEuro = calculateTotalInvestmentForCurrency('Euro');
+    double totalLira = calculateTotalInvestmentForCurrency('Türk Lirası');
     sumOfSavingValue = sumInvestValue.isNaN ? 0.0 : sumInvestValue;
-    result = (savingsValue == 0.0) ? 0.0 : sumOfSavingValue / savingsValue;
-    formattedDollarTotal = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(dollarTotal);
-    formattedEuroTotal = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(euroTotal);
-    formattedLiraTotal = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(liraTotal);
+    resultDollar = totalDollar == 0.0 ? 0.0 : totalDollarAim / totalDollar;
+    resultEuro = totalEuro == 0.0 ? 0.0 : totalEuroAim / totalEuro;
+    resultLira = totalLira == 0.0 ? 0.0 : totalLiraAim / totalLira;
+    print("resultDollar $resultDollar, resultEuro$resultEuro, resultLira$resultLira");
+    formattedDollarTotal = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(calculateTotalInvestmentForCurrency('Dolar'));
+    formattedEuroTotal = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(calculateTotalInvestmentForCurrency('Euro'));
+    formattedLiraTotal = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(calculateTotalInvestmentForCurrency('Türk Lirası'));
     formattedSumOfSavingValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfSavingValue);
     return Material(
       child: Stack(
@@ -2247,7 +2392,6 @@ class _InvestmentPageState extends State<InvestmentPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox(height: 80.h),
                         Text("Birikim",
                             style: GoogleFonts.montserrat(
                                 fontSize: 22, fontWeight: FontWeight.bold)),
@@ -2293,12 +2437,12 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                             CircularPercentIndicator(
                                               radius: 35.r,
                                               lineWidth: 7.h,
-                                              percent: result,
+                                              percent: currencySymbol == r'$' ? resultDollar : currencySymbol == '€' ? resultEuro : resultLira,
                                               center: Text(
-                                                  "%${((result) * 100).toStringAsFixed(0)}",
+                                                  "%${((currencySymbol == r'$' ? resultDollar : currencySymbol == '€' ? resultEuro : resultLira) * 100).toStringAsFixed(0)}",
                                                   style: GoogleFonts.montserrat(
                                                       color: Colors.black,
-                                                      fontSize: (result) * 100 == 100
+                                                      fontSize: (currencySymbol == r'$' ? resultDollar : currencySymbol == '€' ? resultEuro : resultLira) * 100 == 100
                                                           ? 12
                                                           : 16,
                                                       fontWeight: FontWeight.w600
@@ -2330,7 +2474,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                               ),
                               SizedBox(height: 10),
                               CustomSlidingSegmentedControl<int>(
-                                initialValue: 2,
+                                initialValue: 0,
                                 isStretch: true,
                                 children: const {
                                   0: Text(
@@ -2409,32 +2553,6 @@ class _InvestmentPageState extends State<InvestmentPage> {
                           children: [
                             buildSelectedCategories(),
                           ],
-                        ),
-                        SizedBox(
-                          height: 300,
-                          child: investmentList.isEmpty
-                              ? Center(child: Text('No investments found.'))
-                              : ListView.builder(
-                            itemCount: investmentList.length,
-                            itemBuilder: (context, index) {
-                              Investment investment = investmentList[index];
-                              return ListTile(
-                                title: Text(investment.name+investment.amount+DateFormat('yyyy-MM-dd').format(investment.deadline!)),
-                                subtitle: Text('Category: ${investment.category}'),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text('ID: ${investment.id}'),
-                                    SizedBox(width: 8),
-                                    InkWell(
-                                      child: FaIcon(FontAwesomeIcons.xmark),
-                                      onTap: () => _removeInvestment(investment.id),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
                         ),
                         Text("investmentList",
                             style: GoogleFonts.montserrat(
@@ -2610,7 +2728,6 @@ class _ChooseDateBottomSheetState extends State<ChooseDateBottomSheet>{
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height*0.5,
       width: MediaQuery.of(context).size.width*0.9,
       decoration: BoxDecoration(
         color: Colors.white,

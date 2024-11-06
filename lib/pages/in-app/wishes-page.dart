@@ -24,7 +24,7 @@ class _WishesPageState extends State<WishesPage> {
   final TextEditingController assetController = TextEditingController();
   FocusNode focusNode = FocusNode();
   String dropDownValue = "Türk Lirası";
-  var currencyList = [
+  List<String> currencyList = [
     'Türk Lirası',
     'Dolar',
     'Euro',
@@ -35,20 +35,20 @@ class _WishesPageState extends State<WishesPage> {
   String selectedTab = "Türk Lirası";
   String selectedSymbol = "";
   int idForBuild = 0;
+  int selectedTabIndex = 0;
   List<Map<String, dynamic>> bankDataList = [];
   List<TextEditingController> assetControllers = [];
   List<String> selectedTabList = [];
   Map<int, Map<String, List<double>>> sumMap = {};
   int _nextId = 1;
 
-  Future<void> addBankData(String bankName, double percent, double sum, String currency, String selectedSymbol) async {
+  Future<void> addBankData(String bankName, Map<String, double> goal, String currency, String selectedSymbol) async {
     final prefs = await SharedPreferences.getInstance();
     print("AAAAAA 1 : $_nextId");
     final bankData = {
       'id': _nextId++,
       'bankName': bankName,
-      'percent': percent,
-      'sum': sum,
+      'goal': goal,
       'selectedTab': currency,
       'selectedSymbol': selectedSymbol,
       'isEditing': false,
@@ -57,19 +57,6 @@ class _WishesPageState extends State<WishesPage> {
     print("AAAAAA 2 : $_nextId");
     bankDataList.add(bankData);
     selectedTabList.add(currency);
-    final sumMap = <int, Map<String, List<double>>>{
-      bankData['id'] as int: {
-        currency: [],
-      },
-    };
-    final sumValues = sumMap[(bankData['id'] as int)]?[currency];
-    if (sumValues != null) {
-      print("KOD 1");
-      sumValues.add(sum);
-    } else {
-      print("KOD 2");
-      sumMap[(bankData['id'] as int)]?[currency] = [sum];
-    }
     setState(() {
       prefs.setInt('nextId', _nextId);
       String bankDataListJson = jsonEncode(bankDataList);
@@ -105,26 +92,23 @@ class _WishesPageState extends State<WishesPage> {
       prefs.setString('sumMap', sumMapJson);
     });
   }
-  Future<void> updateBankData(int id, String bankName, double percent, double sum, String currency, String selectedSymbol, bool addButton) async {
+  Future<void> updateBankData(int bankId, String currency, double amount) async {
     final prefs = await SharedPreferences.getInstance();
-    final index = bankDataList.indexWhere((bank) => bank['id'] == id);
+    Map<String, dynamic> bankData = bankDataList.firstWhere((bank) => bank['id'] == bankId, orElse: () => <String, dynamic>{});
 
-    if (index != -1) {
-      final bankData = {
-        'id': id,
-        'bankName': bankName,
-        'percent': percent,
-        'sum': sum, // Set sum to the new entered value
-        'selectedTab': currency,
-        'selectedSymbol': selectedSymbol,
-        'isEditing': false,
-        'isAddButtonActive': addButton,
-      };
-      bankDataList[index] = bankData;
-      setState(() {}); // Update the UI to reflect changes
+    if (bankData != null){
+      Map<String, double> goalMap = (bankData['goal'] as Map<String, dynamic>? ?? {})
+          .map((key, value) => MapEntry(key, (value is num) ? value.toDouble() : 0.0));
+
+      goalMap[currency] = amount;
+      bankData['goal'] = goalMap;
     }
-
     // Save the updated bankDataList to preferences
+    String bankDataListJson = jsonEncode(bankDataList);
+    await prefs.setString('bankDataList', bankDataListJson);
+  }
+  Future<void> _saveBankDataList() async {
+    final prefs = await SharedPreferences.getInstance();
     String bankDataListJson = jsonEncode(bankDataList);
     await prefs.setString('bankDataList', bankDataListJson);
   }
@@ -205,18 +189,18 @@ class _WishesPageState extends State<WishesPage> {
     }
   }
   double calculateTotalSumForCurrency(String currency) {
-    double totalSum = 0.0;
+    double totalGoal = 0.0;
 
-    sumMap.forEach((id, currencyMap) {
-      if (currencyMap.containsKey(currency)) {
-        final values = currencyMap[currency]!;
-        for (var value in values) {
-          totalSum += value;
-        }
+    for (var bankData in bankDataList){
+      Map<String, dynamic>? goalMap = bankData['goal'] as Map<String, dynamic>?;
+
+      if (goalMap != null && goalMap.containsKey(currency)){
+        double value = (goalMap[currency] is num) ? (goalMap[currency] as num).toDouble() : 0.0;
+        totalGoal += value;
       }
-    });
+    }
 
-    return totalSum;
+    return totalGoal;
   }
   void updateBankDataList(List<Map<String, dynamic>> bankDataList, int deletedId) {
     final updatedBankDataList = <Map<String, dynamic>>[];
@@ -378,7 +362,7 @@ class _WishesPageState extends State<WishesPage> {
   }
 
   Widget buildBankCategories(BuildContext context, Map<String, dynamic> bankData) {
-    final String newSelectedTab;
+    String newSelectedTab = "Türk Lirası"; // Default customsliding option
     if (selectedTabList.isEmpty){
       newSelectedTab = "Türk Lirası";
     } else {
@@ -413,6 +397,9 @@ class _WishesPageState extends State<WishesPage> {
       selectedSymbol = "?";
     }
     nameController.text = bankData['bankName'];
+    Map<String, double> goalMap = (bankData['goal'] as Map<String, dynamic>?)?.map(
+          (key, value) => MapEntry(key, (value is num) ? value.toDouble() : 0.0), // Ensure value is a double
+    ) ?? {};
 
     return Column(
       children: [
@@ -426,6 +413,7 @@ class _WishesPageState extends State<WishesPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Bank Info Container
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
@@ -437,7 +425,7 @@ class _WishesPageState extends State<WishesPage> {
                     children: [
                       buildMonogram(bankData['bankName']),
                       SizedBox(width: 20.w),
-                      Expanded( // Wrap Column in Expanded
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -446,7 +434,6 @@ class _WishesPageState extends State<WishesPage> {
                                 setState(() {
                                   bankData['isEditing'] = !bankData['isEditing'];
                                 });
-                                // Set the cursor position to the end of the text
                                 nameController.selection = TextSelection.fromPosition(
                                   TextPosition(offset: nameController.text.length),
                                 );
@@ -457,7 +444,7 @@ class _WishesPageState extends State<WishesPage> {
                                   ? EditableText(
                                 controller: nameController,
                                 focusNode: focusNode,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: Colors.black,
                                   fontSize: 25,
                                   fontWeight: FontWeight.normal,
@@ -466,29 +453,18 @@ class _WishesPageState extends State<WishesPage> {
                                 backgroundCursorColor: Colors.black,
                                 keyboardType: TextInputType.text,
                                 onChanged: (newName) {
-                                  // You can update the name in real-time if needed
+                                  bankData['bankName'] = newName;
                                 },
                                 onEditingComplete: () {
-                                  String newName = nameController.text;
-                                  if (bankData['bankName'] != newName) {
-                                    updateBankData(
-                                      bankData['id'],
-                                      newName,
-                                      bankData['percent'],
-                                      bankData['sum'],
-                                      dropDownValue,
-                                      bankData['selectedSymbol'],
-                                      false,
-                                    );
-                                  }
                                   setState(() {
-                                    bankData['isEditing'] = false; // Exit editing mode
+                                    bankData['isEditing'] = false;
                                   });
+                                  _saveBankDataList();
                                 },
                               )
                                   : Text(
                                 bankData['bankName'],
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: Colors.black,
                                   fontSize: 19,
                                   fontWeight: FontWeight.normal,
@@ -497,7 +473,7 @@ class _WishesPageState extends State<WishesPage> {
                             ),
                             const SizedBox(height: 10),
                             Text(
-                              "${bankData['sum']}$selectedSymbol",
+                              "${goalMap[selectedTabList[bankData['id'] - 1]] ?? 0.0}$selectedSymbol",
                               style: GoogleFonts.montserrat(
                                 color: Colors.black,
                                 fontSize: 19,
@@ -508,21 +484,23 @@ class _WishesPageState extends State<WishesPage> {
                         ),
                       ),
                     ],
-                  )
+                  ),
                 ),
               ),
               SizedBox(height: 10),
+
+              // Currency Selector
               ClipRRect(
                 borderRadius: BorderRadius.circular(20),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey[200], // Background color
-                    borderRadius: BorderRadius.circular(20), // Rounded corners
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: CustomSlidingSegmentedControl<int>(
-                      initialValue: 0,
+                      initialValue: currencyList.indexOf(selectedTabList[bankData['id'] - 1]),
                       isStretch: false,
                       children: {
                         for (int i = 0; i < currencyList.length; i++)
@@ -543,20 +521,16 @@ class _WishesPageState extends State<WishesPage> {
                       decoration: BoxDecoration(
                         color: Colors.grey[200],
                         borderRadius: BorderRadius.circular(20),
-                        boxShadow: [],
                       ),
                       thumbDecoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(20), // Match the border radius for thumb
-                        boxShadow: [],
+                        borderRadius: BorderRadius.circular(20),
                       ),
                       onValueChanged: (value) {
                         setState(() {
-                          selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))] = currencyList[value];
-                          dropDownValue = selectedTabList[0];
-                          bankData['selectedSymbol'] = getSelectedSymbol(selectedTabList[selectedTabList.length - (selectedTabList.length - ((bankData['id'] as int) - 1))]);
-                          print("selectedTabList : $selectedTabList");
-                          print("dropDownValue : $dropDownValue");
+                          String selectedCurrency = currencyList[value]; // Get the selected currency string
+                          selectedTabList[bankData['id'] - 1] = selectedCurrency; // Update the selectedTabList for this specific bank
+                          bankData['selectedSymbol'] = getSelectedSymbol(selectedCurrency); // Update the symbol for the bank
                         });
                       },
                     ),
@@ -564,149 +538,116 @@ class _WishesPageState extends State<WishesPage> {
                 ),
               ),
               SizedBox(height: 10),
+
+              // Action Buttons Row
               Row(
                 children: [
                   Expanded(
                     flex: 32,
-                    child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Color(0xFF70B7FE),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: InkWell(
-                          onTap: () {
-                            setState(() {
-                              bankData['isAddButtonActive'] = true;
-                            });
-                          },
-                          child: const Text("Düzenle", textAlign: TextAlign.center),
-                        )
+                    child: ActionButton(
+                      label: "Düzenle",
+                      onTap: () {
+                        setState(() {
+                          bankData['isAddButtonActive'] = true;
+                        });
+                      },
                     ),
                   ),
                   SizedBox(width: 10.w),
                   Expanded(
                     flex: 32,
-                    child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Color(0xFF70B7FE),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: InkWell(
-                          onTap: () {
-                            showCupertinoDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return CupertinoAlertDialog(
-                                  title: const Text("Are you sure?"),
-                                  content: const Text("Do you want to delete this item?"),
-                                  actions: [
-                                    CupertinoDialogAction(
-                                      onPressed: () {
-                                        // Close the dialog
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: const Text("Cancel"),
-                                    ),
-                                    CupertinoDialogAction(
-                                      onPressed: () {
-                                        setState(() {
-                                          deleteBankData(bankData['id']);
-                                          Navigator.of(context).pop();
-                                        });
-                                      },
-                                      child: const Text("Delete"),
-                                    ),
-                                  ],
-                                );
-                              },
+                    child: ActionButton(
+                      label: "Kaldır",
+                      onTap: () {
+                        showCupertinoDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return CupertinoAlertDialog(
+                              title: Text("Are you sure?"),
+                              content: Text("Do you want to delete this item?"),
+                              actions: [
+                                CupertinoDialogAction(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: Text("Cancel"),
+                                ),
+                                CupertinoDialogAction(
+                                  onPressed: () {
+                                    setState(() {
+                                      deleteBankData(bankData['id']);
+                                      Navigator.of(context).pop();
+                                    });
+                                  },
+                                  child: Text("Delete"),
+                                ),
+                              ],
                             );
                           },
-                          child: Text("Kaldır", textAlign: TextAlign.center),
-                        )
+                        );
+                      },
                     ),
                   ),
                 ],
               ),
-              if(bankData['isAddButtonActive'] == true && assetController != null)
+
+              // Add Asset Field
+              if (bankData['isAddButtonActive'] && assetController != null) ...[
                 SizedBox(height: 10),
-              if(bankData['isAddButtonActive'] == true && assetController != null)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: TextFormField(
                         controller: assetController,
-                        keyboardType: const TextInputType.numberWithOptions(signed: false, decimal: true),
+                        keyboardType: TextInputType.numberWithOptions(signed: false, decimal: true),
                         decoration: InputDecoration(
                           filled: true,
-                          fillColor: Colors.grey[200], // Light background color
+                          fillColor: Colors.grey[200],
                           hintText: 'Asset',
-                          hintStyle: TextStyle(color: Colors.grey[600]), // Hint color
-                          contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 20), // Padding inside the text field
+                          hintStyle: TextStyle(color: Colors.grey[600]),
+                          contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20), // 20px border radius
-                            borderSide: BorderSide.none, // Remove default border
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide.none,
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(20),
-                            borderSide: BorderSide(color: Colors.grey[300]!, width: 1), // Light border when not focused
+                            borderSide: BorderSide(color: Colors.grey[300]!, width: 1),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(20),
-                            borderSide: BorderSide(color: Colors.blueAccent, width: 2), // Blue border when focused
+                            borderSide: BorderSide(color: Colors.blueAccent, width: 2),
                           ),
-                          prefixIcon: Icon(Icons.attach_money, color: Colors.blueAccent), // Optional icon
+                          prefixIcon: Icon(Icons.attach_money, color: Colors.blueAccent),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10), // Space between TextFormField and IconButton
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.blueAccent,
-                        borderRadius: BorderRadius.circular(15),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.3),
-                            spreadRadius: 2,
-                            blurRadius: 5,
-                            offset: Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: IconButton(
-                        onPressed: () {
-                          String inputText = assetController?.text.trim() ?? '';
-                          double? price = double.tryParse(inputText);
-
-                          setState(() {
-                            if (price != null && price > 0) {
-                              // Valid price entered
-                              String bankName = nameController.text;
-                              updateBankData(
-                                bankData['id'],
-                                bankName,
-                                bankData['percent'],
-                                price,
-                                dropDownValue,
-                                bankData['selectedSymbol'],
-                                false,
-                              );
-                              assetController?.clear();
-                            } else {
-                              // Invalid or empty input; deactivate add button
-                              bankData['isAddButtonActive'] = false;
-                            }
-                          });
-                        },
-                        icon: Icon(Icons.check_circle, color: Colors.white, size: 28),
-                      ),
+                    const SizedBox(width: 10),
+                    ConfirmButton(
+                      onPressed: () {
+                        String inputText = assetController?.text.trim() ?? '';
+                        double? price = double.tryParse(inputText);
+                        setState(() {
+                          if (price != null && price >= 0) {
+                            updateBankData(
+                              bankData['id'],
+                              newSelectedTab,
+                              price
+                            );
+                            assetController?.clear();
+                            bankData['isAddButtonActive'] = false;
+                          } else {
+                            bankData['isAddButtonActive'] = false;
+                          }
+                        });
+                      },
                     ),
                   ],
-                )
+                ),
+              ],
             ],
-          ),
+          )
         ),
       ],
     );
@@ -722,7 +663,6 @@ class _WishesPageState extends State<WishesPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 80.h),
               Text("Bankalarım",
                   style: GoogleFonts.montserrat(
                       color: Colors.black,
@@ -794,9 +734,8 @@ class _WishesPageState extends State<WishesPage> {
                             setState(() {
                               // Add a new bank directly with default name and 0 percent
                               final bankName = "Bank Name ${bankDataList.length + 1}";
-                              const initialPercent = 0.0;
                               print("TEK ADDBANKDATA ÇALIŞTI");
-                              addBankData(bankName, initialPercent, 0.0, dropDownValue, "");
+                              addBankData(bankName, {'Türk Lirası':0.0}, dropDownValue, "");
                             });
                           },
                           child: SizedBox(
@@ -870,4 +809,57 @@ class _WishesPageState extends State<WishesPage> {
     }
   }
 
+}
+
+class ActionButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const ActionButton({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Color(0xFF70B7FE),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+}
+
+class ConfirmButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const ConfirmButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.blueAccent,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.3),
+            spreadRadius: 2,
+            blurRadius: 5,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: IconButton(
+        onPressed: onPressed,
+        icon: Icon(Icons.check_circle, color: Colors.white, size: 28),
+      ),
+    );
+  }
 }

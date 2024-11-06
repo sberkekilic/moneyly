@@ -21,7 +21,8 @@ class IncomePage extends StatefulWidget {
 
 class _IncomePageState extends State<IncomePage> {
   Map<String, List<String>> incomeMap = {};
-  String selectedTitle = '';
+  Map<String, List<String>> summedIncomeMap = {};
+  String selectedTitle = 'Toplam';
   String selectedKey = "";
   String newSelectedOption = "İş";
   double incomeValue = 0.0;
@@ -60,7 +61,6 @@ class _IncomePageState extends State<IncomePage> {
     final ab2 = prefs.getString('incomeMap') ?? "0";
     final ab3 = prefs.getDouble('sumInvestValue') ?? 0.0;
     setState(() {
-      selectedTitle = labelForOption(SelectedOption.values[ab1]);
       sumInvestValue = ab3;
       if (ab2.isNotEmpty) {
         final decodedData = json.decode(ab2);
@@ -97,10 +97,24 @@ class _IncomePageState extends State<IncomePage> {
           });
         }
       }
+
       totalValues = incomeMap.values.fold<int>(
         0,
             (count, list) => count + list.length,
       );
+
+      for (var key in incomeMap.keys) {
+        double sum = 0.0;
+
+        // Iterate over each value list for the current key
+        for (var value in incomeMap[key]!) {
+          double parsedValue = NumberFormat.decimalPattern('tr_TR').parse(value) as double;
+          sum += parsedValue; // Sum the parsed values
+        }
+
+        // Store the sum as a string in the new map
+        summedIncomeMap[key] = [NumberFormat.decimalPattern('tr_TR').format(sum)];
+      }
     });
   }
 
@@ -110,7 +124,6 @@ class _IncomePageState extends State<IncomePage> {
 
 // Function to handle editing
   void editIncome(String key, String value, int index) async {
-
     keyController.text = key;
     valueController.text = value;
 
@@ -125,6 +138,8 @@ class _IncomePageState extends State<IncomePage> {
               TextField(
                 controller: keyController,
                 decoration: InputDecoration(labelText: 'Key'),
+                readOnly: true,
+                enabled: false,
               ),
               TextField(
                 controller: valueController,
@@ -190,10 +205,8 @@ class _IncomePageState extends State<IncomePage> {
                           );
                         } else {
                           setState(() {
-                            incomeMap[key]!.removeAt(index);
-                            if (incomeMap[key]!.isEmpty){
-                              incomeMap.remove(key);
-                            }
+                            incomeMap.remove(key);
+                            summedIncomeMap.remove(key);
                             // Save the modified incomeMap to SharedPreferences
                             prefs.setString('incomeMap', jsonEncode(incomeMap));
                           });
@@ -324,7 +337,11 @@ class _IncomePageState extends State<IncomePage> {
           NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2)
               .format(sumOfFirstKey);
     }
-    String currentDate = DateFormat('dd MMMM yyyy').format(DateTime.now());
+    if (incomeMap.length == 1){
+      selectedTitle = incomeMap.keys.first;
+    } else {
+      selectedTitle = "Toplam";
+    }
     return Scaffold(
       body: SingleChildScrollView(
         child: Container(
@@ -332,7 +349,6 @@ class _IncomePageState extends State<IncomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 80.h),
               Text(
                 "Gelirler Detayı",
                 style: TextStyle(
@@ -515,87 +531,86 @@ class _IncomePageState extends State<IncomePage> {
                               decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(20),
                               ),
-                              child: Column(
+                              child:  Column(
                                 children: [
-                                  if(totalValues > 1)
-                                  for (var entry in incomeMap.entries)
-                                    for (int i = 0; i < entry.value.length; i++)
-                                      Column(
-                                        children: [
-                                          Container(
-                                            decoration: BoxDecoration(
-                                              borderRadius: BorderRadius.circular(20),
-                                              color: Color(0x7D67C5FF),
-                                            ),
-                                            padding: const EdgeInsets.all(15),
-                                            child: Column(
-                                              children: [
-                                                Row(
-                                                  children: [
-                                                    CircularPercentIndicator(
-                                                      radius: 30,
-                                                      lineWidth: 7.0,
-                                                      percent: (NumberFormat.decimalPattern('tr_TR').parse(entry.value[i]) as double) / incomeValue,
-                                                      center: Text(
-                                                        "%${(((NumberFormat.decimalPattern('tr_TR').parse(entry.value[i]) as double) / incomeValue) * 100).toStringAsFixed(0)}",
-                                                        style: GoogleFonts.montserrat(
-                                                          color: Colors.black,
-                                                          fontSize: 16,
-                                                          fontWeight: FontWeight.w600,
+                                  if (summedIncomeMap.length > 1) ...[
+                                    for (var entry in summedIncomeMap.entries)
+                                      for (int i = 0; i < entry.value.length; i++)
+                                        Column(
+                                          children: [
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                borderRadius: BorderRadius.circular(20),
+                                                color: Color(0x7D67C5FF),
+                                              ),
+                                              padding: const EdgeInsets.all(15),
+                                              child: Column(
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      CircularPercentIndicator(
+                                                        radius: 30,
+                                                        lineWidth: 7.0,
+                                                        percent: (NumberFormat.decimalPattern('tr_TR').parse(entry.value[i]) as double) / incomeValue,
+                                                        center: Text(
+                                                          "%${(((NumberFormat.decimalPattern('tr_TR').parse(entry.value[i]) as double) / incomeValue) * 100).toStringAsFixed(0)}",
+                                                          style: GoogleFonts.montserrat(
+                                                            color: Colors.black,
+                                                            fontSize: 16,
+                                                            fontWeight: FontWeight.w600,
+                                                          ),
+                                                        ),
+                                                        progressColor: Colors.blue,
+                                                      ),
+                                                      const SizedBox(width: 10),
+                                                      Flexible(
+                                                        flex: 2,
+                                                        fit: FlexFit.tight,
+                                                        child: Column(
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          children: [
+                                                            Text(
+                                                              entry.key,  // The key, e.g., "İş"
+                                                              style: GoogleFonts.montserrat(
+                                                                color: Colors.black,
+                                                                fontSize: 18.sp,
+                                                                fontWeight: FontWeight.w600,
+                                                              ),
+                                                            ),
+                                                            Text(
+                                                              NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(parseTurkishDouble(entry.value[i])), // The specific income value, e.g., "25.000" or "200"
+                                                              style: GoogleFonts.montserrat(
+                                                                color: Colors.black,
+                                                                fontSize: 18.sp,
+                                                                fontWeight: FontWeight.bold,
+                                                              ),
+                                                            ),
+                                                          ],
                                                         ),
                                                       ),
-                                                      progressColor: Colors.blue,
-                                                    ),
-                                                    const SizedBox(width: 10),
-                                                    Flexible(
-                                                      flex: 2,
-                                                      fit: FlexFit.tight,
-                                                      child: Column(
-                                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                                        children: [
-                                                          Text(
-                                                            entry.key,  // The key, e.g., "İş"
-                                                            style: GoogleFonts.montserrat(
-                                                              color: Colors.black,
-                                                              fontSize: 18.sp,
-                                                              fontWeight: FontWeight.w600,
-                                                            ),
-                                                          ),
-                                                          Text(
-                                                            "${entry.value[i]}",  // The specific income value, e.g., "25.000" or "200"
-                                                            style: GoogleFonts.montserrat(
-                                                              color: Colors.black,
-                                                              fontSize: 18.sp,
-                                                              fontWeight: FontWeight.bold,
-                                                            ),
-                                                          ),
-                                                        ],
+                                                      const SizedBox(width: 10),
+                                                      Flexible(
+                                                        flex: 1,
+                                                        fit: FlexFit.tight,
+                                                        child: IconButton(
+                                                          onPressed: () {
+                                                            setState(() {
+                                                              editIncome(entry.key, entry.value[i], i);
+                                                            });
+                                                          },
+                                                          icon: Icon(Icons.edit),
+                                                        ),
                                                       ),
-                                                    ),
-                                                    const SizedBox(width: 10),
-                                                    Flexible(
-                                                      flex: 1,
-                                                      fit: FlexFit.tight,
-                                                      child: IconButton(
-                                                        onPressed: () {
-                                                          setState(() {
-                                                            editIncome(entry.key, entry.value[i], i);
-                                                          });
-                                                        },
-                                                        icon: Icon(Icons.edit),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
                                             ),
-                                          ),
-                                          if (i < entry.value.length - 1) // Add a gap if not the last index
-                                            SizedBox(height: 10),
-                                        ],
-                                      ),
-                                  if(totalValues > 1)
-                                  SizedBox(height: 10),
+                                            if (summedIncomeMap.length > 1) // Add a gap if not the last index
+                                              SizedBox(height: 10),
+                                          ],
+                                        ),
+                                  ],
                                   if (!isIncomeAdding)
                                     Container(
                                       decoration: BoxDecoration(
@@ -827,4 +842,15 @@ class _IncomePageState extends State<IncomePage> {
             style: GoogleFonts.montserrat(
                 fontSize: 14, fontWeight: FontWeight.bold)),
       );
+}
+
+double parseTurkishDouble(String numberString) {
+  // Create a NumberFormat instance for the Turkish locale
+  final NumberFormat format = NumberFormat.decimalPattern('tr_TR');
+
+  // Replace the comma with a dot for the decimal part
+  String normalizedString = numberString.replaceAll('.', '').replaceAll(',', '.');
+
+  // Parse the normalized string to a double
+  return format.parse(normalizedString).toDouble();
 }

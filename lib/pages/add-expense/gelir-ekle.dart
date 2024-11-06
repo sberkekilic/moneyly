@@ -143,6 +143,54 @@ class _AddIncomeState extends State<AddIncome> {
     }
   }
 
+  Widget selectableContainer(SelectedOption option, String label, IconData iconData) {
+    return BlocBuilder<IncomeSelectionsBloc, IncomeSelectionsState>(
+      builder: (context, state) {
+        final selectedOption = (state is IncomeSelectionsLoaded)
+            ? state.selectedOption
+            : SelectedOption.None;
+        bool isSelected = selectedOption == option;
+
+        // Directly compute selectedTitle based on the current state
+        String selectedTitle = labelForOption(selectedOption);
+        print('selectedTitle: $selectedTitle'); // This should reflect the current state
+
+        return GestureDetector(
+          onTap: () {
+            context.read<IncomeSelectionsBloc>().add(SetOptionAndValue(option, 'New Value'));
+          },
+          child: Container(
+            height: 140.0, // Adjust according to your needs
+            decoration: BoxDecoration(
+              color: isSelected ? Colors.black : Colors.white,
+              border: Border.all(
+                color: Colors.black,
+                width: isSelected ? 4.0 : 2.0,
+              ),
+              borderRadius: BorderRadius.circular(10.0),
+            ),
+            child: Stack(
+              children: [
+                Align(
+                  alignment: Alignment.center,
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontFamily: 'Keep Calm',
+                      fontSize: isSelected ? 18.0 : 15.0, // Adjust according to your needs
+                      color: isSelected ? Colors.white : Colors.black,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -282,7 +330,7 @@ class _AddIncomeState extends State<AddIncome> {
                                   Align(
                                     alignment: Alignment.centerLeft,
                                     child: Text(
-                                        selectedTitle,
+                                        state is IncomeSelectionsLoaded ? state.selectedTitle : '',
                                         style: TextStyle(
                                           fontFamily: 'Keep Calm',
                                           fontSize: 16.sp,
@@ -403,94 +451,47 @@ class _AddIncomeState extends State<AddIncome> {
           ],
         ),
         child: BottomAppBar(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 10, bottom: 10, left: 20, right: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 50,
-                    color: Colors.white,
-                    child: BlocBuilder<IncomeSelectionsBloc, IncomeSelectionsState>(
-                      builder: (context, state) {
-                        return ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            backgroundColor: state is IncomeSelectionsLoaded && state.selectedOption != SelectedOption.None && incomeController.text.isNotEmpty ? Colors.black : Colors.grey ,
-                          ),
-                          clipBehavior: Clip.hardEdge,
-                          onPressed: (state is IncomeSelectionsLoaded && state.selectedOption != SelectedOption.None && incomeController.text.isNotEmpty)
-                              ? () async {
-                            goToNextPage(context, selections, selectedOption);
-                          }
-                              : null,
-                          child: Text(
-                              'Sonraki',
-                              style: TextStyle(
-                                  fontFamily: 'Keep Calm',
-                                  fontSize: 18.sp
-                              )
-                          ),
-                        );
-                      },
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Container(
+                  height: 50,
+                  color: Colors.white,
+                  child: BlocBuilder<IncomeSelectionsBloc, IncomeSelectionsState>(
+                    builder: (context, state) {
+                      return ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          backgroundColor: state is IncomeSelectionsLoaded && state.selectedOption != SelectedOption.None && incomeController.text.isNotEmpty ? Colors.black : Colors.grey ,
+                        ),
+                        clipBehavior: Clip.hardEdge,
+                        onPressed: (state is IncomeSelectionsLoaded && state.selectedOption != SelectedOption.None && incomeController.text.isNotEmpty)
+                            ? () async {
+                          goToNextPage(context, selections, selectedOption);
+                        }
+                            : null,
+                        child: Text(
+                            'Sonraki',
+                            style: TextStyle(
+                                fontFamily: 'Keep Calm',
+                                fontSize: 18.sp
+                            )
+                        ),
+                      );
+                    },
 
-                    ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget selectableContainer(SelectedOption option, String label, IconData iconData) {
-    return BlocBuilder<IncomeSelectionsBloc, IncomeSelectionsState>(
-      builder: (context, state) {
-        final selectedOption = (state is IncomeSelectionsLoaded)
-            ? state.selectedOption
-            : SelectedOption.None;
-        bool isSelected = selectedOption == option;
-        selectedTitle = labelForOption(selectedOption);
-        print('newSelectedTitle: $newSelectedTitle');
-        return GestureDetector(
-          onTap: () {
-            context.read<IncomeSelectionsBloc>().add(SetSelectedOption(option));
-            context.read<IncomeSelectionsBloc>().add(SetIncomeValue('New Value'));
-          },
-          child: Container(
-            height: 140.0, // Adjust according to your needs
-            decoration: BoxDecoration(
-              color: isSelected ? Colors.black : Colors.white,
-              border: Border.all(
-                color: Colors.black,
-                width: isSelected ? 4.0 : 2.0,
-              ),
-              borderRadius: BorderRadius.circular(10.0),
-            ),
-            child: Stack(
-              children: [
-                Align(
-                  alignment: Alignment.center,
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontFamily: 'Keep Calm',
-                      fontSize: isSelected ? 18.0 : 15.0, // Adjust according to your needs
-                      color: isSelected ? Colors.white : Colors.black,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
+
   Widget buildNumberButton(String value, {Color textColor = Colors.black}) {
     double screenWidth = MediaQuery.of(context).size.width;
     return Container(

@@ -82,6 +82,12 @@ class Invoice {
       return "error2";
     }
 
+    // Check if faturaDonemiDate is before the current date
+    if (currentDate.isAfter(faturaDonemiDate)) {
+      invoice.difference = "0"; // Set difference to 0 if the invoice date is in the past
+      return invoice.difference;
+    }
+
     // Compare the current date with faturaDonemi
     if (currentDate.isBefore(faturaDonemiDate)) {
       invoice.difference = (faturaDonemiDate.difference(currentDate).inDays + 1).toString();
@@ -109,6 +115,11 @@ class Invoice {
   int getPeriodMonth() {
     DateTime periodDateTime = DateTime.parse(periodDate);
     return periodDateTime.month;
+  }
+
+  int getPeriodYear() {
+    DateTime periodDateTime = DateTime.parse(periodDate);
+    return periodDateTime.year;
   }
 
   int? getDueDay() {
@@ -249,7 +260,7 @@ class _BillsState extends State<Bills> {
     _selectedBillingMonth = invoice.getPeriodMonth();
     _selectedBillingDay = invoice.getPeriodDay();
     _selectedDueDay = invoice.getDueDay();
-    invoice.periodDate = formatPeriodDate(_selectedBillingDay ?? 0, _selectedBillingMonth ?? 0);
+    invoice.periodDate = formatPeriodDate(_selectedBillingDay ?? 0, _selectedBillingMonth ?? 0, invoice.getPeriodYear());
     if (_selectedDueDay != null) {
       invoice.dueDate = formatDueDate(_selectedDueDay, invoice.periodDate);
     }
@@ -409,13 +420,13 @@ class _BillsState extends State<Bills> {
                       if (_selectedDueDay != null) {
                         editInvoice(
                           id,
-                          formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                          formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!)),
+                          formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!, invoice.getPeriodYear()),
+                          formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!, invoice.getPeriodYear())),
                         );
                       } else {
                         editInvoice(
                           id,
-                          formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
+                          formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!, invoice.getPeriodYear()),
                           null, // or provide any default value you want for dueDate when _selectedDueDay is null
                         );
                       }
@@ -560,10 +571,7 @@ class _BillsState extends State<Bills> {
     return year % 400 == 0;
   }
 
-  String formatPeriodDate(int day, int month) {
-    final currentDate = DateTime.now();
-    int year = currentDate.year;
-
+  String formatPeriodDate(int day, int month, int year) {
     if (month > 12) {
       month = 1;
       year++;
@@ -1237,9 +1245,9 @@ class _BillsState extends State<Bills> {
                                                                                 subCategory: 'Ev Faturaları',
                                                                                 category: "Faturalar",
                                                                                 name: text,
-                                                                                periodDate: formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
+                                                                                periodDate: formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!, DateTime.now().year),
                                                                                 dueDate: _selectedDueDay != null
-                                                                                    ? formatDueDate(_selectedDueDay!, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!))
+                                                                                    ? formatDueDate(_selectedDueDay!, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!, DateTime.now().year))
                                                                                     : null,
                                                                                 difference: "fa2"
                                                                             );

@@ -22,6 +22,9 @@ class Subscriptions extends StatefulWidget {
   State<Subscriptions> createState() => _SubscriptionsState();
 }
 class _SubscriptionsState extends State<Subscriptions> {
+  FocusNode platformPriceFocusNode = FocusNode();
+  FocusNode textFocusNode = FocusNode();
+
   List<String> sharedPreferencesData = [];
   List<String> desiredKeys = [
     'invoices',
@@ -287,6 +290,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                             .map(
                               (day) => PullDownMenuItem(
                               onTap: () {
+                                FocusScope.of(context).unfocus(); // Unfocus the TextFormField
                                 setState(() {
                                   _selectedBillingDay = day;
                                 });
@@ -329,6 +333,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                             .map(
                               (month) => PullDownMenuItem(
                               onTap: () {
+                                FocusScope.of(context).unfocus(); // Unfocus the TextFormField
                                 setState(() {
                                   _selectedBillingMonth = month;
                                 });
@@ -374,6 +379,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                       .map(
                         (day) => PullDownMenuItem(
                         onTap: () {
+                          FocusScope.of(context).unfocus(); // Unfocus the TextFormField
                           setState(() {
                             _selectedDueDay = day;
                           });
@@ -558,6 +564,13 @@ class _SubscriptionsState extends State<Subscriptions> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    platformPriceFocusNode.dispose();
+    textFocusNode.dispose();
+    super.dispose();
   }
 
   Future<void> loadSharedPreferencesData(List<String> desiredKeys) async {
@@ -962,6 +975,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                       ),
                                                       SizedBox(height: 10.h),
                                                       TextFormField(
+                                                        focusNode: textFocusNode,
                                                         controller: textController,
                                                         decoration: InputDecoration(
                                                             filled: true,
@@ -989,8 +1003,10 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                       ),
                                                       SizedBox(height: 10.h),
                                                       TextFormField(
+                                                        focusNode: platformPriceFocusNode,
                                                         controller: platformPriceController,
                                                         keyboardType: TextInputType.number, // Show numeric keyboard
+                                                        textInputAction: TextInputAction.done, //IOS add done button
                                                         decoration: InputDecoration(
                                                             filled: true,
                                                             fillColor: Colors.white,
@@ -1031,6 +1047,8 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                                               .map(
                                                                                 (day) => PullDownMenuItem(
                                                                                 onTap: () {
+                                                                                  platformPriceFocusNode.unfocus();
+                                                                                  textFocusNode.unfocus();
                                                                                   setState(() {
                                                                                     _selectedBillingDay = day;
                                                                                   });
@@ -1073,6 +1091,8 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                                               .map(
                                                                                 (month) => PullDownMenuItem(
                                                                                 onTap: () {
+                                                                                  platformPriceFocusNode.unfocus();
+                                                                                  textFocusNode.unfocus();
                                                                                   setState(() {
                                                                                     _selectedBillingMonth = month;
                                                                                   });
@@ -1127,6 +1147,8 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                                             .map(
                                                                               (day) => PullDownMenuItem(
                                                                               onTap: () {
+                                                                                platformPriceFocusNode.unfocus();
+                                                                                textFocusNode.unfocus();
                                                                                 setState(() {
                                                                                   _selectedDueDay = day;
                                                                                 });
@@ -1646,49 +1668,46 @@ class _SubscriptionsState extends State<Subscriptions> {
                   ],
                 ),
                 child: BottomAppBar(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 10, bottom: 10, left: 20, right: 20),
-                    child: Row(
-                      children: [
-                        Container(
+                  child: Row(
+                    children: [
+                      Container(
+                        height: 42.h,
+                        width: 42.h,
+                        color: Colors.white,
+                        child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                              backgroundColor: sumAll != 0.0 ? Colors.black : Colors.grey,
+                            ),
+                            clipBehavior: Clip.hardEdge,
+                            onPressed: () {
+                              context.go('/');
+                            },
+                            child: Icon(Icons.arrow_back, color: sumAll != 0.0 ? Colors.white : Colors.black, size: 20.sp,)
+                        ),
+                      ),
+                      SizedBox(width: 20.w),
+                      Expanded(
+                        child: Container(
                           height: 42.h,
-                          width: 42.h,
                           color: Colors.white,
                           child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12)),
-                                backgroundColor: sumAll != 0.0 ? Colors.black : Colors.grey,
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15)
                               ),
-                              clipBehavior: Clip.hardEdge,
-                              onPressed: () {
-                                context.go('/');
-                              },
-                              child: Icon(Icons.arrow_back, color: sumAll != 0.0 ? Colors.white : Colors.black, size: 20.sp,)
-                          ),
-                        ),
-                        SizedBox(width: 20.w),
-                        Expanded(
-                          child: Container(
-                            height: 42.h,
-                            color: Colors.white,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15)
-                                ),
-                                backgroundColor: sumAll != 0.0 ? Colors.black : Colors.grey,
-                              ),
-                              clipBehavior: Clip.hardEdge,
-                              onPressed: sumAll != 0.0 ? () {
-                                goToNextPage();
-                              } : null,
-                              child: Text('Sonraki', style: GoogleFonts.montserrat(fontSize: 18)),
+                              backgroundColor: sumAll != 0.0 ? Colors.black : Colors.grey,
                             ),
+                            clipBehavior: Clip.hardEdge,
+                            onPressed: sumAll != 0.0 ? () {
+                              goToNextPage();
+                            } : null,
+                            child: Text('Sonraki', style: GoogleFonts.montserrat(fontSize: 18)),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),

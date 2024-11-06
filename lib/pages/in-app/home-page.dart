@@ -331,7 +331,10 @@ class _HomePageState extends State<HomePage> {
       if (savedInvoicesJson != null) {
         setState(() {
           invoices = savedInvoicesJson.map((json) => Invoice.fromJson(jsonDecode(json))).toList();
-          print("HOME-PAGE 3| invoices:${invoices}");
+          print("HOME-PAGE 3| invoices:");
+          for (var invoice in invoices) {
+            print(invoice.toDisplayString());
+          }
           setState(() {
             invoices.forEach((invoice) {
               final dueDate = invoice.dueDate; // Safe access to dueDate
@@ -416,10 +419,7 @@ class _HomePageState extends State<HomePage> {
       return "error2";
     }
   }
-  String formatPeriodDate(int day, int month) {
-    final currentDate = DateTime.now();
-    int year = currentDate.year;
-
+  String formatPeriodDate(int day, int month, int year) {
     if (month > 12) {
       month = 1;
       year++;
@@ -433,12 +433,11 @@ class _HomePageState extends State<HomePage> {
     return faturaDonemi = '${year.toString()}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
   }
   String formatDueDate(int? day, String periodDay) {
-    final currentDate = DateTime.now();
-    int year = currentDate.year;
 
     // Parse the periodDay string to DateTime
     DateTime parsedPeriodDay = DateTime.parse(periodDay);
     int month = parsedPeriodDay.month;
+    int year = parsedPeriodDay.year;
 
     if (month > 12) {
       month = 1;
@@ -473,14 +472,16 @@ class _HomePageState extends State<HomePage> {
     if (index != -1) {
       setState(() {
         final invoice = invoices[index];
+        invoice.periodDate = periodDate;
         String diff = getDaysRemainingMessage(invoice);
+        print("BTK2:$diff");
         final updatedInvoice = Invoice(
             id: invoice.id,
             price: invoice.price,
             subCategory: invoice.subCategory,
             category: invoice.category,
             name: invoice.name,
-            periodDate: periodDate,
+            periodDate: invoice.periodDate,
             dueDate: dueDate,
             difference: diff
         );
@@ -496,7 +497,7 @@ class _HomePageState extends State<HomePage> {
     _selectedBillingMonth = invoice.getPeriodMonth();
     _selectedBillingDay = invoice.getPeriodDay();
     _selectedDueDay = invoice.getDueDay();
-    invoice.periodDate = formatPeriodDate(_selectedBillingDay ?? 0, _selectedBillingMonth ?? 0);
+    invoice.periodDate = formatPeriodDate(_selectedBillingDay ?? 0, _selectedBillingMonth ?? 0, invoice.getPeriodYear());
     if (_selectedDueDay != null) {
       invoice.dueDate = formatDueDate(_selectedDueDay, invoice.periodDate);
     }
@@ -627,17 +628,17 @@ class _HomePageState extends State<HomePage> {
                       if (_selectedDueDay != null) {
                         editInvoice(
                           id,
-                          formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                          formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!)),
+                          formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!, invoice.getPeriodYear()),
+                          formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!, invoice.getPeriodYear())),
                         );
                       } else {
                         editInvoice(
                           id,
-                          formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
+                          formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!, invoice.getPeriodYear()),
                           null, // or provide any default value you want for dueDate when _selectedDueDay is null
                         );
                       }
-                      _load(); //Update values immediantly
+                      _load(); //Update values immediately
                       Navigator.of(context).pop();
                     });
                   },
@@ -755,6 +756,7 @@ class _HomePageState extends State<HomePage> {
         invoices[index] = updatedInvoice;
         saveInvoices();
         saveInvoicesToSharedPreferences();
+        _load(); //Update the invoice immediately
       });
     }
   }
@@ -814,9 +816,8 @@ class _HomePageState extends State<HomePage> {
 
     if (incomeValue != 0.0) {
       double bolumDouble = netProfit / incomeValue;
-
       if (bolumDouble.isFinite) {
-        bolum = (bolumDouble * 100).toInt();
+        bolum = (bolumDouble.abs() * 100).toInt();
         netProfit = incomeValue * bolumDouble;
       } else {
         // Handle the case where bolumDouble is Infinity or NaN
@@ -868,7 +869,6 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 80.h),
               Text("Özet", style: GoogleFonts.montserrat(fontSize: 20.sp, fontWeight: FontWeight.bold)),
               SizedBox(height: 20.h),
               Container(
@@ -923,7 +923,9 @@ class _HomePageState extends State<HomePage> {
                               lineHeight: 12.h,
                               animationDuration: 1000,
                               percent: bolum/100,
-                              trailing: Text("%${((bolum/100)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(
+                              trailing: Text(
+                                  netProfit < 0 ? "-%${bolum.abs()}" : "%${bolum.abs()}",
+                                  style: GoogleFonts.montserrat(
                                   color: Colors.black,
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold)),
@@ -1192,25 +1194,24 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    SizedBox(
-                      height: 300.h,
+                    IntrinsicHeight(
                         child: selectedInvoices.isEmpty
-                        ? Center(child: Text('${getTitleForIndex(_currentPage)} sınıfına ait bir fatura bulunmuyor.'))
-                        : ListView(
-                            scrollDirection: Axis.horizontal,
+                            ? Center(child: Text('${getTitleForIndex(_currentPage)} sınıfına ait bir fatura bulunmuyor.'))
+                            : SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
                             children: selectedInvoices.map((invoice) {
                               return Padding(
                                 padding: EdgeInsets.fromLTRB(10.w, 0, 10.w, 0),
-                                child: Container(
-                                  child: InvoiceCard(
-                                    invoice: invoice,
-                                    onDelete: () => payInvoice(invoice, invoice.id, invoice.periodDate, invoice.dueDate),
-                                    onEdit: () => showEditInvoice(invoice.id, invoice.periodDate, invoice.dueDate)
-                                  ),
+                                child: InvoiceCard(
+                                  invoice: invoice,
+                                  onDelete: () => payInvoice(invoice, invoice.id, invoice.periodDate, invoice.dueDate),
+                                  onEdit: () => showEditInvoice(invoice.id, invoice.periodDate, invoice.dueDate),
                                 ),
                               );
                             }).toList(),
-                            ),
+                          ),
+                        ),
                         ),
                     const SizedBox(height: 20),
                     buildIndicator(5, _currentPage),
@@ -1322,28 +1323,30 @@ class InvoiceCard extends StatelessWidget {
                 style: GoogleFonts.montserrat(color: Colors.black, fontSize: 14.sp, fontWeight: FontWeight.normal),
               ),
             ),
-            Container(
-              constraints: BoxConstraints(
-                minHeight: 70.h,
-              ),
-              child: ListTile(
-                title: Text(
-                  daysRemainingMessage,
-                  style: GoogleFonts.montserrat(color: Colors.black, fontSize: 14.sp, fontWeight: FontWeight.normal),
+            Flexible( // Use Flexible here
+              child: Container(
+                constraints: BoxConstraints(
+                  minHeight: 70.h,
                 ),
-                subtitle: daysRemainingMessage != "Ödeme dönemi" ? Text(
-                  invoice.difference,
-                  style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18.sp, fontWeight: FontWeight.bold),
-                ) : null,
+                child: ListTile(
+                  title: Text(
+                    daysRemainingMessage,
+                    style: GoogleFonts.montserrat(color: Colors.black, fontSize: 14.sp, fontWeight: FontWeight.normal),
+                  ),
+                  subtitle: daysRemainingMessage != "Ödeme dönemi" ? Text(
+                    invoice.difference,
+                    style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18.sp, fontWeight: FontWeight.bold),
+                  ) : null,
+                ),
               ),
             ),
+            SizedBox(height: 20.h),
             Container(
               padding: const EdgeInsets.all(10),
               width: double.infinity,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                color: Color.fromARGB(125, 173, 198, 255)
-                ,
+                color: Color.fromARGB(125, 173, 198, 255),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,

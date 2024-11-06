@@ -206,10 +206,12 @@ class _Page6State extends State<Page6> {
           ],
         ),
       ),
-      body: BlocBuilder<SelectedIndexCubit, int>(
-        builder: (context, selectedIndex) {
-          return _createPage(selectedIndex);
-        },
+      body: SafeArea(
+        child: BlocBuilder<SelectedIndexCubit, int>(
+          builder: (context, selectedIndex) {
+            return _createPage(selectedIndex);
+          },
+        ),
       ),
       bottomNavigationBar: BlocBuilder<SelectedIndexCubit, int>(
         builder: (context, selectedIndex) {

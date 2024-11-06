@@ -964,7 +964,6 @@ class _OutcomePageState extends State<OutcomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 80.h),
               Text(
                 "Giderler Detayı",
                 style: TextStyle(
