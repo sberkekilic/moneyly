@@ -353,7 +353,6 @@ class _IncomePageState extends State<IncomePage> {
                 "Gelirler Detayı",
                 style: TextStyle(
                   fontFamily: 'Keep Calm',
-                  color: Colors.black,
                   fontSize: 20.sp,
                   fontWeight: FontWeight.bold,
                 ),
@@ -363,10 +362,14 @@ class _IncomePageState extends State<IncomePage> {
                   padding: EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
-                    color: Colors.white,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[850] // Dark mode color
+                        : Colors.white, // Light mode color
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.grey.withOpacity(0.5),
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.black.withOpacity(0.5) // Dark mode shadow color
+                            : Colors.grey.withOpacity(0.5), // Light mode shadow color
                         spreadRadius: 5,
                         blurRadius: 7,
                         offset: Offset(0, 3),
@@ -388,7 +391,12 @@ class _IncomePageState extends State<IncomePage> {
                                     Text("$selectedTitle Geliri",
                                         style: GoogleFonts.montserrat(
                                             fontSize: 21,
-                                            fontWeight: FontWeight.bold)),
+                                            fontWeight: FontWeight.bold,
+                                          color: Theme.of(context).brightness == Brightness.dark
+                                              ? Colors.grey[850] // Dark mode color
+                                              : Colors.white, // Light mode color
+                                        )
+                                    ),
                                     SizedBox(height: 10),
                                     Row(
                                       mainAxisAlignment:
@@ -450,8 +458,12 @@ class _IncomePageState extends State<IncomePage> {
                                               : Text(formattedIncomeValue,
                                                   style: GoogleFonts.montserrat(
                                                       fontSize: 25,
-                                                      fontWeight:
-                                                          FontWeight.bold)),
+                                                      fontWeight: FontWeight.bold,
+                                                    color: Theme.of(context).brightness == Brightness.dark
+                                                        ? Colors.grey[850] // Dark mode color
+                                                        : Colors.white, // Light mode color
+                                                  )
+                                          ),
                                         ),
                                         SizedBox(width: 20.w),
                                         GestureDetector(
@@ -500,8 +512,18 @@ class _IncomePageState extends State<IncomePage> {
                                                     });
                                                   },
                                             child: isEditing
-                                                ? Icon(Icons.done_rounded)
-                                                : Icon(Icons.edit_rounded)),
+                                                ? Icon(
+                                                Icons.done_rounded,
+                                              color: Theme.of(context).brightness == Brightness.dark
+                                                  ? Colors.grey[850] // Dark mode color
+                                                  : Colors.white, // Light mode color
+                                            )
+                                                : Icon(
+                                                Icons.edit_rounded,
+                                              color: Theme.of(context).brightness == Brightness.dark
+                                                  ? Colors.grey[850] // Dark mode color
+                                                  : Colors.white, // Light mode color
+                                            )),
                                       ],
                                     ),
                                     SizedBox(height: 10),

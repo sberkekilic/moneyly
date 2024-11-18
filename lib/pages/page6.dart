@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -145,16 +146,18 @@ class _Page6State extends State<Page6> {
 
   @override
   Widget build(BuildContext context) {
-
     String formatLocalizedDate(String languageCode) {
       DateFormat dateFormat = DateFormat('dd MMMM yyyy', languageCode);
       return dateFormat.format(DateTime.now());
     }
+    String localizedDate = formatLocalizedDate("tr");
 
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Color.fromARGB(125, 183, 255, 217),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? Color.fromARGB(125, 74, 111, 98) // Dark mode background
+            : Color.fromARGB(125, 183, 255, 217), // Light mode background
         centerTitle: true,
         elevation: 0,
         toolbarHeight: 60.h,
@@ -172,37 +175,40 @@ class _Page6State extends State<Page6> {
           alignment: Alignment.centerLeft,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween, // Distribute space between
               children: [
-                IconButton(
-                  onPressed: () {
-                    context.push('/settings');
-                  },
-                  icon: const Icon(Icons.settings, color: Colors.black),
+                Align(
+                  alignment: Alignment.centerLeft, // Align the Text widget to the left
+                  child: Text(
+                    localizedDate,
+                    style: TextStyle(
+                      fontFamily: 'Keep Calm',
+                      color: Colors.black,
+                      fontSize: 20.sp,
+                    ),
+                  ),
                 ),
-                IconButton(
-                  onPressed: () async {
-                    SharedPreferences prefs = await SharedPreferences.getInstance();
-                    await prefs.clear();
-                    Navigator.pushNamed(context, 'gelir-ekle');
-                  },
-                  icon: FaIcon(FontAwesomeIcons.circleUser, color: Colors.black),
+                Row(
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        context.push('/settings');
+                      },
+                      icon: const Icon(Icons.settings, color: Colors.black),
+                    ),
+                    IconButton(
+                      onPressed: () async {
+                        SharedPreferences prefs = await SharedPreferences.getInstance();
+                        await prefs.clear();
+                        Navigator.pushNamed(context, 'gelir-ekle');
+                      },
+                      icon: FaIcon(FontAwesomeIcons.circleUser, color: Colors.black),
+                    ),
+                  ],
                 ),
               ],
-            ),
-            BlocBuilder<SettingsCubit, SettingsState>(
-              builder: (context, state) {
-                String localizedDate = formatLocalizedDate(state.language);
-                return Text(
-                  localizedDate,
-                  style: TextStyle(
-                    fontFamily: 'Keep Calm',
-                    color: Colors.black,
-                    fontSize: 20.sp,
-                  ),
-                );
-              },
-            ),
+            )
+
           ],
         ),
       ),
@@ -219,7 +225,9 @@ class _Page6State extends State<Page6> {
             decoration: BoxDecoration(
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.5),
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.black.withOpacity(0.5) // Dark mode shadow
+                      : Colors.grey.withOpacity(0.5), // Light mode shadow
                   spreadRadius: 5,
                   blurRadius: 5,
                   offset: const Offset(0, 2),
@@ -243,6 +251,11 @@ class _Page6State extends State<Page6> {
                 data: ThemeData(
                   splashColor: Colors.transparent,
                   highlightColor: Colors.transparent,
+                    bottomNavigationBarTheme: BottomNavigationBarThemeData(
+                      backgroundColor: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.grey[850] // Dark mode background
+                          : Colors.white, // Light mode background
+                    )
                 ),
                 child: BottomNavigationBar(
                   type: BottomNavigationBarType.fixed,

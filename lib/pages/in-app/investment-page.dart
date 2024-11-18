@@ -2400,7 +2400,9 @@ class _InvestmentPageState extends State<InvestmentPage> {
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(20),
-                            color: Color(0xFFD5E1F5),
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? Color(0x7D67C5FF) // Dark mode color
+                                : Color(0xFFD5E1F5),// Light mode color
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,

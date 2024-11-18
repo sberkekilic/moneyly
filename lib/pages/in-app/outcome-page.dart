@@ -968,7 +968,6 @@ class _OutcomePageState extends State<OutcomePage> {
                 "Giderler Detayı",
                 style: TextStyle(
                   fontFamily: 'Keep Calm',
-                  color: Colors.black,
                   fontSize: 20.sp,
                   fontWeight: FontWeight.bold,
                 ),
@@ -978,10 +977,14 @@ class _OutcomePageState extends State<OutcomePage> {
                 padding: EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
-                  color: Colors.white,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.grey[850] // Dark mode color
+                      : Colors.white, // Light mode color
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.5),
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.black.withOpacity(0.5) // Dark mode shadow color
+                          : Colors.grey.withOpacity(0.5), // Light mode shadow color
                       spreadRadius: 5,
                       blurRadius: 7,
                       offset: const Offset(0, 3),
@@ -1060,7 +1063,13 @@ class _OutcomePageState extends State<OutcomePage> {
                                       child: Text(
                                         "%${(percentages[2] * 100).toStringAsFixed(0)}",
                                         textAlign: TextAlign.center,
-                                        style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold),
+                                        style: TextStyle(
+                                            fontSize: 12.sp,
+                                            fontWeight: FontWeight.bold,
+                                          color: Theme.of(context).brightness == Brightness.dark
+                                              ? Colors.grey[850] // Dark mode color
+                                              : Colors.white, // Light mode color
+                                        ),
                                       ),
                                     ),
                                     Expanded(
@@ -1068,7 +1077,13 @@ class _OutcomePageState extends State<OutcomePage> {
                                       child: Text(
                                         "%${(percentages[1] * 100).toStringAsFixed(0)}",
                                         textAlign: TextAlign.center,
-                                        style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold),
+                                        style: TextStyle(
+                                            fontSize: 12.sp,
+                                            fontWeight: FontWeight.bold,
+                                          color: Theme.of(context).brightness == Brightness.dark
+                                              ? Colors.grey[850] // Dark mode color
+                                              : Colors.white, // Light mode color
+                                        ),
                                       ),
                                     ),
                                     Expanded(
@@ -1076,7 +1091,13 @@ class _OutcomePageState extends State<OutcomePage> {
                                       child: Text(
                                         "%${((percentages[2] * 100)+(percentages[1] * 100)).toStringAsFixed(0)}",
                                         textAlign: TextAlign.center,
-                                        style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold),
+                                        style: TextStyle(
+                                            fontSize: 12.sp,
+                                            fontWeight: FontWeight.bold,
+                                          color: Theme.of(context).brightness == Brightness.dark
+                                              ? Colors.grey[850] // Dark mode color
+                                              : Colors.white, // Light mode color
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -1732,10 +1753,14 @@ class _OutcomePageState extends State<OutcomePage> {
                 padding: EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
-                  color: Colors.white,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.grey[850] // Dark mode color
+                      : Colors.white, // Light mode color
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.5),
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.black.withOpacity(0.5) // Dark mode shadow color
+                          : Colors.grey.withOpacity(0.5), // Light mode shadow color
                       spreadRadius: 5,
                       blurRadius: 7,
                       offset: const Offset(0, 3),
@@ -2376,10 +2401,14 @@ class _OutcomePageState extends State<OutcomePage> {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
-                  color: Colors.white,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.grey[850] // Dark mode color
+                      : Colors.white, // Light mode color
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.5),
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.black.withOpacity(0.5) // Dark mode shadow color
+                          : Colors.grey.withOpacity(0.5), // Light mode shadow color
                       spreadRadius: 5,
                       blurRadius: 7,
                       offset: const Offset(0, 3),
@@ -2834,10 +2863,14 @@ class _OutcomePageState extends State<OutcomePage> {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
-                  color: Colors.white,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.grey[850] // Dark mode color
+                      : Colors.white, // Light mode color
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.5),
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.black.withOpacity(0.5) // Dark mode shadow color
+                          : Colors.grey.withOpacity(0.5), // Light mode shadow color
                       spreadRadius: 5,
                       blurRadius: 7,
                       offset: const Offset(0, 3),

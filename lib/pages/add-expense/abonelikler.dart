@@ -189,6 +189,7 @@ class _SubscriptionsState extends State<Subscriptions> {
     TextEditingController selectedPriceController = TextEditingController();
     Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
     _selectedBillingDay = invoice.getPeriodDay();
+    _selectedBillingMonth = invoice.getPeriodMonth();
     _selectedDueDay = invoice.getDueDay();
     invoice.periodDate = formatPeriodDate(_selectedBillingDay ?? 0, _selectedBillingMonth ?? 0);
     if (_selectedDueDay != null) {
@@ -230,11 +231,11 @@ class _SubscriptionsState extends State<Subscriptions> {
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15)
           ),
-          title: Text('Edit Item id:$id',style: GoogleFonts.montserrat(fontSize: 20)),
+          title: Text('Edit Item id:$id',style: GoogleFonts.montserrat(fontSize: 20, color: Colors.white)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Align(alignment: Alignment.centerLeft,child: Text("Item", style: GoogleFonts.montserrat(fontSize: 18),),),
+              Align(alignment: Alignment.centerLeft,child: Text("Item", style: GoogleFonts.montserrat(fontSize: 18, color: Colors.white))),
               const SizedBox(height: 10),
               TextFormField(
                 controller: selectedEditController,
@@ -256,7 +257,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                 style: GoogleFonts.montserrat(fontSize: 20),
               ),
               const SizedBox(height: 10),
-              Align(alignment: Alignment.centerLeft, child: Text("Price",style: GoogleFonts.montserrat(fontSize: 18))),
+              Align(alignment: Alignment.centerLeft, child: Text("Price",style: GoogleFonts.montserrat(fontSize: 18, color: Colors.white))),
               const SizedBox(height: 10),
               TextFormField(
                 controller: selectedPriceController,
@@ -279,7 +280,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 10),
-              Align(alignment: Alignment.centerLeft, child: Text("Period Date",style: GoogleFonts.montserrat(fontSize: 18))),
+              Align(alignment: Alignment.centerLeft, child: Text("Period Date",style: GoogleFonts.montserrat(fontSize: 18, color: Colors.white))),
               const SizedBox(height: 10),
               Row(
                 children: [
@@ -326,6 +327,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                         ),
                       )
                   ),
+                  SizedBox(width: 20.w),
                   Expanded(
                       child: PullDownButton(
                         scrollController: _scrollController,
@@ -369,7 +371,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                 ],
               ),
               const SizedBox(height: 10),
-              Align(alignment: Alignment.centerLeft, child: Text("Due Date",style: GoogleFonts.montserrat(fontSize: 18))),
+              Align(alignment: Alignment.centerLeft, child: Text("Due Date",style: GoogleFonts.montserrat(fontSize: 18, color: Colors.white))),
               const SizedBox(height: 10),
               Align(
                 alignment: Alignment.centerLeft,
@@ -857,9 +859,10 @@ class _SubscriptionsState extends State<Subscriptions> {
                                   children: [
                                     Container(
                                       width: double.infinity,
+                                      padding: const EdgeInsets.all(20),
                                       decoration: BoxDecoration(
                                           color: hasTVSelected ? Colors.black : Colors.black.withOpacity(0.3),
-                                          borderRadius: BorderRadius.circular(15)
+                                          borderRadius: BorderRadius.circular(20)
                                       ),
                                       child: InkWell(
                                         onTap: () {
@@ -875,18 +878,16 @@ class _SubscriptionsState extends State<Subscriptions> {
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            Padding(
-                                                padding: const EdgeInsets.all(20),
-                                                child: Text(
-                                                    "Film, Dizi ve TV",
-                                                    style: GoogleFonts.montserrat(
-                                                        fontSize: 22,
-                                                        fontWeight: FontWeight.bold,
-                                                        color: hasTVSelected ? Colors.white : Colors.black
-                                                    )
+                                            Text(
+                                                "Film, Dizi ve TV",
+                                                style: GoogleFonts.montserrat(
+                                                    fontSize: 22,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: hasTVSelected ? Colors.white : Colors.black
                                                 )
                                             ),
-                                            ListView.builder(
+                                            SizedBox(height: 10),
+                                            /*ListView.builder(
                                               physics: NeverScrollableScrollPhysics(),
                                               shrinkWrap: true,
                                               itemCount: invoices.length,
@@ -895,69 +896,90 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                 String invoiceText = invoice.toDisplayString();
                                                 return Text(invoiceText, style: TextStyle(color: hasTVSelected ? Colors.white : Colors.black));
                                               },
-                                            ),
-                                            if (invoices.isNotEmpty && invoices.isNotEmpty)
-                                              ListView.builder(
-                                                shrinkWrap: true,
-                                                itemCount: idsWithTVTargetCategory.length,
-                                                itemBuilder: (BuildContext context, int i) {
-                                                  int id = idsWithTVTargetCategory[i];
+                                            ),*/
+                                            if (invoices.isNotEmpty && idsWithTVTargetCategory.isNotEmpty)
+                                              Column(
+                                                children: idsWithTVTargetCategory.asMap().entries.map((entry) {
+                                                  int i = entry.key; // The index
+                                                  int id = entry.value; // The id at this index
                                                   Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
+
+                                                  // Background color for each container
+                                                  Color backgroundColor = Colors.grey;
+
                                                   return Container(
-                                                    padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
-                                                    child: Row(
+                                                    margin: const EdgeInsets.only(bottom: 10),
+                                                    padding: const EdgeInsets.all(15),
+                                                    decoration: BoxDecoration(
+                                                      color: backgroundColor,
+                                                      borderRadius: BorderRadius.circular(12), // Rounded corners
+                                                      border: Border.all(color: Colors.grey.shade400, width: 0.5),
+                                                    ),
+                                                    child: Column(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
                                                       children: [
-                                                        Flexible(
-                                                          flex: 4,
-                                                          fit: FlexFit.tight,
-                                                          child: Text(
-                                                            textAlign: TextAlign.center,
-                                                            invoice.name,
-                                                            style: GoogleFonts.montserrat(fontSize: 20),
-                                                            overflow: TextOverflow.ellipsis,
+                                                        // Label and Value for Name
+                                                        Row(
+                                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                          children: [
+                                                            Text(
+                                                              "Name",
+                                                              style: GoogleFonts.montserrat(
+                                                                fontSize: 16,
+                                                                fontWeight: FontWeight.bold,
+                                                                color: Colors.black54,
+                                                              ),
+                                                            ),
+                                                            GestureDetector(
+                                                              onTap: () {
+                                                                _showEditDialog(context, i, 1, id); // Pass the index and id
+                                                              },
+                                                              child: Icon(
+                                                                Icons.edit,
+                                                                size: 21,
+                                                                color: hasTVSelected ? Colors.blueAccent : Colors.black,
+                                                              )
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        Text(
+                                                          invoice.name,
+                                                          style: GoogleFonts.montserrat(fontSize: 18),
+                                                        ),
+                                                        SizedBox(height: 10),
+                                                        // Label and Value for Price
+                                                        Text(
+                                                          "Price",
+                                                          style: GoogleFonts.montserrat(
+                                                            fontSize: 16,
+                                                            fontWeight: FontWeight.bold,
+                                                            color: Colors.black54,
                                                           ),
                                                         ),
-                                                        Flexible(
-                                                          flex: 4,
-                                                          fit: FlexFit.tight,
-                                                          child: Text(
-                                                            invoice.price,
-                                                            style: GoogleFonts.montserrat(fontSize: 20),
-                                                            overflow: TextOverflow.ellipsis,
-                                                          ),
-                                                        ),
-                                                        Flexible(
-                                                          flex: 4,
-                                                          fit: FlexFit.tight,
-                                                          child: Text(
-                                                            invoice.subCategory,
-                                                            style: GoogleFonts.montserrat(fontSize: 20),
-                                                            overflow: TextOverflow.ellipsis,
-                                                          ),
-                                                        ),
-                                                        Flexible(
-                                                          flex: 4,
-                                                          fit: FlexFit.tight,
-                                                          child: Text(
-                                                            id.toString(),
-                                                            style: GoogleFonts.montserrat(fontSize: 20),
-                                                            overflow: TextOverflow.ellipsis,
-                                                          ),
-                                                        ),
-                                                        const SizedBox(width: 20),
-                                                        IconButton(
-                                                          splashRadius: 0.0001,
-                                                          padding: EdgeInsets.zero,
-                                                          constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                                          icon: Icon(Icons.edit, size: 21, color: hasTVSelected ? Colors.white : Colors.black),
-                                                          onPressed: () {
-                                                            _showEditDialog(context, i, 1, id); // Show the edit dialog
-                                                          },
+                                                        Text(
+                                                          invoice.price,
+                                                          style: GoogleFonts.montserrat(fontSize: 18),
                                                         ),
                                                       ],
                                                     ),
                                                   );
-                                                },
+                                                }).toList(),
+                                              ),
+                                            if (formattedTvSum != "0,00" && !isTextFormFieldVisible)
+                                              Column(
+                                                children: [
+                                                  Container(
+                                                    decoration: BoxDecoration(
+                                                      color: Color.fromARGB(120, 152, 255, 170),
+                                                      borderRadius: BorderRadius.circular(10),
+                                                    ),
+                                                    padding: EdgeInsets.all(10),
+                                                    child: SizedBox(
+                                                      child: Text("Toplam: $formattedTvSum", style: GoogleFonts.montserrat(fontSize: 20, color: Colors.white),),
+                                                    ),
+                                                  ),
+                                                  SizedBox(height: 10)
+                                                ],
                                               ),
                                             if (isTextFormFieldVisible && hasTVSelected)
                                               Container(
@@ -1257,31 +1279,33 @@ class _SubscriptionsState extends State<Subscriptions> {
                                               ),
                                             if (!isEditingList && !isTextFormFieldVisible)
                                               Container(
-                                                padding: const EdgeInsets.all(10),
-                                                child: Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                  children: [
-                                                    InkWell(
-                                                      onTap: () {
-                                                        setState(() {
-                                                          hasTVSelected = true;
-                                                          hasGameSelected = false;
-                                                          hasMusicSelected = false;
-                                                          isAddButtonActive = true;
-                                                          isTextFormFieldVisible = true;
-                                                          isTextFormFieldVisibleND =false;
-                                                          isTextFormFieldVisibleRD = false;
-                                                          platformPriceController.clear();
-                                                        });
-                                                      },
-                                                      child: Icon(Icons.add_circle, size: 26, color: hasTVSelected ? Colors.white : Colors.black),
-                                                    ),
-                                                    if (formattedTvSum != "0,00")
-                                                      Padding(
-                                                        padding: const EdgeInsets.only(right: 43),
-                                                        child: Text("Toplam: $formattedTvSum", style: GoogleFonts.montserrat(fontSize: 20),),
+                                                decoration: BoxDecoration(
+                                                  color: Color.fromARGB(120, 152, 255, 170),
+                                                  borderRadius: BorderRadius.circular(10),
+                                                ),
+                                                padding: EdgeInsets.only(left: 20,right: 20),
+                                                child: SizedBox(
+                                                  child: Row(
+                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                    children: [
+                                                      Text("Abonelik Ekle", style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w600)),
+                                                      IconButton(
+                                                        onPressed: () {
+                                                          setState(() {
+                                                            hasTVSelected = true;
+                                                            hasGameSelected = false;
+                                                            hasMusicSelected = false;
+                                                            isAddButtonActive = true;
+                                                            isTextFormFieldVisible = true;
+                                                            isTextFormFieldVisibleND =false;
+                                                            isTextFormFieldVisibleRD = false;
+                                                            platformPriceController.clear();
+                                                          });
+                                                        },
+                                                        icon: Icon(Icons.add_circle, size: 26, color: hasTVSelected ? Colors.white : Colors.black),
                                                       ),
-                                                  ],
+                                                    ],
+                                                  ),
                                                 ),
                                               ),
                                           ],
@@ -1657,7 +1681,10 @@ class _SubscriptionsState extends State<Subscriptions> {
               ),
               bottomNavigationBar: Container(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.only(topLeft: Radius.circular(15), topRight: Radius.circular(15)),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(15),
+                    topRight: Radius.circular(15),
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.3),
@@ -1671,31 +1698,42 @@ class _SubscriptionsState extends State<Subscriptions> {
                   child: Row(
                     children: [
                       Container(
-                        height: 42.h,
-                        width: 42.h,
+                        height: 50,
+                        width: 50,
                         color: Colors.white,
-                        child: ElevatedButton(
+                        alignment: Alignment.center, // Center the button within the container
+                        child: SizedBox(
+                          height: 50,
+                          width: 50,
+                          child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12)),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                               backgroundColor: sumAll != 0.0 ? Colors.black : Colors.grey,
+                              padding: EdgeInsets.zero, // Remove padding to center the icon
                             ),
                             clipBehavior: Clip.hardEdge,
                             onPressed: () {
                               context.go('/');
                             },
-                            child: Icon(Icons.arrow_back, color: sumAll != 0.0 ? Colors.white : Colors.black, size: 20.sp,)
+                            child: Icon(
+                              Icons.arrow_back,
+                              color: sumAll != 0.0 ? Colors.white : Colors.black,
+                              size: 20.sp,
+                            ),
+                          ),
                         ),
                       ),
                       SizedBox(width: 20.w),
                       Expanded(
                         child: Container(
-                          height: 42.h,
+                          height: 50,
                           color: Colors.white,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15)
+                                borderRadius: BorderRadius.circular(15),
                               ),
                               backgroundColor: sumAll != 0.0 ? Colors.black : Colors.grey,
                             ),
@@ -1703,7 +1741,10 @@ class _SubscriptionsState extends State<Subscriptions> {
                             onPressed: sumAll != 0.0 ? () {
                               goToNextPage();
                             } : null,
-                            child: Text('Sonraki', style: GoogleFonts.montserrat(fontSize: 18)),
+                            child: Text(
+                              'Sonraki',
+                              style: GoogleFonts.montserrat(fontSize: 18),
+                            ),
                           ),
                         ),
                       ),

@@ -711,303 +711,497 @@ class _BillsState extends State<Bills> {
         child: BlocBuilder<FormBloc, FormStateCustom>(
             builder: (context, state) {
               return Scaffold(
-                  appBar: AppBar(
-                    backgroundColor: Color(0xfff0f0f1),
-                    elevation: 0,
-                    toolbarHeight: 70,
-                    automaticallyImplyLeading: false,
-                    leadingWidth: 30,
-                    title: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            IconButton(
-                              onPressed: () {
-                                context.go('/subs');
-                              },
-                              icon: Icon(Icons.arrow_back, color: Colors.black), // Replace with the desired left icon
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                context.go('/');
-                              },
-                              icon: Icon(Icons.clear, color: Colors.black), // Replace with the desired right icon
-                            ),
-                          ],
-                        ),
-                        Text(
-                          "Gider Ekle",
-                          style: GoogleFonts.montserrat(color: Colors.black, fontSize: 28, fontWeight: FontWeight.normal),
-                        ),
-                      ],
-                    ),
-                  ),
-                  bottomNavigationBar: BottomAppBar(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 10, bottom: 10),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          SizedBox(width: 20),
-                          Expanded(
-                            child: Container(
-                              height: 50,
-                              color: Colors.white,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12)),
-                                  backgroundColor: sumAll!=0.0 ? Colors.black : Colors.grey,
-                                ),
-                                clipBehavior: Clip.hardEdge,
-                                onPressed: sumAll!=0.0 ? () {
-                                  goToNextPage();
-                                } : null,
-                                child: Text('Sonraki', style: GoogleFonts.montserrat(fontSize: 18),),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 20),
-                        ],
+                appBar: AppBar(
+                  backgroundColor: const Color(0xfff0f0f1),
+                  elevation: 0,
+                  toolbarHeight: 60.h,
+                  automaticallyImplyLeading: false,
+                  leadingWidth: 30.w,
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                          "Faturalar",
+                          style: TextStyle(
+                              fontFamily: 'Keep Calm',
+                              color: Colors.black,
+                              fontSize: 28.sp
+                          )
                       ),
-                    ),
+                      Text(
+                          "3/4",
+                          style: TextStyle(
+                              fontFamily: 'Keep Calm',
+                              color: Colors.black,
+                              fontSize: 24.sp
+                          )
+                      ),
+                    ],
                   ),
+                ),
                   body: Stack(
                     children: [
-                      Positioned(
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        child: Container(
-                          color: Color(0xfff0f0f1),
-                          padding: EdgeInsets.only(left: 20, right: 20),
-                          child: Column(
-                            children: [
-                              Container(
-                                height: 60,
-                                child: ListView(
-                                  controller: ScrollController(initialScrollOffset: (screenWidth - 60) / 3 + 10),
-                                  scrollDirection: Axis.horizontal,
-                                  children: [
-                                    InkWell(
-                                      onTap: (){
-                                        Navigator.pushNamed(context, 'gelir-ekle');
-                                      },
-                                      splashColor: Colors.grey,
-                                      borderRadius: BorderRadius.circular(10),
-                                      child: Container(
-                                        height: 50,
-                                        width: (screenWidth-60) / 3,
-                                        child: Column(
-                                          children: [
-                                            Align(child: Text("Gelir", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 15)), alignment: Alignment.center),
-                                            SizedBox(height: 10),
-                                            ClipRRect(
-                                              borderRadius: BorderRadius.circular(10),
-                                              child: Container(
-                                                  height: 8,
-                                                  width: (screenWidth-60) / 3,
-                                                  color: Color(
-                                                      0xff1ab738)
-                                              ),
-                                            )
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(width: 10),
-                                    InkWell(
-                                      onTap: (){
-                                        Navigator.pushNamed(context, 'abonelikler');
-                                      },
-                                      splashColor: Colors.grey,
-                                      borderRadius: BorderRadius.circular(10),
-                                      child: Container(
-                                        height: 50,
-                                        width: (screenWidth-60) / 3,
-                                        child: Column(
-                                          children: [
-                                            Align(child: Text("Abonelikler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 15)), alignment: Alignment.center),
-                                            SizedBox(height: 10),
-                                            ClipRRect(
-                                              borderRadius: BorderRadius.circular(10),
-                                              child: Container(
-                                                height: 8,
-                                                width: (screenWidth-60) / 3,
-                                                color: Color(0xff1ab738),
-                                              ),
-                                            )
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(width: 10),
-                                    InkWell(
-                                      splashColor: Colors.grey,
-                                      borderRadius: BorderRadius.circular(10),
-                                      child: Container(
-                                        height: 50,
-                                        width: (screenWidth-60) / 3,
-                                        child: Column(
-                                          children: [
-                                            Align(child: Text("Faturalar", style: GoogleFonts.montserrat(color: Color(0xff1ab738), fontWeight: FontWeight.bold, fontSize: 15)), alignment: Alignment.center),
-                                            SizedBox(height: 10),
-                                            ClipRRect(
-                                              borderRadius: BorderRadius.circular(10),
-                                              child: Container(
-                                                height: 8,
-                                                width: (screenWidth-60) / 3,
-                                                color: Color(0xff1ab738),
-                                              ),
-                                            )
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(width: 10),
-                                    InkWell(
-                                      splashColor: Colors.grey,
-                                      borderRadius: BorderRadius.circular(10),
-                                      child: Container(
-                                        height: 50,
-                                        width: ((screenWidth-60) / 3) + 10,
-                                        child: Column(
-                                          children: [
-                                            Align(
-                                                child: Text(
-                                                    "Diğer Giderler",
-                                                    style: GoogleFonts.montserrat(
-                                                        color: Color(0xffc6c6c7),
-                                                        fontSize: 15)
-                                                ),
-                                                alignment: Alignment.center
-                                            ),
-                                            SizedBox(height: 10),
-                                            ClipRRect(
-                                              borderRadius: BorderRadius.circular(10),
-                                              child: Container(
-                                                height: 8,
-                                                width: ((screenWidth-60) / 3) + 10,
-                                                color: Color(
-                                                    0xffc6c6c7),
-                                              ),
-                                            )
-                                          ],
-                                        ),
-                                      ),
-                                    )
-                                  ],
-                                ),
-                              )
-                            ],
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        top: 60, // Adjust the top position as needed
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        child: Container(
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.only(topLeft: Radius.circular(15), topRight: Radius.circular(15)),
-                              boxShadow: [
-                                BoxShadow(
-                                    color: Colors.black.withOpacity(0.3),
-                                    spreadRadius: 2,
-                                    blurRadius: 10,
-                                    offset: Offset(0, 4)
-                                )
-                              ]
-                          ),
-                          child: ClipRRect(
+                      Container(
+                        decoration: BoxDecoration(
                             borderRadius: BorderRadius.only(topLeft: Radius.circular(15), topRight: Radius.circular(15)),
-                            child: Container(
-                              color: Colors.white,
-                              child: SingleChildScrollView(
-                                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left:20, right: 20, bottom: 20),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [Padding(
-                                      padding: const EdgeInsets.only(top: 40),
-                                      child: Center(
-                                        child: Column(
-                                          children: [
-                                            Container(
-                                              width: double.infinity,
-                                              decoration: BoxDecoration(
-                                                borderRadius: BorderRadius.circular(10),
-                                                border: Border.all(
-                                                  color: hasHomeSelected ? Colors.black : Colors.black.withOpacity(0.5),
-                                                  width: hasHomeSelected ? 4 : 2,
-                                                ),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.black.withOpacity(0.3),
+                                  spreadRadius: 2,
+                                  blurRadius: 10,
+                                  offset: Offset(0, 4)
+                              )
+                            ]
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.only(topLeft: Radius.circular(15), topRight: Radius.circular(15)),
+                          child: Container(
+                            color: Colors.white,
+                            child: SingleChildScrollView(
+                              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                              child: Padding(
+                                padding: const EdgeInsets.only(left:20, right: 20, bottom: 20),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [Padding(
+                                    padding: const EdgeInsets.only(top: 40),
+                                    child: Center(
+                                      child: Column(
+                                        children: [
+                                          Container(
+                                            width: double.infinity,
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(10),
+                                              border: Border.all(
+                                                color: hasHomeSelected ? Colors.black : Colors.black.withOpacity(0.5),
+                                                width: hasHomeSelected ? 4 : 2,
                                               ),
-                                              child: InkWell(
-                                                onTap: () {
-                                                  if(isAddButtonActive==false){
-                                                    handleHomeBillsContainer();
-                                                    isAddButtonActiveND = false;
-                                                    isAddButtonActiveRD = false;
-                                                  } else {
-                                                    isAddButtonActiveND = false;
-                                                    isAddButtonActiveRD = false;
-                                                  }
-                                                },
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Padding(
-                                                        padding: EdgeInsets.all(10),
-                                                        child: Text("Ev Faturaları",style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold),)
+                                            ),
+                                            child: InkWell(
+                                              onTap: () {
+                                                if(isAddButtonActive==false){
+                                                  handleHomeBillsContainer();
+                                                  isAddButtonActiveND = false;
+                                                  isAddButtonActiveRD = false;
+                                                } else {
+                                                  isAddButtonActiveND = false;
+                                                  isAddButtonActiveRD = false;
+                                                }
+                                              },
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Padding(
+                                                      padding: EdgeInsets.all(10),
+                                                      child: Text("Ev Faturaları",style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold),)
+                                                  ),
+                                                  if (invoices.isNotEmpty && invoices.isNotEmpty)
+                                                    ListView.builder(
+                                                      shrinkWrap: true,
+                                                      itemCount: idsWithHBTargetCategory.length,
+                                                      itemBuilder: (BuildContext context, int i) {
+                                                        int id = idsWithHBTargetCategory[i];
+                                                        Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
+                                                        return Container(
+                                                          padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+                                                          child: Row(
+                                                            children: [
+                                                              Flexible(
+                                                                flex: 4,
+                                                                fit: FlexFit.tight,
+                                                                child: Text(
+                                                                  textAlign: TextAlign.center,
+                                                                  invoice.name,
+                                                                  style: GoogleFonts.montserrat(fontSize: 20),
+                                                                  overflow: TextOverflow.ellipsis,
+                                                                ),
+                                                              ),
+                                                              Flexible(
+                                                                flex: 4,
+                                                                fit: FlexFit.tight,
+                                                                child: Text(
+                                                                  invoice.price,
+                                                                  style: GoogleFonts.montserrat(fontSize: 20),
+                                                                  overflow: TextOverflow.ellipsis,
+                                                                ),
+                                                              ),
+                                                              Flexible(
+                                                                flex: 4,
+                                                                fit: FlexFit.tight,
+                                                                child: Text(
+                                                                  invoice.subCategory,
+                                                                  style: GoogleFonts.montserrat(fontSize: 20),
+                                                                  overflow: TextOverflow.ellipsis,
+                                                                ),
+                                                              ),
+                                                              Flexible(
+                                                                flex: 4,
+                                                                fit: FlexFit.tight,
+                                                                child: Text(
+                                                                  id.toString(),
+                                                                  style: GoogleFonts.montserrat(fontSize: 20),
+                                                                  overflow: TextOverflow.ellipsis,
+                                                                ),
+                                                              ),
+                                                              SizedBox(width: 20),
+                                                              IconButton(
+                                                                splashRadius: 0.0001,
+                                                                padding: EdgeInsets.zero,
+                                                                constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                                                icon: Icon(Icons.edit, size: 21),
+                                                                onPressed: () {
+                                                                  _showEditDialog(context, i, 1, id); // Show the edit dialog
+                                                                },
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        );
+                                                      },
                                                     ),
-                                                    if (invoices.isNotEmpty && invoices.isNotEmpty)
+                                                  if (isTextFormFieldVisible && hasHomeSelected)
+                                                    Container(
+                                                      padding: EdgeInsets.all(10),
+                                                      child: SingleChildScrollView(
+                                                        child: Column(
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          children: [
+                                                            Text("Fatura Adı"),
+                                                            SizedBox(height: 5.h),
+                                                            TextFormField(
+                                                              controller: textController,
+                                                              decoration: InputDecoration(
+                                                                isDense: true,
+                                                                contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
+                                                                filled: true,
+                                                                hoverColor: Colors.blue,
+                                                                border: OutlineInputBorder(
+                                                                  borderRadius: BorderRadius.circular(10),
+                                                                ),
+                                                                hintText: 'ABA',
+                                                              ),
+                                                            ),
+                                                            SizedBox(height: 10.h),
+                                                            Text("Tutar"),
+                                                            SizedBox(height: 5.h),
+                                                            TextFormField(
+                                                              controller: platformPriceController,
+                                                              keyboardType: TextInputType.number, // Show numeric keyboard
+                                                              decoration: InputDecoration(
+                                                                isDense: true,
+                                                                contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
+                                                                filled: true,
+                                                                hoverColor: Colors.blue,
+                                                                border: OutlineInputBorder(
+                                                                  borderRadius: BorderRadius.circular(10),
+                                                                ),
+                                                                hintText: 'GAG',
+                                                              ),
+                                                            ),
+                                                            SizedBox(height: 10.h),
+                                                            Row(
+                                                              children: [
+                                                                Expanded(
+                                                                  child: Column(
+                                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                                    children: [
+                                                                      Text("Başlangıç Tarihi"),
+                                                                      SizedBox(height: 5.h),
+                                                                      Row(
+                                                                        children: [
+                                                                          Expanded(
+                                                                            child: DropdownButtonFormField2<int>(
+                                                                              value: _selectedBillingDay,
+                                                                              onChanged: (value) {
+                                                                                setState(() {
+                                                                                  _selectedBillingDay = value;
+                                                                                });
+                                                                              },
+                                                                              isExpanded: true,
+                                                                              decoration: InputDecoration(
+                                                                                contentPadding: const EdgeInsets.fromLTRB(0, 5, 0, 0),
+                                                                                isDense: true,
+                                                                                border: OutlineInputBorder(
+                                                                                  borderRadius: BorderRadius.circular(10),
+                                                                                ),
+                                                                              ),
+                                                                              hint: const Text(
+                                                                                'Gün',
+                                                                                style: TextStyle(fontSize: 14),
+                                                                              ),
+                                                                              buttonStyleData: const ButtonStyleData(
+                                                                                padding: EdgeInsets.only(right: 8),
+                                                                              ),
+                                                                              iconStyleData: const IconStyleData(
+                                                                                icon: Icon(
+                                                                                  Icons.arrow_drop_down,
+                                                                                  color: Colors.black45,
+                                                                                ),
+                                                                                iconSize: 24,
+                                                                              ),
+                                                                              dropdownStyleData: DropdownStyleData(
+                                                                                decoration: BoxDecoration(
+                                                                                  borderRadius: BorderRadius.circular(15),
+                                                                                ),
+                                                                              ),
+                                                                              menuItemStyleData: const MenuItemStyleData(
+                                                                                padding: EdgeInsets.symmetric(horizontal: 16),
+                                                                              ),
+                                                                              items: daysList.map((day) {
+                                                                                return DropdownMenuItem<int>(
+                                                                                  value: day,
+                                                                                  child: Text(day.toString()),
+                                                                                );
+                                                                              }).toList(),
+                                                                            ),
+                                                                          ),
+                                                                          SizedBox(width: 10),
+                                                                          Expanded(
+                                                                            child: DropdownButtonFormField2<int>(
+                                                                              value: _selectedBillingMonth,
+                                                                              onChanged: (value) {
+                                                                                setState(() {
+                                                                                  _selectedBillingMonth = value;
+                                                                                });
+                                                                              },
+                                                                              isExpanded: true,
+                                                                              decoration: InputDecoration(
+                                                                                contentPadding: const EdgeInsets.fromLTRB(0, 5, 0, 0),
+                                                                                isDense: true,
+                                                                                border: OutlineInputBorder(
+                                                                                  borderRadius: BorderRadius.circular(10),
+                                                                                ),
+                                                                              ),
+                                                                              hint: const Text(
+                                                                                'Ay',
+                                                                                style: TextStyle(fontSize: 14),
+                                                                              ),
+                                                                              buttonStyleData: const ButtonStyleData(
+                                                                                padding: EdgeInsets.only(right: 8),
+                                                                              ),
+                                                                              iconStyleData: const IconStyleData(
+                                                                                icon: Icon(
+                                                                                  Icons.arrow_drop_down,
+                                                                                  color: Colors.black45,
+                                                                                ),
+                                                                                iconSize: 24,
+                                                                              ),
+                                                                              dropdownStyleData: DropdownStyleData(
+                                                                                decoration: BoxDecoration(
+                                                                                  borderRadius: BorderRadius.circular(15),
+                                                                                ),
+                                                                              ),
+                                                                              menuItemStyleData: const MenuItemStyleData(
+                                                                                padding: EdgeInsets.symmetric(horizontal: 16),
+                                                                              ),
+                                                                              items: monthsList.map((month) {
+                                                                                return DropdownMenuItem<int>(
+                                                                                  value: month,
+                                                                                  child: Text(month.toString()),
+                                                                                );
+                                                                              }).toList(),
+                                                                            ),
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                                      SizedBox(height: 10.h),
+                                                                      Text("Son Ödeme Tarihi"),
+                                                                      SizedBox(height: 5.h),
+                                                                      DropdownButtonFormField2<int>(
+                                                                        value: _selectedDueDay,
+                                                                        onChanged: (value) {
+                                                                          setState(() {
+                                                                            _selectedDueDay = value;
+                                                                          });
+                                                                        },
+                                                                        isExpanded: true,
+                                                                        decoration: InputDecoration(
+                                                                          contentPadding: const EdgeInsets.fromLTRB(0, 5, 0, 0),
+                                                                          isDense: true,
+                                                                          border: OutlineInputBorder(
+                                                                            borderRadius: BorderRadius.circular(10),
+                                                                          ),
+                                                                        ),
+                                                                        hint: const Text(
+                                                                          'Gün',
+                                                                          style: TextStyle(fontSize: 14),
+                                                                        ),
+                                                                        buttonStyleData: const ButtonStyleData(
+                                                                          padding: EdgeInsets.only(right: 8),
+                                                                        ),
+                                                                        iconStyleData: const IconStyleData(
+                                                                          icon: Icon(
+                                                                            Icons.arrow_drop_down,
+                                                                            color: Colors.black45,
+                                                                          ),
+                                                                          iconSize: 24,
+                                                                        ),
+                                                                        dropdownStyleData: DropdownStyleData(
+                                                                          decoration: BoxDecoration(
+                                                                            borderRadius: BorderRadius.circular(15),
+                                                                          ),
+                                                                        ),
+                                                                        menuItemStyleData: const MenuItemStyleData(
+                                                                          padding: EdgeInsets.symmetric(horizontal: 16),
+                                                                        ),
+                                                                        items: daysList.map((day) {
+                                                                          return DropdownMenuItem<int>(
+                                                                            value: day,
+                                                                            child: Text(day.toString()),
+                                                                          );
+                                                                        }).toList(),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                ),
+                                                                Column(
+                                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                  children: [
+                                                                    IconButton(
+                                                                      onPressed: () {
+                                                                        setState(() {
+                                                                          int maxId = 0; // Initialize with the lowest possible value
+                                                                          for (var invoice in invoices) {
+                                                                            if (invoice.id > maxId) {
+                                                                              maxId = invoice.id;
+                                                                            }
+                                                                          }
+                                                                          int newId = maxId + 1;
+                                                                          final text = textController.text.trim();
+                                                                          final priceText = platformPriceController.text.trim();
+                                                                          double dprice = double.tryParse(priceText) ?? 0.0;
+                                                                          String price = dprice.toStringAsFixed(2);
+                                                                          final invoice = Invoice(
+                                                                              id: newId,
+                                                                              price: price,
+                                                                              subCategory: 'Ev Faturaları',
+                                                                              category: "Faturalar",
+                                                                              name: text,
+                                                                              periodDate: formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!, DateTime.now().year),
+                                                                              dueDate: _selectedDueDay != null
+                                                                                  ? formatDueDate(_selectedDueDay!, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!, DateTime.now().year))
+                                                                                  : null,
+                                                                              difference: "fa2"
+                                                                          );
+                                                                          onSave(invoice);
+                                                                          if (text.isNotEmpty && priceText.isNotEmpty) {
+                                                                            setState(() {
+                                                                              isEditingList = false; // Add a corresponding entry for the new item
+                                                                              textController.clear();
+                                                                              platformPriceController.clear();
+                                                                              isTextFormFieldVisible = false;
+                                                                              isAddButtonActive = false;
+                                                                            });
+                                                                          }
+                                                                        });
+                                                                      },
+                                                                      icon: Icon(Icons.check_circle, size: 26),
+                                                                    ),
+                                                                    IconButton(
+                                                                      onPressed: () {
+                                                                        setState(() {
+                                                                          isTextFormFieldVisible = false;
+                                                                          isAddButtonActive = false;
+                                                                          textController.clear();
+                                                                          platformPriceController.clear();
+                                                                        });
+                                                                      },
+                                                                      icon: Icon(Icons.cancel, size: 26),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  if (!isEditingList && !isTextFormFieldVisible)
+                                                    Container(
+                                                      padding: EdgeInsets.all(10),
+                                                      child: Row(
+                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                        children: [
+                                                          InkWell(
+                                                            onTap: () {
+                                                              setState(() {
+                                                                hasHomeSelected = true;
+                                                                hasInternetSelected = false;
+                                                                hasPhoneSelected = false;
+                                                                isAddButtonActive = true;
+                                                                isTextFormFieldVisible = true;
+                                                                isTextFormFieldVisibleND =false;
+                                                                isTextFormFieldVisibleRD = false;
+                                                                platformPriceController.clear();
+                                                              });
+                                                            },
+                                                            child: Icon(Icons.add_circle, size: 26),
+                                                          ),
+                                                          if (formattedHbSum != "0,00")
+                                                            Padding(
+                                                              padding: const EdgeInsets.only(right: 43),
+                                                              child: Text("Toplam: $formattedHbSum", style: GoogleFonts.montserrat(fontSize: 20),),
+                                                            ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(height: 20),
+                                          Container(
+                                            width: double.infinity,
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(10),
+                                              border: Border.all(
+                                                color: hasInternetSelected ? Colors.black : Colors.black.withOpacity(0.5),
+                                                width: hasInternetSelected ? 4 : 2,
+                                              ),
+                                            ),
+                                            child: InkWell(
+                                              onTap: () {
+                                                if(isAddButtonActive==false){
+                                                  handleInternetContainerTouch();
+                                                  isAddButtonActiveND = false;
+                                                  isAddButtonActiveRD = false;
+                                                } else {
+                                                  isAddButtonActiveND = false;
+                                                  isAddButtonActiveRD = false;
+                                                }
+                                              },
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Padding(
+                                                      padding: EdgeInsets.all(10),
+                                                      child: Text("İnternet",style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold),)
+                                                  ),
+                                                  if (internetTitleList.isNotEmpty && internetPriceList.isNotEmpty)
+                                                    Container(
+                                                      child:
                                                       ListView.builder(
                                                         shrinkWrap: true,
-                                                        itemCount: idsWithHBTargetCategory.length,
+                                                        itemCount: internetTitleList.length,
                                                         itemBuilder: (BuildContext context, int i) {
-                                                          int id = idsWithHBTargetCategory[i];
-                                                          Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
                                                           return Container(
                                                             padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
                                                             child: Row(
                                                               children: [
                                                                 Flexible(
-                                                                  flex: 4,
+                                                                  flex: 2,
                                                                   fit: FlexFit.tight,
                                                                   child: Text(
-                                                                    textAlign: TextAlign.center,
-                                                                    invoice.name,
+                                                                    internetTitleList[i],
                                                                     style: GoogleFonts.montserrat(fontSize: 20),
                                                                     overflow: TextOverflow.ellipsis,
                                                                   ),
                                                                 ),
                                                                 Flexible(
-                                                                  flex: 4,
+                                                                  flex: 2,
                                                                   fit: FlexFit.tight,
                                                                   child: Text(
-                                                                    invoice.price,
-                                                                    style: GoogleFonts.montserrat(fontSize: 20),
-                                                                    overflow: TextOverflow.ellipsis,
-                                                                  ),
-                                                                ),
-                                                                Flexible(
-                                                                  flex: 4,
-                                                                  fit: FlexFit.tight,
-                                                                  child: Text(
-                                                                    invoice.subCategory,
-                                                                    style: GoogleFonts.montserrat(fontSize: 20),
-                                                                    overflow: TextOverflow.ellipsis,
-                                                                  ),
-                                                                ),
-                                                                Flexible(
-                                                                  flex: 4,
-                                                                  fit: FlexFit.tight,
-                                                                  child: Text(
-                                                                    id.toString(),
+                                                                    textAlign: TextAlign.right,
+                                                                    internetPriceList[i].toString(),
                                                                     style: GoogleFonts.montserrat(fontSize: 20),
                                                                     overflow: TextOverflow.ellipsis,
                                                                   ),
@@ -1019,7 +1213,7 @@ class _BillsState extends State<Bills> {
                                                                   constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
                                                                   icon: Icon(Icons.edit, size: 21),
                                                                   onPressed: () {
-                                                                    _showEditDialog(context, i, 1, id); // Show the edit dialog
+                                                                    _showEditDialog(context, i, 2, 1); // Show the edit dialog
                                                                   },
                                                                 ),
                                                               ],
@@ -1027,657 +1221,293 @@ class _BillsState extends State<Bills> {
                                                           );
                                                         },
                                                       ),
-                                                    if (isTextFormFieldVisible && hasHomeSelected)
-                                                      Container(
-                                                        padding: EdgeInsets.all(10),
-                                                        child: SingleChildScrollView(
-                                                          child: Column(
-                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                    ),
+                                                  if (isTextFormFieldVisibleND && hasInternetSelected)
+                                                    Container(
+                                                      padding: EdgeInsets.all(10),
+                                                      child: Row(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          Expanded(
+                                                            child: TextFormField(
+                                                              controller: NDtextController,
+                                                              decoration: InputDecoration(
+                                                                border: InputBorder.none,
+                                                                hintText: 'ABA',
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          SizedBox(width: 10),
+                                                          Expanded(
+                                                            child: TextFormField(
+                                                              controller: NDplatformPriceController,
+                                                              keyboardType: TextInputType.number, // Show numeric keyboard
+                                                              decoration: InputDecoration(
+                                                                border: InputBorder.none,
+                                                                hintText: 'GAG',
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          Wrap(
                                                             children: [
-                                                              Text("Fatura Adı"),
-                                                              SizedBox(height: 5.h),
-                                                              TextFormField(
-                                                                controller: textController,
-                                                                decoration: InputDecoration(
-                                                                  isDense: true,
-                                                                  contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
-                                                                  filled: true,
-                                                                  hoverColor: Colors.blue,
-                                                                  border: OutlineInputBorder(
-                                                                    borderRadius: BorderRadius.circular(10),
-                                                                  ),
-                                                                  hintText: 'ABA',
-                                                                ),
+                                                              IconButton(
+                                                                onPressed: () {
+                                                                  final text = NDtextController.text.trim();
+                                                                  final priceText = NDplatformPriceController.text.trim();
+                                                                  if (text.isNotEmpty && priceText.isNotEmpty) {
+                                                                    double dprice = double.tryParse(priceText) ?? 0.0;
+                                                                    String price = dprice.toStringAsFixed(2);
+                                                                    setState(() {
+                                                                      internetTitleList.add(text);
+                                                                      internetPriceList.add(price);
+                                                                      context.read<FormBloc>().add(AddInternetTitle(text));
+                                                                      context.read<FormBloc>().add(AddInternetPrice(price));
+                                                                      context.read<FormBloc>().add(CalculateInternetSum(internetPriceList));
+                                                                      isEditingListND = false; // Add a corresponding entry for the new item
+                                                                      NDtextController.clear();
+                                                                      NDplatformPriceController.clear();
+                                                                      isTextFormFieldVisibleND = false;
+                                                                      isAddButtonActiveND = false;
+                                                                    });
+                                                                  }
+                                                                },
+                                                                icon: Icon(Icons.check_circle, size: 26),
                                                               ),
-                                                              SizedBox(height: 10.h),
-                                                              Text("Tutar"),
-                                                              SizedBox(height: 5.h),
-                                                              TextFormField(
-                                                                controller: platformPriceController,
-                                                                keyboardType: TextInputType.number, // Show numeric keyboard
-                                                                decoration: InputDecoration(
-                                                                  isDense: true,
-                                                                  contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
-                                                                  filled: true,
-                                                                  hoverColor: Colors.blue,
-                                                                  border: OutlineInputBorder(
-                                                                    borderRadius: BorderRadius.circular(10),
-                                                                  ),
-                                                                  hintText: 'GAG',
-                                                                ),
-                                                              ),
-                                                              SizedBox(height: 10.h),
-                                                              Row(
-                                                                children: [
-                                                                  Expanded(
-                                                                    child: Column(
-                                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                                      children: [
-                                                                        Text("Başlangıç Tarihi"),
-                                                                        SizedBox(height: 5.h),
-                                                                        Row(
-                                                                          children: [
-                                                                            Expanded(
-                                                                              child: DropdownButtonFormField2<int>(
-                                                                                value: _selectedBillingDay,
-                                                                                onChanged: (value) {
-                                                                                  setState(() {
-                                                                                    _selectedBillingDay = value;
-                                                                                  });
-                                                                                },
-                                                                                isExpanded: true,
-                                                                                decoration: InputDecoration(
-                                                                                  contentPadding: const EdgeInsets.fromLTRB(0, 5, 0, 0),
-                                                                                  isDense: true,
-                                                                                  border: OutlineInputBorder(
-                                                                                    borderRadius: BorderRadius.circular(10),
-                                                                                  ),
-                                                                                ),
-                                                                                hint: const Text(
-                                                                                  'Gün',
-                                                                                  style: TextStyle(fontSize: 14),
-                                                                                ),
-                                                                                buttonStyleData: const ButtonStyleData(
-                                                                                  padding: EdgeInsets.only(right: 8),
-                                                                                ),
-                                                                                iconStyleData: const IconStyleData(
-                                                                                  icon: Icon(
-                                                                                    Icons.arrow_drop_down,
-                                                                                    color: Colors.black45,
-                                                                                  ),
-                                                                                  iconSize: 24,
-                                                                                ),
-                                                                                dropdownStyleData: DropdownStyleData(
-                                                                                  decoration: BoxDecoration(
-                                                                                    borderRadius: BorderRadius.circular(15),
-                                                                                  ),
-                                                                                ),
-                                                                                menuItemStyleData: const MenuItemStyleData(
-                                                                                  padding: EdgeInsets.symmetric(horizontal: 16),
-                                                                                ),
-                                                                                items: daysList.map((day) {
-                                                                                  return DropdownMenuItem<int>(
-                                                                                    value: day,
-                                                                                    child: Text(day.toString()),
-                                                                                  );
-                                                                                }).toList(),
-                                                                              ),
-                                                                            ),
-                                                                            SizedBox(width: 10),
-                                                                            Expanded(
-                                                                              child: DropdownButtonFormField2<int>(
-                                                                                value: _selectedBillingMonth,
-                                                                                onChanged: (value) {
-                                                                                  setState(() {
-                                                                                    _selectedBillingMonth = value;
-                                                                                  });
-                                                                                },
-                                                                                isExpanded: true,
-                                                                                decoration: InputDecoration(
-                                                                                  contentPadding: const EdgeInsets.fromLTRB(0, 5, 0, 0),
-                                                                                  isDense: true,
-                                                                                  border: OutlineInputBorder(
-                                                                                    borderRadius: BorderRadius.circular(10),
-                                                                                  ),
-                                                                                ),
-                                                                                hint: const Text(
-                                                                                  'Ay',
-                                                                                  style: TextStyle(fontSize: 14),
-                                                                                ),
-                                                                                buttonStyleData: const ButtonStyleData(
-                                                                                  padding: EdgeInsets.only(right: 8),
-                                                                                ),
-                                                                                iconStyleData: const IconStyleData(
-                                                                                  icon: Icon(
-                                                                                    Icons.arrow_drop_down,
-                                                                                    color: Colors.black45,
-                                                                                  ),
-                                                                                  iconSize: 24,
-                                                                                ),
-                                                                                dropdownStyleData: DropdownStyleData(
-                                                                                  decoration: BoxDecoration(
-                                                                                    borderRadius: BorderRadius.circular(15),
-                                                                                  ),
-                                                                                ),
-                                                                                menuItemStyleData: const MenuItemStyleData(
-                                                                                  padding: EdgeInsets.symmetric(horizontal: 16),
-                                                                                ),
-                                                                                items: monthsList.map((month) {
-                                                                                  return DropdownMenuItem<int>(
-                                                                                    value: month,
-                                                                                    child: Text(month.toString()),
-                                                                                  );
-                                                                                }).toList(),
-                                                                              ),
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                        SizedBox(height: 10.h),
-                                                                        Text("Son Ödeme Tarihi"),
-                                                                        SizedBox(height: 5.h),
-                                                                        DropdownButtonFormField2<int>(
-                                                                          value: _selectedDueDay,
-                                                                          onChanged: (value) {
-                                                                            setState(() {
-                                                                              _selectedDueDay = value;
-                                                                            });
-                                                                          },
-                                                                          isExpanded: true,
-                                                                          decoration: InputDecoration(
-                                                                            contentPadding: const EdgeInsets.fromLTRB(0, 5, 0, 0),
-                                                                            isDense: true,
-                                                                            border: OutlineInputBorder(
-                                                                              borderRadius: BorderRadius.circular(10),
-                                                                            ),
-                                                                          ),
-                                                                          hint: const Text(
-                                                                            'Gün',
-                                                                            style: TextStyle(fontSize: 14),
-                                                                          ),
-                                                                          buttonStyleData: const ButtonStyleData(
-                                                                            padding: EdgeInsets.only(right: 8),
-                                                                          ),
-                                                                          iconStyleData: const IconStyleData(
-                                                                            icon: Icon(
-                                                                              Icons.arrow_drop_down,
-                                                                              color: Colors.black45,
-                                                                            ),
-                                                                            iconSize: 24,
-                                                                          ),
-                                                                          dropdownStyleData: DropdownStyleData(
-                                                                            decoration: BoxDecoration(
-                                                                              borderRadius: BorderRadius.circular(15),
-                                                                            ),
-                                                                          ),
-                                                                          menuItemStyleData: const MenuItemStyleData(
-                                                                            padding: EdgeInsets.symmetric(horizontal: 16),
-                                                                          ),
-                                                                          items: daysList.map((day) {
-                                                                            return DropdownMenuItem<int>(
-                                                                              value: day,
-                                                                              child: Text(day.toString()),
-                                                                            );
-                                                                          }).toList(),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                  ),
-                                                                  Column(
-                                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                                    children: [
-                                                                      IconButton(
-                                                                        onPressed: () {
-                                                                          setState(() {
-                                                                            int maxId = 0; // Initialize with the lowest possible value
-                                                                            for (var invoice in invoices) {
-                                                                              if (invoice.id > maxId) {
-                                                                                maxId = invoice.id;
-                                                                              }
-                                                                            }
-                                                                            int newId = maxId + 1;
-                                                                            final text = textController.text.trim();
-                                                                            final priceText = platformPriceController.text.trim();
-                                                                            double dprice = double.tryParse(priceText) ?? 0.0;
-                                                                            String price = dprice.toStringAsFixed(2);
-                                                                            final invoice = Invoice(
-                                                                                id: newId,
-                                                                                price: price,
-                                                                                subCategory: 'Ev Faturaları',
-                                                                                category: "Faturalar",
-                                                                                name: text,
-                                                                                periodDate: formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!, DateTime.now().year),
-                                                                                dueDate: _selectedDueDay != null
-                                                                                    ? formatDueDate(_selectedDueDay!, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!, DateTime.now().year))
-                                                                                    : null,
-                                                                                difference: "fa2"
-                                                                            );
-                                                                            onSave(invoice);
-                                                                            if (text.isNotEmpty && priceText.isNotEmpty) {
-                                                                              setState(() {
-                                                                                isEditingList = false; // Add a corresponding entry for the new item
-                                                                                textController.clear();
-                                                                                platformPriceController.clear();
-                                                                                isTextFormFieldVisible = false;
-                                                                                isAddButtonActive = false;
-                                                                              });
-                                                                            }
-                                                                          });
-                                                                        },
-                                                                        icon: Icon(Icons.check_circle, size: 26),
-                                                                      ),
-                                                                      IconButton(
-                                                                        onPressed: () {
-                                                                          setState(() {
-                                                                            isTextFormFieldVisible = false;
-                                                                            isAddButtonActive = false;
-                                                                            textController.clear();
-                                                                            platformPriceController.clear();
-                                                                          });
-                                                                        },
-                                                                        icon: Icon(Icons.cancel, size: 26),
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                ],
+                                                              IconButton(
+                                                                onPressed: () {
+                                                                  setState(() {
+                                                                    isTextFormFieldVisibleND = false;
+                                                                    isAddButtonActiveND = false;
+                                                                    NDtextController.clear();
+                                                                    NDplatformPriceController.clear();
+                                                                  });
+                                                                },
+                                                                icon: Icon(Icons.cancel, size: 26),
                                                               ),
                                                             ],
                                                           ),
-                                                        ),
+                                                        ],
                                                       ),
-                                                    if (!isEditingList && !isTextFormFieldVisible)
-                                                      Container(
-                                                        padding: EdgeInsets.all(10),
-                                                        child: Row(
-                                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                          children: [
-                                                            InkWell(
-                                                              onTap: () {
-                                                                setState(() {
-                                                                  hasHomeSelected = true;
-                                                                  hasInternetSelected = false;
-                                                                  hasPhoneSelected = false;
-                                                                  isAddButtonActive = true;
-                                                                  isTextFormFieldVisible = true;
-                                                                  isTextFormFieldVisibleND =false;
-                                                                  isTextFormFieldVisibleRD = false;
-                                                                  platformPriceController.clear();
-                                                                });
-                                                              },
-                                                              child: Icon(Icons.add_circle, size: 26),
+                                                    ),
+                                                  if (!isEditingListND && !isTextFormFieldVisibleND)
+                                                    Container(
+                                                      padding: EdgeInsets.all(10),
+                                                      child: Row(
+                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                        children: [
+                                                          InkWell(
+                                                            onTap: () {
+                                                              setState(() {
+                                                                hasHomeSelected = false;
+                                                                hasInternetSelected = true;
+                                                                hasPhoneSelected = false;
+                                                                isAddButtonActiveND = true;
+                                                                isTextFormFieldVisible = false;
+                                                                isTextFormFieldVisibleND =true;
+                                                                isTextFormFieldVisibleRD = false;
+                                                                NDplatformPriceController.clear();
+                                                              });
+                                                            },
+                                                            child: Icon(Icons.add_circle, size: 26),
+                                                          ),
+                                                          if (convertSum2 != "0,00")
+                                                            Padding(
+                                                              padding: const EdgeInsets.only(right: 43),
+                                                              child: Text("Toplam: $convertSum2", style: GoogleFonts.montserrat(fontSize: 20),),
                                                             ),
-                                                            if (formattedHbSum != "0,00")
-                                                              Padding(
-                                                                padding: const EdgeInsets.only(right: 43),
-                                                                child: Text("Toplam: $formattedHbSum", style: GoogleFonts.montserrat(fontSize: 20),),
-                                                              ),
-                                                          ],
-                                                        ),
+                                                        ],
                                                       ),
-                                                  ],
-                                                ),
+                                                    ),
+                                                ],
                                               ),
                                             ),
-                                            SizedBox(height: 20),
-                                            Container(
-                                              width: double.infinity,
-                                              decoration: BoxDecoration(
-                                                borderRadius: BorderRadius.circular(10),
-                                                border: Border.all(
-                                                  color: hasInternetSelected ? Colors.black : Colors.black.withOpacity(0.5),
-                                                  width: hasInternetSelected ? 4 : 2,
-                                                ),
+                                          ),
+                                          SizedBox(height: 20),
+                                          Container(
+                                            width: double.infinity,
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(10),
+                                              border: Border.all(
+                                                color: hasPhoneSelected ? Colors.black : Colors.black.withOpacity(0.5),
+                                                width: hasPhoneSelected ? 4 : 2,
                                               ),
-                                              child: InkWell(
-                                                onTap: () {
-                                                  if(isAddButtonActive==false){
-                                                    handleInternetContainerTouch();
-                                                    isAddButtonActiveND = false;
-                                                    isAddButtonActiveRD = false;
-                                                  } else {
-                                                    isAddButtonActiveND = false;
-                                                    isAddButtonActiveRD = false;
-                                                  }
-                                                },
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Padding(
-                                                        padding: EdgeInsets.all(10),
-                                                        child: Text("İnternet",style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold),)
-                                                    ),
-                                                    if (internetTitleList.isNotEmpty && internetPriceList.isNotEmpty)
-                                                      Container(
-                                                        child:
-                                                        ListView.builder(
-                                                          shrinkWrap: true,
-                                                          itemCount: internetTitleList.length,
-                                                          itemBuilder: (BuildContext context, int i) {
-                                                            return Container(
-                                                              padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
-                                                              child: Row(
-                                                                children: [
-                                                                  Flexible(
-                                                                    flex: 2,
-                                                                    fit: FlexFit.tight,
-                                                                    child: Text(
-                                                                      internetTitleList[i],
-                                                                      style: GoogleFonts.montserrat(fontSize: 20),
-                                                                      overflow: TextOverflow.ellipsis,
-                                                                    ),
-                                                                  ),
-                                                                  Flexible(
-                                                                    flex: 2,
-                                                                    fit: FlexFit.tight,
-                                                                    child: Text(
-                                                                      textAlign: TextAlign.right,
-                                                                      internetPriceList[i].toString(),
-                                                                      style: GoogleFonts.montserrat(fontSize: 20),
-                                                                      overflow: TextOverflow.ellipsis,
-                                                                    ),
-                                                                  ),
-                                                                  SizedBox(width: 20),
-                                                                  IconButton(
-                                                                    splashRadius: 0.0001,
-                                                                    padding: EdgeInsets.zero,
-                                                                    constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                                                    icon: Icon(Icons.edit, size: 21),
-                                                                    onPressed: () {
-                                                                      _showEditDialog(context, i, 2, 1); // Show the edit dialog
-                                                                    },
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            );
-                                                          },
-                                                        ),
-                                                      ),
-                                                    if (isTextFormFieldVisibleND && hasInternetSelected)
-                                                      Container(
-                                                        padding: EdgeInsets.all(10),
-                                                        child: Row(
-                                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                                          children: [
-                                                            Expanded(
-                                                              child: TextFormField(
-                                                                controller: NDtextController,
-                                                                decoration: InputDecoration(
-                                                                  border: InputBorder.none,
-                                                                  hintText: 'ABA',
-                                                                ),
-                                                              ),
-                                                            ),
-                                                            SizedBox(width: 10),
-                                                            Expanded(
-                                                              child: TextFormField(
-                                                                controller: NDplatformPriceController,
-                                                                keyboardType: TextInputType.number, // Show numeric keyboard
-                                                                decoration: InputDecoration(
-                                                                  border: InputBorder.none,
-                                                                  hintText: 'GAG',
-                                                                ),
-                                                              ),
-                                                            ),
-                                                            Wrap(
+                                            ),
+                                            child: InkWell(
+                                              onTap: () {
+                                                if(isAddButtonActive==false){
+                                                  handlePhoneContainerTouch();
+                                                  isAddButtonActiveND = false;
+                                                  isAddButtonActiveRD = false;
+                                                } else {
+                                                  isAddButtonActiveND = false;
+                                                  isAddButtonActiveRD = false;
+                                                }
+                                              },
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Padding(
+                                                      padding: EdgeInsets.all(10),
+                                                      child: Text("Telefon",style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold),)
+                                                  ),
+                                                  if (phoneTitleList.isNotEmpty && phonePriceList.isNotEmpty)
+                                                    Container(
+                                                      child:
+                                                      ListView.builder(
+                                                        shrinkWrap: true,
+                                                        itemCount: phoneTitleList.length,
+                                                        itemBuilder: (BuildContext context, int i) {
+                                                          return Container(
+                                                            padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+                                                            child: Row(
                                                               children: [
-                                                                IconButton(
-                                                                  onPressed: () {
-                                                                    final text = NDtextController.text.trim();
-                                                                    final priceText = NDplatformPriceController.text.trim();
-                                                                    if (text.isNotEmpty && priceText.isNotEmpty) {
-                                                                      double dprice = double.tryParse(priceText) ?? 0.0;
-                                                                      String price = dprice.toStringAsFixed(2);
-                                                                      setState(() {
-                                                                        internetTitleList.add(text);
-                                                                        internetPriceList.add(price);
-                                                                        context.read<FormBloc>().add(AddInternetTitle(text));
-                                                                        context.read<FormBloc>().add(AddInternetPrice(price));
-                                                                        context.read<FormBloc>().add(CalculateInternetSum(internetPriceList));
-                                                                        isEditingListND = false; // Add a corresponding entry for the new item
-                                                                        NDtextController.clear();
-                                                                        NDplatformPriceController.clear();
-                                                                        isTextFormFieldVisibleND = false;
-                                                                        isAddButtonActiveND = false;
-                                                                      });
-                                                                    }
-                                                                  },
-                                                                  icon: Icon(Icons.check_circle, size: 26),
+                                                                Flexible(
+                                                                  flex: 2,
+                                                                  fit: FlexFit.tight,
+                                                                  child: Text(
+                                                                    phoneTitleList[i],
+                                                                    style: GoogleFonts.montserrat(fontSize: 20),
+                                                                    overflow: TextOverflow.ellipsis,
+                                                                  ),
                                                                 ),
+                                                                Flexible(
+                                                                  flex: 2,
+                                                                  fit: FlexFit.tight,
+                                                                  child: Text(
+                                                                    textAlign: TextAlign.right,
+                                                                    phonePriceList[i].toString(),
+                                                                    style: GoogleFonts.montserrat(fontSize: 20),
+                                                                    overflow: TextOverflow.ellipsis,
+                                                                  ),
+                                                                ),
+                                                                SizedBox(width: 20),
                                                                 IconButton(
+                                                                  splashRadius: 0.0001,
+                                                                  padding: EdgeInsets.zero,
+                                                                  constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                                                  icon: Icon(Icons.edit, size: 21),
                                                                   onPressed: () {
-                                                                    setState(() {
-                                                                      isTextFormFieldVisibleND = false;
-                                                                      isAddButtonActiveND = false;
-                                                                      NDtextController.clear();
-                                                                      NDplatformPriceController.clear();
-                                                                    });
+                                                                    _showEditDialog(context, i, 3, 1); // Show the edit dialog
                                                                   },
-                                                                  icon: Icon(Icons.cancel, size: 26),
                                                                 ),
                                                               ],
                                                             ),
-                                                          ],
-                                                        ),
+                                                          );
+                                                        },
                                                       ),
-                                                    if (!isEditingListND && !isTextFormFieldVisibleND)
-                                                      Container(
-                                                        padding: EdgeInsets.all(10),
-                                                        child: Row(
-                                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                          children: [
-                                                            InkWell(
-                                                              onTap: () {
-                                                                setState(() {
-                                                                  hasHomeSelected = false;
-                                                                  hasInternetSelected = true;
-                                                                  hasPhoneSelected = false;
-                                                                  isAddButtonActiveND = true;
-                                                                  isTextFormFieldVisible = false;
-                                                                  isTextFormFieldVisibleND =true;
-                                                                  isTextFormFieldVisibleRD = false;
-                                                                  NDplatformPriceController.clear();
-                                                                });
-                                                              },
-                                                              child: Icon(Icons.add_circle, size: 26),
-                                                            ),
-                                                            if (convertSum2 != "0,00")
-                                                              Padding(
-                                                                padding: const EdgeInsets.only(right: 43),
-                                                                child: Text("Toplam: $convertSum2", style: GoogleFonts.montserrat(fontSize: 20),),
-                                                              ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                            SizedBox(height: 20),
-                                            Container(
-                                              width: double.infinity,
-                                              decoration: BoxDecoration(
-                                                borderRadius: BorderRadius.circular(10),
-                                                border: Border.all(
-                                                  color: hasPhoneSelected ? Colors.black : Colors.black.withOpacity(0.5),
-                                                  width: hasPhoneSelected ? 4 : 2,
-                                                ),
-                                              ),
-                                              child: InkWell(
-                                                onTap: () {
-                                                  if(isAddButtonActive==false){
-                                                    handlePhoneContainerTouch();
-                                                    isAddButtonActiveND = false;
-                                                    isAddButtonActiveRD = false;
-                                                  } else {
-                                                    isAddButtonActiveND = false;
-                                                    isAddButtonActiveRD = false;
-                                                  }
-                                                },
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Padding(
-                                                        padding: EdgeInsets.all(10),
-                                                        child: Text("Telefon",style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold),)
                                                     ),
-                                                    if (phoneTitleList.isNotEmpty && phonePriceList.isNotEmpty)
-                                                      Container(
-                                                        child:
-                                                        ListView.builder(
-                                                          shrinkWrap: true,
-                                                          itemCount: phoneTitleList.length,
-                                                          itemBuilder: (BuildContext context, int i) {
-                                                            return Container(
-                                                              padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
-                                                              child: Row(
-                                                                children: [
-                                                                  Flexible(
-                                                                    flex: 2,
-                                                                    fit: FlexFit.tight,
-                                                                    child: Text(
-                                                                      phoneTitleList[i],
-                                                                      style: GoogleFonts.montserrat(fontSize: 20),
-                                                                      overflow: TextOverflow.ellipsis,
-                                                                    ),
-                                                                  ),
-                                                                  Flexible(
-                                                                    flex: 2,
-                                                                    fit: FlexFit.tight,
-                                                                    child: Text(
-                                                                      textAlign: TextAlign.right,
-                                                                      phonePriceList[i].toString(),
-                                                                      style: GoogleFonts.montserrat(fontSize: 20),
-                                                                      overflow: TextOverflow.ellipsis,
-                                                                    ),
-                                                                  ),
-                                                                  SizedBox(width: 20),
-                                                                  IconButton(
-                                                                    splashRadius: 0.0001,
-                                                                    padding: EdgeInsets.zero,
-                                                                    constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                                                    icon: Icon(Icons.edit, size: 21),
-                                                                    onPressed: () {
-                                                                      _showEditDialog(context, i, 3, 1); // Show the edit dialog
-                                                                    },
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            );
-                                                          },
-                                                        ),
-                                                      ),
-                                                    if (isTextFormFieldVisibleRD && hasPhoneSelected)
-                                                      Container(
-                                                        padding: EdgeInsets.all(10),
-                                                        child: Row(
-                                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                                          children: [
-                                                            Expanded(
-                                                              child: TextFormField(
-                                                                controller: RDtextController,
-                                                                decoration: InputDecoration(
-                                                                  border: InputBorder.none,
-                                                                  hintText: 'ABA',
-                                                                ),
+                                                  if (isTextFormFieldVisibleRD && hasPhoneSelected)
+                                                    Container(
+                                                      padding: EdgeInsets.all(10),
+                                                      child: Row(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          Expanded(
+                                                            child: TextFormField(
+                                                              controller: RDtextController,
+                                                              decoration: InputDecoration(
+                                                                border: InputBorder.none,
+                                                                hintText: 'ABA',
                                                               ),
                                                             ),
-                                                            SizedBox(width: 10),
-                                                            Expanded(
-                                                              child: TextFormField(
-                                                                controller: RDplatformPriceController,
-                                                                keyboardType: TextInputType.number, // Show numeric keyboard
-                                                                decoration: InputDecoration(
-                                                                  border: InputBorder.none,
-                                                                  hintText: 'GAG',
-                                                                ),
+                                                          ),
+                                                          SizedBox(width: 10),
+                                                          Expanded(
+                                                            child: TextFormField(
+                                                              controller: RDplatformPriceController,
+                                                              keyboardType: TextInputType.number, // Show numeric keyboard
+                                                              decoration: InputDecoration(
+                                                                border: InputBorder.none,
+                                                                hintText: 'GAG',
                                                               ),
                                                             ),
-                                                            Wrap(
-                                                              children: [
-                                                                IconButton(
-                                                                  onPressed: () {
-                                                                    final text = RDtextController.text.trim();
-                                                                    final priceText = RDplatformPriceController.text.trim();
-                                                                    if (text.isNotEmpty && priceText.isNotEmpty) {
-                                                                      double dprice = double.tryParse(priceText) ?? 0.0;
-                                                                      String price = dprice.toStringAsFixed(2);
-                                                                      setState(() {
-                                                                        phoneTitleList.add(text);
-                                                                        phonePriceList.add(price);
-                                                                        isEditingListRD = false; // Add a corresponding entry for the new item
-                                                                        RDtextController.clear();
-                                                                        RDplatformPriceController.clear();
-                                                                        isTextFormFieldVisibleRD = false;
-                                                                        isAddButtonActiveRD = false;
-                                                                      });
-                                                                    }
-                                                                  },
-                                                                  icon: Icon(Icons.check_circle, size: 26),
-                                                                ),
-                                                                IconButton(
-                                                                  onPressed: () {
+                                                          ),
+                                                          Wrap(
+                                                            children: [
+                                                              IconButton(
+                                                                onPressed: () {
+                                                                  final text = RDtextController.text.trim();
+                                                                  final priceText = RDplatformPriceController.text.trim();
+                                                                  if (text.isNotEmpty && priceText.isNotEmpty) {
+                                                                    double dprice = double.tryParse(priceText) ?? 0.0;
+                                                                    String price = dprice.toStringAsFixed(2);
                                                                     setState(() {
-                                                                      isTextFormFieldVisibleRD = false;
-                                                                      isAddButtonActiveRD = false;
+                                                                      phoneTitleList.add(text);
+                                                                      phonePriceList.add(price);
+                                                                      isEditingListRD = false; // Add a corresponding entry for the new item
                                                                       RDtextController.clear();
                                                                       RDplatformPriceController.clear();
+                                                                      isTextFormFieldVisibleRD = false;
+                                                                      isAddButtonActiveRD = false;
                                                                     });
-                                                                  },
-                                                                  icon: Icon(Icons.cancel, size: 26),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    if (!isEditingListRD && !isTextFormFieldVisibleRD)
-                                                      Container(
-                                                        padding: EdgeInsets.all(10),
-                                                        child: Row(
-                                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                          children: [
-                                                            InkWell(
-                                                              onTap: () {
-                                                                setState(() {
-                                                                  hasHomeSelected = false;
-                                                                  hasInternetSelected = false;
-                                                                  hasPhoneSelected = true;
-                                                                  isAddButtonActiveRD = true;
-                                                                  isTextFormFieldVisible = false;
-                                                                  isTextFormFieldVisibleND =false;
-                                                                  isTextFormFieldVisibleRD = true;
-                                                                  RDplatformPriceController.clear();
-                                                                });
-                                                              },
-                                                              child: Icon(Icons.add_circle, size: 26),
-                                                            ),
-                                                            if (convertSum3 != "0,00")
-                                                              Padding(
-                                                                padding: const EdgeInsets.only(right: 43),
-                                                                child: Text("Toplam: $convertSum3", style: GoogleFonts.montserrat(fontSize: 20),),
+                                                                  }
+                                                                },
+                                                                icon: Icon(Icons.check_circle, size: 26),
                                                               ),
-                                                          ],
-                                                        ),
+                                                              IconButton(
+                                                                onPressed: () {
+                                                                  setState(() {
+                                                                    isTextFormFieldVisibleRD = false;
+                                                                    isAddButtonActiveRD = false;
+                                                                    RDtextController.clear();
+                                                                    RDplatformPriceController.clear();
+                                                                  });
+                                                                },
+                                                                icon: Icon(Icons.cancel, size: 26),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ],
                                                       ),
-                                                  ],
-                                                ),
+                                                    ),
+                                                  if (!isEditingListRD && !isTextFormFieldVisibleRD)
+                                                    Container(
+                                                      padding: EdgeInsets.all(10),
+                                                      child: Row(
+                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                        children: [
+                                                          InkWell(
+                                                            onTap: () {
+                                                              setState(() {
+                                                                hasHomeSelected = false;
+                                                                hasInternetSelected = false;
+                                                                hasPhoneSelected = true;
+                                                                isAddButtonActiveRD = true;
+                                                                isTextFormFieldVisible = false;
+                                                                isTextFormFieldVisibleND =false;
+                                                                isTextFormFieldVisibleRD = true;
+                                                                RDplatformPriceController.clear();
+                                                              });
+                                                            },
+                                                            child: Icon(Icons.add_circle, size: 26),
+                                                          ),
+                                                          if (convertSum3 != "0,00")
+                                                            Padding(
+                                                              padding: const EdgeInsets.only(right: 43),
+                                                              child: Text("Toplam: $convertSum3", style: GoogleFonts.montserrat(fontSize: 20),),
+                                                            ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                ],
                                               ),
                                             ),
-                                            ListView.builder(
-                                              itemCount: sharedPreferencesData.length,
-                                              itemBuilder: (context, index) {
-                                                return ListTile(
-                                                  title: Text(sharedPreferencesData[index]),
-                                                );
-                                              },
-                                              shrinkWrap: true,
-                                              physics: const NeverScrollableScrollPhysics(),
-                                            ),
-                                          ],
-                                        ),
+                                          ),
+                                          ListView.builder(
+                                            itemCount: sharedPreferencesData.length,
+                                            itemBuilder: (context, index) {
+                                              return ListTile(
+                                                title: Text(sharedPreferencesData[index]),
+                                              );
+                                            },
+                                            shrinkWrap: true,
+                                            physics: const NeverScrollableScrollPhysics(),
+                                          ),
+                                        ],
                                       ),
-                                    )
-                                    ],
-                                  ),
+                                    ),
+                                  )
+                                  ],
                                 ),
                               ),
                             ),
@@ -1685,7 +1515,80 @@ class _BillsState extends State<Bills> {
                         ),
                       ),
                     ],
-                  )
+                  ),
+                bottomNavigationBar: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(15),
+                      topRight: Radius.circular(15),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        spreadRadius: 2,
+                        blurRadius: 10,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: BottomAppBar(
+                    child: Row(
+                      children: [
+                        Container(
+                          height: 50,
+                          width: 50,
+                          color: Colors.white,
+                          alignment: Alignment.center, // Center the button within the container
+                          child: SizedBox(
+                            height: 50,
+                            width: 50,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                backgroundColor: sumAll != 0.0 ? Colors.black : Colors.grey,
+                                padding: EdgeInsets.zero, // Remove padding to center the icon
+                              ),
+                              clipBehavior: Clip.hardEdge,
+                              onPressed: () {
+                                context.go('/subs');
+                              },
+                              child: Icon(
+                                Icons.arrow_back,
+                                color: sumAll != 0.0 ? Colors.white : Colors.black,
+                                size: 20.sp,
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 20.w),
+                        Expanded(
+                          child: Container(
+                            height: 50,
+                            color: Colors.white,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                backgroundColor: sumAll != 0.0 ? Colors.black : Colors.grey,
+                              ),
+                              clipBehavior: Clip.hardEdge,
+                              onPressed: sumAll != 0.0 ? () {
+                                goToNextPage();
+                              } : null,
+                              child: Text(
+                                'Sonraki',
+                                style: GoogleFonts.montserrat(fontSize: 18),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               );
             },
         ),

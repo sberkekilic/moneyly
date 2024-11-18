@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moneyly/blocs/settings/selected-index-cubit.dart';
@@ -11,11 +12,13 @@ import 'package:moneyly/pages/in-app/income-page.dart';
 import 'package:moneyly/pages/in-app/investment-page.dart';
 import 'package:moneyly/pages/in-app/outcome-page.dart';
 import 'package:moneyly/pages/page6.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../blocs/form-bloc.dart';
 import '../blocs/income-selections.dart';
+import '../blocs/settings/settings_util.dart';
 
-GoRouter createRouter(String initialLocation) {
+GoRouter createRouter(String initialLocation, VoidCallback onThemeToggle) {
   return GoRouter(
       initialLocation: initialLocation,
       routes: [
@@ -71,8 +74,12 @@ GoRouter createRouter(String initialLocation) {
             builder: (context, state) => InvestmentPage()
         ),
         GoRoute(
-            path: '/settings',
-            builder: (context, state) => SettingsScreen()
+          path: '/settings',
+          builder: (context, state) {
+            return SettingsPage(
+              onThemeToggle: onThemeToggle,
+            );
+          },
         ),
       ]
   );

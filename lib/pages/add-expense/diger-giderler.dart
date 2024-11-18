@@ -742,69 +742,34 @@ class _OtherExpensesState extends State<OtherExpenses> {
         child: BlocBuilder<FormBloc, FormStateCustom>(
             builder: (context, state) {
               return Scaffold(
-                  appBar: AppBar(
-                    backgroundColor: Color(0xfff0f0f1),
-                    elevation: 0,
-                    toolbarHeight: 70,
-                    automaticallyImplyLeading: false,
-                    leadingWidth: 30,
-                    title: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            IconButton(
-                              onPressed: () {
-                                Navigator.pushNamed(context, 'faturalar');
-                              },
-                              icon: Icon(Icons.arrow_back, color: Colors.black), // Replace with the desired left icon
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                Navigator.pushNamed(context, 'gelir-ekle');
-                              },
-                              icon: Icon(Icons.clear, color: Colors.black), // Replace with the desired right icon
-                            ),
-                          ],
-                        ),
-                        Text(
-                          "Gider Ekle",
-                          style: TextStyle(color: Colors.black, fontSize: 28, fontWeight: FontWeight.normal),
-                        ),
-                      ],
-                    ),
-                  ),
-                  bottomNavigationBar: BottomAppBar(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 10, bottom: 10),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          SizedBox(width: 20),
-                          Expanded(
-                            child: Container(
-                              height: 50,
-                              color: Colors.white,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12)),
-                                  backgroundColor: sumAll!=0.0 ? Colors.black : Colors.grey,
-                                ),
-                                clipBehavior: Clip.hardEdge,
-                                onPressed: sumAll!=0.0 ? () {
-                                  goToNextPage();
-                                } : null,
-                                child: const Text('Sonraki', style: TextStyle(fontSize: 18),),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 20),
-                        ],
+                appBar: AppBar(
+                  backgroundColor: const Color(0xfff0f0f1),
+                  elevation: 0,
+                  toolbarHeight: 60.h,
+                  automaticallyImplyLeading: false,
+                  leadingWidth: 30.w,
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                          "Diğer Giderler",
+                          style: TextStyle(
+                              fontFamily: 'Keep Calm',
+                              color: Colors.black,
+                              fontSize: 28.sp
+                          )
                       ),
-                    ),
+                      Text(
+                          "4/4",
+                          style: TextStyle(
+                              fontFamily: 'Keep Calm',
+                              color: Colors.black,
+                              fontSize: 24.sp
+                          )
+                      ),
+                    ],
                   ),
+                ),
                   body: Stack(
                     children: [
                       Positioned(
@@ -934,1108 +899,1102 @@ class _OtherExpensesState extends State<OtherExpenses> {
                           ),
                         ),
                       ),
-                      Positioned(
-                        top: 60, // Adjust the top position as needed
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        child: Container(
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.only(topLeft: Radius.circular(15), topRight: Radius.circular(15)),
-                              boxShadow: [
-                                BoxShadow(
-                                    color: Colors.black.withOpacity(0.3),
-                                    spreadRadius: 2,
-                                    blurRadius: 10,
-                                    offset: Offset(0, 4)
-                                )
-                              ]
-                          ),
-                          child: ClipRRect(
+                      Container(
+                        decoration: BoxDecoration(
                             borderRadius: BorderRadius.only(topLeft: Radius.circular(15), topRight: Radius.circular(15)),
-                            child: Container(
-                              color: Colors.white,
-                              child: SingleChildScrollView(
-                                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left:20, right: 20, bottom: 20),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.only(top: 40),
-                                        child: Center(
-                                          child: Column(
-                                            children: [
-                                              Container(
-                                                width: double.infinity,
-                                                decoration: BoxDecoration(
-                                                  borderRadius: BorderRadius.circular(10),
-                                                  border: Border.all(
-                                                    color: hasRentSelected ? Colors.black : Colors.black.withOpacity(0.5),
-                                                    width: hasRentSelected ? 4 : 2,
-                                                  ),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.black.withOpacity(0.3),
+                                  spreadRadius: 2,
+                                  blurRadius: 10,
+                                  offset: Offset(0, 4)
+                              )
+                            ]
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.only(topLeft: Radius.circular(15), topRight: Radius.circular(15)),
+                          child: Container(
+                            color: Colors.white,
+                            child: SingleChildScrollView(
+                              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                              child: Padding(
+                                padding: const EdgeInsets.only(left:20, right: 20, bottom: 20),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 40),
+                                      child: Center(
+                                        child: Column(
+                                          children: [
+                                            Container(
+                                              width: double.infinity,
+                                              decoration: BoxDecoration(
+                                                borderRadius: BorderRadius.circular(10),
+                                                border: Border.all(
+                                                  color: hasRentSelected ? Colors.black : Colors.black.withOpacity(0.5),
+                                                  width: hasRentSelected ? 4 : 2,
                                                 ),
-                                                child: InkWell(
-                                                  onTap: () {
-                                                    if(isAddButtonActive==false){
-                                                      handleRentContainerTouch();
-                                                      isAddButtonActiveND = false;
-                                                      isAddButtonActiveRD = false;
-                                                    } else {
-                                                      isAddButtonActiveND = false;
-                                                      isAddButtonActiveRD = false;
-                                                    }
-                                                  },
-                                                  child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Padding(
-                                                          padding: EdgeInsets.all(10),
-                                                          child: Text("Kira",style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),)
-                                                      ),
-                                                      if (invoices.isNotEmpty && invoices.isNotEmpty)
-                                                        Container(
-                                                          child: ListView.builder(
-                                                            shrinkWrap: true,
-                                                            itemCount: idsWithRentTargetCategory.length,
-                                                            itemBuilder: (BuildContext context, int i) {
-                                                              int id = idsWithRentTargetCategory[i];
-                                                              Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
-                                                              return Container(
-                                                                padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
-                                                                child: Row(
-                                                                  children: [
-                                                                    Flexible(
-                                                                      flex: 4,
-                                                                      fit: FlexFit.tight,
-                                                                      child: Text(
-                                                                        textAlign: TextAlign.center,
-                                                                        invoice.name,
-                                                                        style: GoogleFonts.montserrat(fontSize: 20),
-                                                                        overflow: TextOverflow.ellipsis,
-                                                                      ),
+                                              ),
+                                              child: InkWell(
+                                                onTap: () {
+                                                  if(isAddButtonActive==false){
+                                                    handleRentContainerTouch();
+                                                    isAddButtonActiveND = false;
+                                                    isAddButtonActiveRD = false;
+                                                  } else {
+                                                    isAddButtonActiveND = false;
+                                                    isAddButtonActiveRD = false;
+                                                  }
+                                                },
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Padding(
+                                                        padding: EdgeInsets.all(10),
+                                                        child: Text("Kira",style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),)
+                                                    ),
+                                                    if (invoices.isNotEmpty && invoices.isNotEmpty)
+                                                      Container(
+                                                        child: ListView.builder(
+                                                          shrinkWrap: true,
+                                                          itemCount: idsWithRentTargetCategory.length,
+                                                          itemBuilder: (BuildContext context, int i) {
+                                                            int id = idsWithRentTargetCategory[i];
+                                                            Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
+                                                            return Container(
+                                                              padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+                                                              child: Row(
+                                                                children: [
+                                                                  Flexible(
+                                                                    flex: 4,
+                                                                    fit: FlexFit.tight,
+                                                                    child: Text(
+                                                                      textAlign: TextAlign.center,
+                                                                      invoice.name,
+                                                                      style: GoogleFonts.montserrat(fontSize: 20),
+                                                                      overflow: TextOverflow.ellipsis,
                                                                     ),
-                                                                    Flexible(
-                                                                      flex: 4,
-                                                                      fit: FlexFit.tight,
-                                                                      child: Text(
-                                                                        invoice.price,
-                                                                        style: GoogleFonts.montserrat(fontSize: 20),
-                                                                        overflow: TextOverflow.ellipsis,
-                                                                      ),
+                                                                  ),
+                                                                  Flexible(
+                                                                    flex: 4,
+                                                                    fit: FlexFit.tight,
+                                                                    child: Text(
+                                                                      invoice.price,
+                                                                      style: GoogleFonts.montserrat(fontSize: 20),
+                                                                      overflow: TextOverflow.ellipsis,
                                                                     ),
-                                                                    Flexible(
-                                                                      flex: 4,
-                                                                      fit: FlexFit.tight,
-                                                                      child: Text(
-                                                                        invoice.subCategory,
-                                                                        style: GoogleFonts.montserrat(fontSize: 20),
-                                                                        overflow: TextOverflow.ellipsis,
-                                                                      ),
+                                                                  ),
+                                                                  Flexible(
+                                                                    flex: 4,
+                                                                    fit: FlexFit.tight,
+                                                                    child: Text(
+                                                                      invoice.subCategory,
+                                                                      style: GoogleFonts.montserrat(fontSize: 20),
+                                                                      overflow: TextOverflow.ellipsis,
                                                                     ),
-                                                                    Flexible(
-                                                                      flex: 4,
-                                                                      fit: FlexFit.tight,
-                                                                      child: Text(
-                                                                        id.toString(),
-                                                                        style: GoogleFonts.montserrat(fontSize: 20),
-                                                                        overflow: TextOverflow.ellipsis,
-                                                                      ),
+                                                                  ),
+                                                                  Flexible(
+                                                                    flex: 4,
+                                                                    fit: FlexFit.tight,
+                                                                    child: Text(
+                                                                      id.toString(),
+                                                                      style: GoogleFonts.montserrat(fontSize: 20),
+                                                                      overflow: TextOverflow.ellipsis,
                                                                     ),
-                                                                    const SizedBox(width: 20),
-                                                                    IconButton(
-                                                                      splashRadius: 0.0001,
-                                                                      padding: EdgeInsets.zero,
-                                                                      constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                                                      icon: const Icon(Icons.edit, size: 21),
-                                                                      onPressed: () {
-                                                                        _showEditDialog(context, i, 1, id); // Show the edit dialog
-                                                                      },
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                              );
-                                                            },
-                                                          ),
+                                                                  ),
+                                                                  const SizedBox(width: 20),
+                                                                  IconButton(
+                                                                    splashRadius: 0.0001,
+                                                                    padding: EdgeInsets.zero,
+                                                                    constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                                                    icon: const Icon(Icons.edit, size: 21),
+                                                                    onPressed: () {
+                                                                      _showEditDialog(context, i, 1, id); // Show the edit dialog
+                                                                    },
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            );
+                                                          },
                                                         ),
-                                                      if (isTextFormFieldVisible && hasRentSelected)
-                                                        Container(
-                                                          padding: EdgeInsets.all(10),
-                                                          child: SingleChildScrollView(
-                                                            child: Column(
-                                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                                              children: [
-                                                                Text("Fatura Adı"),
-                                                                SizedBox(height: 5.h),
-                                                                TextFormField(
-                                                                  controller: textController,
-                                                                  decoration: InputDecoration(
-                                                                    isDense: true,
-                                                                    contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
-                                                                    filled: true,
-                                                                    hoverColor: Colors.blue,
-                                                                    border: OutlineInputBorder(
-                                                                      borderRadius: BorderRadius.circular(10),
-                                                                    ),
-                                                                    hintText: 'ABA',
+                                                      ),
+                                                    if (isTextFormFieldVisible && hasRentSelected)
+                                                      Container(
+                                                        padding: EdgeInsets.all(10),
+                                                        child: SingleChildScrollView(
+                                                          child: Column(
+                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                            children: [
+                                                              Text("Fatura Adı"),
+                                                              SizedBox(height: 5.h),
+                                                              TextFormField(
+                                                                controller: textController,
+                                                                decoration: InputDecoration(
+                                                                  isDense: true,
+                                                                  contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
+                                                                  filled: true,
+                                                                  hoverColor: Colors.blue,
+                                                                  border: OutlineInputBorder(
+                                                                    borderRadius: BorderRadius.circular(10),
                                                                   ),
+                                                                  hintText: 'ABA',
                                                                 ),
-                                                                SizedBox(height: 10.h),
-                                                                Text("Tutar"),
-                                                                SizedBox(height: 5.h),
-                                                                TextFormField(
-                                                                  controller: platformPriceController,
-                                                                  keyboardType: TextInputType.number, // Show numeric keyboard
-                                                                  decoration: InputDecoration(
-                                                                    isDense: true,
-                                                                    contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
-                                                                    filled: true,
-                                                                    hoverColor: Colors.blue,
-                                                                    border: OutlineInputBorder(
-                                                                      borderRadius: BorderRadius.circular(10),
-                                                                    ),
-                                                                    hintText: 'GAG',
+                                                              ),
+                                                              SizedBox(height: 10.h),
+                                                              Text("Tutar"),
+                                                              SizedBox(height: 5.h),
+                                                              TextFormField(
+                                                                controller: platformPriceController,
+                                                                keyboardType: TextInputType.number, // Show numeric keyboard
+                                                                decoration: InputDecoration(
+                                                                  isDense: true,
+                                                                  contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
+                                                                  filled: true,
+                                                                  hoverColor: Colors.blue,
+                                                                  border: OutlineInputBorder(
+                                                                    borderRadius: BorderRadius.circular(10),
                                                                   ),
+                                                                  hintText: 'GAG',
                                                                 ),
-                                                                SizedBox(height: 10.h),
-                                                                Row(
-                                                                  children: [
-                                                                    Expanded(
-                                                                      child: Column(
-                                                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                                                        children: [
-                                                                          Text("Başlangıç Tarihi"),
-                                                                          SizedBox(height: 5.h),
-                                                                          Row(
-                                                                            children: [
-                                                                              Expanded(
-                                                                                child: DropdownButtonFormField2<int>(
-                                                                                  value: _selectedBillingDay,
-                                                                                  onChanged: (value) {
-                                                                                    setState(() {
-                                                                                      _selectedBillingDay = value;
-                                                                                    });
-                                                                                  },
-                                                                                  isExpanded: true,
-                                                                                  decoration: InputDecoration(
-                                                                                    contentPadding: const EdgeInsets.fromLTRB(0, 5, 0, 0),
-                                                                                    isDense: true,
-                                                                                    border: OutlineInputBorder(
-                                                                                      borderRadius: BorderRadius.circular(10),
-                                                                                    ),
-                                                                                  ),
-                                                                                  hint: const Text(
-                                                                                    'Gün',
-                                                                                    style: TextStyle(fontSize: 14),
-                                                                                  ),
-                                                                                  buttonStyleData: const ButtonStyleData(
-                                                                                    padding: EdgeInsets.only(right: 8),
-                                                                                  ),
-                                                                                  iconStyleData: const IconStyleData(
-                                                                                    icon: Icon(
-                                                                                      Icons.arrow_drop_down,
-                                                                                      color: Colors.black45,
-                                                                                    ),
-                                                                                    iconSize: 24,
-                                                                                  ),
-                                                                                  dropdownStyleData: DropdownStyleData(
-                                                                                    decoration: BoxDecoration(
-                                                                                      borderRadius: BorderRadius.circular(15),
-                                                                                    ),
-                                                                                  ),
-                                                                                  menuItemStyleData: const MenuItemStyleData(
-                                                                                    padding: EdgeInsets.symmetric(horizontal: 16),
-                                                                                  ),
-                                                                                  items: daysList.map((day) {
-                                                                                    return DropdownMenuItem<int>(
-                                                                                      value: day,
-                                                                                      child: Text(day.toString()),
-                                                                                    );
-                                                                                  }).toList(),
-                                                                                ),
-                                                                              ),
-                                                                              SizedBox(width: 10),
-                                                                              Expanded(
-                                                                                child: DropdownButtonFormField2<int>(
-                                                                                  value: _selectedBillingMonth,
-                                                                                  onChanged: (value) {
-                                                                                    setState(() {
-                                                                                      _selectedBillingMonth = value;
-                                                                                    });
-                                                                                  },
-                                                                                  isExpanded: true,
-                                                                                  decoration: InputDecoration(
-                                                                                    contentPadding: const EdgeInsets.fromLTRB(0, 5, 0, 0),
-                                                                                    isDense: true,
-                                                                                    border: OutlineInputBorder(
-                                                                                      borderRadius: BorderRadius.circular(10),
-                                                                                    ),
-                                                                                  ),
-                                                                                  hint: const Text(
-                                                                                    'Ay',
-                                                                                    style: TextStyle(fontSize: 14),
-                                                                                  ),
-                                                                                  buttonStyleData: const ButtonStyleData(
-                                                                                    padding: EdgeInsets.only(right: 8),
-                                                                                  ),
-                                                                                  iconStyleData: const IconStyleData(
-                                                                                    icon: Icon(
-                                                                                      Icons.arrow_drop_down,
-                                                                                      color: Colors.black45,
-                                                                                    ),
-                                                                                    iconSize: 24,
-                                                                                  ),
-                                                                                  dropdownStyleData: DropdownStyleData(
-                                                                                    decoration: BoxDecoration(
-                                                                                      borderRadius: BorderRadius.circular(15),
-                                                                                    ),
-                                                                                  ),
-                                                                                  menuItemStyleData: const MenuItemStyleData(
-                                                                                    padding: EdgeInsets.symmetric(horizontal: 16),
-                                                                                  ),
-                                                                                  items: monthsList.map((month) {
-                                                                                    return DropdownMenuItem<int>(
-                                                                                      value: month,
-                                                                                      child: Text(month.toString()),
-                                                                                    );
-                                                                                  }).toList(),
-                                                                                ),
-                                                                              ),
-                                                                            ],
-                                                                          ),
-                                                                          SizedBox(height: 10.h),
-                                                                          Text("Son Ödeme Tarihi"),
-                                                                          SizedBox(height: 5.h),
-                                                                          DropdownButtonFormField2<int>(
-                                                                            value: _selectedDueDay,
-                                                                            onChanged: (value) {
-                                                                              setState(() {
-                                                                                _selectedDueDay = value;
-                                                                              });
-                                                                            },
-                                                                            isExpanded: true,
-                                                                            decoration: InputDecoration(
-                                                                              contentPadding: const EdgeInsets.fromLTRB(0, 5, 0, 0),
-                                                                              isDense: true,
-                                                                              border: OutlineInputBorder(
-                                                                                borderRadius: BorderRadius.circular(10),
-                                                                              ),
-                                                                            ),
-                                                                            hint: const Text(
-                                                                              'Gün',
-                                                                              style: TextStyle(fontSize: 14),
-                                                                            ),
-                                                                            buttonStyleData: const ButtonStyleData(
-                                                                              padding: EdgeInsets.only(right: 8),
-                                                                            ),
-                                                                            iconStyleData: const IconStyleData(
-                                                                              icon: Icon(
-                                                                                Icons.arrow_drop_down,
-                                                                                color: Colors.black45,
-                                                                              ),
-                                                                              iconSize: 24,
-                                                                            ),
-                                                                            dropdownStyleData: DropdownStyleData(
-                                                                              decoration: BoxDecoration(
-                                                                                borderRadius: BorderRadius.circular(15),
-                                                                              ),
-                                                                            ),
-                                                                            menuItemStyleData: const MenuItemStyleData(
-                                                                              padding: EdgeInsets.symmetric(horizontal: 16),
-                                                                            ),
-                                                                            items: daysList.map((day) {
-                                                                              return DropdownMenuItem<int>(
-                                                                                value: day,
-                                                                                child: Text(day.toString()),
-                                                                              );
-                                                                            }).toList(),
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                    ),
-                                                                    Column(
-                                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                              ),
+                                                              SizedBox(height: 10.h),
+                                                              Row(
+                                                                children: [
+                                                                  Expanded(
+                                                                    child: Column(
+                                                                      crossAxisAlignment: CrossAxisAlignment.start,
                                                                       children: [
-                                                                        IconButton(
-                                                                          onPressed: () {
-                                                                            setState(() {
-                                                                              int maxId = 0; // Initialize with the lowest possible value
-                                                                              for (var invoice in invoices) {
-                                                                                if (invoice.id > maxId) {
-                                                                                  maxId = invoice.id;
-                                                                                }
-                                                                              }
-                                                                              int newId = maxId + 1;
-                                                                              final text = textController.text.trim();
-                                                                              final priceText = platformPriceController.text.trim();
-                                                                              double dprice = double.tryParse(priceText) ?? 0.0;
-                                                                              String price = dprice.toStringAsFixed(2);
-                                                                              final invoice = Invoice(
-                                                                                  id: newId,
-                                                                                  price: price,
-                                                                                  subCategory: 'Kira',
-                                                                                  category: "Diğer Giderler",
-                                                                                  name: text,
-                                                                                  periodDate: formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                                                                                  dueDate: _selectedDueDay != null
-                                                                                      ? formatDueDate(_selectedDueDay!, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!))
-                                                                                      : null,
-                                                                                  difference: "do2"
-                                                                              );
-                                                                              onSave(invoice);
-                                                                              if (text.isNotEmpty && priceText.isNotEmpty) {
-                                                                                setState(() {
-                                                                                  isEditingList = false; // Add a corresponding entry for the new item
-                                                                                  textController.clear();
-                                                                                  platformPriceController.clear();
-                                                                                  isTextFormFieldVisible = false;
-                                                                                  isAddButtonActive = false;
-                                                                                });
-                                                                              }
-                                                                            });
-                                                                          },
-                                                                          icon: Icon(Icons.check_circle, size: 26),
+                                                                        Text("Başlangıç Tarihi"),
+                                                                        SizedBox(height: 5.h),
+                                                                        Row(
+                                                                          children: [
+                                                                            Expanded(
+                                                                              child: DropdownButtonFormField2<int>(
+                                                                                value: _selectedBillingDay,
+                                                                                onChanged: (value) {
+                                                                                  setState(() {
+                                                                                    _selectedBillingDay = value;
+                                                                                  });
+                                                                                },
+                                                                                isExpanded: true,
+                                                                                decoration: InputDecoration(
+                                                                                  contentPadding: const EdgeInsets.fromLTRB(0, 5, 0, 0),
+                                                                                  isDense: true,
+                                                                                  border: OutlineInputBorder(
+                                                                                    borderRadius: BorderRadius.circular(10),
+                                                                                  ),
+                                                                                ),
+                                                                                hint: const Text(
+                                                                                  'Gün',
+                                                                                  style: TextStyle(fontSize: 14),
+                                                                                ),
+                                                                                buttonStyleData: const ButtonStyleData(
+                                                                                  padding: EdgeInsets.only(right: 8),
+                                                                                ),
+                                                                                iconStyleData: const IconStyleData(
+                                                                                  icon: Icon(
+                                                                                    Icons.arrow_drop_down,
+                                                                                    color: Colors.black45,
+                                                                                  ),
+                                                                                  iconSize: 24,
+                                                                                ),
+                                                                                dropdownStyleData: DropdownStyleData(
+                                                                                  decoration: BoxDecoration(
+                                                                                    borderRadius: BorderRadius.circular(15),
+                                                                                  ),
+                                                                                ),
+                                                                                menuItemStyleData: const MenuItemStyleData(
+                                                                                  padding: EdgeInsets.symmetric(horizontal: 16),
+                                                                                ),
+                                                                                items: daysList.map((day) {
+                                                                                  return DropdownMenuItem<int>(
+                                                                                    value: day,
+                                                                                    child: Text(day.toString()),
+                                                                                  );
+                                                                                }).toList(),
+                                                                              ),
+                                                                            ),
+                                                                            SizedBox(width: 10),
+                                                                            Expanded(
+                                                                              child: DropdownButtonFormField2<int>(
+                                                                                value: _selectedBillingMonth,
+                                                                                onChanged: (value) {
+                                                                                  setState(() {
+                                                                                    _selectedBillingMonth = value;
+                                                                                  });
+                                                                                },
+                                                                                isExpanded: true,
+                                                                                decoration: InputDecoration(
+                                                                                  contentPadding: const EdgeInsets.fromLTRB(0, 5, 0, 0),
+                                                                                  isDense: true,
+                                                                                  border: OutlineInputBorder(
+                                                                                    borderRadius: BorderRadius.circular(10),
+                                                                                  ),
+                                                                                ),
+                                                                                hint: const Text(
+                                                                                  'Ay',
+                                                                                  style: TextStyle(fontSize: 14),
+                                                                                ),
+                                                                                buttonStyleData: const ButtonStyleData(
+                                                                                  padding: EdgeInsets.only(right: 8),
+                                                                                ),
+                                                                                iconStyleData: const IconStyleData(
+                                                                                  icon: Icon(
+                                                                                    Icons.arrow_drop_down,
+                                                                                    color: Colors.black45,
+                                                                                  ),
+                                                                                  iconSize: 24,
+                                                                                ),
+                                                                                dropdownStyleData: DropdownStyleData(
+                                                                                  decoration: BoxDecoration(
+                                                                                    borderRadius: BorderRadius.circular(15),
+                                                                                  ),
+                                                                                ),
+                                                                                menuItemStyleData: const MenuItemStyleData(
+                                                                                  padding: EdgeInsets.symmetric(horizontal: 16),
+                                                                                ),
+                                                                                items: monthsList.map((month) {
+                                                                                  return DropdownMenuItem<int>(
+                                                                                    value: month,
+                                                                                    child: Text(month.toString()),
+                                                                                  );
+                                                                                }).toList(),
+                                                                              ),
+                                                                            ),
+                                                                          ],
                                                                         ),
-                                                                        IconButton(
-                                                                          onPressed: () {
+                                                                        SizedBox(height: 10.h),
+                                                                        Text("Son Ödeme Tarihi"),
+                                                                        SizedBox(height: 5.h),
+                                                                        DropdownButtonFormField2<int>(
+                                                                          value: _selectedDueDay,
+                                                                          onChanged: (value) {
                                                                             setState(() {
-                                                                              isTextFormFieldVisible = false;
-                                                                              isAddButtonActive = false;
-                                                                              textController.clear();
-                                                                              platformPriceController.clear();
+                                                                              _selectedDueDay = value;
                                                                             });
                                                                           },
-                                                                          icon: Icon(Icons.cancel, size: 26),
+                                                                          isExpanded: true,
+                                                                          decoration: InputDecoration(
+                                                                            contentPadding: const EdgeInsets.fromLTRB(0, 5, 0, 0),
+                                                                            isDense: true,
+                                                                            border: OutlineInputBorder(
+                                                                              borderRadius: BorderRadius.circular(10),
+                                                                            ),
+                                                                          ),
+                                                                          hint: const Text(
+                                                                            'Gün',
+                                                                            style: TextStyle(fontSize: 14),
+                                                                          ),
+                                                                          buttonStyleData: const ButtonStyleData(
+                                                                            padding: EdgeInsets.only(right: 8),
+                                                                          ),
+                                                                          iconStyleData: const IconStyleData(
+                                                                            icon: Icon(
+                                                                              Icons.arrow_drop_down,
+                                                                              color: Colors.black45,
+                                                                            ),
+                                                                            iconSize: 24,
+                                                                          ),
+                                                                          dropdownStyleData: DropdownStyleData(
+                                                                            decoration: BoxDecoration(
+                                                                              borderRadius: BorderRadius.circular(15),
+                                                                            ),
+                                                                          ),
+                                                                          menuItemStyleData: const MenuItemStyleData(
+                                                                            padding: EdgeInsets.symmetric(horizontal: 16),
+                                                                          ),
+                                                                          items: daysList.map((day) {
+                                                                            return DropdownMenuItem<int>(
+                                                                              value: day,
+                                                                              child: Text(day.toString()),
+                                                                            );
+                                                                          }).toList(),
                                                                         ),
                                                                       ],
-                                                                    )
-                                                                  ],
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      if (!isEditingList && !isTextFormFieldVisible)
-                                                        Container(
-                                                          padding: EdgeInsets.all(10),
-                                                          child: Row(
-                                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                            children: [
-                                                              InkWell(
-                                                                onTap: () {
-                                                                  setState(() {
-                                                                    hasRentSelected = true;
-                                                                    hasKitchenSelected = false;
-                                                                    hasCateringSelected = false;
-                                                                    hasEntertainmentSelected = false;
-                                                                    hasOtherSelected = false;
-                                                                    isAddButtonActive = true;
-                                                                    isTextFormFieldVisible = true;
-                                                                    isTextFormFieldVisibleND =false;
-                                                                    isTextFormFieldVisibleRD = false;
-                                                                    isTextFormFieldVisibleTH = false;
-                                                                    isTextFormFieldVisibleOther = false;
-                                                                    platformPriceController.clear();
-                                                                  });
-                                                                },
-                                                                child: Icon(Icons.add_circle, size: 26),
-                                                              ),
-                                                              if (formattedRentSum != "0,00")
-                                                                Padding(
-                                                                  padding: const EdgeInsets.only(right: 43),
-                                                                  child: Text("Toplam: ${formattedRentSum}", style: TextStyle(fontSize: 20),),
-                                                                ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                              SizedBox(height: 20),
-                                              Container(
-                                                width: double.infinity,
-                                                decoration: BoxDecoration(
-                                                  borderRadius: BorderRadius.circular(10),
-                                                  border: Border.all(
-                                                    color: hasKitchenSelected ? Colors.black : Colors.black.withOpacity(0.5),
-                                                    width: hasKitchenSelected ? 4 : 2,
-                                                  ),
-                                                ),
-                                                child: InkWell(
-                                                  onTap: isAddButtonActiveND ? null : handleKitchenContainerTouch,
-                                                  child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Padding(
-                                                          padding: EdgeInsets.all(10),
-                                                          child: Text("Mutfak",style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),)
-                                                      ),
-                                                      if (kitchenTitleList.isNotEmpty && kitchenPriceList.isNotEmpty)
-                                                        Container(
-                                                          child:
-                                                          ListView.builder(
-                                                            shrinkWrap: true,
-                                                            itemCount: kitchenTitleList.length,
-                                                            itemBuilder: (BuildContext context, int i) {
-                                                              double sum2 = double.parse(kitchenPriceList[i]);
-                                                              String convertSumo = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum2);
-                                                              return Container(
-                                                                padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
-                                                                child: Row(
-                                                                  children: [
-                                                                    Flexible(
-                                                                      flex: 2,
-                                                                      fit: FlexFit.tight,
-                                                                      child: Text(
-                                                                        kitchenTitleList[i],
-                                                                        style: TextStyle(fontSize: 20),
-                                                                        overflow: TextOverflow.ellipsis,
-                                                                      ),
                                                                     ),
-                                                                    Flexible(
-                                                                      flex: 2,
-                                                                      fit: FlexFit.tight,
-                                                                      child: Text(
-                                                                        textAlign: TextAlign.right,
-                                                                        convertSumo,
-                                                                        style: TextStyle(fontSize: 20),
-                                                                        overflow: TextOverflow.ellipsis,
-                                                                      ),
-                                                                    ),
-                                                                    SizedBox(width: 20),
-                                                                    IconButton(
-                                                                      splashRadius: 0.0001,
-                                                                      padding: EdgeInsets.zero,
-                                                                      constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                                                      icon: Icon(Icons.edit, size: 21),
-                                                                      onPressed: () {
-                                                                        _showEditDialog(context, i, 2, 0); // Show the edit dialog
-                                                                      },
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                              );
-                                                            },
-                                                          ),
-                                                        ),
-                                                      if (isTextFormFieldVisibleND && hasKitchenSelected)
-                                                        Container(
-                                                          padding: EdgeInsets.all(10),
-                                                          child: Row(
-                                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                                            children: [
-                                                              Expanded(
-                                                                child: TextFormField(
-                                                                  controller: NDtextController,
-                                                                  decoration: InputDecoration(
-                                                                    border: InputBorder.none,
-                                                                    hintText: 'ABA',
                                                                   ),
-                                                                ),
-                                                              ),
-                                                              SizedBox(width: 10),
-                                                              Expanded(
-                                                                child: TextFormField(
-                                                                  controller: NDplatformPriceController,
-                                                                  keyboardType: TextInputType.number, // Show numeric keyboard
-                                                                  decoration: InputDecoration(
-                                                                    border: InputBorder.none,
-                                                                    hintText: 'GAG',
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                              Wrap(
-                                                                children: [
-                                                                  IconButton(
-                                                                    onPressed: () {
-                                                                      final text = NDtextController.text.trim();
-                                                                      final priceText = NDplatformPriceController.text.trim();
-                                                                      if (text.isNotEmpty && priceText.isNotEmpty) {
-                                                                        double dprice = double.tryParse(priceText) ?? 0.0;
-                                                                        String price = dprice.toStringAsFixed(2);
-                                                                        setState(() {
-                                                                          rentTitleList.add(text);
-                                                                          rentPriceList.add(price);
-                                                                          context.read<FormBloc>().add(AddRentTitle(text));
-                                                                          context.read<FormBloc>().add(AddRentPrice(price));
-                                                                          context.read<FormBloc>().add(CalculateRentSum(rentPriceList));
-                                                                          isEditingListND = false; // Add a corresponding entry for the new item
-                                                                          NDtextController.clear();
-                                                                          NDplatformPriceController.clear();
-                                                                          isTextFormFieldVisibleND = false;
-                                                                          isAddButtonActiveND = false;
-                                                                        });
-                                                                      }
-                                                                    },
-                                                                    icon: Icon(Icons.check_circle, size: 26),
-                                                                  ),
-                                                                  IconButton(
-                                                                    onPressed: () {
-                                                                      setState(() {
-                                                                        isTextFormFieldVisibleND = false;
-                                                                        isAddButtonActiveND = false;
-                                                                        NDtextController.clear();
-                                                                        NDplatformPriceController.clear();
-                                                                      });
-                                                                    },
-                                                                    icon: Icon(Icons.cancel, size: 26),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                      if (!isEditingListND && !isTextFormFieldVisibleND)
-                                                        Container(
-                                                          padding: EdgeInsets.all(10),
-                                                          child: Row(
-                                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                            children: [
-                                                              InkWell(
-                                                                onTap: () {
-                                                                  setState(() {
-                                                                    hasRentSelected = false;
-                                                                    hasKitchenSelected = true;
-                                                                    hasCateringSelected = false;
-                                                                    hasEntertainmentSelected = false;
-                                                                    hasOtherSelected = false;
-                                                                    isAddButtonActiveND = true;
-                                                                    isTextFormFieldVisible = false;
-                                                                    isTextFormFieldVisibleND =true;
-                                                                    isTextFormFieldVisibleRD = false;
-                                                                    isTextFormFieldVisibleTH = false;
-                                                                    isTextFormFieldVisibleOther = false;
-                                                                    NDplatformPriceController.clear();
-                                                                  });
-                                                                },
-                                                                child: Icon(Icons.add_circle, size: 26),
-                                                              ),
-                                                              if (convertSum2 != "0,00")
-                                                                Padding(
-                                                                  padding: const EdgeInsets.only(right: 43),
-                                                                  child: Text("Toplam: ${convertSum2}", style: TextStyle(fontSize: 20),),
-                                                                ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                              SizedBox(height: 20),
-                                              Container(
-                                                width: double.infinity,
-                                                decoration: BoxDecoration(
-                                                  borderRadius: BorderRadius.circular(10),
-                                                  border: Border.all(
-                                                    color: hasCateringSelected ? Colors.black : Colors.black.withOpacity(0.5),
-                                                    width: hasCateringSelected ? 4 : 2,
-                                                  ),
-                                                ),
-                                                child: InkWell(
-                                                  onTap: isAddButtonActiveRD ? null :handleCateringContainerTouch,
-                                                  child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Padding(
-                                                          padding: EdgeInsets.all(10),
-                                                          child: Text("Yeme İçme",style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),)
-                                                      ),
-                                                      if (cateringTitleList.isNotEmpty && cateringPriceList.isNotEmpty)
-                                                        Container(
-                                                          child:
-                                                          ListView.builder(
-                                                            shrinkWrap: true,
-                                                            itemCount: cateringTitleList.length,
-                                                            itemBuilder: (BuildContext context, int i) {
-                                                              double sum2 = double.parse(cateringPriceList[i]);
-                                                              String convertSumo = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum2);
-                                                              return Container(
-                                                                padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
-                                                                child: Row(
-                                                                  children: [
-                                                                    Flexible(
-                                                                      flex: 2,
-                                                                      fit: FlexFit.tight,
-                                                                      child: Text(
-                                                                        cateringTitleList[i],
-                                                                        style: TextStyle(fontSize: 20),
-                                                                        overflow: TextOverflow.ellipsis,
-                                                                      ),
-                                                                    ),
-                                                                    Flexible(
-                                                                      flex: 2,
-                                                                      fit: FlexFit.tight,
-                                                                      child: Text(
-                                                                        textAlign: TextAlign.right,
-                                                                        convertSumo,
-                                                                        style: TextStyle(fontSize: 20),
-                                                                        overflow: TextOverflow.ellipsis,
-                                                                      ),
-                                                                    ),
-                                                                    SizedBox(width: 20),
-                                                                    IconButton(
-                                                                      splashRadius: 0.0001,
-                                                                      padding: EdgeInsets.zero,
-                                                                      constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                                                      icon: Icon(Icons.edit, size: 21),
-                                                                      onPressed: () {
-                                                                        _showEditDialog(context, i, 3, 0); // Show the edit dialog
-                                                                      },
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                              );
-                                                            },
-                                                          ),
-                                                        ),
-                                                      if (isTextFormFieldVisibleRD && hasCateringSelected)
-                                                        Container(
-                                                          padding: EdgeInsets.all(10),
-                                                          child: Row(
-                                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                                            children: [
-                                                              Expanded(
-                                                                child: TextFormField(
-                                                                  controller: RDtextController,
-                                                                  decoration: InputDecoration(
-                                                                    border: InputBorder.none,
-                                                                    hintText: 'ABA',
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                              SizedBox(width: 10),
-                                                              Expanded(
-                                                                child: TextFormField(
-                                                                  controller: RDplatformPriceController,
-                                                                  keyboardType: TextInputType.number, // Show numeric keyboard
-                                                                  decoration: InputDecoration(
-                                                                    border: InputBorder.none,
-                                                                    hintText: 'GAG',
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                              Wrap(
-                                                                children: [
-                                                                  IconButton(
-                                                                    onPressed: () {
-                                                                      final text = RDtextController.text.trim();
-                                                                      final priceText = RDplatformPriceController.text.trim();
-                                                                      if (text.isNotEmpty && priceText.isNotEmpty) {
-                                                                        double dprice = double.tryParse(priceText) ?? 0.0;
-                                                                        String price = dprice.toStringAsFixed(2);
-                                                                        setState(() {
-                                                                          isEditingListRD = false; // Add a corresponding entry for the new item
-                                                                          RDtextController.clear();
-                                                                          RDplatformPriceController.clear();
-                                                                          isTextFormFieldVisibleRD = false;
-                                                                          isAddButtonActiveRD = false;
-                                                                        });
-                                                                      }
-                                                                    },
-                                                                    icon: Icon(Icons.check_circle, size: 26),
-                                                                  ),
-                                                                  IconButton(
-                                                                    onPressed: () {
-                                                                      setState(() {
-                                                                        isTextFormFieldVisibleRD = false;
-                                                                        isAddButtonActiveRD = false;
-                                                                        RDtextController.clear();
-                                                                        RDplatformPriceController.clear();
-                                                                      });
-                                                                    },
-                                                                    icon: Icon(Icons.cancel, size: 26),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                      if (!isEditingListRD && !isTextFormFieldVisibleRD)
-                                                        Container(
-                                                          padding: EdgeInsets.all(10),
-                                                          child: Row(
-                                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                            children: [
-                                                              InkWell(
-                                                                onTap: () {
-                                                                  setState(() {
-                                                                    hasRentSelected = false;
-                                                                    hasKitchenSelected = false;
-                                                                    hasCateringSelected = true;
-                                                                    hasEntertainmentSelected = false;
-                                                                    hasOtherSelected = false;
-                                                                    isAddButtonActiveRD = true;
-                                                                    isTextFormFieldVisible = false;
-                                                                    isTextFormFieldVisibleND =false;
-                                                                    isTextFormFieldVisibleRD = true;
-                                                                    isTextFormFieldVisibleTH = false;
-                                                                    isTextFormFieldVisibleOther = false;
-                                                                    RDplatformPriceController.clear();
-                                                                  });
-                                                                },
-                                                                child: Icon(Icons.add_circle, size: 26),
-                                                              ),
-                                                              if (convertSum3 != "0,00")
-                                                                Padding(
-                                                                  padding: const EdgeInsets.only(right: 43),
-                                                                  child: Text("Toplam: ${convertSum3}", style: TextStyle(fontSize: 20),),
-                                                                ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                              SizedBox(height: 20),
-                                              Container(
-                                                width: double.infinity,
-                                                decoration: BoxDecoration(
-                                                  borderRadius: BorderRadius.circular(10),
-                                                  border: Border.all(
-                                                    color: hasEntertainmentSelected ? Colors.black : Colors.black.withOpacity(0.5),
-                                                    width: hasEntertainmentSelected ? 4 : 2,
-                                                  ),
-                                                ),
-                                                child: InkWell(
-                                                  onTap: isAddButtonActiveTH ? null :handleEntContainerTouch,
-                                                  child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Padding(
-                                                          padding: EdgeInsets.all(10),
-                                                          child: Text("Eğlence",style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),)
-                                                      ),
-                                                      if (entertainmentTitleList.isNotEmpty && entertainmentPriceList.isNotEmpty)
-                                                        Container(
-                                                          child:
-                                                          ListView.builder(
-                                                            shrinkWrap: true,
-                                                            itemCount: entertainmentTitleList.length,
-                                                            itemBuilder: (BuildContext context, int i) {
-                                                              double sum2 = double.parse(entertainmentPriceList[i]);
-                                                              String convertSumo = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum2);
-                                                              return Container(
-                                                                padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
-                                                                child: Row(
-                                                                  children: [
-                                                                    Flexible(
-                                                                      flex: 2,
-                                                                      fit: FlexFit.tight,
-                                                                      child: Text(
-                                                                        entertainmentTitleList[i],
-                                                                        style: TextStyle(fontSize: 20),
-                                                                        overflow: TextOverflow.ellipsis,
-                                                                      ),
-                                                                    ),
-                                                                    Flexible(
-                                                                      flex: 2,
-                                                                      fit: FlexFit.tight,
-                                                                      child: Text(
-                                                                        textAlign: TextAlign.right,
-                                                                        convertSumo,
-                                                                        style: TextStyle(fontSize: 20),
-                                                                        overflow: TextOverflow.ellipsis,
-                                                                      ),
-                                                                    ),
-                                                                    SizedBox(width: 20),
-                                                                    IconButton(
-                                                                      splashRadius: 0.0001,
-                                                                      padding: EdgeInsets.zero,
-                                                                      constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                                                      icon: Icon(Icons.edit, size: 21),
-                                                                      onPressed: () {
-                                                                        _showEditDialog(context, i, 4, 0); // Show the edit dialog
-                                                                      },
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                              );
-                                                            },
-                                                          ),
-                                                        ),
-                                                      if (isTextFormFieldVisibleTH && hasEntertainmentSelected)
-                                                        Container(
-                                                          padding: EdgeInsets.all(10),
-                                                          child: Row(
-                                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                                            children: [
-                                                              Expanded(
-                                                                child: TextFormField(
-                                                                  controller: THtextController,
-                                                                  decoration: InputDecoration(
-                                                                    border: InputBorder.none,
-                                                                    hintText: 'ABA',
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                              SizedBox(width: 10),
-                                                              Expanded(
-                                                                child: TextFormField(
-                                                                  controller: THplatformPriceController,
-                                                                  keyboardType: TextInputType.number, // Show numeric keyboard
-                                                                  decoration: InputDecoration(
-                                                                    border: InputBorder.none,
-                                                                    hintText: 'GAG',
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                              Wrap(
-                                                                children: [
-                                                                  IconButton(
-                                                                    onPressed: () {
-                                                                      final text = THtextController.text.trim();
-                                                                      final priceText = THplatformPriceController.text.trim();
-                                                                      if (text.isNotEmpty && priceText.isNotEmpty) {
-                                                                        double dprice = double.tryParse(priceText) ?? 0.0;
-                                                                        String price = dprice.toStringAsFixed(2);
-                                                                        setState(() {
-                                                                          isEditingListTH = false; // Add a corresponding entry for the new item
-                                                                          THtextController.clear();
-                                                                          THplatformPriceController.clear();
-                                                                          isTextFormFieldVisibleTH = false;
-                                                                          isAddButtonActiveTH = false;
-                                                                        });
-                                                                      }
-                                                                    },
-                                                                    icon: Icon(Icons.check_circle, size: 26),
-                                                                  ),
-                                                                  IconButton(
-                                                                    onPressed: () {
-                                                                      setState(() {
-                                                                        isTextFormFieldVisibleTH = false;
-                                                                        isAddButtonActiveTH = false;
-                                                                        THtextController.clear();
-                                                                        THplatformPriceController.clear();
-                                                                      });
-                                                                    },
-                                                                    icon: Icon(Icons.cancel, size: 26),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                      if (!isEditingListTH && !isTextFormFieldVisibleTH)
-                                                        Container(
-                                                          padding: EdgeInsets.all(10),
-                                                          child: Row(
-                                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                            children: [
-                                                              InkWell(
-                                                                onTap: () {
-                                                                  setState(() {
-                                                                    hasRentSelected = false;
-                                                                    hasKitchenSelected = false;
-                                                                    hasCateringSelected = false;
-                                                                    hasEntertainmentSelected = true;
-                                                                    hasOtherSelected = false;
-                                                                    isAddButtonActiveTH = true;
-                                                                    isTextFormFieldVisible = false;
-                                                                    isTextFormFieldVisibleND =false;
-                                                                    isTextFormFieldVisibleRD = false;
-                                                                    isTextFormFieldVisibleTH = true;
-                                                                    isTextFormFieldVisibleOther = false;
-                                                                    THplatformPriceController.clear();
-                                                                  });
-                                                                },
-                                                                child: Icon(Icons.add_circle, size: 26),
-                                                              ),
-                                                              if (convertSum4 != "0,00")
-                                                                Padding(
-                                                                  padding: const EdgeInsets.only(right: 43),
-                                                                  child: Text("Toplam: ${convertSum4}", style: TextStyle(fontSize: 20),),
-                                                                ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                              SizedBox(height: 20),
-                                              DottedBorder(
-                                                borderType: BorderType.RRect,
-                                                radius: Radius.circular(10),
-                                                color: hasOtherSelected ? Colors.black : Colors.black.withOpacity(0.5),
-                                                strokeWidth: hasOtherSelected ? 4 : 2,
-                                                dashPattern: [6,3],
-                                                child: Container(
-                                                  width: double.infinity,
-                                                  child: InkWell(
-                                                    onTap: isAddButtonActiveOther ? null :handleOtherContainerTouch,
-                                                    child: Column(
-                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                      children: [
-                                                        Padding(
-                                                            padding: EdgeInsets.all(10),
-                                                            child: Text("Diğer",style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),)
-                                                        ),
-                                                        if (otherTitleList.isNotEmpty && otherPriceList.isNotEmpty)
-                                                          Container(
-                                                            child:
-                                                            ListView.builder(
-                                                              shrinkWrap: true,
-                                                              itemCount: otherTitleList.length,
-                                                              itemBuilder: (BuildContext context, int i) {
-                                                                double sum2 = double.parse(otherPriceList[i]);
-                                                                String convertSumo = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum2);
-                                                                return Container(
-                                                                  padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
-                                                                  child: Row(
+                                                                  Column(
+                                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                                     children: [
-                                                                      Flexible(
-                                                                        flex: 2,
-                                                                        fit: FlexFit.tight,
-                                                                        child: Text(
-                                                                          otherTitleList[i],
-                                                                          style: TextStyle(fontSize: 20),
-                                                                          overflow: TextOverflow.ellipsis,
-                                                                        ),
-                                                                      ),
-                                                                      Flexible(
-                                                                        flex: 2,
-                                                                        fit: FlexFit.tight,
-                                                                        child: Text(
-                                                                          textAlign: TextAlign.right,
-                                                                          convertSumo,
-                                                                          style: TextStyle(fontSize: 20),
-                                                                          overflow: TextOverflow.ellipsis,
-                                                                        ),
-                                                                      ),
-                                                                      SizedBox(width: 20),
                                                                       IconButton(
-                                                                        splashRadius: 0.0001,
-                                                                        padding: EdgeInsets.zero,
-                                                                        constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                                                        icon: Icon(Icons.edit, size: 21),
                                                                         onPressed: () {
-                                                                          _showEditDialog(context, i, 5, 0); // Show the edit dialog
+                                                                          setState(() {
+                                                                            int maxId = 0; // Initialize with the lowest possible value
+                                                                            for (var invoice in invoices) {
+                                                                              if (invoice.id > maxId) {
+                                                                                maxId = invoice.id;
+                                                                              }
+                                                                            }
+                                                                            int newId = maxId + 1;
+                                                                            final text = textController.text.trim();
+                                                                            final priceText = platformPriceController.text.trim();
+                                                                            double dprice = double.tryParse(priceText) ?? 0.0;
+                                                                            String price = dprice.toStringAsFixed(2);
+                                                                            final invoice = Invoice(
+                                                                                id: newId,
+                                                                                price: price,
+                                                                                subCategory: 'Kira',
+                                                                                category: "Diğer Giderler",
+                                                                                name: text,
+                                                                                periodDate: formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
+                                                                                dueDate: _selectedDueDay != null
+                                                                                    ? formatDueDate(_selectedDueDay!, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!))
+                                                                                    : null,
+                                                                                difference: "do2"
+                                                                            );
+                                                                            onSave(invoice);
+                                                                            if (text.isNotEmpty && priceText.isNotEmpty) {
+                                                                              setState(() {
+                                                                                isEditingList = false; // Add a corresponding entry for the new item
+                                                                                textController.clear();
+                                                                                platformPriceController.clear();
+                                                                                isTextFormFieldVisible = false;
+                                                                                isAddButtonActive = false;
+                                                                              });
+                                                                            }
+                                                                          });
                                                                         },
+                                                                        icon: Icon(Icons.check_circle, size: 26),
+                                                                      ),
+                                                                      IconButton(
+                                                                        onPressed: () {
+                                                                          setState(() {
+                                                                            isTextFormFieldVisible = false;
+                                                                            isAddButtonActive = false;
+                                                                            textController.clear();
+                                                                            platformPriceController.clear();
+                                                                          });
+                                                                        },
+                                                                        icon: Icon(Icons.cancel, size: 26),
                                                                       ),
                                                                     ],
-                                                                  ),
-                                                                );
-                                                              },
-                                                            ),
+                                                                  )
+                                                                ],
+                                                              ),
+                                                            ],
                                                           ),
-                                                        if (isTextFormFieldVisibleOther && hasOtherSelected)
-                                                          Container(
-                                                            padding: EdgeInsets.all(10),
-                                                            child: Row(
-                                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                                        ),
+                                                      ),
+                                                    if (!isEditingList && !isTextFormFieldVisible)
+                                                      Container(
+                                                        padding: EdgeInsets.all(10),
+                                                        child: Row(
+                                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                          children: [
+                                                            InkWell(
+                                                              onTap: () {
+                                                                setState(() {
+                                                                  hasRentSelected = true;
+                                                                  hasKitchenSelected = false;
+                                                                  hasCateringSelected = false;
+                                                                  hasEntertainmentSelected = false;
+                                                                  hasOtherSelected = false;
+                                                                  isAddButtonActive = true;
+                                                                  isTextFormFieldVisible = true;
+                                                                  isTextFormFieldVisibleND =false;
+                                                                  isTextFormFieldVisibleRD = false;
+                                                                  isTextFormFieldVisibleTH = false;
+                                                                  isTextFormFieldVisibleOther = false;
+                                                                  platformPriceController.clear();
+                                                                });
+                                                              },
+                                                              child: Icon(Icons.add_circle, size: 26),
+                                                            ),
+                                                            if (formattedRentSum != "0,00")
+                                                              Padding(
+                                                                padding: const EdgeInsets.only(right: 43),
+                                                                child: Text("Toplam: ${formattedRentSum}", style: TextStyle(fontSize: 20),),
+                                                              ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            SizedBox(height: 20),
+                                            Container(
+                                              width: double.infinity,
+                                              decoration: BoxDecoration(
+                                                borderRadius: BorderRadius.circular(10),
+                                                border: Border.all(
+                                                  color: hasKitchenSelected ? Colors.black : Colors.black.withOpacity(0.5),
+                                                  width: hasKitchenSelected ? 4 : 2,
+                                                ),
+                                              ),
+                                              child: InkWell(
+                                                onTap: isAddButtonActiveND ? null : handleKitchenContainerTouch,
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Padding(
+                                                        padding: EdgeInsets.all(10),
+                                                        child: Text("Mutfak",style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),)
+                                                    ),
+                                                    if (kitchenTitleList.isNotEmpty && kitchenPriceList.isNotEmpty)
+                                                      Container(
+                                                        child:
+                                                        ListView.builder(
+                                                          shrinkWrap: true,
+                                                          itemCount: kitchenTitleList.length,
+                                                          itemBuilder: (BuildContext context, int i) {
+                                                            double sum2 = double.parse(kitchenPriceList[i]);
+                                                            String convertSumo = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum2);
+                                                            return Container(
+                                                              padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+                                                              child: Row(
+                                                                children: [
+                                                                  Flexible(
+                                                                    flex: 2,
+                                                                    fit: FlexFit.tight,
+                                                                    child: Text(
+                                                                      kitchenTitleList[i],
+                                                                      style: TextStyle(fontSize: 20),
+                                                                      overflow: TextOverflow.ellipsis,
+                                                                    ),
+                                                                  ),
+                                                                  Flexible(
+                                                                    flex: 2,
+                                                                    fit: FlexFit.tight,
+                                                                    child: Text(
+                                                                      textAlign: TextAlign.right,
+                                                                      convertSumo,
+                                                                      style: TextStyle(fontSize: 20),
+                                                                      overflow: TextOverflow.ellipsis,
+                                                                    ),
+                                                                  ),
+                                                                  SizedBox(width: 20),
+                                                                  IconButton(
+                                                                    splashRadius: 0.0001,
+                                                                    padding: EdgeInsets.zero,
+                                                                    constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                                                    icon: Icon(Icons.edit, size: 21),
+                                                                    onPressed: () {
+                                                                      _showEditDialog(context, i, 2, 0); // Show the edit dialog
+                                                                    },
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            );
+                                                          },
+                                                        ),
+                                                      ),
+                                                    if (isTextFormFieldVisibleND && hasKitchenSelected)
+                                                      Container(
+                                                        padding: EdgeInsets.all(10),
+                                                        child: Row(
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          children: [
+                                                            Expanded(
+                                                              child: TextFormField(
+                                                                controller: NDtextController,
+                                                                decoration: InputDecoration(
+                                                                  border: InputBorder.none,
+                                                                  hintText: 'ABA',
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            SizedBox(width: 10),
+                                                            Expanded(
+                                                              child: TextFormField(
+                                                                controller: NDplatformPriceController,
+                                                                keyboardType: TextInputType.number, // Show numeric keyboard
+                                                                decoration: InputDecoration(
+                                                                  border: InputBorder.none,
+                                                                  hintText: 'GAG',
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            Wrap(
                                                               children: [
-                                                                Expanded(
-                                                                  child: TextFormField(
-                                                                    controller: otherTextController,
-                                                                    decoration: InputDecoration(
-                                                                      border: InputBorder.none,
-                                                                      hintText: 'ABA',
+                                                                IconButton(
+                                                                  onPressed: () {
+                                                                    final text = NDtextController.text.trim();
+                                                                    final priceText = NDplatformPriceController.text.trim();
+                                                                    if (text.isNotEmpty && priceText.isNotEmpty) {
+                                                                      double dprice = double.tryParse(priceText) ?? 0.0;
+                                                                      String price = dprice.toStringAsFixed(2);
+                                                                      setState(() {
+                                                                        rentTitleList.add(text);
+                                                                        rentPriceList.add(price);
+                                                                        context.read<FormBloc>().add(AddRentTitle(text));
+                                                                        context.read<FormBloc>().add(AddRentPrice(price));
+                                                                        context.read<FormBloc>().add(CalculateRentSum(rentPriceList));
+                                                                        isEditingListND = false; // Add a corresponding entry for the new item
+                                                                        NDtextController.clear();
+                                                                        NDplatformPriceController.clear();
+                                                                        isTextFormFieldVisibleND = false;
+                                                                        isAddButtonActiveND = false;
+                                                                      });
+                                                                    }
+                                                                  },
+                                                                  icon: Icon(Icons.check_circle, size: 26),
+                                                                ),
+                                                                IconButton(
+                                                                  onPressed: () {
+                                                                    setState(() {
+                                                                      isTextFormFieldVisibleND = false;
+                                                                      isAddButtonActiveND = false;
+                                                                      NDtextController.clear();
+                                                                      NDplatformPriceController.clear();
+                                                                    });
+                                                                  },
+                                                                  icon: Icon(Icons.cancel, size: 26),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    if (!isEditingListND && !isTextFormFieldVisibleND)
+                                                      Container(
+                                                        padding: EdgeInsets.all(10),
+                                                        child: Row(
+                                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                          children: [
+                                                            InkWell(
+                                                              onTap: () {
+                                                                setState(() {
+                                                                  hasRentSelected = false;
+                                                                  hasKitchenSelected = true;
+                                                                  hasCateringSelected = false;
+                                                                  hasEntertainmentSelected = false;
+                                                                  hasOtherSelected = false;
+                                                                  isAddButtonActiveND = true;
+                                                                  isTextFormFieldVisible = false;
+                                                                  isTextFormFieldVisibleND =true;
+                                                                  isTextFormFieldVisibleRD = false;
+                                                                  isTextFormFieldVisibleTH = false;
+                                                                  isTextFormFieldVisibleOther = false;
+                                                                  NDplatformPriceController.clear();
+                                                                });
+                                                              },
+                                                              child: Icon(Icons.add_circle, size: 26),
+                                                            ),
+                                                            if (convertSum2 != "0,00")
+                                                              Padding(
+                                                                padding: const EdgeInsets.only(right: 43),
+                                                                child: Text("Toplam: ${convertSum2}", style: TextStyle(fontSize: 20),),
+                                                              ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            SizedBox(height: 20),
+                                            Container(
+                                              width: double.infinity,
+                                              decoration: BoxDecoration(
+                                                borderRadius: BorderRadius.circular(10),
+                                                border: Border.all(
+                                                  color: hasCateringSelected ? Colors.black : Colors.black.withOpacity(0.5),
+                                                  width: hasCateringSelected ? 4 : 2,
+                                                ),
+                                              ),
+                                              child: InkWell(
+                                                onTap: isAddButtonActiveRD ? null :handleCateringContainerTouch,
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Padding(
+                                                        padding: EdgeInsets.all(10),
+                                                        child: Text("Yeme İçme",style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),)
+                                                    ),
+                                                    if (cateringTitleList.isNotEmpty && cateringPriceList.isNotEmpty)
+                                                      Container(
+                                                        child:
+                                                        ListView.builder(
+                                                          shrinkWrap: true,
+                                                          itemCount: cateringTitleList.length,
+                                                          itemBuilder: (BuildContext context, int i) {
+                                                            double sum2 = double.parse(cateringPriceList[i]);
+                                                            String convertSumo = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum2);
+                                                            return Container(
+                                                              padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+                                                              child: Row(
+                                                                children: [
+                                                                  Flexible(
+                                                                    flex: 2,
+                                                                    fit: FlexFit.tight,
+                                                                    child: Text(
+                                                                      cateringTitleList[i],
+                                                                      style: TextStyle(fontSize: 20),
+                                                                      overflow: TextOverflow.ellipsis,
                                                                     ),
                                                                   ),
-                                                                ),
-                                                                SizedBox(width: 10),
-                                                                Expanded(
-                                                                  child: TextFormField(
-                                                                    controller: otherPlatformPriceController,
-                                                                    keyboardType: TextInputType.number, // Show numeric keyboard
-                                                                    decoration: InputDecoration(
-                                                                      border: InputBorder.none,
-                                                                      hintText: 'GAG',
+                                                                  Flexible(
+                                                                    flex: 2,
+                                                                    fit: FlexFit.tight,
+                                                                    child: Text(
+                                                                      textAlign: TextAlign.right,
+                                                                      convertSumo,
+                                                                      style: TextStyle(fontSize: 20),
+                                                                      overflow: TextOverflow.ellipsis,
                                                                     ),
                                                                   ),
+                                                                  SizedBox(width: 20),
+                                                                  IconButton(
+                                                                    splashRadius: 0.0001,
+                                                                    padding: EdgeInsets.zero,
+                                                                    constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                                                    icon: Icon(Icons.edit, size: 21),
+                                                                    onPressed: () {
+                                                                      _showEditDialog(context, i, 3, 0); // Show the edit dialog
+                                                                    },
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            );
+                                                          },
+                                                        ),
+                                                      ),
+                                                    if (isTextFormFieldVisibleRD && hasCateringSelected)
+                                                      Container(
+                                                        padding: EdgeInsets.all(10),
+                                                        child: Row(
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          children: [
+                                                            Expanded(
+                                                              child: TextFormField(
+                                                                controller: RDtextController,
+                                                                decoration: InputDecoration(
+                                                                  border: InputBorder.none,
+                                                                  hintText: 'ABA',
                                                                 ),
-                                                                Wrap(
+                                                              ),
+                                                            ),
+                                                            SizedBox(width: 10),
+                                                            Expanded(
+                                                              child: TextFormField(
+                                                                controller: RDplatformPriceController,
+                                                                keyboardType: TextInputType.number, // Show numeric keyboard
+                                                                decoration: InputDecoration(
+                                                                  border: InputBorder.none,
+                                                                  hintText: 'GAG',
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            Wrap(
+                                                              children: [
+                                                                IconButton(
+                                                                  onPressed: () {
+                                                                    final text = RDtextController.text.trim();
+                                                                    final priceText = RDplatformPriceController.text.trim();
+                                                                    if (text.isNotEmpty && priceText.isNotEmpty) {
+                                                                      double dprice = double.tryParse(priceText) ?? 0.0;
+                                                                      String price = dprice.toStringAsFixed(2);
+                                                                      setState(() {
+                                                                        isEditingListRD = false; // Add a corresponding entry for the new item
+                                                                        RDtextController.clear();
+                                                                        RDplatformPriceController.clear();
+                                                                        isTextFormFieldVisibleRD = false;
+                                                                        isAddButtonActiveRD = false;
+                                                                      });
+                                                                    }
+                                                                  },
+                                                                  icon: Icon(Icons.check_circle, size: 26),
+                                                                ),
+                                                                IconButton(
+                                                                  onPressed: () {
+                                                                    setState(() {
+                                                                      isTextFormFieldVisibleRD = false;
+                                                                      isAddButtonActiveRD = false;
+                                                                      RDtextController.clear();
+                                                                      RDplatformPriceController.clear();
+                                                                    });
+                                                                  },
+                                                                  icon: Icon(Icons.cancel, size: 26),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    if (!isEditingListRD && !isTextFormFieldVisibleRD)
+                                                      Container(
+                                                        padding: EdgeInsets.all(10),
+                                                        child: Row(
+                                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                          children: [
+                                                            InkWell(
+                                                              onTap: () {
+                                                                setState(() {
+                                                                  hasRentSelected = false;
+                                                                  hasKitchenSelected = false;
+                                                                  hasCateringSelected = true;
+                                                                  hasEntertainmentSelected = false;
+                                                                  hasOtherSelected = false;
+                                                                  isAddButtonActiveRD = true;
+                                                                  isTextFormFieldVisible = false;
+                                                                  isTextFormFieldVisibleND =false;
+                                                                  isTextFormFieldVisibleRD = true;
+                                                                  isTextFormFieldVisibleTH = false;
+                                                                  isTextFormFieldVisibleOther = false;
+                                                                  RDplatformPriceController.clear();
+                                                                });
+                                                              },
+                                                              child: Icon(Icons.add_circle, size: 26),
+                                                            ),
+                                                            if (convertSum3 != "0,00")
+                                                              Padding(
+                                                                padding: const EdgeInsets.only(right: 43),
+                                                                child: Text("Toplam: ${convertSum3}", style: TextStyle(fontSize: 20),),
+                                                              ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            SizedBox(height: 20),
+                                            Container(
+                                              width: double.infinity,
+                                              decoration: BoxDecoration(
+                                                borderRadius: BorderRadius.circular(10),
+                                                border: Border.all(
+                                                  color: hasEntertainmentSelected ? Colors.black : Colors.black.withOpacity(0.5),
+                                                  width: hasEntertainmentSelected ? 4 : 2,
+                                                ),
+                                              ),
+                                              child: InkWell(
+                                                onTap: isAddButtonActiveTH ? null :handleEntContainerTouch,
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Padding(
+                                                        padding: EdgeInsets.all(10),
+                                                        child: Text("Eğlence",style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),)
+                                                    ),
+                                                    if (entertainmentTitleList.isNotEmpty && entertainmentPriceList.isNotEmpty)
+                                                      Container(
+                                                        child:
+                                                        ListView.builder(
+                                                          shrinkWrap: true,
+                                                          itemCount: entertainmentTitleList.length,
+                                                          itemBuilder: (BuildContext context, int i) {
+                                                            double sum2 = double.parse(entertainmentPriceList[i]);
+                                                            String convertSumo = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum2);
+                                                            return Container(
+                                                              padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+                                                              child: Row(
+                                                                children: [
+                                                                  Flexible(
+                                                                    flex: 2,
+                                                                    fit: FlexFit.tight,
+                                                                    child: Text(
+                                                                      entertainmentTitleList[i],
+                                                                      style: TextStyle(fontSize: 20),
+                                                                      overflow: TextOverflow.ellipsis,
+                                                                    ),
+                                                                  ),
+                                                                  Flexible(
+                                                                    flex: 2,
+                                                                    fit: FlexFit.tight,
+                                                                    child: Text(
+                                                                      textAlign: TextAlign.right,
+                                                                      convertSumo,
+                                                                      style: TextStyle(fontSize: 20),
+                                                                      overflow: TextOverflow.ellipsis,
+                                                                    ),
+                                                                  ),
+                                                                  SizedBox(width: 20),
+                                                                  IconButton(
+                                                                    splashRadius: 0.0001,
+                                                                    padding: EdgeInsets.zero,
+                                                                    constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                                                    icon: Icon(Icons.edit, size: 21),
+                                                                    onPressed: () {
+                                                                      _showEditDialog(context, i, 4, 0); // Show the edit dialog
+                                                                    },
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            );
+                                                          },
+                                                        ),
+                                                      ),
+                                                    if (isTextFormFieldVisibleTH && hasEntertainmentSelected)
+                                                      Container(
+                                                        padding: EdgeInsets.all(10),
+                                                        child: Row(
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          children: [
+                                                            Expanded(
+                                                              child: TextFormField(
+                                                                controller: THtextController,
+                                                                decoration: InputDecoration(
+                                                                  border: InputBorder.none,
+                                                                  hintText: 'ABA',
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            SizedBox(width: 10),
+                                                            Expanded(
+                                                              child: TextFormField(
+                                                                controller: THplatformPriceController,
+                                                                keyboardType: TextInputType.number, // Show numeric keyboard
+                                                                decoration: InputDecoration(
+                                                                  border: InputBorder.none,
+                                                                  hintText: 'GAG',
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            Wrap(
+                                                              children: [
+                                                                IconButton(
+                                                                  onPressed: () {
+                                                                    final text = THtextController.text.trim();
+                                                                    final priceText = THplatformPriceController.text.trim();
+                                                                    if (text.isNotEmpty && priceText.isNotEmpty) {
+                                                                      double dprice = double.tryParse(priceText) ?? 0.0;
+                                                                      String price = dprice.toStringAsFixed(2);
+                                                                      setState(() {
+                                                                        isEditingListTH = false; // Add a corresponding entry for the new item
+                                                                        THtextController.clear();
+                                                                        THplatformPriceController.clear();
+                                                                        isTextFormFieldVisibleTH = false;
+                                                                        isAddButtonActiveTH = false;
+                                                                      });
+                                                                    }
+                                                                  },
+                                                                  icon: Icon(Icons.check_circle, size: 26),
+                                                                ),
+                                                                IconButton(
+                                                                  onPressed: () {
+                                                                    setState(() {
+                                                                      isTextFormFieldVisibleTH = false;
+                                                                      isAddButtonActiveTH = false;
+                                                                      THtextController.clear();
+                                                                      THplatformPriceController.clear();
+                                                                    });
+                                                                  },
+                                                                  icon: Icon(Icons.cancel, size: 26),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    if (!isEditingListTH && !isTextFormFieldVisibleTH)
+                                                      Container(
+                                                        padding: EdgeInsets.all(10),
+                                                        child: Row(
+                                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                          children: [
+                                                            InkWell(
+                                                              onTap: () {
+                                                                setState(() {
+                                                                  hasRentSelected = false;
+                                                                  hasKitchenSelected = false;
+                                                                  hasCateringSelected = false;
+                                                                  hasEntertainmentSelected = true;
+                                                                  hasOtherSelected = false;
+                                                                  isAddButtonActiveTH = true;
+                                                                  isTextFormFieldVisible = false;
+                                                                  isTextFormFieldVisibleND =false;
+                                                                  isTextFormFieldVisibleRD = false;
+                                                                  isTextFormFieldVisibleTH = true;
+                                                                  isTextFormFieldVisibleOther = false;
+                                                                  THplatformPriceController.clear();
+                                                                });
+                                                              },
+                                                              child: Icon(Icons.add_circle, size: 26),
+                                                            ),
+                                                            if (convertSum4 != "0,00")
+                                                              Padding(
+                                                                padding: const EdgeInsets.only(right: 43),
+                                                                child: Text("Toplam: ${convertSum4}", style: TextStyle(fontSize: 20),),
+                                                              ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            SizedBox(height: 20),
+                                            DottedBorder(
+                                              borderType: BorderType.RRect,
+                                              radius: Radius.circular(10),
+                                              color: hasOtherSelected ? Colors.black : Colors.black.withOpacity(0.5),
+                                              strokeWidth: hasOtherSelected ? 4 : 2,
+                                              dashPattern: [6,3],
+                                              child: Container(
+                                                width: double.infinity,
+                                                child: InkWell(
+                                                  onTap: isAddButtonActiveOther ? null :handleOtherContainerTouch,
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Padding(
+                                                          padding: EdgeInsets.all(10),
+                                                          child: Text("Diğer",style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),)
+                                                      ),
+                                                      if (otherTitleList.isNotEmpty && otherPriceList.isNotEmpty)
+                                                        Container(
+                                                          child:
+                                                          ListView.builder(
+                                                            shrinkWrap: true,
+                                                            itemCount: otherTitleList.length,
+                                                            itemBuilder: (BuildContext context, int i) {
+                                                              double sum2 = double.parse(otherPriceList[i]);
+                                                              String convertSumo = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sum2);
+                                                              return Container(
+                                                                padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+                                                                child: Row(
                                                                   children: [
-                                                                    IconButton(
-                                                                      onPressed: () {
-                                                                        final text = otherTextController.text.trim();
-                                                                        final priceText = otherPlatformPriceController.text.trim();
-                                                                        if (text.isNotEmpty && priceText.isNotEmpty) {
-                                                                          setState(() {
-                                                                            isEditingListOther = false; // Add a corresponding entry for the new item
-                                                                            otherTextController.clear();
-                                                                            otherPlatformPriceController.clear();
-                                                                            isTextFormFieldVisibleOther = false;
-                                                                            isAddButtonActiveOther = false;
-                                                                          });
-                                                                        }
-                                                                      },
-                                                                      icon: Icon(Icons.check_circle, size: 26),
+                                                                    Flexible(
+                                                                      flex: 2,
+                                                                      fit: FlexFit.tight,
+                                                                      child: Text(
+                                                                        otherTitleList[i],
+                                                                        style: TextStyle(fontSize: 20),
+                                                                        overflow: TextOverflow.ellipsis,
+                                                                      ),
                                                                     ),
+                                                                    Flexible(
+                                                                      flex: 2,
+                                                                      fit: FlexFit.tight,
+                                                                      child: Text(
+                                                                        textAlign: TextAlign.right,
+                                                                        convertSumo,
+                                                                        style: TextStyle(fontSize: 20),
+                                                                        overflow: TextOverflow.ellipsis,
+                                                                      ),
+                                                                    ),
+                                                                    SizedBox(width: 20),
                                                                     IconButton(
+                                                                      splashRadius: 0.0001,
+                                                                      padding: EdgeInsets.zero,
+                                                                      constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
+                                                                      icon: Icon(Icons.edit, size: 21),
                                                                       onPressed: () {
-                                                                        setState(() {
-                                                                          isTextFormFieldVisibleOther = false;
-                                                                          isAddButtonActiveOther = false;
-                                                                          otherTextController.clear();
-                                                                          otherPlatformPriceController.clear();
-                                                                        });
+                                                                        _showEditDialog(context, i, 5, 0); // Show the edit dialog
                                                                       },
-                                                                      icon: Icon(Icons.cancel, size: 26),
                                                                     ),
                                                                   ],
                                                                 ),
-                                                              ],
-                                                            ),
+                                                              );
+                                                            },
                                                           ),
-                                                        if (!isEditingListOther && !isTextFormFieldVisibleOther)
-                                                          Container(
-                                                            padding: EdgeInsets.all(10),
-                                                            child: Row(
-                                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                              children: [
-                                                                InkWell(
-                                                                  onTap: () {
-                                                                    setState(() {
-                                                                      hasRentSelected = false;
-                                                                      hasKitchenSelected = false;
-                                                                      hasCateringSelected = false;
-                                                                      hasEntertainmentSelected = false;
-                                                                      hasOtherSelected = true;
-                                                                      isAddButtonActiveOther = true;
-                                                                      isTextFormFieldVisible = false;
-                                                                      isTextFormFieldVisibleND =false;
-                                                                      isTextFormFieldVisibleRD = false;
-                                                                      isTextFormFieldVisibleTH = false;
-                                                                      isTextFormFieldVisibleOther = true;
-                                                                      otherPlatformPriceController.clear();
-                                                                    });
-                                                                  },
-                                                                  child: Icon(Icons.add_circle, size: 26),
-                                                                ),
-                                                                if (convertSum5 != "0,00")
-                                                                  Padding(
-                                                                    padding: const EdgeInsets.only(right: 43),
-                                                                    child: Text("Toplam: ${convertSum5}", style: TextStyle(fontSize: 20),),
+                                                        ),
+                                                      if (isTextFormFieldVisibleOther && hasOtherSelected)
+                                                        Container(
+                                                          padding: EdgeInsets.all(10),
+                                                          child: Row(
+                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                            children: [
+                                                              Expanded(
+                                                                child: TextFormField(
+                                                                  controller: otherTextController,
+                                                                  decoration: InputDecoration(
+                                                                    border: InputBorder.none,
+                                                                    hintText: 'ABA',
                                                                   ),
-                                                              ],
-                                                            ),
+                                                                ),
+                                                              ),
+                                                              SizedBox(width: 10),
+                                                              Expanded(
+                                                                child: TextFormField(
+                                                                  controller: otherPlatformPriceController,
+                                                                  keyboardType: TextInputType.number, // Show numeric keyboard
+                                                                  decoration: InputDecoration(
+                                                                    border: InputBorder.none,
+                                                                    hintText: 'GAG',
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                              Wrap(
+                                                                children: [
+                                                                  IconButton(
+                                                                    onPressed: () {
+                                                                      final text = otherTextController.text.trim();
+                                                                      final priceText = otherPlatformPriceController.text.trim();
+                                                                      if (text.isNotEmpty && priceText.isNotEmpty) {
+                                                                        setState(() {
+                                                                          isEditingListOther = false; // Add a corresponding entry for the new item
+                                                                          otherTextController.clear();
+                                                                          otherPlatformPriceController.clear();
+                                                                          isTextFormFieldVisibleOther = false;
+                                                                          isAddButtonActiveOther = false;
+                                                                        });
+                                                                      }
+                                                                    },
+                                                                    icon: Icon(Icons.check_circle, size: 26),
+                                                                  ),
+                                                                  IconButton(
+                                                                    onPressed: () {
+                                                                      setState(() {
+                                                                        isTextFormFieldVisibleOther = false;
+                                                                        isAddButtonActiveOther = false;
+                                                                        otherTextController.clear();
+                                                                        otherPlatformPriceController.clear();
+                                                                      });
+                                                                    },
+                                                                    icon: Icon(Icons.cancel, size: 26),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ],
                                                           ),
-                                                      ],
-                                                    ),
+                                                        ),
+                                                      if (!isEditingListOther && !isTextFormFieldVisibleOther)
+                                                        Container(
+                                                          padding: EdgeInsets.all(10),
+                                                          child: Row(
+                                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                            children: [
+                                                              InkWell(
+                                                                onTap: () {
+                                                                  setState(() {
+                                                                    hasRentSelected = false;
+                                                                    hasKitchenSelected = false;
+                                                                    hasCateringSelected = false;
+                                                                    hasEntertainmentSelected = false;
+                                                                    hasOtherSelected = true;
+                                                                    isAddButtonActiveOther = true;
+                                                                    isTextFormFieldVisible = false;
+                                                                    isTextFormFieldVisibleND =false;
+                                                                    isTextFormFieldVisibleRD = false;
+                                                                    isTextFormFieldVisibleTH = false;
+                                                                    isTextFormFieldVisibleOther = true;
+                                                                    otherPlatformPriceController.clear();
+                                                                  });
+                                                                },
+                                                                child: Icon(Icons.add_circle, size: 26),
+                                                              ),
+                                                              if (convertSum5 != "0,00")
+                                                                Padding(
+                                                                  padding: const EdgeInsets.only(right: 43),
+                                                                  child: Text("Toplam: ${convertSum5}", style: TextStyle(fontSize: 20),),
+                                                                ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                    ],
                                                   ),
                                                 ),
                                               ),
-                                              ListView.builder(
-                                                itemCount: sharedPreferencesData.length,
-                                                itemBuilder: (context, index) {
-                                                  return ListTile(
-                                                    title: Text(sharedPreferencesData[index]),
-                                                  );
-                                                },
-                                                shrinkWrap: true,
-                                                physics: const NeverScrollableScrollPhysics(),
-                                              ),
-                                            ],
-                                          ),
+                                            ),
+                                            ListView.builder(
+                                              itemCount: sharedPreferencesData.length,
+                                              itemBuilder: (context, index) {
+                                                return ListTile(
+                                                  title: Text(sharedPreferencesData[index]),
+                                                );
+                                              },
+                                              shrinkWrap: true,
+                                              physics: const NeverScrollableScrollPhysics(),
+                                            ),
+                                          ],
                                         ),
-                                      )
-                                    ],
-                                  ),
+                                      ),
+                                    )
+                                  ],
                                 ),
                               ),
                             ),
@@ -2043,7 +2002,80 @@ class _OtherExpensesState extends State<OtherExpenses> {
                         ),
                       ),
                     ],
-                  )
+                  ),
+                bottomNavigationBar: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(15),
+                      topRight: Radius.circular(15),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        spreadRadius: 2,
+                        blurRadius: 10,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: BottomAppBar(
+                    child: Row(
+                      children: [
+                        Container(
+                          height: 50,
+                          width: 50,
+                          color: Colors.white,
+                          alignment: Alignment.center, // Center the button within the container
+                          child: SizedBox(
+                            height: 50,
+                            width: 50,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                backgroundColor: sumAll != 0.0 ? Colors.black : Colors.grey,
+                                padding: EdgeInsets.zero, // Remove padding to center the icon
+                              ),
+                              clipBehavior: Clip.hardEdge,
+                              onPressed: () {
+                                context.go('/bills');
+                              },
+                              child: Icon(
+                                Icons.arrow_back,
+                                color: sumAll != 0.0 ? Colors.white : Colors.black,
+                                size: 20.sp,
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 20.w),
+                        Expanded(
+                          child: Container(
+                            height: 50,
+                            color: Colors.white,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                backgroundColor: sumAll != 0.0 ? Colors.black : Colors.grey,
+                              ),
+                              clipBehavior: Clip.hardEdge,
+                              onPressed: sumAll != 0.0 ? () {
+                                goToNextPage();
+                              } : null,
+                              child: Text(
+                                'Sonraki',
+                                style: GoogleFonts.montserrat(fontSize: 18),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               );
             },
         ),

@@ -665,15 +665,16 @@ class _WishesPageState extends State<WishesPage> {
             children: [
               Text("Bankalarım",
                   style: GoogleFonts.montserrat(
-                      color: Colors.black,
-                      fontSize: 16,
-                      fontWeight: FontWeight.normal)),
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
-                  color: Color(0xFFD5E1F5),
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Color(0x7D67C5FF) // Dark mode color
+                      : Color(0xFFD5E1F5),// Light mode color
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
