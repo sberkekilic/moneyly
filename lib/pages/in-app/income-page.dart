@@ -394,7 +394,7 @@ class _IncomePageState extends State<IncomePage> {
                                             fontWeight: FontWeight.bold,
                                           color: Theme.of(context).brightness == Brightness.dark
                                               ? Colors.grey[850] // Dark mode color
-                                              : Colors.white, // Light mode color
+                                              : Colors.black, // Light mode color
                                         )
                                     ),
                                     SizedBox(height: 10),
@@ -461,7 +461,7 @@ class _IncomePageState extends State<IncomePage> {
                                                       fontWeight: FontWeight.bold,
                                                     color: Theme.of(context).brightness == Brightness.dark
                                                         ? Colors.grey[850] // Dark mode color
-                                                        : Colors.white, // Light mode color
+                                                        : Colors.black, // Light mode color
                                                   )
                                           ),
                                         ),
@@ -516,13 +516,13 @@ class _IncomePageState extends State<IncomePage> {
                                                 Icons.done_rounded,
                                               color: Theme.of(context).brightness == Brightness.dark
                                                   ? Colors.grey[850] // Dark mode color
-                                                  : Colors.white, // Light mode color
+                                                  : Colors.black, // Light mode color
                                             )
                                                 : Icon(
                                                 Icons.edit_rounded,
                                               color: Theme.of(context).brightness == Brightness.dark
                                                   ? Colors.grey[850] // Dark mode color
-                                                  : Colors.white, // Light mode color
+                                                  : Colors.black, // Light mode color
                                             )),
                                       ],
                                     ),
@@ -640,7 +640,7 @@ class _IncomePageState extends State<IncomePage> {
                                         Color.fromARGB(120, 152, 255, 170),
                                         borderRadius: BorderRadius.circular(20),
                                       ),
-                                      padding: EdgeInsets.all(15),
+                                      padding: EdgeInsets.only(left: 20,right: 20),
                                       child: SizedBox(
                                         child: Row(
                                           mainAxisAlignment:

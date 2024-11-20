@@ -385,6 +385,7 @@ class _OutcomePageState extends State<OutcomePage> {
     percentages.sort((a, b) => b.compareTo(a),);
     percentages[0] = 1.0;
     print("son percentages:$percentages, smallestVariable:$smallestVariable, mediumVariable:$mediumVariable, largestVariable:$largestVariable");
+    print("variableNames:$variableNames");
 
     String formattedIncomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(incomeValue);
     String formattedOutcomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(outcomeValue);
@@ -400,7 +401,7 @@ class _OutcomePageState extends State<OutcomePage> {
     Color biggestColor = Color(0xFFFF8C00);
     Color smallestSoftColor = Color(0xFFFFE680);
     Color mediumSoftColor = Color(0xFFFFD3A3);
-    Color biggestSoftColor = Color(0xFFFFC299);
+    Color biggestSoftColor = Color(0xFFFFAB8A);
 
 
     List<int> getIdsWithSubcategory(List<Invoice> invoices, String subCategory) {
@@ -1006,20 +1007,17 @@ class _OutcomePageState extends State<OutcomePage> {
                           children: [
                             Text(
                               "Tüm Giderler",
-                              style: TextStyle(
-                                fontFamily: 'Keep Calm',
+                              style: GoogleFonts.montserrat(
                                 color: Colors.black,
                                 fontSize: 15.sp,
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                            const SizedBox(height: 10),
                             Text(
                               formattedOutcomeValue,
-                              style: TextStyle(
-                                fontFamily: 'Keep Calm',
+                              style: GoogleFonts.montserrat(
                                 color: Colors.black,
-                                fontSize: 20.sp,
+                                fontSize: 24.sp,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -1063,12 +1061,12 @@ class _OutcomePageState extends State<OutcomePage> {
                                       child: Text(
                                         "%${(percentages[2] * 100).toStringAsFixed(0)}",
                                         textAlign: TextAlign.center,
-                                        style: TextStyle(
+                                        style: GoogleFonts.montserrat(
                                             fontSize: 12.sp,
                                             fontWeight: FontWeight.bold,
                                           color: Theme.of(context).brightness == Brightness.dark
                                               ? Colors.grey[850] // Dark mode color
-                                              : Colors.white, // Light mode color
+                                              : Colors.black, // Light mode color
                                         ),
                                       ),
                                     ),
@@ -1077,12 +1075,12 @@ class _OutcomePageState extends State<OutcomePage> {
                                       child: Text(
                                         "%${(percentages[1] * 100).toStringAsFixed(0)}",
                                         textAlign: TextAlign.center,
-                                        style: TextStyle(
+                                        style: GoogleFonts.montserrat(
                                             fontSize: 12.sp,
                                             fontWeight: FontWeight.bold,
                                           color: Theme.of(context).brightness == Brightness.dark
                                               ? Colors.grey[850] // Dark mode color
-                                              : Colors.white, // Light mode color
+                                              : Colors.black, // Light mode color
                                         ),
                                       ),
                                     ),
@@ -1091,12 +1089,12 @@ class _OutcomePageState extends State<OutcomePage> {
                                       child: Text(
                                         "%${((percentages[2] * 100)+(percentages[1] * 100)).toStringAsFixed(0)}",
                                         textAlign: TextAlign.center,
-                                        style: TextStyle(
+                                        style: GoogleFonts.montserrat(
                                             fontSize: 12.sp,
                                             fontWeight: FontWeight.bold,
                                           color: Theme.of(context).brightness == Brightness.dark
                                               ? Colors.grey[850] // Dark mode color
-                                              : Colors.white, // Light mode color
+                                              : Colors.black, // Light mode color
                                         ),
                                       ),
                                     ),
@@ -1555,22 +1553,20 @@ class _OutcomePageState extends State<OutcomePage> {
                                 CircularPercentIndicator(
                                   animation: true,
                                   circularStrokeCap: CircularStrokeCap.round,
-                                  radius: 25.sp,
+                                  radius: 23.sp,
                                   lineWidth: 6.w,
-                                  percent: 0,
+                                  percent: sumOfSubs/outcomeValue,
                                   center: Text(
                                     "%${((sumOfSubs/outcomeValue)*100).toStringAsFixed(0)}",
-                                    style: TextStyle(
-                                      fontFamily: 'Keep Calm',
+                                    style: GoogleFonts.montserrat(
                                       color: Colors.black,
                                       fontSize: (sumOfSubs/outcomeValue)*100 == 100
-                                          ? 9.sp
-                                          : 13.sp,
+                                          ? 8.sp
+                                          : 11.sp,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                   progressColor: smallestColor,
-
                                 ),
                                 const SizedBox(width: 10),
                                 Column(
@@ -1578,20 +1574,18 @@ class _OutcomePageState extends State<OutcomePage> {
                                   children: [
                                     Text(
                                       "Abonelikler",
-                                      style: TextStyle(
-                                        fontFamily: 'Keep Calm',
+                                      style: GoogleFonts.montserrat(
                                         color: Colors.black,
-                                        fontSize: 14.sp,
+                                        fontSize: 15.sp,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                     Text(
                                       "$formattedSumOfSubs / $formattedOutcomeValue",
-                                      style: TextStyle(
-                                        fontFamily: 'Keep Calm',
+                                      style: GoogleFonts.montserrat(
                                         color: Colors.black,
                                         fontSize: 14.sp,
-                                        fontWeight: FontWeight.bold,
+                                        fontWeight: FontWeight.w500,
                                       ),
                                     )
                                   ],
@@ -1609,18 +1603,41 @@ class _OutcomePageState extends State<OutcomePage> {
                             child: Row(
                               children: [
                                 CircularPercentIndicator(
-                                  radius: 25.sp,
+                                  radius: 23.sp,
                                   lineWidth: 6.w,
-                                  percent: 0,
-                                  center: Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
+                                  percent: sumOfBills/outcomeValue,
+                                  center: Text(
+                                      "%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}",
+                                      style: GoogleFonts.montserrat(
+                                          color: Colors.black,
+                                          fontSize: (sumOfSubs/outcomeValue)*100 == 100
+                                              ? 8.sp
+                                              : 11.sp,
+                                          fontWeight: FontWeight.w600
+                                      )
+                                  ),
                                   progressColor: mediumColor,
                                 ),
                                 const SizedBox(width: 10),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text("Faturalar", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("$formattedSumOfBills / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                                    Text(
+                                        "Faturalar",
+                                        style: GoogleFonts.montserrat(
+                                            color: Colors.black,
+                                            fontSize: 15.sp,
+                                            fontWeight: FontWeight.w600
+                                        )
+                                    ),
+                                    Text(
+                                        "$formattedSumOfBills / $formattedOutcomeValue",
+                                        style: GoogleFonts.montserrat(
+                                            color: Colors.black,
+                                            fontSize: 14.sp,
+                                            fontWeight: FontWeight.w500
+                                        )
+                                    )
                                   ],
                                 )
                               ],
@@ -1636,18 +1653,41 @@ class _OutcomePageState extends State<OutcomePage> {
                             child: Row(
                               children: [
                                 CircularPercentIndicator(
-                                  radius: 25.sp,
+                                  radius: 23.sp,
                                   lineWidth: 6.w,
-                                  percent: 0,
-                                  center: Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
+                                  percent: sumOfOthers/outcomeValue,
+                                  center: Text(
+                                      "%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}",
+                                      style: GoogleFonts.montserrat(
+                                          color: Colors.black,
+                                          fontSize: (sumOfSubs/outcomeValue)*100 == 100
+                                              ? 8.sp
+                                              : 11.sp,
+                                          fontWeight: FontWeight.w600
+                                      )
+                                  ),
                                   progressColor: biggestColor,
                                 ),
                                 const SizedBox(width: 10),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text("Diğer Giderler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("$formattedSumOfOthers / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
+                                    Text(
+                                        "Diğer Giderler",
+                                        style: GoogleFonts.montserrat(
+                                            color: Colors.black,
+                                            fontSize: 15.sp,
+                                            fontWeight: FontWeight.w600
+                                        )
+                                    ),
+                                    Text(
+                                        "$formattedSumOfOthers / $formattedOutcomeValue",
+                                        style: GoogleFonts.montserrat(
+                                            color: Colors.black,
+                                            fontSize: 14.sp,
+                                            fontWeight: FontWeight.w500
+                                        )
+                                    )
                                   ],
                                 )
                               ],
@@ -1773,7 +1813,11 @@ class _OutcomePageState extends State<OutcomePage> {
                     Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
-                        color: Color.fromARGB(125, 155, 228, 242),
+                        color: variableNames[0] == "subsPercent"
+                          ? smallestSoftColor
+                            : variableNames[1] == "subsPercent"
+                          ? mediumSoftColor
+                            :biggestSoftColor
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(20),
@@ -1781,7 +1825,27 @@ class _OutcomePageState extends State<OutcomePage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text("$formattedSumOfSubs / $formattedOutcomeValue", style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold)),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                    formattedSumOfSubs,
+                                    style: GoogleFonts.montserrat(
+                                        fontSize: 19.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black
+                                    )
+                                ),
+                                Text(
+                                    formattedOutcomeValue,
+                                    style: GoogleFonts.montserrat(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black
+                                    )
+                                ),
+                              ],
+                            ),
                             SizedBox(
                               child: LinearPercentIndicator(
                                 padding: const EdgeInsets.only(right: 10),
@@ -1792,7 +1856,11 @@ class _OutcomePageState extends State<OutcomePage> {
                                 percent: sumOfSubs/outcomeValue,
                                 trailing: Text("%${((sumOfSubs/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
                                 barRadius: const Radius.circular(10),
-                                progressColor: Colors.lightBlue,
+                                progressColor: variableNames[0] == "subsPercent"
+                                    ? smallestColor
+                                    : variableNames[1] == "subsPercent"
+                                    ? mediumColor
+                                    :biggestColor
                               ),
                             ),
                           ],
@@ -1808,77 +1876,121 @@ class _OutcomePageState extends State<OutcomePage> {
                         if(invoices.isNotEmpty)
                           Container(
                             decoration: BoxDecoration(
-                              color: Color.fromARGB(120, 152, 255, 170),
+                              color: Color.fromARGB(200, 255, 243, 152),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.all(10),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("TV", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                                Padding(
+                                  padding: const EdgeInsets.only(left:10, top:10),
+                                  child: Text("TV", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                                ),
                                 SizedBox(height: 20),
-                                ListView.builder(
+                                ListView(
                                   padding: EdgeInsets.zero,
                                   physics: const NeverScrollableScrollPhysics(),
                                   shrinkWrap: true,
-                                  itemCount: idsWithTVTargetCategory.length,
-                                  itemBuilder: (context, index) {
-                                    int id = idsWithTVTargetCategory[index];
+                                  children: idsWithTVTargetCategory.map((id) {
                                     Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
-                                    if (index < idsWithTVTargetCategory.length) {
-                                      return Column(
-                                        children: [
-                                          Container(
-                                            decoration: BoxDecoration(
-                                              color: Color.fromARGB(120, 152, 255, 170),
-                                              borderRadius: BorderRadius.circular(20),
-                                            ),
-                                            padding: EdgeInsets.all(10),
-                                            child: Row(
-                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 10),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Color.fromARGB(255, 255, 226, 3),
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            Row(
                                               children: [
                                                 Flexible(
-                                                  flex: 2,
-                                                  fit: FlexFit.tight,
-                                                  child: Text(
-                                                    invoice.name,
-                                                    style: GoogleFonts.montserrat(fontSize: 20),
-                                                    overflow: TextOverflow.ellipsis,
+                                                  flex:2,
+                                                  child: ListTile(
+                                                    dense: true,
+                                                    title: Text("Name", style: TextStyle(color: Colors.black)),
+                                                    subtitle: Text(
+                                                        invoice.name,
+                                                      style: GoogleFonts.montserrat(fontSize: 16.sp, color: Colors.black),
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
                                                   ),
                                                 ),
                                                 Flexible(
-                                                  flex: 2,
-                                                  fit: FlexFit.tight,
-                                                  child: Text(
-                                                    textAlign: TextAlign.right,
-                                                    invoice.price,
-                                                    style: GoogleFonts.montserrat(fontSize: 20),
-                                                    overflow: TextOverflow.ellipsis,
+                                                  flex:2,
+                                                  child: ListTile(
+                                                    dense: true,
+                                                    title: Text("Amount", style: TextStyle(color: Colors.black)),
+                                                    subtitle: Text(
+                                                        invoice.price,
+                                                      style: GoogleFonts.montserrat(fontSize: 16.sp, color: Colors.black),
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
                                                   ),
-                                                ),
-                                                const SizedBox(width: 20),
-                                                IconButton(
-                                                  splashRadius: 0.0001,
-                                                  padding: EdgeInsets.zero,
-                                                  constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                                  icon: const Icon(Icons.edit, size: 21),
-                                                  onPressed: () {
-                                                    print("TV: ${context}, ${index}, ${id}");
-                                                    _showEditDialog(context, index, 1, 1, id); // Show the edit dialog
-                                                  },
                                                 ),
                                               ],
                                             ),
-                                          ),
-                                          // Add 10px gap only if there is more than one item and it's not the last item
-                                          if (idsWithTVTargetCategory.length > 1 && index < idsWithTVTargetCategory.length - 1)
-                                            const SizedBox(height: 10),
-                                        ],
-                                      );
-                                    }
-                                    return null;
-                                  },
-                                ),
+                                            Row(
+                                              children: [
+                                                Flexible(
+                                                  flex:2,
+                                                  child: ListTile(
+                                                    dense: true,
+                                                    title: Text("Period Date", style: TextStyle(color: Colors.black)),
+                                                    subtitle: Text(
+                                                        invoice.periodDate,
+                                                      style: GoogleFonts.montserrat(fontSize: 16.sp, color: Colors.black),
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Flexible(
+                                                  flex:2,
+                                                  child: ListTile(
+                                                    dense: true,
+                                                    title: Text("Due Date", style: TextStyle(color: Colors.black)),
+                                                    subtitle: Text(
+                                                        invoice.dueDate ?? "N/A",
+                                                      style: GoogleFonts.montserrat(fontSize: 16.sp, color: Colors.black),
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                color: Color.fromARGB(200, 255, 200, 0),
+                                                borderRadius: BorderRadius.circular(20),
+                                              ),
+                                              padding: EdgeInsets.only(left: 20,right: 20),
+                                              child: SizedBox(
+                                                child: Row(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                  children: [
+                                                    Text("Düzenle", style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black)),
+                                                    IconButton(
+                                                      splashRadius: 0.0001,
+                                                      padding: EdgeInsets.zero,
+                                                      constraints: BoxConstraints(minWidth: 23, maxWidth: 23),
+                                                      icon: Icon(Icons.edit, size: 21, color: Colors.black),
+                                                      onPressed: () {
+                                                        print("TV: ${context}, $id");
+                                                        _showEditDialog(context, idsWithTVTargetCategory.indexOf(id), 1, 1, id);
+                                                      },
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                )
+
                               ],
                             ),
                           ),
@@ -2004,7 +2116,7 @@ class _OutcomePageState extends State<OutcomePage> {
                         if(!isSubsAddActive)
                           Container(
                             decoration: BoxDecoration(
-                              color: Color.fromARGB(120, 152, 255, 170),
+                              color: Color.fromARGB(200, 255, 200, 0),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             padding: EdgeInsets.only(left: 20,right: 20),
@@ -2012,14 +2124,14 @@ class _OutcomePageState extends State<OutcomePage> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text("Abonelik Ekle", style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w600)),
+                                  Text("Abonelik Ekle", style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w600,color: Colors.black)),
                                   IconButton(
                                     onPressed: () {
                                       setState(() {
                                         isSubsAddActive = true;
                                       });
                                     },
-                                    icon: const Icon(Icons.add_circle),
+                                    icon: const Icon(Icons.add_circle, color: Colors.black),
                                   ),
                                 ],
                               ),
@@ -2398,7 +2510,7 @@ class _OutcomePageState extends State<OutcomePage> {
               Text("Faturalar", style: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
                   color: Theme.of(context).brightness == Brightness.dark
@@ -2418,88 +2530,187 @@ class _OutcomePageState extends State<OutcomePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("$formattedSumOfBills / $formattedOutcomeValue", style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold)),
-                    SizedBox(
-                      child: LinearPercentIndicator(
-                        padding: const EdgeInsets.only(right: 10),
-                        backgroundColor: const Color(0xffc6c6c7),
-                        animation: true,
-                        lineHeight: 10,
-                        animationDuration: 1000,
-                        percent: 0,
-                        trailing: Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                        barRadius: const Radius.circular(10),
-                        progressColor: Colors.lightBlue,
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                          color: variableNames[0] == "billsPercent"
+                              ? smallestSoftColor
+                              : variableNames[1] == "billsPercent"
+                              ? mediumSoftColor
+                              :biggestSoftColor
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                    formattedSumOfBills,
+                                    style: GoogleFonts.montserrat(
+                                        fontSize: 19.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black
+                                    )
+                                ),
+                                Text(
+                                    formattedOutcomeValue,
+                                    style: GoogleFonts.montserrat(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black
+                                    )
+                                ),
+                              ],
+                            ),
+                            SizedBox(
+                              child: LinearPercentIndicator(
+                                padding: const EdgeInsets.only(right: 10),
+                                backgroundColor: const Color(0xffc6c6c7),
+                                animation: true,
+                                lineHeight: 10,
+                                animationDuration: 1000,
+                                percent: sumOfBills/outcomeValue,
+                                trailing: Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
+                                barRadius: const Radius.circular(10),
+                                progressColor: variableNames[0] == "billsPercent"
+                                    ? smallestColor
+                                    : variableNames[1] == "billsPercent"
+                                    ? mediumColor
+                                    :biggestColor
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 10),
                     ListView(
                       padding: EdgeInsets.zero,
                       physics: const NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
                       children: [
                         if(invoices.isNotEmpty)
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("Home Bills", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                              const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                              ListView.builder(
-                                padding: EdgeInsets.zero,
-                                physics: const NeverScrollableScrollPhysics(),
-                                shrinkWrap: true,
-                                itemCount: idsWithHBTargetCategory.length,
-                                itemBuilder: (context, index) {
-                                  int id = idsWithHBTargetCategory[index];
-                                  Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
-                                  if (index < idsWithHBTargetCategory.length) {
-                                    return Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Color.fromARGB(120, 255, 204, 148),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            padding: EdgeInsets.all(10),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(left:10, top:10),
+                                  child: Text("Home Bills", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                                ),
+                                SizedBox(height: 20),
+                                ListView(
+                                  padding: EdgeInsets.zero,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  shrinkWrap: true,
+                                  children: idsWithHBTargetCategory.map((id) {
+                                    Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 10),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Color.fromARGB(200, 255, 199, 138),
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        child: Column(
                                           children: [
-                                            Flexible(
-                                              flex: 2,
-                                              fit: FlexFit.tight,
-                                              child: Text(
-                                                invoice.name,
-                                                style: GoogleFonts.montserrat(fontSize: 20),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
+                                            Row(
+                                              children: [
+                                                Flexible(
+                                                  flex:2,
+                                                  child: ListTile(
+                                                    dense: true,
+                                                    title: Text("Name", style: TextStyle(color: Colors.black)),
+                                                    subtitle: Text(
+                                                      invoice.name,
+                                                      style: GoogleFonts.montserrat(fontSize: 16.sp, color: Colors.black),
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Flexible(
+                                                  flex:2,
+                                                  child: ListTile(
+                                                    dense: true,
+                                                    title: Text("Amount", style: TextStyle(color: Colors.black)),
+                                                    subtitle: Text(
+                                                      invoice.price,
+                                                      style: GoogleFonts.montserrat(fontSize: 16.sp, color: Colors.black),
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                            Flexible(
-                                              flex: 2,
-                                              fit: FlexFit.tight,
-                                              child: Text(
-                                                textAlign: TextAlign.right,
-                                                invoice.price,
-                                                style: GoogleFonts.montserrat(fontSize: 20),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
+                                            Row(
+                                              children: [
+                                                Flexible(
+                                                  flex:2,
+                                                  child: ListTile(
+                                                    dense: true,
+                                                    title: Text("Period Date", style: TextStyle(color: Colors.black)),
+                                                    subtitle: Text(
+                                                      invoice.periodDate,
+                                                      style: GoogleFonts.montserrat(fontSize: 16.sp, color: Colors.black),
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Flexible(
+                                                  flex:2,
+                                                  child: ListTile(
+                                                    dense: true,
+                                                    title: Text("Due Date", style: TextStyle(color: Colors.black)),
+                                                    subtitle: Text(
+                                                      invoice.dueDate ?? "N/A",
+                                                      style: GoogleFonts.montserrat(fontSize: 16.sp, color: Colors.black),
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                )
+                                              ],
                                             ),
-                                            const SizedBox(width: 20),
-                                            IconButton(
-                                              splashRadius: 0.0001,
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                              icon: const Icon(Icons.edit, size: 21),
-                                              onPressed: () {
-                                                print("EV: ${context}, ${index}, ${id}");
-                                                print("home list : ${homeBillsTitleList[index]}");
-                                                _showEditDialog(context, index, 2, 1, id); // Show the edit dialog
-                                              },
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                color: Color.fromARGB(200, 255, 176, 89),
+                                                borderRadius: BorderRadius.circular(20),
+                                              ),
+                                              padding: EdgeInsets.only(left: 20,right: 20),
+                                              child: SizedBox(
+                                                child: Row(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                  children: [
+                                                    Text("Düzenle", style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black)),
+                                                    IconButton(
+                                                      splashRadius: 0.0001,
+                                                      padding: EdgeInsets.zero,
+                                                      constraints: BoxConstraints(minWidth: 23, maxWidth: 23),
+                                                      icon: Icon(Icons.edit, size: 21, color: Colors.black),
+                                                      onPressed: () {
+                                                        _showEditDialog(context, idsWithHBTargetCategory.indexOf(id), 1, 1, id);
+                                                      },
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
                                             ),
                                           ],
                                         ),
-                                        const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                      ],
+                                      ),
                                     );
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ],
+                                  }).toList(),
+                                ),
+                              ],
+                            ),
                           ),
                         if(internetTitleList.isNotEmpty)
                           Column(
@@ -2619,21 +2830,29 @@ class _OutcomePageState extends State<OutcomePage> {
                               ),
                             ],
                           ),
+                        SizedBox(height: 10),
                         if(!isBillsAddActive)
-                          SizedBox(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text("Fatura Ekle", style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w600)),
-                                IconButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      isBillsAddActive = true;
-                                    });
-                                  },
-                                  icon: const Icon(Icons.add_circle),
-                                ),
-                              ],
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Color.fromARGB(200, 255, 176, 89),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            padding: EdgeInsets.only(left: 20,right: 20),
+                            child: SizedBox(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text("Fatura Ekle", style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black)),
+                                  IconButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        isBillsAddActive = true;
+                                      });
+                                    },
+                                    icon: const Icon(Icons.add_circle, color: Colors.black),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         if(isBillsAddActive)
@@ -2880,86 +3099,187 @@ class _OutcomePageState extends State<OutcomePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("$formattedSumOfOthers / $formattedOutcomeValue", style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold)),
-                    SizedBox(
-                      child: LinearPercentIndicator(
-                        padding: const EdgeInsets.only(right: 10),
-                        backgroundColor: const Color(0xffc6c6c7),
-                        animation: true,
-                        lineHeight: 10,
-                        animationDuration: 1000,
-                        percent: 0.0,
-                        trailing: Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                        barRadius: const Radius.circular(10),
-                        progressColor: Colors.lightBlue,
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                          color: variableNames[0] == "othersPercent"
+                              ? smallestSoftColor
+                              : variableNames[1] == "othersPercent"
+                              ? mediumSoftColor
+                              :biggestSoftColor
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                    formattedSumOfOthers,
+                                    style: GoogleFonts.montserrat(
+                                        fontSize: 19.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black
+                                    )
+                                ),
+                                Text(
+                                    formattedOutcomeValue,
+                                    style: GoogleFonts.montserrat(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black
+                                    )
+                                ),
+                              ],
+                            ),
+                            SizedBox(
+                              child: LinearPercentIndicator(
+                                padding: const EdgeInsets.only(right: 10),
+                                backgroundColor: const Color(0xffc6c6c7),
+                                animation: true,
+                                lineHeight: 10,
+                                animationDuration: 1000,
+                                percent: sumOfOthers/outcomeValue,
+                                trailing: Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
+                                barRadius: const Radius.circular(10),
+                                progressColor: variableNames[0] == "othersPercent"
+                                    ? smallestColor
+                                    : variableNames[1] == "othersPercent"
+                                    ? mediumColor
+                                    :biggestColor
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 10),
                     ListView(
                       padding: EdgeInsets.zero,
-                      shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
                       children: [
                         if(invoices.isNotEmpty)
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("Rent", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                              const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                              ListView.builder(
-                                padding: EdgeInsets.zero,
-                                physics: const NeverScrollableScrollPhysics(),
-                                shrinkWrap: true,
-                                itemCount: idsWithRentTargetCategory.length,
-                                itemBuilder: (context, index) {
-                                  int id = idsWithRentTargetCategory[index];
-                                  Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
-                                  if (index < idsWithRentTargetCategory.length) {
-                                    return Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Color.fromARGB(120, 255, 171, 138),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            padding: EdgeInsets.all(10),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(left:10, top:10),
+                                  child: Text("Rent", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                                ),
+                                SizedBox(height: 20),
+                                ListView(
+                                  padding: EdgeInsets.zero,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  shrinkWrap: true,
+                                  children: idsWithRentTargetCategory.map((id) {
+                                    Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 10),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Color.fromARGB(255, 255, 127, 77),
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        child: Column(
                                           children: [
-                                            Flexible(
-                                              flex: 2,
-                                              fit: FlexFit.tight,
-                                              child: Text(
-                                                invoice.name,
-                                                style: GoogleFonts.montserrat(fontSize: 20),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
+                                            Row(
+                                              children: [
+                                                Flexible(
+                                                  flex:2,
+                                                  child: ListTile(
+                                                    dense: true,
+                                                    title: Text("Name", style: TextStyle(color: Colors.black)),
+                                                    subtitle: Text(
+                                                      invoice.name,
+                                                      style: GoogleFonts.montserrat(fontSize: 16.sp, color: Colors.black),
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Flexible(
+                                                  flex:2,
+                                                  child: ListTile(
+                                                    dense: true,
+                                                    title: Text("Amount", style: TextStyle(color: Colors.black)),
+                                                    subtitle: Text(
+                                                      invoice.price,
+                                                      style: GoogleFonts.montserrat(fontSize: 16.sp, color: Colors.black),
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                            Flexible(
-                                              flex: 2,
-                                              fit: FlexFit.tight,
-                                              child: Text(
-                                                textAlign: TextAlign.right,
-                                                invoice.price,
-                                                style: GoogleFonts.montserrat(fontSize: 20),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
+                                            Row(
+                                              children: [
+                                                Flexible(
+                                                  flex:2,
+                                                  child: ListTile(
+                                                    dense: true,
+                                                    title: Text("Period Date", style: TextStyle(color: Colors.black)),
+                                                    subtitle: Text(
+                                                      invoice.periodDate,
+                                                      style: GoogleFonts.montserrat(fontSize: 16.sp, color: Colors.black),
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Flexible(
+                                                  flex:2,
+                                                  child: ListTile(
+                                                    dense: true,
+                                                    title: Text("Due Date", style: TextStyle(color: Colors.black)),
+                                                    subtitle: Text(
+                                                      invoice.dueDate ?? "N/A",
+                                                      style: GoogleFonts.montserrat(fontSize: 16.sp, color: Colors.black),
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                )
+                                              ],
                                             ),
-                                            const SizedBox(width: 20),
-                                            IconButton(
-                                              splashRadius: 0.0001,
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                              icon: const Icon(Icons.edit, size: 21),
-                                              onPressed: () {
-                                                _showEditDialog(context, index, 3, 1, id); // Show the edit dialog
-                                              },
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                color: Color.fromARGB(200, 247, 69, 0),
+                                                borderRadius: BorderRadius.circular(20),
+                                              ),
+                                              padding: EdgeInsets.only(left: 20,right: 20),
+                                              child: SizedBox(
+                                                child: Row(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                  children: [
+                                                    Text("Düzenle", style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black)),
+                                                    IconButton(
+                                                      splashRadius: 0.0001,
+                                                      padding: EdgeInsets.zero,
+                                                      constraints: BoxConstraints(minWidth: 23, maxWidth: 23),
+                                                      icon: Icon(Icons.edit, size: 21, color: Colors.black),
+                                                      onPressed: () {
+                                                        _showEditDialog(context, idsWithRentTargetCategory.indexOf(id), 1, 1, id);
+                                                      },
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
                                             ),
                                           ],
                                         ),
-                                        const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                      ],
+                                      ),
                                     );
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ],
+                                  }).toList()
+                                ),
+                              ],
+                            ),
                           ),
                         if(kitchenTitleList.isNotEmpty)
                           Column(
@@ -3197,21 +3517,29 @@ class _OutcomePageState extends State<OutcomePage> {
                               ),
                             ],
                           ),
+                        SizedBox(height: 10),
                         if(!isOthersAddActive)
-                          SizedBox(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text("Diğer Gider Ekle", style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w600)),
-                                IconButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      isOthersAddActive = true;
-                                    });
-                                  },
-                                  icon: const Icon(Icons.add_circle),
-                                ),
-                              ],
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Color.fromARGB(200, 247, 69, 0),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            padding: EdgeInsets.only(left: 20,right: 20),
+                            child: SizedBox(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text("Diğer Gider Ekle", style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black)),
+                                  IconButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        isOthersAddActive = true;
+                                      });
+                                    },
+                                    icon: const Icon(Icons.add_circle, color: Colors.black),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         if(isOthersAddActive)

@@ -337,15 +337,12 @@ class _HomePageState extends State<HomePage> {
           }
           setState(() {
             invoices.forEach((invoice) {
-              final dueDate = invoice.dueDate; // Safe access to dueDate
-              if (dueDate != null) {
-                invoice.updateDifference(invoice, invoice.periodDate, dueDate);
+              if (invoice.dueDate != null){
+                invoice.updateDifference(invoice, invoice.periodDate, invoice.dueDate);
               } else {
-                // Handle the case where dueDate is null, e.g., log a message or set a default value
-                print('Due date is null for invoice: ${invoice.id}');
+                invoice.updateDifference(invoice, invoice.periodDate, null);
               }
             });
-
 
             invoices.sort((a, b) {
               int differenceA = int.parse(a.difference);
@@ -507,163 +504,209 @@ class _HomePageState extends State<HomePage> {
         builder: (BuildContext context) {
           return AlertDialog(
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20)
+              borderRadius: BorderRadius.circular(20),
             ),
-            title: Text('Edit ${invoice.category}',style: const TextStyle(fontSize: 20)),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Align(alignment: Alignment.centerLeft,child: Text("Item", style: GoogleFonts.montserrat(fontSize: 18),),),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: selectedEditController,
-                  decoration: InputDecoration(
-                    isDense: true,
-                    focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        borderSide: const BorderSide(width: 3, color: Colors.black)
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: const BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
-                    ),
-                    contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
+            title: Text(
+              'Edit ${invoice.category}',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Item Field
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text("Item", style: GoogleFonts.montserrat(fontSize: 18)),
                   ),
-                  style: GoogleFonts.montserrat(fontSize: 20),
-                ),
-                const SizedBox(height: 10),
-                Align(alignment: Alignment.centerLeft, child: Text("Price",style: GoogleFonts.montserrat(fontSize: 18))),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: selectedPriceController,
-                  decoration: InputDecoration(
-                    isDense: true,
-                    focusedBorder: OutlineInputBorder(
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: selectedEditController,
+                    decoration: InputDecoration(
+                      hintText: "e.g., Subscription",
+                      border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(20),
-                        borderSide: const BorderSide(width: 3, color: Colors.black)
+                        borderSide: const BorderSide(width: 2, color: Colors.black),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: const BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
-                    ),
-                    contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
+                    style: GoogleFonts.montserrat(fontSize: 18),
                   ),
-                  style: GoogleFonts.montserrat(fontSize: 20),
-                  keyboardType: TextInputType.number,
-                ),
-                const SizedBox(height: 10),
-                Align(alignment: Alignment.centerLeft, child: Text("Period Date",style: GoogleFonts.montserrat(fontSize: 18))),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<int>(
-                        value: _selectedBillingDay,
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedBillingDay = value;
-                          });
-                        },
-                        items: daysList.map((day) {
-                          return DropdownMenuItem<int>(
-                            value: day,
-                            child: Text(day.toString()),
-                          );
-                        }).toList(),
+                  const SizedBox(height: 15),
+
+                  // Price Field
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text("Price", style: GoogleFonts.montserrat(fontSize: 18)),
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: selectedPriceController,
+                    decoration: InputDecoration(
+                      hintText: "e.g., 10.00",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        borderSide: const BorderSide(width: 2, color: Colors.black),
                       ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     ),
-                    Expanded(
-                      child: DropdownButtonFormField<int>(
-                        value: _selectedBillingMonth,
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedBillingMonth = value;
-                          });
-                        },
-                        items: monthsList.map((month) {
-                          return DropdownMenuItem<int>(
-                            value: month,
-                            child: Text(month.toString()),
-                          );
-                        }).toList(),
+                    style: GoogleFonts.montserrat(fontSize: 18),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 15),
+
+                  // Period Date Fields
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text("Period Date", style: GoogleFonts.montserrat(fontSize: 18)),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<int>(
+                          value: _selectedBillingDay,
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedBillingDay = value;
+                            });
+                          },
+                          items: daysList.map((day) {
+                            return DropdownMenuItem<int>(
+                              value: day,
+                              child: Text(day.toString()),
+                            );
+                          }).toList(),
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              borderSide: const BorderSide(width: 2, color: Colors.black),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                          ),
+                        ),
                       ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: DropdownButtonFormField<int>(
+                          value: _selectedBillingMonth,
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedBillingMonth = value;
+                            });
+                          },
+                          items: monthsList.map((month) {
+                            return DropdownMenuItem<int>(
+                              value: month,
+                              child: Text(month.toString()),
+                            );
+                          }).toList(),
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              borderSide: const BorderSide(width: 2, color: Colors.black),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 15),
+
+                  // Due Date Field
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text("Due Date", style: GoogleFonts.montserrat(fontSize: 18)),
+                  ),
+                  const SizedBox(height: 10),
+                  DropdownButtonFormField<int>(
+                    value: _selectedDueDay,
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedDueDay = value;
+                      });
+                    },
+                    items: daysList.map((day) {
+                      return DropdownMenuItem<int>(
+                        value: day,
+                        child: Text(day.toString()),
+                      );
+                    }).toList(),
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        borderSide: const BorderSide(width: 2, color: Colors.black),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Align(alignment: Alignment.centerLeft, child: Text("Due Date",style: GoogleFonts.montserrat(fontSize: 18))),
-                const SizedBox(height: 10),
-                DropdownButtonFormField<int>(
-                  value: _selectedDueDay,
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedDueDay = value;
-                    });
-                  },
-                  items: daysList.map((day) {
-                    return DropdownMenuItem<int>(
-                      value: day,
-                      child: Text(day.toString()),
-                    );
-                  }).toList(),
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
             actions: [
-              IconButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  icon: const Icon(Icons.cancel)
-              ),
-              IconButton(
-                  onPressed: () {
-                    setState(() {
-                      final priceText = selectedPriceController.text.trim();
-                      double dprice = double.tryParse(priceText) ?? 0.0;
-                      String price = dprice.toStringAsFixed(2);
-                      String name = selectedEditController.text;
-                      invoice.name = name;
-                      invoice.price = price;
-                      if (_selectedDueDay != null) {
-                        editInvoice(
-                          id,
-                          formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!, invoice.getPeriodYear()),
-                          formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!, invoice.getPeriodYear())),
-                        );
-                      } else {
-                        editInvoice(
-                          id,
-                          formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!, invoice.getPeriodYear()),
-                          null, // or provide any default value you want for dueDate when _selectedDueDay is null
-                        );
-                      }
-                      _load(); //Update values immediately
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  IconButton(
+                    onPressed: () {
                       Navigator.of(context).pop();
-                    });
-                  },
-                  icon: const Icon(Icons.save)
-              ),
-              IconButton(
-                  onPressed: () {
-                    setState(() {
-                      List<int> quantityOfCategory = getIdsWithSubcategory(invoices, invoice.subCategory);
-                      if (quantityOfCategory.length != 1){
-                        removeInvoice(id);
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Delete operation not allowed."),
-                          ),
-                        );
-                      }
-                      Navigator.of(context).pop();
-                    });
-                  },
-                  icon: const Icon(Icons.delete_forever)
+                    },
+                    icon: const Icon(Icons.cancel),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      setState(() {
+                        final priceText = selectedPriceController.text.trim();
+                        double dprice = double.tryParse(priceText) ?? 0.0;
+                        String price = dprice.toStringAsFixed(2);
+                        String name = selectedEditController.text;
+                        invoice.name = name;
+                        invoice.price = price;
+                        if (_selectedDueDay != null) {
+                          editInvoice(
+                            id,
+                            formatPeriodDate(
+                                _selectedBillingDay!, _selectedBillingMonth!, invoice.getPeriodYear()),
+                            formatDueDate(_selectedDueDay,
+                                formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!, invoice.getPeriodYear())),
+                          );
+                        } else {
+                          editInvoice(
+                            id,
+                            formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!, invoice.getPeriodYear()),
+                            null,
+                          );
+                        }
+                        _load();
+                        Navigator.of(context).pop();
+                      });
+                    },
+                    icon: const Icon(Icons.save),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      setState(() {
+                        List<int> quantityOfCategory = getIdsWithSubcategory(invoices, invoice.subCategory);
+                        if (quantityOfCategory.length != 1) {
+                          removeInvoice(id);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Delete operation not allowed."),
+                            ),
+                          );
+                        }
+                        Navigator.of(context).pop();
+                      });
+                    },
+                    icon: const Icon(Icons.delete_forever),
+                  ),
+                ],
               ),
             ],
           );
+
         },
     );
   }

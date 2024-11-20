@@ -32,8 +32,17 @@ class _WishesPageState extends State<WishesPage> {
     'Hisse',
     'Diğer'
   ];
+  final Map<String, String> currencySymbols = {
+    'Türk Lirası': '₺',
+    'Dolar': '\$',
+    'Euro': '€',
+    'Altın': 'g',
+    'Hisse': '📈',
+    'Diğer': '?',
+  };
   String selectedTab = "Türk Lirası";
   String selectedSymbol = "";
+  String totalSymbol = "";
   int idForBuild = 0;
   int selectedTabIndex = 0;
   List<Map<String, dynamic>> bankDataList = [];
@@ -41,6 +50,8 @@ class _WishesPageState extends State<WishesPage> {
   List<String> selectedTabList = [];
   Map<int, Map<String, List<double>>> sumMap = {};
   int _nextId = 1;
+  double totalCurrencySum = 0.0;
+  int selectedCurrencyIndex = 0;
 
   Future<void> addBankData(String bankName, Map<String, double> goal, String currency, String selectedSymbol) async {
     final prefs = await SharedPreferences.getInstance();
@@ -356,11 +367,9 @@ class _WishesPageState extends State<WishesPage> {
         sumMap = {};
       }
 
-      // Assign the final sumMap to your instance variable if needed
-      // this.sumMap = sumMap;
+      totalCurrencySum = calculateTotalSumForCurrency("Türk Lirası");
     });
   }
-
   Widget buildBankCategories(BuildContext context, Map<String, dynamic> bankData) {
     String newSelectedTab = "Türk Lirası"; // Default customsliding option
     if (selectedTabList.isEmpty){
@@ -473,7 +482,7 @@ class _WishesPageState extends State<WishesPage> {
                             ),
                             const SizedBox(height: 10),
                             Text(
-                              "${goalMap[selectedTabList[bankData['id'] - 1]] ?? 0.0}$selectedSymbol",
+                              NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(goalMap[selectedTabList[bankData['id'] - 1]] ?? 0.0) + selectedSymbol,
                               style: GoogleFonts.montserrat(
                                 color: Colors.black,
                                 fontSize: 19,
@@ -488,7 +497,6 @@ class _WishesPageState extends State<WishesPage> {
                 ),
               ),
               SizedBox(height: 10),
-
               // Currency Selector
               ClipRRect(
                 borderRadius: BorderRadius.circular(20),
@@ -499,40 +507,51 @@ class _WishesPageState extends State<WishesPage> {
                   ),
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
-                    child: CustomSlidingSegmentedControl<int>(
-                      initialValue: currencyList.indexOf(selectedTabList[bankData['id'] - 1]),
-                      isStretch: false,
-                      children: {
-                        for (int i = 0; i < currencyList.length; i++)
-                          i: Container(
-                            width: 100,
-                            alignment: Alignment.center,
-                            child: Text(
-                              currencyList[i],
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.montserrat(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
+                    child: Theme(
+                      data: Theme.of(context).copyWith(
+                        splashColor: Colors.transparent, // Disable splash effect
+                        highlightColor: Colors.transparent, // Disable highlight effect
+                        hoverColor: Colors.transparent, // Disable hover effect
+                      ),
+                      child: CustomSlidingSegmentedControl<int>(
+                        initialValue: currencyList.indexOf(selectedTabList[bankData['id'] - 1]),
+                        isStretch: false,
+                        children: {
+                          for (int i = 0; i < currencyList.length; i++)
+                            i: Container(
+                              width: 100,
+                              alignment: Alignment.center,
+                              child: Text(
+                                currencyList[i],
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
-                          ),
-                      },
-                      innerPadding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(20),
+                        },
+                        innerPadding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Color(0xFF86CDEA),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [],
+                        ),
+                        thumbDecoration: BoxDecoration(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Color(0x7D0065a3)  // Dark mode color
+                              : Colors.white, // Light mode color
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [],
+                        ),
+                        onValueChanged: (value) {
+                          setState(() {
+                            String selectedCurrency = currencyList[value]; // Get the selected currency string
+                            selectedTabList[bankData['id'] - 1] = selectedCurrency; // Update the selectedTabList for this specific bank
+                            bankData['selectedSymbol'] = getSelectedSymbol(selectedCurrency); // Update the symbol for the bank
+                          });
+                        },
                       ),
-                      thumbDecoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      onValueChanged: (value) {
-                        setState(() {
-                          String selectedCurrency = currencyList[value]; // Get the selected currency string
-                          selectedTabList[bankData['id'] - 1] = selectedCurrency; // Update the selectedTabList for this specific bank
-                          bankData['selectedSymbol'] = getSelectedSymbol(selectedCurrency); // Update the symbol for the bank
-                        });
-                      },
                     ),
                   ),
                 ),
@@ -655,7 +674,9 @@ class _WishesPageState extends State<WishesPage> {
 
   @override
   Widget build(BuildContext context) {
-    double totalCurrencySum = calculateTotalSumForCurrency("Türk Lirası");
+    String selectedCurrency = currencyList[selectedCurrencyIndex];
+    String currencySymbol = currencySymbols[selectedCurrency] ?? '';
+
     return Scaffold(
       body: SingleChildScrollView(
         child: Container(
@@ -706,12 +727,13 @@ class _WishesPageState extends State<WishesPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("Türk Lirası Varlığım",
+                                Text("$selectedCurrency Varlığım",
                                     style: GoogleFonts.montserrat(
                                         color: Colors.black,
                                         fontSize: 19,
                                         fontWeight: FontWeight.normal)),
-                                Text("${totalCurrencySum.toString()}₺",
+                                Text(
+                                    NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(totalCurrencySum) + currencySymbol,
                                     style: GoogleFonts.montserrat(
                                         color: Colors.black,
                                         fontSize: 19,
@@ -720,6 +742,64 @@ class _WishesPageState extends State<WishesPage> {
                             ),
                           ),
                         ],
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Theme(
+                            data: Theme.of(context).copyWith(
+                              splashColor: Colors.transparent, // Disable splash effect
+                              highlightColor: Colors.transparent, // Disable highlight effect
+                              hoverColor: Colors.transparent, // Disable hover effect
+                            ),
+                            child: CustomSlidingSegmentedControl<int>(
+                              initialValue: 0,
+                              isStretch: false,
+                              children: {
+                                for (int i = 0; i < currencyList.length; i++)
+                                  i: Container(
+                                    width: 100,
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      currencyList[i],
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                              },
+                              innerPadding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Color(0xFF86CDEA),
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [],
+                              ),
+                              thumbDecoration: BoxDecoration(
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? Color(0x7D0065a3)  // Dark mode color
+                                    : Colors.white, // Light mode color
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [],
+                              ),
+                              onValueChanged: (value) {
+                                setState(() {
+                                  selectedCurrencyIndex = value; // Update selected currency index
+                                  totalCurrencySum = calculateTotalSumForCurrency(currencyList[selectedCurrencyIndex]);
+                                });
+                              },
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                     SizedBox(height: 10),
@@ -831,6 +911,10 @@ class ActionButton extends StatelessWidget {
         child: Text(
           label,
           textAlign: TextAlign.center,
+          style: GoogleFonts.montserrat(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );

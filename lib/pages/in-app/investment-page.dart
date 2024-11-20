@@ -575,7 +575,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
             const SizedBox(height: 10),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(15),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 color: Color(0xFFD5E1F5),
@@ -616,12 +616,18 @@ class _InvestmentPageState extends State<InvestmentPage> {
                               Text(
                                   "${category == 'Döviz' ? 'Döviz Hedefi' : category == 'Nakit' ? 'Nakit Hedefi' : 'Diğer Kategori Hedefi'}",
                                   style: GoogleFonts.montserrat(
-                                      fontSize: 15.sp, fontWeight: FontWeight.bold)
+                                      fontSize: 15.sp,
+                                      fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  )
                               ),
                               Text(
                                   "${formattedGoal}${exchangeCurrencySymbol}",
                                   style: GoogleFonts.montserrat(
-                                      fontSize: 25.sp, fontWeight: FontWeight.bold)
+                                      fontSize: 25.sp,
+                                      fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  )
                               ),
                             ],
                           ),
@@ -633,18 +639,33 @@ class _InvestmentPageState extends State<InvestmentPage> {
                   CustomSlidingSegmentedControl<int>(
                     initialValue: 0,
                     isStretch: true,
-                    children: const {
+                    children: {
                       0: Text(
                         'Dolar',
                         textAlign: TextAlign.center,
+                          style: GoogleFonts.montserrat(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          )
                       ),
                       1: Text(
                         'Euro',
                         textAlign: TextAlign.center,
+                          style: GoogleFonts.montserrat(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          )
                       ),
                       2: Text(
                         'Türk Lirası',
                         textAlign: TextAlign.center,
+                          style: GoogleFonts.montserrat(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          )
                       ),
                     },
                     innerPadding: const EdgeInsets.all(4),
@@ -654,7 +675,9 @@ class _InvestmentPageState extends State<InvestmentPage> {
                       boxShadow: [],
                     ),
                     thumbDecoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Color(0x7D0065a3)  // Dark mode color
+                          : Colors.white, // Light mode color
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [],
                     ),
@@ -699,6 +722,10 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                 itemBuilder: (context, index) {
                                   List<Investment> filteredList = exchangeList.where((investment) => investment.category == 'Döviz').toList();
                                   Investment investment = filteredList[index];
+                                  String formattedDate = DateFormat('d MMMM y', 'tr_TR').format(investment.deadline!);
+                                  final DateTime now = DateTime.now();
+                                  final Duration difference = investment.deadline!.difference(now);
+                                  final int remainingDays = difference.inDays;
                                   InvestmentModel? investmentModel = exchangeDollarList.firstWhere(
                                         (model) => model.id == investment.id,
                                     orElse: () => null as InvestmentModel, // Return null if no match is found
@@ -727,12 +754,18 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                                     Text(
                                                         investment.name,
                                                         style: GoogleFonts.montserrat(
-                                                            fontSize: 15.sp, fontWeight: FontWeight.bold)
+                                                            fontSize: 15.sp,
+                                                            fontWeight: FontWeight.w600,
+                                                          color: Colors.black,
+                                                        )
                                                     ),
                                                     Text(
-                                                        investment.amount + exchangeCurrencySymbol,
+                                                      NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(double.parse(investment.amount)) + exchangeCurrencySymbol,
                                                         style: GoogleFonts.montserrat(
-                                                            fontSize: 25.sp, fontWeight: FontWeight.bold)
+                                                            fontSize: 20.sp,
+                                                            fontWeight: FontWeight.bold,
+                                                          color: Colors.black,
+                                                        )
                                                     ),
                                                   ],
                                                 ),
@@ -764,16 +797,19 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
                                                 Text(
-                                                    "${NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(investmentModel.aim)}/${NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(double.parse(investment.amount))}${exchangeCurrencySymbol}",
+                                                    "${NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(investmentModel.aim)}${exchangeCurrencySymbol}",
                                                     style: GoogleFonts.montserrat(
-                                                        fontSize: 20.sp, fontWeight: FontWeight.bold)
+                                                        fontSize: 20.sp,
+                                                        fontWeight: FontWeight.bold,
+                                                      color: Colors.black,
+                                                    )
                                                 ),
                                                 SizedBox(height: 10),
                                                 LinearPercentIndicator(
                                                   padding: const EdgeInsets.only(right: 10),
                                                   backgroundColor: Colors.grey[200],
                                                   animation: true,
-                                                  lineHeight: 14.h,
+                                                  lineHeight: 12.h,
                                                   animationDuration: 1000,
                                                   percent: investmentModel.aim/investmentModel.amount,
                                                   trailing: Text("%${((investmentModel.aim/investmentModel.amount)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(
@@ -782,6 +818,22 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                                       fontWeight: FontWeight.bold)),
                                                   barRadius: const Radius.circular(10),
                                                   progressColor: const Color(0xff017b94),
+                                                ),
+                                                Text(
+                                                    "Hedef Tarihi $formattedDate",
+                                                    style: GoogleFonts.montserrat(
+                                                        fontSize: 12.sp,
+                                                        fontWeight: FontWeight.w600,
+                                                      color: Colors.black,
+                                                    )
+                                                ),
+                                                Text(
+                                                    "$remainingDays Gün Kaldı",
+                                                    style: GoogleFonts.montserrat(
+                                                        fontSize: 15.sp,
+                                                        fontWeight: FontWeight.bold,
+                                                      color: Colors.black,
+                                                    )
                                                 ),
                                                 SizedBox(height: 10),
                                                 Row(
@@ -874,7 +926,15 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                                                 },
                                                               );
                                                             },
-                                                            child: const Text("Ekle", textAlign: TextAlign.center),
+                                                            child: Text(
+                                                                "Ekle",
+                                                                textAlign: TextAlign.center,
+                                                                style: GoogleFonts.montserrat(
+                                                                  fontSize: 12.sp,
+                                                                  fontWeight: FontWeight.bold,
+                                                                  color: Colors.black,
+                                                                )
+                                                            ),
                                                           )
                                                       ),
                                                     ),
@@ -967,7 +1027,15 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                                                 },
                                                               );
                                                             },
-                                                            child: const Text("Çıkart",textAlign: TextAlign.center),
+                                                            child: Text(
+                                                                "Çıkart",
+                                                                textAlign: TextAlign.center,
+                                                                style: GoogleFonts.montserrat(
+                                                                  fontSize: 12.sp,
+                                                                  fontWeight: FontWeight.bold,
+                                                                  color: Colors.black,
+                                                                )
+                                                            ),
                                                           )
                                                       ),
                                                     ),
@@ -1031,7 +1099,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                       child: Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text("Döviz Ekle", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.normal)),
+                                          Text("Döviz Ekle", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
                                           Icon(Icons.add_circle),
                                         ],
                                       ),
@@ -1728,8 +1796,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
 
   Widget buildMonogram(String title) {
     return Container(
-      width: 70.r,
-      height: 70.r,
+      width: 50.r,
+      height: 50.r,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: Colors.grey
@@ -1913,7 +1981,6 @@ class _InvestmentPageState extends State<InvestmentPage> {
             bottom: MediaQuery.of(context).viewInsets.bottom, // Padding for keyboard overlap
           ),
           child: Container(
-            height: MediaQuery.of(context).size.height * 0.6,
             decoration: BoxDecoration(
               color: Color(0xffD7CECE),
               borderRadius: BorderRadius.only(
@@ -1921,44 +1988,66 @@ class _InvestmentPageState extends State<InvestmentPage> {
                 topRight: Radius.circular(10),
               ),
             ),
-            child: Padding(
-              padding: EdgeInsets.all(20),
-              child: KeyboardActions(
-                config: _buildConfig(context),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisSize: MainAxisSize.min, // Match the height of the content
                   children: [
                     Text(
                       'Döviz Cinsi',
-                      style: TextStyle(fontSize: 18.sp),
+                      style: GoogleFonts.montserrat(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
                     ),
                     SizedBox(height: 10.h),
                     CustomSlidingSegmentedControl<int>(
                       initialValue: 2,
                       isStretch: true,
-                      children: const {
+                      children: {
                         0: Text(
                           'Dolar',
                           textAlign: TextAlign.center,
+                          style: GoogleFonts.montserrat(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.normal,
+                            color: Colors.black,
+                          ),
                         ),
                         1: Text(
                           'Euro',
                           textAlign: TextAlign.center,
+                          style: GoogleFonts.montserrat(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.normal,
+                            color: Colors.black,
+                          ),
                         ),
                         2: Text(
                           'Türk Lirası',
                           textAlign: TextAlign.center,
+                          style: GoogleFonts.montserrat(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.normal,
+                            color: Colors.black,
+                          ),
                         ),
                       },
                       innerPadding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: Colors.grey[200],
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.grey[400]
+                            : Colors.white,
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [],
                       ),
                       thumbDecoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.grey[850]
+                            : Colors.white,
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [],
                       ),
@@ -1986,8 +2075,12 @@ class _InvestmentPageState extends State<InvestmentPage> {
                     ),
                     SizedBox(height: 10.h),
                     Text(
-                      'Hedef İsmi',
-                      style: TextStyle(fontSize: 18.sp),
+                        'Hedef İsmi',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        )
                     ),
                     SizedBox(height: 10.h),
                     TextFormField(
@@ -2015,8 +2108,12 @@ class _InvestmentPageState extends State<InvestmentPage> {
                     ),
                     SizedBox(height: 10.h),
                     Text(
-                      'Hedef Miktarı',
-                      style: TextStyle(fontSize: 18.sp),
+                        'Hedef Miktarı',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        )
                     ),
                     SizedBox(height: 10.h),
                     TextFormField(
@@ -2044,20 +2141,20 @@ class _InvestmentPageState extends State<InvestmentPage> {
                     ),
                     SizedBox(height: 10.h),
                     Text(
-                      'Hedef Tarihi',
-                      style: TextStyle(fontSize: 18.sp),
+                        'Hedef Tarihi',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        )
                     ),
                     SizedBox(height: 10.h),
                     GestureDetector(
-                      onTap: () {
-                        _openDatePicker(setModalState);
-                      },
+                      onTap: () => _openDatePicker(setModalState),
                       child: AbsorbPointer(
                         child: TextFormField(
                           decoration: InputDecoration(
-                              labelText: _savedDate == null
-                                  ? ''
-                                  : '${DateFormat('yyyy-MM-dd').format(_savedDate!)}',
+                              labelText: _savedDate == null ? '' : DateFormat('yyyy-MM-dd').format(_savedDate!),
                               filled: true,
                               fillColor: Colors.white,
                               isDense: true,
@@ -2089,7 +2186,6 @@ class _InvestmentPageState extends State<InvestmentPage> {
                           backgroundColor: Colors.black,
                           minimumSize: Size(double.infinity, 40),
                         ),
-                        clipBehavior: Clip.hardEdge,
                         onPressed: () async {
                           setState(() {
                             int maxId = 0;
@@ -2131,7 +2227,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                             }
                           });
                         },
-                        child: const Text('Add'),
+                        child: Text('Add'),
                       ),
                     ),
                   ],
@@ -2428,6 +2524,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                         style: GoogleFonts.montserrat(
                                           fontSize: 18.sp,
                                           fontWeight: FontWeight.bold,
+                                          color: Colors.black,
                                           height: 1.2, // Adjusts line height for better control
                                         ),
                                       ),
@@ -2459,12 +2556,18 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                                 Text(
                                                     "${currencySymbol == r'$' ? 'Dolar Hedefi ' : currencySymbol == '€' ? 'Euro Hedefi' : 'Türk Lirası Hedefi'}",
                                                     style: GoogleFonts.montserrat(
-                                                        fontSize: 15.sp, fontWeight: FontWeight.bold)
+                                                        fontSize: 15.sp,
+                                                        fontWeight: FontWeight.bold,
+                                                      color: Colors.black,
+                                                    )
                                                 ),
                                                 Text(
                                                     "${currencySymbol == r'$' ? "${formattedDollarTotal}${currencySymbol}" : currencySymbol == "${formattedEuroTotal}${currencySymbol}" ? 'Euro Hedefi' : "${formattedLiraTotal}${currencySymbol}"}",
                                                     style: GoogleFonts.montserrat(
-                                                        fontSize: 25.sp, fontWeight: FontWeight.bold)
+                                                        fontSize: 25.sp,
+                                                        fontWeight: FontWeight.bold,
+                                                      color: Colors.black,
+                                                    )
                                                 ),
                                               ],
                                             )
@@ -2478,18 +2581,33 @@ class _InvestmentPageState extends State<InvestmentPage> {
                               CustomSlidingSegmentedControl<int>(
                                 initialValue: 0,
                                 isStretch: true,
-                                children: const {
+                                children: {
                                   0: Text(
                                     'Dolar',
                                     textAlign: TextAlign.center,
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      )
                                   ),
                                   1: Text(
                                     'Euro',
                                     textAlign: TextAlign.center,
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      )
                                   ),
                                   2: Text(
                                     'Türk Lirası',
                                     textAlign: TextAlign.center,
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      )
                                   ),
                                 },
                                 innerPadding: const EdgeInsets.all(4),
@@ -2499,7 +2617,9 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                   boxShadow: [],
                                 ),
                                 thumbDecoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: Theme.of(context).brightness == Brightness.dark
+                                      ? Color(0x7D0065a3)  // Dark mode color
+                                      : Colors.white, // Light mode color
                                   borderRadius: BorderRadius.circular(20),
                                   boxShadow: [],
                                 ),
@@ -2536,7 +2656,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                       child: Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text("Birikim Ekle", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.normal)),
+                                          Text("Birikim Ekle", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w500)),
                                           Icon(Icons.add_circle),
                                         ],
                                       ),
@@ -2741,71 +2861,67 @@ class _ChooseDateBottomSheetState extends State<ChooseDateBottomSheet>{
         children: [
           Align(child: Text("Hedef Tarihi", style: TextStyle(fontSize: 24.sp)), alignment: Alignment.bottomLeft,),
           SizedBox(height: 20),
-          BlocBuilder<SettingsCubit, SettingsState>(
-            builder: (context, state) {
-              return SfDateRangePicker(
-                onSelectionChanged: _onSelectionChanged,
-                backgroundColor: Colors.white,
-                selectionColor: Colors.blue,
-                todayHighlightColor: Colors.red,
-                selectionMode: DateRangePickerSelectionMode.single,
-                selectionTextStyle: TextStyle(
-                  color: Colors.white, // Color of selected day text
-                  fontSize: 18.sp, // Font size of selected day text
-                  fontWeight: FontWeight.bold, // Font weight of selected day text
+          SfDateRangePicker(
+            onSelectionChanged: _onSelectionChanged,
+            backgroundColor: Colors.white,
+            selectionColor: Colors.blue,
+            todayHighlightColor: Colors.red,
+            selectionMode: DateRangePickerSelectionMode.single,
+            selectionTextStyle: TextStyle(
+              color: Colors.white, // Color of selected day text
+              fontSize: 18.sp, // Font size of selected day text
+              fontWeight: FontWeight.bold, // Font weight of selected day text
+            ),
+            monthViewSettings: DateRangePickerMonthViewSettings(
+              dayFormat: 'EEE',
+              viewHeaderStyle: DateRangePickerViewHeaderStyle(
+                textStyle: TextStyle(
+                  fontSize: 12.sp, // Custom font size for day names
+                  fontWeight: FontWeight.bold, // Custom font weight for day names
+                  color: Colors.black, // Custom color for day names
                 ),
-                monthViewSettings: DateRangePickerMonthViewSettings(
-                  dayFormat: 'EEE',
-                  viewHeaderStyle: DateRangePickerViewHeaderStyle(
-                    textStyle: TextStyle(
-                      fontSize: 12.sp, // Custom font size for day names
-                      fontWeight: FontWeight.bold, // Custom font weight for day names
-                      color: Colors.black, // Custom color for day names
-                    ),
-                  ),
-                ),
-                monthCellStyle: DateRangePickerMonthCellStyle(
-                  disabledDatesTextStyle: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 18.sp,
-                      color: Colors.black54),
-                    blackoutDateTextStyle: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 18.sp,
-                        color: Colors.black54),
-                    blackoutDatesDecoration: BoxDecoration(
-                        color: Colors.amber,
-                        shape: BoxShape.circle),
-                    cellDecoration: BoxDecoration(
-                        color: Colors.transparent,
-                        shape: BoxShape.circle,
-                      border: Border.all(color: Colors.transparent, width: 8), // add some gap between cells
-                    ),
-                    textStyle: TextStyle(
-                        fontStyle: FontStyle.normal,
-                        fontWeight: FontWeight.w400,
-                        fontSize: 18.sp,
-                        color: Colors.blue
-                    )
-                ),
-                initialSelectedDate: _selectedDate != null
-                  ? DateTime(_selectedDate!.year, _selectedDate!.month, _selectedDate!.day)
-                : DateTime.now(),
-                minDate: DateTime.now(),
-                showTodayButton: false,
-                showNavigationArrow: true,
-                headerHeight: 60,
-                headerStyle: DateRangePickerHeaderStyle(
-                  textAlign: TextAlign.left,
-                  textStyle: TextStyle(
-                    color: Colors.blue,
+              ),
+            ),
+            monthCellStyle: DateRangePickerMonthCellStyle(
+                disabledDatesTextStyle: TextStyle(
+                    fontWeight: FontWeight.w500,
                     fontSize: 18.sp,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  backgroundColor: Colors.transparent,
+                    color: Colors.black54),
+                blackoutDateTextStyle: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 18.sp,
+                    color: Colors.black54),
+                blackoutDatesDecoration: BoxDecoration(
+                    color: Colors.amber,
+                    shape: BoxShape.circle),
+                cellDecoration: BoxDecoration(
+                  color: Colors.transparent,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.transparent, width: 8), // add some gap between cells
                 ),
-              );
-            },
+                textStyle: TextStyle(
+                    fontStyle: FontStyle.normal,
+                    fontWeight: FontWeight.w400,
+                    fontSize: 18.sp,
+                    color: Colors.blue
+                )
+            ),
+            initialSelectedDate: _selectedDate != null
+                ? DateTime(_selectedDate!.year, _selectedDate!.month, _selectedDate!.day)
+                : DateTime.now(),
+            minDate: DateTime.now(),
+            showTodayButton: false,
+            showNavigationArrow: true,
+            headerHeight: 60,
+            headerStyle: DateRangePickerHeaderStyle(
+              textAlign: TextAlign.left,
+              textStyle: TextStyle(
+                color: Colors.blue,
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w700,
+              ),
+              backgroundColor: Colors.transparent,
+            ),
           ),
           ElevatedButton(
               style: ElevatedButton.styleFrom(
