@@ -140,6 +140,28 @@ class _OutcomePageState extends State<OutcomePage> {
     _load();
   }
 
+  // Function to get the correct number of days for a given month in the current year
+  int _daysInMonth(int month) {
+    int year = DateTime.now().year;
+    return DateTime(year, month + 1, 0).day;
+  }
+
+// Function to update the days list based on the selected month
+  void _updateDaysListForSelectedMonth() {
+    daysList = List.generate(_daysInMonth(_selectedBillingMonth!), (index) => index + 1);
+
+    // Ensure selected day is within the updated range
+    if (_selectedBillingDay != null && (_selectedBillingDay! > daysList.length)) {
+      setState(() {
+        _selectedBillingDay = daysList.last;
+      });
+    } else if (_selectedDueDay != null && (_selectedDueDay! > daysList.length)) {
+      setState(() {
+        _selectedDueDay = daysList.last;
+      });
+    }
+  }
+
   String labelForOption(SelectedOption option) {
     switch (option) {
       case SelectedOption.Is:
@@ -349,14 +371,24 @@ class _OutcomePageState extends State<OutcomePage> {
     return sum;
   }
 
+  double calculateCategorySum(List<Invoice> invoices, String category) {
+    double sum = 0.0;
+
+    for (var invoice in invoices) {
+      if (invoice.category == category) {
+        double price = double.parse(invoice.price);
+        sum += price;
+      }
+    }
+
+    return sum;
+  }
+
   @override
   Widget build(BuildContext context) {
-    double tvSum = calculateSubcategorySum(invoices, 'TV');
-    double hbSum = calculateSubcategorySum(invoices, 'Ev Faturaları');
-    double rentSum = calculateSubcategorySum(invoices, 'Kira');
-    sumOfSubs = tvSum + sumOfGame + sumOfMusic;
-    sumOfBills = hbSum + sumOfInternet + sumOfPhone;
-    sumOfOthers = rentSum + sumOfKitchen + sumOfCatering + sumOfEnt + sumOfOther;
+    sumOfSubs = calculateCategorySum(invoices, 'Abonelikler');
+    sumOfBills = calculateCategorySum(invoices, 'Faturalar');
+    sumOfOthers = calculateCategorySum(invoices, 'Diğer Giderler');
     outcomeValue = sumOfSubs+sumOfBills+sumOfOthers;
     subsPercent = (outcomeValue != 0) ? ((sumOfSubs / outcomeValue) * 100).round() : 0;
     billsPercent = (outcomeValue != 0) ? ((sumOfBills / outcomeValue) * 100).round() : 0;
@@ -529,6 +561,9 @@ class _OutcomePageState extends State<OutcomePage> {
       if (_selectedDueDay != null) {
         invoice.dueDate = formatDueDate(_selectedDueDay, invoice.periodDate);
       }
+      setState(() {
+        _updateDaysListForSelectedMonth();
+      });
 
       if(page == 1){
         switch (orderIndex) {
@@ -632,321 +667,357 @@ class _OutcomePageState extends State<OutcomePage> {
       showDialog(
         context: context,
         builder: (BuildContext context) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20)
-            ),
-            title: Text('Edit $caterogyName',style: const TextStyle(fontSize: 20)),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Align(alignment: Alignment.centerLeft,child: Text("Item", style: GoogleFonts.montserrat(fontSize: 18),),),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: selectedEditController,
-                  decoration: InputDecoration(
-                    isDense: true,
-                    focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        borderSide: const BorderSide(width: 3, color: Colors.black)
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: const BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
-                    ),
-                    contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
-                  ),
-                  style: GoogleFonts.montserrat(fontSize: 20),
+          return StatefulBuilder( //TO UPDATE DAYS LIST
+            builder: (context, setState) {
+              return AlertDialog(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)
                 ),
-                const SizedBox(height: 10),
-                Align(alignment: Alignment.centerLeft, child: Text("Price",style: GoogleFonts.montserrat(fontSize: 18))),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: selectedPriceController,
-                  decoration: InputDecoration(
-                    isDense: true,
-                    focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        borderSide: const BorderSide(width: 3, color: Colors.black)
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: const BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
-                    ),
-                    contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
-                  ),
-                  style: GoogleFonts.montserrat(fontSize: 20),
-                  keyboardType: TextInputType.number,
+                title: Text(
+                  'Edit $caterogyName',
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 10),
-                Align(alignment: Alignment.centerLeft, child: Text("Period Date",style: GoogleFonts.montserrat(fontSize: 18))),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<int>(
-                        value: _selectedBillingDay,
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedBillingDay = value;
-                          });
-                        },
-                        items: daysList.map((day) {
-                          return DropdownMenuItem<int>(
-                            value: day,
-                            child: Text(day.toString()),
-                          );
-                        }).toList(),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "Item",
+                          style: GoogleFonts.montserrat(fontSize: 18),
+                        ),
                       ),
-                    ),
-                    Expanded(
-                      child: DropdownButtonFormField<int>(
-                        value: _selectedBillingMonth,
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedBillingMonth = value;
-                          });
-                        },
-                        items: monthsList.map((month) {
-                          return DropdownMenuItem<int>(
-                            value: month,
-                            child: Text(month.toString()),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Align(alignment: Alignment.centerLeft, child: Text("Due Date",style: GoogleFonts.montserrat(fontSize: 18))),
-                const SizedBox(height: 10),
-                DropdownButtonFormField<int>(
-                  value: _selectedDueDay,
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedDueDay = value;
-                    });
-                  },
-                  items: daysList.map((day) {
-                    return DropdownMenuItem<int>(
-                      value: day,
-                      child: Text(day.toString()),
-                    );
-                  }).toList(),
-                ),
-              ],
-            ),
-            actions: [
-              IconButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  icon: const Icon(Icons.cancel)
-              ),
-              IconButton(
-                  onPressed: () {
-                    setState(() {
-                      if(page == 1){
-                        switch (orderIndex){
-                          case 1:
-                            final priceText = selectedPriceController.text.trim();
-                            double dprice = double.tryParse(priceText) ?? 0.0;
-                            String price = dprice.toStringAsFixed(2);
-                            String name = selectedEditController.text;
-                            invoice.name = name;
-                            invoice.price = price;
-                            if (_selectedDueDay != null) {
-                              editInvoice(
-                                id,
-                                formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                                formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!)),
-                              );
-                            } else {
-                              editInvoice(
-                                id,
-                                formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                                null, // or provide any default value you want for dueDate when _selectedDueDay is null
-                              );
-                            }
-                            break;
-                          case 2:
-                            final priceText = selectedPriceController.text.trim();
-                            double dprice = double.tryParse(priceText) ?? 0.0;
-                            String price = dprice.toStringAsFixed(2);
-                            gameTitleList[index] = selectedEditController.text;
-                            gamePriceList[index] = price;
-                            break;
-                          case 3:
-                            final priceText = selectedPriceController.text.trim();
-                            double dprice = double.tryParse(priceText) ?? 0.0;
-                            String price = dprice.toStringAsFixed(2);
-                            musicTitleList[index] = selectedEditController.text;
-                            musicPriceList[index] = price;
-                            break;
-                        }
-                      } else if (page == 2){
-                        switch (orderIndex){
-                          case 1:
-                            final priceText = selectedPriceController.text.trim();
-                            double dprice = double.tryParse(priceText) ?? 0.0;
-                            String price = dprice.toStringAsFixed(2);
-                            String name = selectedEditController.text;
-                            invoice.name = name;
-                            invoice.price = price;
-                            if (_selectedDueDay != null) {
-                              editInvoice(
-                                id,
-                                formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                                formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!)),
-                              );
-                            } else {
-                              editInvoice(
-                                id,
-                                formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                                null, // or provide any default value you want for dueDate when _selectedDueDay is null
-                              );
-                            }
-                            break;
-                          case 2:
-                            final priceText = selectedPriceController.text.trim();
-                            double dprice = double.tryParse(priceText) ?? 0.0;
-                            String price = dprice.toStringAsFixed(2);
-                            internetTitleList[index] = selectedEditController.text;
-                            internetPriceList[index] = price;
-                            break;
-                          case 3:
-                            final priceText = selectedPriceController.text.trim();
-                            double dprice = double.tryParse(priceText) ?? 0.0;
-                            String price = dprice.toStringAsFixed(2);
-                            phoneTitleList[index] = selectedEditController.text;
-                            phonePriceList[index] = price;
-                            break;
-                        }
-                      } else if (page == 3){
-                        switch (orderIndex){
-                          case 1:
-                            final priceText = selectedPriceController.text.trim();
-                            double dprice = double.tryParse(priceText) ?? 0.0;
-                            String price = dprice.toStringAsFixed(2);
-                            String name = selectedEditController.text;
-                            invoice.name = name;
-                            invoice.price = price;
-                            if (_selectedDueDay != null) {
-                              editInvoice(
-                                id,
-                                formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                                formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!)),
-                              );
-                            } else {
-                              editInvoice(
-                                id,
-                                formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                                null, // or provide any default value you want for dueDate when _selectedDueDay is null
-                              );
-                            }
-                            break;
-                          case 2:
-                            final priceText = selectedPriceController.text.trim();
-                            double dprice = double.tryParse(priceText) ?? 0.0;
-                            String price = dprice.toStringAsFixed(2);
-                            kitchenTitleList[index] = selectedEditController.text;
-                            kitchenPriceList[index] = price;
-                            break;
-                          case 3:
-                            final priceText = selectedPriceController.text.trim();
-                            double dprice = double.tryParse(priceText) ?? 0.0;
-                            String price = dprice.toStringAsFixed(2);
-                            cateringTitleList[index] = selectedEditController.text;
-                            cateringPriceList[index] = price;
-                            break;
-                          case 4:
-                            final priceText = selectedPriceController.text.trim();
-                            double dprice = double.tryParse(priceText) ?? 0.0;
-                            String price = dprice.toStringAsFixed(2);
-                            entertainmentTitleList[index] = selectedEditController.text;
-                            entertainmentPriceList[index] = price;
-                            break;
-                          case 5:
-                            final priceText = selectedPriceController.text.trim();
-                            double dprice = double.tryParse(priceText) ?? 0.0;
-                            String price = dprice.toStringAsFixed(2);
-                            otherTitleList[index] = selectedEditController.text;
-                            otherPriceList[index] = price;
-                            break;
-                        }
-                      }
-                    });
-                    saveInvoices();
-                    Navigator.pop(context);
-                  },
-                  icon: const Icon(Icons.save)
-              ),
-              IconButton(
-                  onPressed: () {
-                    setState(() {
-                      if(page == 1 && totalSubsElement != 1){
-                        switch (orderIndex){
-                          case 1:
-                            removeInvoice(id);
-                            break;
-                          case 2:
-                            gameTitleList.removeAt(index);
-                            gamePriceList.removeAt(index);
-                            break;
-                          case 3:
-                            musicTitleList.removeAt(index);
-                            musicPriceList.removeAt(index);
-                            break;
-                        }
-                      } else if (page == 2 && totalBillsElement != 1){
-                        switch (orderIndex){
-                          case 1:
-                            removeInvoice(id);
-                            break;
-                          case 2:
-                            internetTitleList.removeAt(index);
-                            internetPriceList.removeAt(index);
-                            break;
-                          case 3:
-                            phoneTitleList.removeAt(index);
-                            phonePriceList.removeAt(index);
-                            break;
-                        }
-                      } else if (page == 3 && totalOthersElement != 1){
-                        switch (orderIndex){
-                          case 1:
-                            removeInvoice(id);
-                            break;
-                          case 2:
-                            kitchenTitleList.removeAt(index);
-                            kitchenPriceList.removeAt(index);
-                            break;
-                          case 3:
-                            cateringTitleList.removeAt(index);
-                            cateringPriceList.removeAt(index);
-                            break;
-                          case 4:
-                            entertainmentTitleList.removeAt(index);
-                            entertainmentPriceList.removeAt(index);
-                            break;
-                          case 5:
-                            otherTitleList.removeAt(index);
-                            otherPriceList.removeAt(index);
-                            break;
-                        }
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Delete operation not allowed."),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: selectedEditController,
+                        decoration: InputDecoration(
+                          hintText: "e.g., Subscription",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: const BorderSide(width: 2, color: Colors.black),
                           ),
-                        );
-                      }
-                      Navigator.of(context).pop();
-                    });
-                  },
-                  icon: const Icon(Icons.delete_forever)
-              )
-            ],
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                        style: GoogleFonts.montserrat(fontSize: 18),
+                      ),
+                      const SizedBox(height: 10),
+                      Align(alignment: Alignment.centerLeft, child: Text("Price",style: GoogleFonts.montserrat(fontSize: 18))),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: selectedPriceController,
+                        decoration: InputDecoration(
+                          hintText: "e.g., 10.00",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: const BorderSide(width: 2, color: Colors.black),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                        style: GoogleFonts.montserrat(fontSize: 18),
+                        keyboardType: TextInputType.number,
+                      ),
+                      const SizedBox(height: 10),
+                      Align(alignment: Alignment.centerLeft, child: Text("Period Date",style: GoogleFonts.montserrat(fontSize: 18))),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<int>(
+                              value: _selectedBillingDay,
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedBillingDay = value;
+                                });
+                              },
+                              items: daysList.map((day) {
+                                return DropdownMenuItem<int>(
+                                  value: day,
+                                  child: Text(day.toString()),
+                                );
+                              }).toList(),
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: const BorderSide(width: 2, color: Colors.black),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: DropdownButtonFormField<int>(
+                              value: _selectedBillingMonth,
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedBillingMonth = value;
+                                  _updateDaysListForSelectedMonth();
+                                });
+                              },
+                              items: monthsList.map((month) {
+                                return DropdownMenuItem<int>(
+                                  value: month,
+                                  child: Text(month.toString()),
+                                );
+                              }).toList(),
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: const BorderSide(width: 2, color: Colors.black),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Align(alignment: Alignment.centerLeft, child: Text("Due Date",style: GoogleFonts.montserrat(fontSize: 18))),
+                      const SizedBox(height: 10),
+                      DropdownButtonFormField<int>(
+                        value: _selectedDueDay,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedDueDay = value;
+                          });
+                        },
+                        items: [
+                          DropdownMenuItem<int>(
+                            value: null,
+                              child: Text("None")
+                          ),
+                          ...daysList.map((day) {
+                            return DropdownMenuItem<int>(
+                              value: day,
+                              child: Text(day.toString()),
+                            );
+                          }).toList(),
+                        ],
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: const BorderSide(width: 2, color: Colors.black),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  IconButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      icon: const Icon(Icons.cancel)
+                  ),
+                  IconButton(
+                      onPressed: () {
+                        setState(() {
+                          if(page == 1){
+                            switch (orderIndex){
+                              case 1:
+                                final priceText = selectedPriceController.text.trim();
+                                double dprice = double.tryParse(priceText) ?? 0.0;
+                                String price = dprice.toStringAsFixed(2);
+                                String name = selectedEditController.text;
+                                invoice.name = name;
+                                invoice.price = price;
+                                if (_selectedDueDay != null) {
+                                  editInvoice(
+                                    id,
+                                    formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
+                                    formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!)),
+                                  );
+                                } else {
+                                  editInvoice(
+                                    id,
+                                    formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
+                                    null, // or provide any default value you want for dueDate when _selectedDueDay is null
+                                  );
+                                }
+                                break;
+                              case 2:
+                                final priceText = selectedPriceController.text.trim();
+                                double dprice = double.tryParse(priceText) ?? 0.0;
+                                String price = dprice.toStringAsFixed(2);
+                                gameTitleList[index] = selectedEditController.text;
+                                gamePriceList[index] = price;
+                                break;
+                              case 3:
+                                final priceText = selectedPriceController.text.trim();
+                                double dprice = double.tryParse(priceText) ?? 0.0;
+                                String price = dprice.toStringAsFixed(2);
+                                musicTitleList[index] = selectedEditController.text;
+                                musicPriceList[index] = price;
+                                break;
+                            }
+                          } else if (page == 2){
+                            switch (orderIndex){
+                              case 1:
+                                final priceText = selectedPriceController.text.trim();
+                                double dprice = double.tryParse(priceText) ?? 0.0;
+                                String price = dprice.toStringAsFixed(2);
+                                String name = selectedEditController.text;
+                                invoice.name = name;
+                                invoice.price = price;
+                                if (_selectedDueDay != null) {
+                                  editInvoice(
+                                    id,
+                                    formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
+                                    formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!)),
+                                  );
+                                } else {
+                                  editInvoice(
+                                    id,
+                                    formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
+                                    null, // or provide any default value you want for dueDate when _selectedDueDay is null
+                                  );
+                                }
+                                break;
+                              case 2:
+                                final priceText = selectedPriceController.text.trim();
+                                double dprice = double.tryParse(priceText) ?? 0.0;
+                                String price = dprice.toStringAsFixed(2);
+                                internetTitleList[index] = selectedEditController.text;
+                                internetPriceList[index] = price;
+                                break;
+                              case 3:
+                                final priceText = selectedPriceController.text.trim();
+                                double dprice = double.tryParse(priceText) ?? 0.0;
+                                String price = dprice.toStringAsFixed(2);
+                                phoneTitleList[index] = selectedEditController.text;
+                                phonePriceList[index] = price;
+                                break;
+                            }
+                          } else if (page == 3){
+                            switch (orderIndex){
+                              case 1:
+                                final priceText = selectedPriceController.text.trim();
+                                double dprice = double.tryParse(priceText) ?? 0.0;
+                                String price = dprice.toStringAsFixed(2);
+                                String name = selectedEditController.text;
+                                invoice.name = name;
+                                invoice.price = price;
+                                if (_selectedDueDay != null) {
+                                  editInvoice(
+                                    id,
+                                    formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
+                                    formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!)),
+                                  );
+                                } else {
+                                  editInvoice(
+                                    id,
+                                    formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
+                                    null, // or provide any default value you want for dueDate when _selectedDueDay is null
+                                  );
+                                }
+                                break;
+                              case 2:
+                                final priceText = selectedPriceController.text.trim();
+                                double dprice = double.tryParse(priceText) ?? 0.0;
+                                String price = dprice.toStringAsFixed(2);
+                                kitchenTitleList[index] = selectedEditController.text;
+                                kitchenPriceList[index] = price;
+                                break;
+                              case 3:
+                                final priceText = selectedPriceController.text.trim();
+                                double dprice = double.tryParse(priceText) ?? 0.0;
+                                String price = dprice.toStringAsFixed(2);
+                                cateringTitleList[index] = selectedEditController.text;
+                                cateringPriceList[index] = price;
+                                break;
+                              case 4:
+                                final priceText = selectedPriceController.text.trim();
+                                double dprice = double.tryParse(priceText) ?? 0.0;
+                                String price = dprice.toStringAsFixed(2);
+                                entertainmentTitleList[index] = selectedEditController.text;
+                                entertainmentPriceList[index] = price;
+                                break;
+                              case 5:
+                                final priceText = selectedPriceController.text.trim();
+                                double dprice = double.tryParse(priceText) ?? 0.0;
+                                String price = dprice.toStringAsFixed(2);
+                                otherTitleList[index] = selectedEditController.text;
+                                otherPriceList[index] = price;
+                                break;
+                            }
+                          }
+                        });
+                        saveInvoices();
+                        Navigator.pop(context);
+                      },
+                      icon: const Icon(Icons.save)
+                  ),
+                  IconButton(
+                      onPressed: () {
+                        setState(() {
+                          if(page == 1 && totalSubsElement != 1){
+                            switch (orderIndex){
+                              case 1:
+                                removeInvoice(id);
+                                break;
+                              case 2:
+                                gameTitleList.removeAt(index);
+                                gamePriceList.removeAt(index);
+                                break;
+                              case 3:
+                                musicTitleList.removeAt(index);
+                                musicPriceList.removeAt(index);
+                                break;
+                            }
+                          } else if (page == 2 && totalBillsElement != 1){
+                            switch (orderIndex){
+                              case 1:
+                                removeInvoice(id);
+                                break;
+                              case 2:
+                                internetTitleList.removeAt(index);
+                                internetPriceList.removeAt(index);
+                                break;
+                              case 3:
+                                phoneTitleList.removeAt(index);
+                                phonePriceList.removeAt(index);
+                                break;
+                            }
+                          } else if (page == 3 && totalOthersElement != 1){
+                            switch (orderIndex){
+                              case 1:
+                                removeInvoice(id);
+                                break;
+                              case 2:
+                                kitchenTitleList.removeAt(index);
+                                kitchenPriceList.removeAt(index);
+                                break;
+                              case 3:
+                                cateringTitleList.removeAt(index);
+                                cateringPriceList.removeAt(index);
+                                break;
+                              case 4:
+                                entertainmentTitleList.removeAt(index);
+                                entertainmentPriceList.removeAt(index);
+                                break;
+                              case 5:
+                                otherTitleList.removeAt(index);
+                                otherPriceList.removeAt(index);
+                                break;
+                            }
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Delete operation not allowed."),
+                              ),
+                            );
+                          }
+                          Navigator.of(context).pop();
+                        });
+                      },
+                      icon: const Icon(Icons.delete_forever)
+                  )
+                ],
+              );
+            },
           );
         },
       );

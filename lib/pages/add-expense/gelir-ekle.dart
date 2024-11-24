@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:moneyly/routes/routes.dart';
+import 'package:number_text_input_formatter/number_text_input_formatter.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -50,83 +51,120 @@ class _AddIncomeState extends State<AddIncome> {
     // Navigate to the next page
     context.go('/subs');
   }
+
   void handleButtonPress(String value) {
+    print("VALUE: $value");
     setState(() {
+      String currentText = incomeController.text;
+      int cursorPosition = incomeController.selection.baseOffset;
+      int commaIndex = currentText.indexOf(',');
+      String integerPart = currentText.substring(0, commaIndex); // Integer part before the comma
+      String decimalPart = currentText.substring(commaIndex + 1); // Decimal part after the comma
+      print("currentText is $currentText and cursorPosition is $cursorPosition\nintegerPart is $integerPart and decimalPart is $decimalPart");
+
+      // Handle comma for decimal separator
       if (value == ',') {
-        if (!isDecimal) {
-          incomeController.text += ',';
-          isDecimal = true;
-        }
-      } else if (value == 'C') {
-        incomeController.clear();
-        isDecimal = false;
-      } else if (value == '←' || value == '') { // Compare with empty string for backspace
-        if (incomeController.text.isNotEmpty) {
-          final currentText = incomeController.text;
-          final textWithoutDots = currentText.replaceAll('.', '');
-
-          if (textWithoutDots.isEmpty) {
-            incomeController.clear();
-            isDecimal = false;
-          } else if (incomeController.text.contains(',')) {
-            final newText = currentText.substring(0, currentText.length - 1);
-            incomeController.text = formatNumber(newText);
+        // Insert comma at the correct position, either before or after the integer part
+        currentText = currentText.substring(0, commaIndex) + ',' + currentText.substring(commaIndex + 1);
+        cursorPosition = commaIndex+1;
+      }
+      // Clear button press (C)
+      else if (value == 'C') {
+        currentText = "0,00"; // Reset to "0,00"
+        cursorPosition = 1; // Reset cursor position
+      }
+      // Handle backspace button (←)
+      else if (value == '←') {
+        if (decimalPart != "00"){
+          // Delete from the decimal part
+          if (decimalPart[1] != '0') {
+            decimalPart = decimalPart[0] + '0'; // Replace last digit with '0'
+            currentText = "$integerPart,$decimalPart";
+            cursorPosition--;
           } else {
-            final newText = textWithoutDots.substring(0, textWithoutDots.length - 1);
-            incomeController.text = formatNumber(newText);
+            decimalPart = '0' + '0';
+            currentText = "$integerPart,$decimalPart";
+            cursorPosition--;
           }
-
-          if (incomeController.text.endsWith(',')) {
-            isDecimal = false;
-          }
-        }
-      } else {
-        final currentText = incomeController.text;
-        final parts = currentText.split(',');
-        final wholePart = parts[0];
-        int wholePartLength = wholePart.replaceAll('.', '').length;
-        final decimalPart = parts.length > 1 ? parts[1] : '';
-
-        if (isDecimal && decimalPart.length <= 9 - wholePartLength && (wholePartLength + decimalPart.length + value.length) <= 9) {
-          incomeController.text = formatNumber('$wholePart,$decimalPart$value');
-          print(parts);
-          print("${decimalPart.length} decimal");
-          print("${wholePartLength} whole");
-          print("${(wholePart + decimalPart).length} sum");
-          print(isDecimal);
         } else {
-          print(parts);
-          print(isDecimal);
-          final textWithoutDots = incomeController.text.replaceAll('.', '');
-
-          if (textWithoutDots.isEmpty || textWithoutDots == '0') {
-            incomeController.clear();
+          // If integer part is empty, set it to '0'
+          if (integerPart.isEmpty) {
+            print("integerPart.isEmpty");
+            integerPart = '0';
+            currentText = "$integerPart,$decimalPart";
           }
-
-          if (textWithoutDots.length < 9) {
-            incomeController.text = formatNumber(textWithoutDots + value);
+          // If there's only one digit left in the integer part, set it to '0'
+          if (integerPart.length == 1) {
+            print("integerPart.length == 1");
+            integerPart = '0';
+            currentText = "$integerPart,$decimalPart";
+          }
+          // Delete from the integer part
+          if (integerPart.length > 1) {
+            print("integerPart.length > 1");
+            integerPart = integerPart.substring(0, integerPart.length - 1);
+            integerPart = _formatIntegerPart(integerPart);
+            currentText = "$integerPart,$decimalPart";
           }
         }
       }
+      // Handle digit buttons (0-9)
+      else {
+        // If the currentText is "0,00" or empty, initialize it with the first number
+        if (currentText == "0,00" || currentText.isEmpty) {
+          currentText = "$value,00"; // Start with the pressed value and "00"
+        } else {
+          // Add the digit based on the cursor position
+          if (integerPart.length > 0 && cursorPosition <= commaIndex) {
+            // Insert the digit in the integer part
+            integerPart += value;
+            integerPart = _formatIntegerPart(integerPart);
+          }
+          if (cursorPosition == commaIndex+2){
+            decimalPart = decimalPart.substring(0,1) + value;
+            cursorPosition++;
+          }
+          if (cursorPosition == commaIndex+1){
+            decimalPart = value + decimalPart.substring(1);
+            cursorPosition++;
+          }
+          // Combine the integer and decimal parts
+          currentText = "$integerPart,$decimalPart";
+        }
+      }
+
+      // Ensure the cursor position is within bounds
+      cursorPosition = cursorPosition.clamp(0, currentText.length);
+      // Update the controller with the new value and set the cursor position
+      incomeController.text = currentText;
+      if (currentText == "0,00"){
+      cursorPosition = 1;
+      }
+      incomeController.selection = TextSelection.collapsed(offset: cursorPosition);
     });
   }
-  String formatNumber(String value) {
-    final numericValue = int.tryParse(value);
-    if (numericValue == null) {
-      return value;
+  String _formatIntegerPart(String integerPart) {
+    if (integerPart.isEmpty || integerPart == "0") return "0";
+
+    // Remove any existing dots to start with a clean number
+    integerPart = integerPart.replaceAll('.', '');
+
+    // Format the integer part with dots for thousands
+    StringBuffer buffer = StringBuffer();
+    int count = 0;
+
+    for (int i = integerPart.length - 1; i >= 0; i--) {
+      buffer.write(integerPart[i]);
+      count++;
+      if (count % 3 == 0 && i != 0) {
+        buffer.write('.'); // Add dot every 3 digits from the right
+      }
     }
 
-    final formattedValue = numericValue.toString();
-    final length = formattedValue.length;
-    final segments = <String>[];
-
-    for (var i = length; i > 0; i -= 3) {
-      final startIndex = i - 3 > 0 ? i - 3 : 0;
-      segments.insert(0, formattedValue.substring(startIndex, i));
-    }
-
-    return segments.join('.');
+    // Reverse the result to get the correct order
+    return buffer.toString().split('').reversed.join('');
   }
+
   String labelForOption(SelectedOption option) {
     switch (option) {
       case SelectedOption.Is:
@@ -142,7 +180,6 @@ class _AddIncomeState extends State<AddIncome> {
         return '';
     }
   }
-
   Widget selectableContainer(SelectedOption option, String label, IconData iconData) {
     return BlocBuilder<IncomeSelectionsBloc, IncomeSelectionsState>(
       builder: (context, state) {
@@ -153,7 +190,6 @@ class _AddIncomeState extends State<AddIncome> {
 
         // Directly compute selectedTitle based on the current state
         String selectedTitle = labelForOption(selectedOption);
-        print('selectedTitle: $selectedTitle'); // This should reflect the current state
 
         return GestureDetector(
           onTap: () {
@@ -200,7 +236,7 @@ class _AddIncomeState extends State<AddIncome> {
   Future<void> _loadSelectedOption() async {
     final prefs = await SharedPreferences.getInstance();
     final index = prefs.getInt('selected_option') ?? SelectedOption.None.index;
-    final loadedIncomeData = prefs.getString('incomeMap') ?? "{}";
+    final loadedIncomeData = prefs.getString('incomeMap') ?? '';
 
     final bloc = context.read<IncomeSelectionsBloc>();
     bloc.add(LoadSelectedOption(SelectedOption.values[index]));
@@ -215,11 +251,13 @@ class _AddIncomeState extends State<AddIncome> {
 
     // Set the title based on the selected option
     selectedTitle = labelForOption(selectedOption);
-    if (loadedIncomeData.isNotEmpty) {
+    if (loadedIncomeData!.isNotEmpty) {
       Map<String, dynamic> decodedData = json.decode(loadedIncomeData);
       if (decodedData.containsKey(newSelectedTitle)) {
         incomeController.text = decodedData[newSelectedTitle].join(', ');
       }
+    } else{
+      incomeController.text = "0,00";
     }
   }
 
@@ -338,56 +376,51 @@ class _AddIncomeState extends State<AddIncome> {
                                     ),
                                   ),
                                   SizedBox(height: 10.h),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: TextFormField(
-                                          controller: incomeController,
-                                          textAlign: TextAlign.right,
-                                          readOnly: true,
-                                          style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold),
-                                          decoration: InputDecoration(
-                                            border: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(10),
-                                              borderSide: BorderSide(color: Colors.black, width: 4, style: BorderStyle.solid),
-                                            ),
-                                            enabledBorder: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(10),
-                                              borderSide: BorderSide(color: Colors.black, width: 3, style: BorderStyle.solid),
-                                            ),
-                                            focusedBorder: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(10),
-                                              borderSide: BorderSide(color: Colors.black, width: 3, style: BorderStyle.solid),
-                                            ),
-                                            contentPadding: EdgeInsets.symmetric(vertical: 0),
-                                            suffixIcon: Container(
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  SizedBox(width: 20),
-                                                  ElevatedButton(
-                                                    style: ElevatedButton.styleFrom(
-                                                      minimumSize: Size((screenWidth - 60) / 3, 45),
-                                                      backgroundColor: Colors.black,
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius: BorderRadius.circular(10),
-                                                      ),
-                                                    ),
-                                                    child: Icon(Icons.clear),
-                                                    onPressed: () {
-                                                      setState(() {
-                                                        incomeController.clear();
-                                                        isDecimal = false;
-                                                      });
-                                                    },
+                                  IntrinsicHeight(
+                                    child: TextFormField(
+                                      readOnly: true,
+                                      controller: incomeController,
+                                      textAlign: TextAlign.right,
+                                      style: GoogleFonts.montserrat(fontSize: 20.sp, fontWeight: FontWeight.bold),
+                                      decoration: InputDecoration(
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                          borderSide: BorderSide(color: Colors.black, width: 4, style: BorderStyle.solid),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                          borderSide: BorderSide(color: Colors.black, width: 3, style: BorderStyle.solid),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                          borderSide: BorderSide(color: Colors.black, width: 3, style: BorderStyle.solid),
+                                        ),
+                                        contentPadding: EdgeInsets.symmetric(vertical: 10),
+                                        suffixIcon:  Container(
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              SizedBox(width: 10),
+                                              ElevatedButton(
+                                                style: ElevatedButton.styleFrom(
+                                                  minimumSize: Size((screenWidth - 60) / 3, 50),
+                                                  backgroundColor: Colors.black,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(10),
                                                   ),
-                                                ],
+                                                ),
+                                                child: Icon(Icons.clear),
+                                                onPressed: () {
+                                                  setState(() {
+                                                    handleButtonPress('C');
+                                                  });
+                                                },
                                               ),
-                                            ),
+                                            ],
                                           ),
                                         ),
                                       ),
-                                    ],
+                                    ),
                                   ),
                                   SizedBox(height: 10),
                                   Row(
@@ -457,7 +490,6 @@ class _AddIncomeState extends State<AddIncome> {
               Expanded(
                 child: Container(
                   height: 50,
-                  color: Colors.white,
                   child: BlocBuilder<IncomeSelectionsBloc, IncomeSelectionsState>(
                     builder: (context, state) {
                       return ElevatedButton(
@@ -547,7 +579,7 @@ class _AddIncomeState extends State<AddIncome> {
     return Container(
       height: 50,
       child: ElevatedButton(
-        onPressed: () => handleButtonPress(icon == Icon(Icons.backspace) ? '←' : ''),
+        onPressed: () => handleButtonPress('←'),
         style: ElevatedButton.styleFrom(
             minimumSize: Size((screenWidth - 60) / 3, 45),
             backgroundColor: Colors.black,

@@ -821,6 +821,19 @@ class _HomePageState extends State<HomePage> {
     return sum;
   }
 
+  double calculateCategorySum(List<Invoice> invoices, String category) {
+    double sum = 0.0;
+
+    for (var invoice in invoices) {
+      if (invoice.category == category) {
+        double price = double.parse(invoice.price);
+        sum += price;
+      }
+    }
+
+    return sum;
+  }
+
   int _currentPage = 0;
 
   @override
@@ -836,12 +849,9 @@ class _HomePageState extends State<HomePage> {
     savingsValue = incomeValue * 0.2;
     wishesValue = incomeValue  * 0.3;
     needsValue = incomeValue * 0.5;
-    double tvSum = calculateSubcategorySum(invoices, 'TV');
-    double hbSum = calculateSubcategorySum(invoices, 'Ev Faturaları');
-    double rentSum = calculateSubcategorySum(invoices, 'Kira');
-    double sumOfSubs = tvSum + double.parse(sumOfGame)+double.parse(sumOfMusic);
-    double sumOfBills = hbSum + double.parse(sumOfInternet)+double.parse(sumOfPhone);
-    double sumOfOthers = rentSum +double.parse(sumOfKitchen)+double.parse(sumOfCatering)+double.parse(sumOfEnt)+double.parse(sumOfOther);
+    double sumOfSubs = calculateCategorySum(invoices, 'Abonelikler');
+    double sumOfBills = calculateCategorySum(invoices, 'Faturalar');
+    double sumOfOthers = calculateCategorySum(invoices, 'Diğer Giderler');
     double outcomeValue = sumOfSubs+sumOfBills+sumOfOthers;
     double netProfit = incomeValue - outcomeValue;
     String formattedIncomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(incomeValue);
