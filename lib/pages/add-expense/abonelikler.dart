@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -362,13 +363,14 @@ class _SubscriptionsState extends State<Subscriptions> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(
-                                        _selectedBillingMonth == null
-                                            ? "Ay"
-                                            : monthNames[_selectedBillingMonth! - 1],
-                                        style: TextStyle(
-                                            color: Colors.black
-                                        )
+                                    Expanded(
+                                      child: Text(
+                                          _selectedBillingMonth == null
+                                              ? "Ay"
+                                              : monthNames[_selectedBillingMonth! - 1],
+                                          style: TextStyle(color: Colors.black),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
                                     Icon(Icons.arrow_drop_down, color: Colors.black)
                                   ],
@@ -1061,7 +1063,11 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                             contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
                                                             focusedBorder: OutlineInputBorder(
                                                               borderRadius: BorderRadius.circular(20),
-                                                              borderSide: BorderSide(color: Colors.white, width: 3),
+                                                              borderSide: BorderSide(width: 3),
+                                                            ),
+                                                            enabledBorder: OutlineInputBorder(
+                                                              borderRadius: BorderRadius.circular(20),
+                                                              borderSide: BorderSide(width: 2),
                                                             ),
                                                             border: OutlineInputBorder(
                                                               borderRadius: BorderRadius.circular(20),
@@ -1090,7 +1096,11 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                             contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
                                                             focusedBorder: OutlineInputBorder(
                                                               borderRadius: BorderRadius.circular(20),
-                                                              borderSide: BorderSide(color: Colors.white, width: 3),
+                                                              borderSide: BorderSide(width: 3),
+                                                            ),
+                                                            enabledBorder: OutlineInputBorder(
+                                                              borderRadius: BorderRadius.circular(20),
+                                                              borderSide: BorderSide(width: 2),
                                                             ),
                                                             border: OutlineInputBorder(
                                                               borderRadius: BorderRadius.circular(20),
@@ -1149,6 +1159,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                                               shape: RoundedRectangleBorder(
                                                                                 borderRadius: BorderRadius.circular(20),
                                                                               ),
+                                                                              side: BorderSide(width: 2),
                                                                             ),
                                                                             child: Row(
                                                                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1192,6 +1203,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                                               shape: RoundedRectangleBorder(
                                                                                 borderRadius: BorderRadius.circular(20),
                                                                               ),
+                                                                              side: BorderSide(width: 2),
                                                                             ),
                                                                             onPressed: showMenu,
                                                                             child: Row(
@@ -1247,6 +1259,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                                             shape: RoundedRectangleBorder(
                                                                               borderRadius: BorderRadius.circular(20),
                                                                             ),
+                                                                            side: BorderSide(width: 2),
                                                                           ),
                                                                           child: Row(
                                                                             mainAxisSize: MainAxisSize.min,
@@ -1565,7 +1578,11 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                             contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
                                                             focusedBorder: OutlineInputBorder(
                                                               borderRadius: BorderRadius.circular(20),
-                                                              borderSide: BorderSide(color: Colors.white, width: 3),
+                                                              borderSide: BorderSide(width: 3),
+                                                            ),
+                                                            enabledBorder: OutlineInputBorder(
+                                                              borderRadius: BorderRadius.circular(20),
+                                                              borderSide: BorderSide(width: 2),
                                                             ),
                                                             border: OutlineInputBorder(
                                                               borderRadius: BorderRadius.circular(20),
@@ -1594,7 +1611,11 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                             contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
                                                             focusedBorder: OutlineInputBorder(
                                                               borderRadius: BorderRadius.circular(20),
-                                                              borderSide: BorderSide(color: Colors.white, width: 3),
+                                                              borderSide: BorderSide(width: 3),
+                                                            ),
+                                                            enabledBorder: OutlineInputBorder(
+                                                              borderRadius: BorderRadius.circular(20),
+                                                              borderSide: BorderSide(width: 2),
                                                             ),
                                                             border: OutlineInputBorder(
                                                               borderRadius: BorderRadius.circular(20),
@@ -1653,6 +1674,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                                               shape: RoundedRectangleBorder(
                                                                                 borderRadius: BorderRadius.circular(20),
                                                                               ),
+                                                                              side: BorderSide(width: 2),
                                                                             ),
                                                                             child: Row(
                                                                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1696,6 +1718,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                                               shape: RoundedRectangleBorder(
                                                                                 borderRadius: BorderRadius.circular(20),
                                                                               ),
+                                                                              side: BorderSide(width: 2),
                                                                             ),
                                                                             onPressed: showMenu,
                                                                             child: Row(
@@ -1751,6 +1774,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                                             shape: RoundedRectangleBorder(
                                                                               borderRadius: BorderRadius.circular(20),
                                                                             ),
+                                                                            side: BorderSide(width: 2),
                                                                           ),
                                                                           child: Row(
                                                                             mainAxisSize: MainAxisSize.min,
@@ -2069,7 +2093,11 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                             contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
                                                             focusedBorder: OutlineInputBorder(
                                                               borderRadius: BorderRadius.circular(20),
-                                                              borderSide: BorderSide(color: Colors.white, width: 3),
+                                                              borderSide: BorderSide(width: 3),
+                                                            ),
+                                                            enabledBorder: OutlineInputBorder(
+                                                              borderRadius: BorderRadius.circular(20),
+                                                              borderSide: BorderSide(width: 2),
                                                             ),
                                                             border: OutlineInputBorder(
                                                               borderRadius: BorderRadius.circular(20),
@@ -2098,7 +2126,11 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                             contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
                                                             focusedBorder: OutlineInputBorder(
                                                               borderRadius: BorderRadius.circular(20),
-                                                              borderSide: BorderSide(color: Colors.white, width: 3),
+                                                              borderSide: BorderSide(width: 3),
+                                                            ),
+                                                            enabledBorder: OutlineInputBorder(
+                                                              borderRadius: BorderRadius.circular(20),
+                                                              borderSide: BorderSide(width: 2),
                                                             ),
                                                             border: OutlineInputBorder(
                                                               borderRadius: BorderRadius.circular(20),
@@ -2157,6 +2189,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                                               shape: RoundedRectangleBorder(
                                                                                 borderRadius: BorderRadius.circular(20),
                                                                               ),
+                                                                              side: BorderSide(width: 2),
                                                                             ),
                                                                             child: Row(
                                                                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -2200,6 +2233,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                                               shape: RoundedRectangleBorder(
                                                                                 borderRadius: BorderRadius.circular(20),
                                                                               ),
+                                                                              side: BorderSide(width: 2),
                                                                             ),
                                                                             onPressed: showMenu,
                                                                             child: Row(
@@ -2255,6 +2289,7 @@ class _SubscriptionsState extends State<Subscriptions> {
                                                                             shape: RoundedRectangleBorder(
                                                                               borderRadius: BorderRadius.circular(20),
                                                                             ),
+                                                                            side: BorderSide(width: 2),
                                                                           ),
                                                                           child: Row(
                                                                             mainAxisSize: MainAxisSize.min,

@@ -139,7 +139,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
   Future<void> addCategoryValue(String category, String currency, double value, double sum) async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      print("category:${category} and value:${value}");
+      print("category:${category} and ananim:${value}");
       categoryValues[category] = value;
       totalInvestValue[currency] = value;
       print("categoryValues is at that point:${categoryValues}");
@@ -239,15 +239,15 @@ class _InvestmentPageState extends State<InvestmentPage> {
   void showEditDialog(int index, int categoryIndex){
     TextEditingController nameEditController = TextEditingController();
     TextEditingController amountEditController = TextEditingController();
+    List<Investment> filteredList = exchangeList.where((investment) => investment.category == 'Döviz').toList();
+    Investment investment = filteredList[index];
+    InvestmentModel? investmentModel = exchangeDollarList.firstWhere(
+          (model) => model.id == investment.id,
+      orElse: () => null as InvestmentModel, // Return null if no match is found
+    );
 
     switch (categoryIndex){
       case 1:
-        List<Investment> filteredList = exchangeList.where((investment) => investment.category == 'Döviz').toList();
-        Investment investment = filteredList[index];
-        InvestmentModel? investmentModel = exchangeDollarList.firstWhere(
-              (model) => model.id == investment.id,
-          orElse: () => null as InvestmentModel, // Return null if no match is found
-        );
         TextEditingController nameController = TextEditingController(text: investment.name);
         TextEditingController editController = TextEditingController(text: investmentModel.amount.toString());
         amountEditController = editController;
@@ -276,238 +276,265 @@ class _InvestmentPageState extends State<InvestmentPage> {
     }
 
     showDialog(context: context, builder: (BuildContext context) {
-      return AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20)
-        ),
-        title: Text('Edit category',style: const TextStyle(fontSize: 20)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Align(alignment: Alignment.centerLeft,child: Text("Invest Name", style: TextStyle(fontSize: 18),),),
-            const SizedBox(height: 10),
-            TextFormField(
-              controller: nameEditController,
-              decoration: InputDecoration(
-                isDense: true,
-                focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    borderSide: const BorderSide(width: 3, color: Colors.black)
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: const BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
-                ),
-                contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
-              ),
-              style: const TextStyle(fontSize: 20),
+      return StatefulBuilder(
+        builder: (context, setModalState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20)
             ),
-            const Align(alignment: Alignment.centerLeft,child: Text("Invest Amount", style: TextStyle(fontSize: 18),),),
-            const SizedBox(height: 10),
-            TextFormField(
-              controller: amountEditController,
-              decoration: InputDecoration(
-                isDense: true,
-                focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    borderSide: const BorderSide(width: 3, color: Colors.black)
+            title: Text('Edit category',style: const TextStyle(fontSize: 20)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Align(alignment: Alignment.centerLeft,child: Text("Invest Name", style: TextStyle(fontSize: 18),),),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: nameEditController,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        borderSide: const BorderSide(width: 3, color: Colors.black)
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: const BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
+                    ),
+                    contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
+                  ),
+                  style: const TextStyle(fontSize: 20),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: const BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
+                const Align(alignment: Alignment.centerLeft,child: Text("Invest Amount", style: TextStyle(fontSize: 18),),),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: amountEditController,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        borderSide: const BorderSide(width: 3, color: Colors.black)
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: const BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
+                    ),
+                    contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
+                  ),
+                  style: const TextStyle(fontSize: 20),
                 ),
-                contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
-              ),
-              style: const TextStyle(fontSize: 20),
+                const Align(alignment: Alignment.centerLeft,child: Text("Invest Deadline", style: TextStyle(fontSize: 18),),),
+                const SizedBox(height: 10),
+                GestureDetector(
+                  onTap: () async {
+                    await _openDatePicker(setModalState);
+                    setState(() {
+                      investment.deadline = _savedDate;
+                    });
+                  },
+                  child: AbsorbPointer(
+                    child: TextFormField(
+                      decoration: InputDecoration(
+                          labelText: investment.deadline == null ? '' : DateFormat('yyyy-MM-dd').format(investment.deadline!),
+                          filled: true,
+                          fillColor: Colors.white,
+                          isDense: true,
+                          contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(color: Colors.white, width: 3),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(color: Colors.black, width: 3),
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          hintStyle: TextStyle(color: Colors.black)
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-        actions: [
-          IconButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              icon: const Icon(Icons.cancel)
-          ),
-          IconButton(
-              onPressed: () async {
-                final prefs = await SharedPreferences.getInstance();
-                setState(() {
-                  switch (categoryIndex){
-                    case 1:
-                      int indexToChange = sumList.indexOf(exchangeDepot[index]);
-                      if(indexToChange != -1){
-                        sumList[indexToChange] = double.parse(amountEditController.text);
+            actions: [
+              IconButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  icon: const Icon(Icons.cancel)
+              ),
+              IconButton(
+                  onPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    setState(() {
+                      switch (categoryIndex){
+                        case 1:
+                          updateInvestmentDeadline(investment.id, investment.deadline!);
+                          break;
+                        case 2:
+                          int indexToChange = sumList.indexOf(cashDepot[index]);
+                          if(indexToChange != -1){
+                            sumList[indexToChange] = double.parse(amountEditController.text);
+                          }
+                          cashDepot[index] = double.parse(amountEditController.text);
+                          sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
+                          final cashDepotJson = jsonEncode(cashDepot);
+                          prefs.setDouble('sumInvestValue', sumInvestValue);
+                          prefs.setString('cashDepot', cashDepotJson);
+                          final sumListJson = jsonEncode(sumList);
+                          prefs.setString('sumList', sumListJson);
+                          break;
+                        case 3:
+                          int indexToChange = sumList.indexOf(realEstateDepot[index]);
+                          if(indexToChange != -1){
+                            sumList[indexToChange] = double.parse(amountEditController.text);
+                          }
+                          realEstateDepot[index] = double.parse(amountEditController.text);
+                          sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
+                          final realEstateDepotJson = jsonEncode(realEstateDepot);
+                          prefs.setDouble('sumInvestValue', sumInvestValue);
+                          prefs.setString('realEstateDepot', realEstateDepotJson);
+                          final sumListJson = jsonEncode(sumList);
+                          prefs.setString('sumList', sumListJson);
+                          break;
+                        case 4:
+                          int indexToChange = sumList.indexOf(carDepot[index]);
+                          if(indexToChange != -1){
+                            sumList[indexToChange] = double.parse(amountEditController.text);
+                          }
+                          carDepot[index] = double.parse(amountEditController.text);
+                          sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
+                          final carDepotJson = jsonEncode(carDepot);
+                          prefs.setDouble('sumInvestValue', sumInvestValue);
+                          prefs.setString('carDepot', carDepotJson);
+                          final sumListJson = jsonEncode(sumList);
+                          prefs.setString('sumList', sumListJson);
+                          break;
+                        case 5:
+                          int indexToChange = sumList.indexOf(electronicDepot[index]);
+                          if(indexToChange != -1){
+                            sumList[indexToChange] = double.parse(amountEditController.text);
+                          }
+                          electronicDepot[index] = double.parse(amountEditController.text);
+                          sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
+                          final electronicDepotJson = jsonEncode(electronicDepot);
+                          prefs.setDouble('sumInvestValue', sumInvestValue);
+                          prefs.setString('electronicDepot', electronicDepotJson);
+                          final sumListJson = jsonEncode(sumList);
+                          prefs.setString('sumList', sumListJson);
+                          break;
+                        case 6:
+                          int indexToChange = sumList.indexOf(otherDepot[index]);
+                          if(indexToChange != -1){
+                            sumList[indexToChange] = double.parse(amountEditController.text);
+                          }
+                          otherDepot[index] = double.parse(amountEditController.text);
+                          sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
+                          final otherDepotJson = jsonEncode(otherDepot);
+                          prefs.setDouble('sumInvestValue', sumInvestValue);
+                          prefs.setString('otherDepot', otherDepotJson);
+                          final sumListJson = jsonEncode(sumList);
+                          prefs.setString('sumList', sumListJson);
+                          break;
                       }
-                      exchangeDepot[index] = double.parse(amountEditController.text);
-                      sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
-                      final exchangeDepotJson = jsonEncode(exchangeDepot);
-                      prefs.setDouble('sumInvestValue', sumInvestValue);
-                      prefs.setString('exchangeDepot', exchangeDepotJson);
-                      final sumListJson = jsonEncode(sumList);
-                      prefs.setString('sumList', sumListJson);
-                      break;
-                    case 2:
-                      int indexToChange = sumList.indexOf(cashDepot[index]);
-                      if(indexToChange != -1){
-                        sumList[indexToChange] = double.parse(amountEditController.text);
+                    });
+                    Navigator.pop(context);
+                  },
+                  icon: const Icon(Icons.save)
+              ),
+              IconButton(
+                  onPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    setState(() {
+                      switch (categoryIndex){
+                        case 1:
+                          int indexToDelete = sumList.indexOf(exchangeDepot[index]);
+                          if (indexToDelete != -1) {
+                            sumList.removeAt(indexToDelete);
+                          }
+                          exchangeDepot.removeAt(index);
+                          sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
+                          final exchangeDepotJson = jsonEncode(exchangeDepot);
+                          prefs.setDouble('sumInvestValue', sumInvestValue);
+                          prefs.setString('exchangeDepot', exchangeDepotJson);
+                          final sumListJson = jsonEncode(sumList);
+                          prefs.setString('sumList', sumListJson);
+                          break;
+                        case 2:
+                          int indexToDelete = sumList.indexOf(cashDepot[index]);
+                          if (indexToDelete != -1) {
+                            sumList.removeAt(indexToDelete);
+                          }
+                          cashDepot.removeAt(index);
+                          sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
+                          final cashDepotJson = jsonEncode(cashDepot);
+                          prefs.setDouble('sumInvestValue', sumInvestValue);
+                          prefs.setString('cashDepot', cashDepotJson);
+                          final sumListJson = jsonEncode(sumList);
+                          prefs.setString('sumList', sumListJson);
+                          break;
+                        case 3:
+                          int indexToDelete = sumList.indexOf(realEstateDepot[index]);
+                          if (indexToDelete != -1) {
+                            sumList.removeAt(indexToDelete);
+                          }
+                          realEstateDepot.removeAt(index);
+                          sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
+                          final realEstateDepotJson = jsonEncode(realEstateDepot);
+                          prefs.setDouble('sumInvestValue', sumInvestValue);
+                          prefs.setString('realEstateDepot', realEstateDepotJson);
+                          final sumListJson = jsonEncode(sumList);
+                          prefs.setString('sumList', sumListJson);
+                          break;
+                        case 4:
+                          int indexToDelete = sumList.indexOf(carDepot[index]);
+                          if (indexToDelete != -1) {
+                            sumList.removeAt(indexToDelete);
+                          }
+                          carDepot.removeAt(index);
+                          sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
+                          final carDepotJson = jsonEncode(carDepot);
+                          prefs.setDouble('sumInvestValue', sumInvestValue);
+                          prefs.setString('carDepot', carDepotJson);
+                          final sumListJson = jsonEncode(sumList);
+                          prefs.setString('sumList', sumListJson);
+                          break;
+                        case 5:
+                          int indexToDelete = sumList.indexOf(electronicDepot[index]);
+                          if (indexToDelete != -1) {
+                            sumList.removeAt(indexToDelete);
+                          }
+                          electronicDepot.removeAt(index);
+                          sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
+                          final electronicDepotJson = jsonEncode(electronicDepot);
+                          prefs.setDouble('sumInvestValue', sumInvestValue);
+                          prefs.setString('electronicDepot', electronicDepotJson);
+                          final sumListJson = jsonEncode(sumList);
+                          prefs.setString('sumList', sumListJson);
+                          break;
+                        case 6:
+                          int indexToDelete = sumList.indexOf(otherDepot[index]);
+                          if (indexToDelete != -1) {
+                            sumList.removeAt(indexToDelete);
+                          }
+                          otherDepot.removeAt(index);
+                          sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
+                          final otherDepotJson = jsonEncode(otherDepot);
+                          prefs.setDouble('sumInvestValue', sumInvestValue);
+                          prefs.setString('otherDepot', otherDepotJson);
+                          final sumListJson = jsonEncode(sumList);
+                          prefs.setString('sumList', sumListJson);
+                          break;
                       }
-                      cashDepot[index] = double.parse(amountEditController.text);
-                      sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
-                      final cashDepotJson = jsonEncode(cashDepot);
-                      prefs.setDouble('sumInvestValue', sumInvestValue);
-                      prefs.setString('cashDepot', cashDepotJson);
-                      final sumListJson = jsonEncode(sumList);
-                      prefs.setString('sumList', sumListJson);
-                      break;
-                    case 3:
-                      int indexToChange = sumList.indexOf(realEstateDepot[index]);
-                      if(indexToChange != -1){
-                        sumList[indexToChange] = double.parse(amountEditController.text);
-                      }
-                      realEstateDepot[index] = double.parse(amountEditController.text);
-                      sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
-                      final realEstateDepotJson = jsonEncode(realEstateDepot);
-                      prefs.setDouble('sumInvestValue', sumInvestValue);
-                      prefs.setString('realEstateDepot', realEstateDepotJson);
-                      final sumListJson = jsonEncode(sumList);
-                      prefs.setString('sumList', sumListJson);
-                      break;
-                    case 4:
-                      int indexToChange = sumList.indexOf(carDepot[index]);
-                      if(indexToChange != -1){
-                        sumList[indexToChange] = double.parse(amountEditController.text);
-                      }
-                      carDepot[index] = double.parse(amountEditController.text);
-                      sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
-                      final carDepotJson = jsonEncode(carDepot);
-                      prefs.setDouble('sumInvestValue', sumInvestValue);
-                      prefs.setString('carDepot', carDepotJson);
-                      final sumListJson = jsonEncode(sumList);
-                      prefs.setString('sumList', sumListJson);
-                      break;
-                    case 5:
-                      int indexToChange = sumList.indexOf(electronicDepot[index]);
-                      if(indexToChange != -1){
-                        sumList[indexToChange] = double.parse(amountEditController.text);
-                      }
-                      electronicDepot[index] = double.parse(amountEditController.text);
-                      sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
-                      final electronicDepotJson = jsonEncode(electronicDepot);
-                      prefs.setDouble('sumInvestValue', sumInvestValue);
-                      prefs.setString('electronicDepot', electronicDepotJson);
-                      final sumListJson = jsonEncode(sumList);
-                      prefs.setString('sumList', sumListJson);
-                      break;
-                    case 6:
-                      int indexToChange = sumList.indexOf(otherDepot[index]);
-                      if(indexToChange != -1){
-                        sumList[indexToChange] = double.parse(amountEditController.text);
-                      }
-                      otherDepot[index] = double.parse(amountEditController.text);
-                      sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
-                      final otherDepotJson = jsonEncode(otherDepot);
-                      prefs.setDouble('sumInvestValue', sumInvestValue);
-                      prefs.setString('otherDepot', otherDepotJson);
-                      final sumListJson = jsonEncode(sumList);
-                      prefs.setString('sumList', sumListJson);
-                      break;
-                  }
-                });
-                Navigator.pop(context);
-              },
-              icon: const Icon(Icons.save)
-          ),
-          IconButton(
-              onPressed: () async {
-                final prefs = await SharedPreferences.getInstance();
-                setState(() {
-                  switch (categoryIndex){
-                    case 1:
-                      int indexToDelete = sumList.indexOf(exchangeDepot[index]);
-                      if (indexToDelete != -1) {
-                        sumList.removeAt(indexToDelete);
-                      }
-                      exchangeDepot.removeAt(index);
-                      sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
-                      final exchangeDepotJson = jsonEncode(exchangeDepot);
-                      prefs.setDouble('sumInvestValue', sumInvestValue);
-                      prefs.setString('exchangeDepot', exchangeDepotJson);
-                      final sumListJson = jsonEncode(sumList);
-                      prefs.setString('sumList', sumListJson);
-                      break;
-                    case 2:
-                      int indexToDelete = sumList.indexOf(cashDepot[index]);
-                      if (indexToDelete != -1) {
-                        sumList.removeAt(indexToDelete);
-                      }
-                      cashDepot.removeAt(index);
-                      sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
-                      final cashDepotJson = jsonEncode(cashDepot);
-                      prefs.setDouble('sumInvestValue', sumInvestValue);
-                      prefs.setString('cashDepot', cashDepotJson);
-                      final sumListJson = jsonEncode(sumList);
-                      prefs.setString('sumList', sumListJson);
-                      break;
-                    case 3:
-                      int indexToDelete = sumList.indexOf(realEstateDepot[index]);
-                      if (indexToDelete != -1) {
-                        sumList.removeAt(indexToDelete);
-                      }
-                      realEstateDepot.removeAt(index);
-                      sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
-                      final realEstateDepotJson = jsonEncode(realEstateDepot);
-                      prefs.setDouble('sumInvestValue', sumInvestValue);
-                      prefs.setString('realEstateDepot', realEstateDepotJson);
-                      final sumListJson = jsonEncode(sumList);
-                      prefs.setString('sumList', sumListJson);
-                      break;
-                    case 4:
-                      int indexToDelete = sumList.indexOf(carDepot[index]);
-                      if (indexToDelete != -1) {
-                        sumList.removeAt(indexToDelete);
-                      }
-                      carDepot.removeAt(index);
-                      sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
-                      final carDepotJson = jsonEncode(carDepot);
-                      prefs.setDouble('sumInvestValue', sumInvestValue);
-                      prefs.setString('carDepot', carDepotJson);
-                      final sumListJson = jsonEncode(sumList);
-                      prefs.setString('sumList', sumListJson);
-                      break;
-                    case 5:
-                      int indexToDelete = sumList.indexOf(electronicDepot[index]);
-                      if (indexToDelete != -1) {
-                        sumList.removeAt(indexToDelete);
-                      }
-                      electronicDepot.removeAt(index);
-                      sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
-                      final electronicDepotJson = jsonEncode(electronicDepot);
-                      prefs.setDouble('sumInvestValue', sumInvestValue);
-                      prefs.setString('electronicDepot', electronicDepotJson);
-                      final sumListJson = jsonEncode(sumList);
-                      prefs.setString('sumList', sumListJson);
-                      break;
-                    case 6:
-                      int indexToDelete = sumList.indexOf(otherDepot[index]);
-                      if (indexToDelete != -1) {
-                        sumList.removeAt(indexToDelete);
-                      }
-                      otherDepot.removeAt(index);
-                      sumInvestValue = sumList.isNotEmpty ? sumList.reduce((a, b) => a + b) : 0.0;
-                      final otherDepotJson = jsonEncode(otherDepot);
-                      prefs.setDouble('sumInvestValue', sumInvestValue);
-                      prefs.setString('otherDepot', otherDepotJson);
-                      final sumListJson = jsonEncode(sumList);
-                      prefs.setString('sumList', sumListJson);
-                      break;
-                  }
-                  Navigator.of(context).pop();
-                });
-              },
-              icon: const Icon(Icons.delete_forever)
-          )
-        ],
+                      Navigator.of(context).pop();
+                    });
+                  },
+                  icon: const Icon(Icons.delete_forever)
+              )
+            ],
+          );
+        },
       );
     },
     );
@@ -1859,6 +1886,28 @@ class _InvestmentPageState extends State<InvestmentPage> {
     print('_saveInvestment (New investment added): ${newInvestment.toMap()}');
   }
 
+  void updateInvestmentDeadline(int id, DateTime newDeadline) async {
+    // Find the index of the investment with the specified id
+    int index = investmentList.indexWhere((investment) => investment.id == id);
+
+    if (index != -1) {
+      // Update the deadline of the found investment
+      investmentList[index].deadline = newDeadline;
+
+      // Convert investmentList to a list of JSON strings
+      List<String> investmentJsonList = investmentList.map((investment) => jsonEncode(investment.toMap())).toList();
+
+      // Save the updated list to SharedPreferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList('investments', investmentJsonList);
+      await prefs.setString('selectedDate', newDeadline.toIso8601String());
+
+      print('updateInvestmentDeadline (Investment updated and saved): ${investmentList[index].toMap()}');
+    } else {
+      print('Investment with id $id not found.');
+    }
+  }
+
   void _saveInvestmentModel(int id, double latestValue, String amount, String category) async {
     InvestmentModel modelInvestment = InvestmentModel(
         id: id,
@@ -2047,7 +2096,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
                       thumbDecoration: BoxDecoration(
                         color: Theme.of(context).brightness == Brightness.dark
                             ? Colors.grey[850]
-                            : Colors.white,
+                            : Colors.blueGrey,
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [],
                       ),
@@ -2283,7 +2332,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
     });
   }
 
-  void _openDatePicker(StateSetter setModalState) async {
+  Future<void> _openDatePicker(StateSetter setModalState) async {
     DateTime? selectedDate = await showDialog<DateTime>(
       context: context,
       builder: (context) {
@@ -2294,7 +2343,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
           ),
           child: ChooseDateBottomSheet(
             onDateSelected: (date) {
-              _savedDate = date;
+              _savedDate = date; // Save date when selected
+              print("AJAX2: ${_savedDate!.toIso8601String()}");
             },
           ),
         );
@@ -2303,10 +2353,12 @@ class _InvestmentPageState extends State<InvestmentPage> {
 
     if (selectedDate != null) {
       setModalState(() {
-        _savedDate = selectedDate;
+        _savedDate = selectedDate; // Ensure _savedDate is updated
+        print("AJAX3: ${_savedDate!.toIso8601String()}");
       });
     }
   }
+
 
   double calculateTotalInvestmentForCurrency(String currency) {
     double total = 0.0;
@@ -2319,7 +2371,6 @@ class _InvestmentPageState extends State<InvestmentPage> {
     print("Total $currency Amount: $total");
     return total;
   }
-
 
   double sumAims(List<InvestmentModel> investments) {
     // Use map to extract the aim values and then fold to sum them
@@ -2455,6 +2506,7 @@ class _InvestmentPageState extends State<InvestmentPage> {
       if (ab12 != null){
         setState(() {
           _savedDate = DateTime.parse(ab12);
+          print("AJAX1: ${_savedDate!.toIso8601String()}");
         });
       }
 
@@ -2815,6 +2867,7 @@ class _ChooseDateBottomSheetState extends State<ChooseDateBottomSheet>{
   @override
   void initState() {
     super.initState();
+    print("AJAX7: ${_selectedDate?.toIso8601String()}");
     _loadSelectedDate();
   }
 
@@ -2830,12 +2883,14 @@ class _ChooseDateBottomSheetState extends State<ChooseDateBottomSheet>{
         _selectedDate = DateTime.now();
       });
     }
+    print("AJAX8: ${_selectedDate!.toIso8601String()}");
   }
 
   void _onSelectionChanged(DateRangePickerSelectionChangedArgs args){
     setState(() {
       _selectedDate = args.value;
       _saveDate();
+      print("AJAX9: ${_selectedDate!.toIso8601String()}");
     });
   }
 
@@ -2850,65 +2905,70 @@ class _ChooseDateBottomSheetState extends State<ChooseDateBottomSheet>{
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: MediaQuery.of(context).size.width*0.9,
+      width: MediaQuery.of(context).size.width * 0.9,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20)
+        borderRadius: BorderRadius.circular(20),
       ),
       padding: EdgeInsets.all(16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Align(child: Text("Hedef Tarihi", style: TextStyle(fontSize: 24.sp)), alignment: Alignment.bottomLeft,),
+          Align(
+            alignment: Alignment.bottomLeft,
+            child: Text(
+              "Hedef Tarihi",
+              style: TextStyle(fontSize: 24.sp),
+            ),
+          ),
           SizedBox(height: 20),
-          SfDateRangePicker(
+          _selectedDate == null
+              ? CircularProgressIndicator() // Show a loading indicator until _selectedDate is loaded
+              : SfDateRangePicker(
             onSelectionChanged: _onSelectionChanged,
             backgroundColor: Colors.white,
             selectionColor: Colors.blue,
             todayHighlightColor: Colors.red,
             selectionMode: DateRangePickerSelectionMode.single,
             selectionTextStyle: TextStyle(
-              color: Colors.white, // Color of selected day text
-              fontSize: 18.sp, // Font size of selected day text
-              fontWeight: FontWeight.bold, // Font weight of selected day text
+              color: Colors.white,
+              fontSize: 18.sp,
+              fontWeight: FontWeight.bold,
             ),
             monthViewSettings: DateRangePickerMonthViewSettings(
               dayFormat: 'EEE',
               viewHeaderStyle: DateRangePickerViewHeaderStyle(
                 textStyle: TextStyle(
-                  fontSize: 12.sp, // Custom font size for day names
-                  fontWeight: FontWeight.bold, // Custom font weight for day names
-                  color: Colors.black, // Custom color for day names
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
                 ),
               ),
             ),
             monthCellStyle: DateRangePickerMonthCellStyle(
-                disabledDatesTextStyle: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 18.sp,
-                    color: Colors.black54),
-                blackoutDateTextStyle: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 18.sp,
-                    color: Colors.black54),
-                blackoutDatesDecoration: BoxDecoration(
-                    color: Colors.amber,
-                    shape: BoxShape.circle),
-                cellDecoration: BoxDecoration(
-                  color: Colors.transparent,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.transparent, width: 8), // add some gap between cells
-                ),
-                textStyle: TextStyle(
-                    fontStyle: FontStyle.normal,
-                    fontWeight: FontWeight.w400,
-                    fontSize: 18.sp,
-                    color: Colors.blue
-                )
+              disabledDatesTextStyle: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 18.sp,
+                  color: Colors.black54),
+              blackoutDateTextStyle: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 18.sp,
+                  color: Colors.black54),
+              blackoutDatesDecoration: BoxDecoration(
+                  color: Colors.amber, shape: BoxShape.circle),
+              cellDecoration: BoxDecoration(
+                color: Colors.transparent,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.transparent, width: 8),
+              ),
+              textStyle: TextStyle(
+                  fontStyle: FontStyle.normal,
+                  fontWeight: FontWeight.w400,
+                  fontSize: 18.sp,
+                  color: Colors.blue),
             ),
-            initialSelectedDate: _selectedDate != null
-                ? DateTime(_selectedDate!.year, _selectedDate!.month, _selectedDate!.day)
-                : DateTime.now(),
+            initialSelectedDate: _selectedDate,
+            initialDisplayDate: _selectedDate,
             minDate: DateTime.now(),
             showTodayButton: false,
             showNavigationArrow: true,
@@ -2924,23 +2984,24 @@ class _ChooseDateBottomSheetState extends State<ChooseDateBottomSheet>{
             ),
           ),
           ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)),
-                backgroundColor: Colors.black,
-                minimumSize: Size(double.infinity, 40),
-              ),
-              onPressed: () {
-                setState(() {
-                  Navigator.of(context).pop(_selectedDate);
-                });
-              },
-              child: Text('Tamam')
-          )
+            style: ElevatedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              backgroundColor: Colors.black,
+              minimumSize: Size(double.infinity, 40),
+            ),
+            onPressed: () {
+              setState(() {
+                Navigator.of(context).pop(_selectedDate);
+              });
+            },
+            child: Text('Tamam'),
+          ),
         ],
       ),
     );
   }
+
 
 }
 

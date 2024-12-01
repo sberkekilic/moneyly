@@ -299,208 +299,310 @@ class _OtherExpensesState extends State<OtherExpenses> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10)
-          ),
-          title: Text('Edit Item id:$id',style: GoogleFonts.montserrat(fontSize: 20)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Align(alignment: Alignment.centerLeft,child: Text("Item", style: GoogleFonts.montserrat(fontSize: 18),),),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: selectedEditController,
-                decoration: InputDecoration(
-                  isDense: true,
-                  focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(width: 3, color: Colors.black)
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
-                  ),
-                  contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
-                ),
-                style: GoogleFonts.montserrat(fontSize: 20),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)
               ),
-              const SizedBox(height: 10),
-              Align(alignment: Alignment.centerLeft, child: Text("Price",style: GoogleFonts.montserrat(fontSize: 18))),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: selectedPriceController,
-                decoration: InputDecoration(
-                  isDense: true,
-                  focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(width: 3, color: Colors.black)
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(width: 3, color: Colors.black), // Use the same border style for enabled state
-                  ),
-                  contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
-                ),
-                style: GoogleFonts.montserrat(fontSize: 20),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 10),
-              Align(alignment: Alignment.centerLeft, child: Text("Period Date",style: GoogleFonts.montserrat(fontSize: 18))),
-              const SizedBox(height: 10),
-              Row(
+              title: Text('Edit Item id:$id',style: GoogleFonts.montserrat(fontSize: 20)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: DropdownButtonFormField<int>(
-                      value: _selectedBillingDay,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedBillingDay = value;
-                        });
-                      },
-                      items: daysList.map((day) {
-                        return DropdownMenuItem<int>(
-                          value: day,
-                          child: Text(day.toString()),
-                        );
-                      }).toList(),
-                    ),
+                  Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                          "Item",
+                          style: GoogleFonts.montserrat(fontSize: 18, color: Colors.black)
+                      )
                   ),
-                  Expanded(
-                    child: DropdownButtonFormField<int>(
-                      value: _selectedBillingMonth,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedBillingMonth = value;
-                        });
-                      },
-                      items: monthsList.map((month) {
-                        return DropdownMenuItem<int>(
-                          value: month,
-                          child: Text(month.toString()),
-                        );
-                      }).toList(),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: selectedEditController,
+                    decoration: InputDecoration(
+                      hintText: "e.g., Subscription",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        borderSide: const BorderSide(width: 2, color: Colors.black),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    ),
+                    style: GoogleFonts.montserrat(fontSize: 18),
+                  ),
+                  const SizedBox(height: 10),
+                  Align(alignment: Alignment.centerLeft, child: Text("Price",style: GoogleFonts.montserrat(fontSize: 18, color: Colors.black))),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: selectedPriceController,
+                    decoration: InputDecoration(
+                      hintText: "e.g., 10.00",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        borderSide: const BorderSide(width: 2, color: Colors.black),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    ),
+                    style: GoogleFonts.montserrat(fontSize: 20),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      NumberTextInputFormatter(
+                        allowNegative: false,
+                        overrideDecimalPoint: true,
+                        insertDecimalPoint: false,
+                        insertDecimalDigits: true,
+                        decimalDigits: 2,
+                        groupDigits: 3,
+                        decimalSeparator: ',',
+                        groupSeparator: '.',
+                      )
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Align(alignment: Alignment.centerLeft, child: Text("Period Date",style: GoogleFonts.montserrat(fontSize: 18, color: Colors.black))),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                          child: PullDownButton(
+                            itemBuilder: (context) => daysList
+                                .map(
+                                  (day) => PullDownMenuItem(
+                                  onTap: () {
+                                    FocusScope.of(context).unfocus(); // Unfocus the TextFormField
+                                    setState(() {
+                                      _selectedBillingDay = day;
+                                    });
+                                  },
+                                  title: day.toString()
+                              ),
+                            ).toList(),
+                            buttonBuilder: (context, showMenu) => ElevatedButton(
+                              onPressed: showMenu,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                      _selectedBillingDay == null
+                                          ? "Gün"
+                                          : _selectedBillingDay.toString(),
+                                      style: TextStyle(
+                                          color: Colors.black
+                                      )
+                                  ),
+                                  Icon(
+                                      Icons.arrow_drop_down,
+                                      color: Colors.black
+                                  )
+                                ],
+                              ),
+                            ),
+                          )
+                      ),
+                      SizedBox(width: 20.w),
+                      Expanded(
+                          child: PullDownButton(
+                            itemBuilder: (context) => monthsList
+                                .map(
+                                  (month) => PullDownMenuItem(
+                                  onTap: () {
+                                    FocusScope.of(context).unfocus(); // Unfocus the TextFormField
+                                    setState(() {
+                                      _selectedBillingMonth = month;
+                                      _updateDaysListForSelectedMonth();
+                                    });
+                                  },
+                                  title: monthNames[month - 1]
+                              ),
+                            ).toList(),
+                            buttonBuilder: (context, showMenu) => ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                              ),
+                              onPressed: showMenu,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      _selectedBillingMonth == null
+                                          ? "Ay"
+                                          : monthNames[_selectedBillingMonth! - 1],
+                                      style: TextStyle(color: Colors.black),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  Icon(Icons.arrow_drop_down, color: Colors.black)
+                                ],
+                              ),
+                            ),
+                          )
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Align(alignment: Alignment.centerLeft, child: Text("Due Date",style: GoogleFonts.montserrat(fontSize: 18, color: Colors.black))),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: PullDownButton(
+                      itemBuilder: (context) => [
+                        PullDownMenuItem(
+                          onTap: () {
+                            FocusScope.of(context).unfocus(); // Unfocus the TextFormField
+                            setState(() {
+                              _selectedDueDay = null; // Set selected day to null
+                            });
+                          },
+                          title: 'None', // Label for the null option
+                        ),
+                        ...daysList.map(
+                              (day) => PullDownMenuItem(
+                            onTap: () {
+                              FocusScope.of(context).unfocus();
+                              setState(() {
+                                _selectedDueDay = day;
+                              });
+                            },
+                            title: day.toString(),
+                          ),
+                        ),
+                      ],
+                      buttonBuilder: (context, showMenu) => ElevatedButton(
+                        onPressed: showMenu,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                                _selectedDueDay == null
+                                    ? "Gün"
+                                    : _selectedDueDay.toString(),
+                                style: TextStyle(
+                                    color: Colors.black
+                                )
+                            ),
+                            Icon(Icons.arrow_drop_down, color: Colors.black)
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
-              Align(alignment: Alignment.centerLeft, child: Text("Due Date",style: GoogleFonts.montserrat(fontSize: 18))),
-              const SizedBox(height: 10),
-              DropdownButtonFormField<int>(
-                value: _selectedDueDay,
-                onChanged: (value) {
-                  setState(() {
-                    _selectedDueDay = value;
-                  });
-                },
-                items: daysList.map((day) {
-                  return DropdownMenuItem<int>(
-                    value: day,
-                    child: Text(day.toString()),
-                  );
-                }).toList(),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  switch (orderIndex){
-                    case 1:
-                      final priceText = selectedPriceController.text.trim();
-                      double dprice = double.tryParse(priceText) ?? 0.0;
-                      String price = dprice.toStringAsFixed(2);
-                      String name = selectedEditController.text;
-                      invoice.name = name;
-                      invoice.price = price;
-                      if (_selectedDueDay != null) {
-                        editInvoice(
-                          id,
-                          formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                          formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!)),
-                        );
-                      } else {
-                        editInvoice(
-                          id,
-                          formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                          null, // or provide any default value you want for dueDate when _selectedDueDay is null
-                        );
-                      }
-                      break;
-                    case 2:
-                      final priceText = selectedPriceController.text.trim();
-                      double dprice = double.tryParse(priceText) ?? 0.0;
-                      String price = dprice.toStringAsFixed(2);
-                      kitchenTitleList[index] = selectedEditController.text;
-                      kitchenPriceList[index] = price;
-                      break;
-                    case 3:
-                      final priceText = selectedPriceController.text.trim();
-                      double dprice = double.tryParse(priceText) ?? 0.0;
-                      String price = dprice.toStringAsFixed(2);
-                      cateringTitleList[index] = selectedEditController.text;
-                      cateringPriceList[index] = price;
-                      break;
-                    case 4:
-                      final priceText = selectedPriceController.text.trim();
-                      double dprice = double.tryParse(priceText) ?? 0.0;
-                      String price = dprice.toStringAsFixed(2);
-                      entertainmentTitleList[index] = selectedEditController.text;
-                      entertainmentPriceList[index] = price;
-                      break;
-                    case 5:
-                      final priceText = selectedPriceController.text.trim();
-                      double dprice = double.tryParse(priceText) ?? 0.0;
-                      String price = dprice.toStringAsFixed(2);
-                      otherTitleList[index] = selectedEditController.text;
-                      otherPriceList[index] = price;
-                      break;
-                  }
-                });
-                Navigator.of(context).pop();
-              },
-
-              child: Text('Save'),
-            ),
-            TextButton(
-                onPressed: () {
-                  setState(() {
-                    switch (orderIndex){
-                      case 1:
-                        isEditingList = false;
-                        isAddButtonActive = false;
-                        removeInvoice(id);
-                        break;
-                      case 2:
-                        isEditingListND = false;
-                        isAddButtonActiveND = false;
-                        break;
-                      case 3:
-                        isEditingListRD = false;
-                        isAddButtonActiveRD = false;
-                        break;
-                      case 4:
-                        isEditingListTH = false;
-                        isAddButtonActiveTH = false;
-                        break;
-                      case 5:
-                        isEditingListOther = false;
-                        isAddButtonActiveOther = false;
-                        break;
-                    }
+              actions: [
+                TextButton(
+                  onPressed: () {
                     Navigator.of(context).pop();
-                  });
-                },
-                child: Text("Remove"))
-          ],
+                  },
+                  child: Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      switch (orderIndex){
+                        case 1:
+                          final priceText = selectedPriceController.text.trim();
+                          double dprice = double.tryParse(priceText) ?? 0.0;
+                          String price = dprice.toStringAsFixed(2);
+                          String name = selectedEditController.text;
+                          invoice.name = name;
+                          invoice.price = price;
+                          if (_selectedDueDay != null) {
+                            editInvoice(
+                              id,
+                              formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
+                              formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!)),
+                            );
+                          } else {
+                            editInvoice(
+                              id,
+                              formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
+                              null, // or provide any default value you want for dueDate when _selectedDueDay is null
+                            );
+                          }
+                          break;
+                        case 2:
+                          final priceText = selectedPriceController.text.trim();
+                          double dprice = double.tryParse(priceText) ?? 0.0;
+                          String price = dprice.toStringAsFixed(2);
+                          kitchenTitleList[index] = selectedEditController.text;
+                          kitchenPriceList[index] = price;
+                          break;
+                        case 3:
+                          final priceText = selectedPriceController.text.trim();
+                          double dprice = double.tryParse(priceText) ?? 0.0;
+                          String price = dprice.toStringAsFixed(2);
+                          cateringTitleList[index] = selectedEditController.text;
+                          cateringPriceList[index] = price;
+                          break;
+                        case 4:
+                          final priceText = selectedPriceController.text.trim();
+                          double dprice = double.tryParse(priceText) ?? 0.0;
+                          String price = dprice.toStringAsFixed(2);
+                          entertainmentTitleList[index] = selectedEditController.text;
+                          entertainmentPriceList[index] = price;
+                          break;
+                        case 5:
+                          final priceText = selectedPriceController.text.trim();
+                          double dprice = double.tryParse(priceText) ?? 0.0;
+                          String price = dprice.toStringAsFixed(2);
+                          otherTitleList[index] = selectedEditController.text;
+                          otherPriceList[index] = price;
+                          break;
+                      }
+                    });
+                    Navigator.of(context).pop();
+                  },
+
+                  child: Text('Save'),
+                ),
+                TextButton(
+                    onPressed: () {
+                      setState(() {
+                        switch (orderIndex){
+                          case 1:
+                            isEditingList = false;
+                            isAddButtonActive = false;
+                            removeInvoice(id);
+                            break;
+                          case 2:
+                            isEditingListND = false;
+                            isAddButtonActiveND = false;
+                            break;
+                          case 3:
+                            isEditingListRD = false;
+                            isAddButtonActiveRD = false;
+                            break;
+                          case 4:
+                            isEditingListTH = false;
+                            isAddButtonActiveTH = false;
+                            break;
+                          case 5:
+                            isEditingListOther = false;
+                            isAddButtonActiveOther = false;
+                            break;
+                        }
+                        Navigator.of(context).pop();
+                      });
+                    },
+                    child: Text("Remove"))
+              ],
+            );
+          },
         );
       },
     );
@@ -510,6 +612,28 @@ class _OtherExpensesState extends State<OtherExpenses> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  // Function to get the correct number of days for a given month in the current year
+  int _daysInMonth(int month) {
+    int year = DateTime.now().year;
+    return DateTime(year, month + 1, 0).day;
+  }
+
+// Function to update the days list based on the selected month
+  void _updateDaysListForSelectedMonth() {
+    daysList = List.generate(_daysInMonth(_selectedBillingMonth!), (index) => index + 1);
+
+    // Ensure selected day is within the updated range
+    if (_selectedBillingDay != null && (_selectedBillingDay! > daysList.length)) {
+      setState(() {
+        _selectedBillingDay = daysList.last;
+      });
+    } else if (_selectedDueDay != null && (_selectedDueDay! > daysList.length)) {
+      setState(() {
+        _selectedDueDay = daysList.last;
+      });
+    }
   }
 
   Future<void> loadSharedPreferencesData(List<String> desiredKeys) async {
@@ -1150,7 +1274,11 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                     contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
                                                                     focusedBorder: OutlineInputBorder(
                                                                       borderRadius: BorderRadius.circular(20),
-                                                                      borderSide: BorderSide(color: Colors.white, width: 3),
+                                                                      borderSide: BorderSide(width: 3),
+                                                                    ),
+                                                                    enabledBorder: OutlineInputBorder(
+                                                                      borderRadius: BorderRadius.circular(20),
+                                                                      borderSide: BorderSide(width: 2),
                                                                     ),
                                                                     border: OutlineInputBorder(
                                                                       borderRadius: BorderRadius.circular(20),
@@ -1179,7 +1307,11 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                     contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
                                                                     focusedBorder: OutlineInputBorder(
                                                                       borderRadius: BorderRadius.circular(20),
-                                                                      borderSide: BorderSide(color: Colors.white, width: 3),
+                                                                      borderSide: BorderSide(width: 3),
+                                                                    ),
+                                                                    enabledBorder: OutlineInputBorder(
+                                                                      borderRadius: BorderRadius.circular(20),
+                                                                      borderSide: BorderSide(width: 2),
                                                                     ),
                                                                     border: OutlineInputBorder(
                                                                       borderRadius: BorderRadius.circular(20),
@@ -1238,6 +1370,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                                       shape: RoundedRectangleBorder(
                                                                                         borderRadius: BorderRadius.circular(20),
                                                                                       ),
+                                                                                      side: BorderSide(width: 2),
                                                                                     ),
                                                                                     child: Row(
                                                                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1281,6 +1414,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                                       shape: RoundedRectangleBorder(
                                                                                         borderRadius: BorderRadius.circular(20),
                                                                                       ),
+                                                                                      side: BorderSide(width: 2),
                                                                                     ),
                                                                                     onPressed: showMenu,
                                                                                     child: Row(
@@ -1336,6 +1470,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                                     shape: RoundedRectangleBorder(
                                                                                       borderRadius: BorderRadius.circular(20),
                                                                                     ),
+                                                                                    side: BorderSide(width: 2),
                                                                                   ),
                                                                                   child: Row(
                                                                                     mainAxisSize: MainAxisSize.min,
@@ -1647,7 +1782,11 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                   contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
                                                                   focusedBorder: OutlineInputBorder(
                                                                     borderRadius: BorderRadius.circular(20),
-                                                                    borderSide: BorderSide(color: Colors.white, width: 3),
+                                                                    borderSide: BorderSide(width: 3),
+                                                                  ),
+                                                                  enabledBorder: OutlineInputBorder(
+                                                                    borderRadius: BorderRadius.circular(20),
+                                                                    borderSide: BorderSide(width: 2),
                                                                   ),
                                                                   border: OutlineInputBorder(
                                                                     borderRadius: BorderRadius.circular(20),
@@ -1676,7 +1815,11 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                   contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
                                                                   focusedBorder: OutlineInputBorder(
                                                                     borderRadius: BorderRadius.circular(20),
-                                                                    borderSide: BorderSide(color: Colors.white, width: 3),
+                                                                    borderSide: BorderSide(width: 3),
+                                                                  ),
+                                                                  enabledBorder: OutlineInputBorder(
+                                                                    borderRadius: BorderRadius.circular(20),
+                                                                    borderSide: BorderSide(width: 2),
                                                                   ),
                                                                   border: OutlineInputBorder(
                                                                     borderRadius: BorderRadius.circular(20),
@@ -1735,6 +1878,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                                     shape: RoundedRectangleBorder(
                                                                                       borderRadius: BorderRadius.circular(20),
                                                                                     ),
+                                                                                    side: BorderSide(width: 2),
                                                                                   ),
                                                                                   child: Row(
                                                                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1778,6 +1922,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                                     shape: RoundedRectangleBorder(
                                                                                       borderRadius: BorderRadius.circular(20),
                                                                                     ),
+                                                                                    side: BorderSide(width: 2),
                                                                                   ),
                                                                                   onPressed: showMenu,
                                                                                   child: Row(
@@ -1833,6 +1978,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                                   shape: RoundedRectangleBorder(
                                                                                     borderRadius: BorderRadius.circular(20),
                                                                                   ),
+                                                                                  side: BorderSide(width: 2),
                                                                                 ),
                                                                                 child: Row(
                                                                                   mainAxisSize: MainAxisSize.min,
@@ -2143,7 +2289,11 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                   contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
                                                                   focusedBorder: OutlineInputBorder(
                                                                     borderRadius: BorderRadius.circular(20),
-                                                                    borderSide: BorderSide(color: Colors.white, width: 3),
+                                                                    borderSide: BorderSide(width: 3),
+                                                                  ),
+                                                                  enabledBorder: OutlineInputBorder(
+                                                                    borderRadius: BorderRadius.circular(20),
+                                                                    borderSide: BorderSide(width: 2),
                                                                   ),
                                                                   border: OutlineInputBorder(
                                                                     borderRadius: BorderRadius.circular(20),
@@ -2172,7 +2322,11 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                   contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
                                                                   focusedBorder: OutlineInputBorder(
                                                                     borderRadius: BorderRadius.circular(20),
-                                                                    borderSide: BorderSide(color: Colors.white, width: 3),
+                                                                    borderSide: BorderSide(width: 3),
+                                                                  ),
+                                                                  enabledBorder: OutlineInputBorder(
+                                                                    borderRadius: BorderRadius.circular(20),
+                                                                    borderSide: BorderSide(width: 2),
                                                                   ),
                                                                   border: OutlineInputBorder(
                                                                     borderRadius: BorderRadius.circular(20),
@@ -2231,6 +2385,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                                     shape: RoundedRectangleBorder(
                                                                                       borderRadius: BorderRadius.circular(20),
                                                                                     ),
+                                                                                    side: BorderSide(width: 2),
                                                                                   ),
                                                                                   child: Row(
                                                                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -2274,6 +2429,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                                     shape: RoundedRectangleBorder(
                                                                                       borderRadius: BorderRadius.circular(20),
                                                                                     ),
+                                                                                    side: BorderSide(width: 2),
                                                                                   ),
                                                                                   onPressed: showMenu,
                                                                                   child: Row(
@@ -2329,6 +2485,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                                   shape: RoundedRectangleBorder(
                                                                                     borderRadius: BorderRadius.circular(20),
                                                                                   ),
+                                                                                  side: BorderSide(width: 2),
                                                                                 ),
                                                                                 child: Row(
                                                                                   mainAxisSize: MainAxisSize.min,
@@ -2639,7 +2796,11 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                   contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
                                                                   focusedBorder: OutlineInputBorder(
                                                                     borderRadius: BorderRadius.circular(20),
-                                                                    borderSide: BorderSide(color: Colors.white, width: 3),
+                                                                    borderSide: BorderSide(width: 3),
+                                                                  ),
+                                                                  enabledBorder: OutlineInputBorder(
+                                                                    borderRadius: BorderRadius.circular(20),
+                                                                    borderSide: BorderSide(width: 2),
                                                                   ),
                                                                   border: OutlineInputBorder(
                                                                     borderRadius: BorderRadius.circular(20),
@@ -2668,7 +2829,11 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                   contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
                                                                   focusedBorder: OutlineInputBorder(
                                                                     borderRadius: BorderRadius.circular(20),
-                                                                    borderSide: BorderSide(color: Colors.white, width: 3),
+                                                                    borderSide: BorderSide(width: 3),
+                                                                  ),
+                                                                  enabledBorder: OutlineInputBorder(
+                                                                    borderRadius: BorderRadius.circular(20),
+                                                                    borderSide: BorderSide(width: 2),
                                                                   ),
                                                                   border: OutlineInputBorder(
                                                                     borderRadius: BorderRadius.circular(20),
@@ -2727,6 +2892,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                                     shape: RoundedRectangleBorder(
                                                                                       borderRadius: BorderRadius.circular(20),
                                                                                     ),
+                                                                                    side: BorderSide(width: 2),
                                                                                   ),
                                                                                   child: Row(
                                                                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -2770,6 +2936,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                                     shape: RoundedRectangleBorder(
                                                                                       borderRadius: BorderRadius.circular(20),
                                                                                     ),
+                                                                                    side: BorderSide(width: 2),
                                                                                   ),
                                                                                   onPressed: showMenu,
                                                                                   child: Row(
@@ -2825,6 +2992,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                                   shape: RoundedRectangleBorder(
                                                                                     borderRadius: BorderRadius.circular(20),
                                                                                   ),
+                                                                                  side: BorderSide(width: 2),
                                                                                 ),
                                                                                 child: Row(
                                                                                   mainAxisSize: MainAxisSize.min,
@@ -3132,7 +3300,11 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                   contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
                                                                   focusedBorder: OutlineInputBorder(
                                                                     borderRadius: BorderRadius.circular(20),
-                                                                    borderSide: BorderSide(color: Colors.white, width: 3),
+                                                                    borderSide: BorderSide(width: 3),
+                                                                  ),
+                                                                  enabledBorder: OutlineInputBorder(
+                                                                    borderRadius: BorderRadius.circular(20),
+                                                                    borderSide: BorderSide(width: 2),
                                                                   ),
                                                                   border: OutlineInputBorder(
                                                                     borderRadius: BorderRadius.circular(20),
@@ -3161,7 +3333,11 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                   contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
                                                                   focusedBorder: OutlineInputBorder(
                                                                     borderRadius: BorderRadius.circular(20),
-                                                                    borderSide: BorderSide(color: Colors.white, width: 3),
+                                                                    borderSide: BorderSide(width: 3),
+                                                                  ),
+                                                                  enabledBorder: OutlineInputBorder(
+                                                                    borderRadius: BorderRadius.circular(20),
+                                                                    borderSide: BorderSide(width: 2),
                                                                   ),
                                                                   border: OutlineInputBorder(
                                                                     borderRadius: BorderRadius.circular(20),
@@ -3220,6 +3396,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                                     shape: RoundedRectangleBorder(
                                                                                       borderRadius: BorderRadius.circular(20),
                                                                                     ),
+                                                                                    side: BorderSide(width: 2),
                                                                                   ),
                                                                                   child: Row(
                                                                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -3263,6 +3440,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                                     shape: RoundedRectangleBorder(
                                                                                       borderRadius: BorderRadius.circular(20),
                                                                                     ),
+                                                                                    side: BorderSide(width: 2),
                                                                                   ),
                                                                                   onPressed: showMenu,
                                                                                   child: Row(
@@ -3318,6 +3496,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                                   shape: RoundedRectangleBorder(
                                                                                     borderRadius: BorderRadius.circular(20),
                                                                                   ),
+                                                                                  side: BorderSide(width: 2),
                                                                                 ),
                                                                                 child: Row(
                                                                                   mainAxisSize: MainAxisSize.min,

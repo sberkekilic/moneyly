@@ -22,6 +22,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  double? _height;
+  int _currentPage = 0;
   List<Invoice> invoices = [];
   Map<String, List<String>> incomeMap = {};
   String selectedKey = "";
@@ -58,6 +60,8 @@ class _HomePageState extends State<HomePage> {
   String faturaDonemi = "";
   String? sonOdeme;
 
+  List<Invoice> selectedInvoices = [];
+
   List<Invoice> upcomingInvoices = [];
   List<Invoice> todayInvoices = [];
   List<Invoice> approachingDueInvoices = [];
@@ -74,6 +78,7 @@ class _HomePageState extends State<HomePage> {
         .toList();
   }
 
+
   @override
   void initState() {
     super.initState();
@@ -83,7 +88,6 @@ class _HomePageState extends State<HomePage> {
   void categorizeInvoices(List<Invoice> faturalar) {
     DateTime today = DateTime.now();
     today = DateTime(today.year, today.month, today.day);
-
     // 1. Upcoming Invoice Date (those with PeriodDate before today)
     upcomingInvoices = faturalar.where((invoice) {
       DateTime periodDate = DateTime.parse(invoice.periodDate);
@@ -154,60 +158,6 @@ class _HomePageState extends State<HomePage> {
         },
     );
   }
-  Widget buildIndicator(int itemCount, int currentIndex) {
-    return GestureDetector(
-      onHorizontalDragEnd: (details) {
-        if (details.primaryVelocity != null && details.primaryVelocity! < 0) {
-          // Swiped left
-          if (_currentPage < itemCount - 1) {
-            setState(() {
-              _currentPage++;
-            });
-          } else {
-            setState(() {
-              _currentPage = 0;
-            });
-          }
-        } else if (details.primaryVelocity != null && details.primaryVelocity! > 0) {
-          // Swiped right
-          if (_currentPage > 0) {
-            setState(() {
-              _currentPage--;
-            });
-          } else {
-            setState(() {
-              _currentPage = itemCount - 1;
-            });
-          }
-        }
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.green.withOpacity(0.2), // Highlight color for the touchable area
-          borderRadius: BorderRadius.all(Radius.circular(20)),
-        ),
-        padding: EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
-        child: IntrinsicWidth(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(itemCount, (index) {
-              return Container(
-                width: 8.0,
-                height: 8.0,
-                margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 2.0),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: (currentIndex % itemCount == index)
-                      ? Color.fromARGB(125, 0, 149, 30)
-                      : Colors.grey,
-                ),
-              );
-            }),
-          ),
-        ),
-      ),
-    );
-  }
   Future<void> loadSharedPreferencesData(List<String> desiredKeys) async {
     final prefs = await SharedPreferences.getInstance();
     sharedPreferencesData = [];
@@ -240,39 +190,6 @@ class _HomePageState extends State<HomePage> {
         return '';
     }
   }
-  String getTitleForIndex(int index) {
-    switch (index) {
-      case 0:
-        return "Fatura Tarihi Yaklaşan";
-      case 1:
-        return "Fatura Günü";
-      case 2:
-        return "Son Ödeme Tarihi Yaklaşan";
-      case 3:
-        return "Son Ödeme Günü";
-      case 4:
-        return "Tarihi Geçmiş Faturalar";
-      default:
-        return "null";
-    }
-  }
-  List<Invoice> getCurrentPageInvoices(int currentPage) {
-    switch (currentPage) {
-      case 0:
-        return upcomingInvoices;
-      case 1:
-        return todayInvoices;
-      case 2:
-        return approachingDueInvoices;
-      case 3:
-        return paymentDueInvoices;
-      case 4:
-        return overdueInvoices;
-      default:
-        return [];
-    }
-  }
-
   void _load() async {
     final prefs = await SharedPreferences.getInstance();
     final ab1 = prefs.getInt('selected_option') ?? SelectedOption.None.index;
@@ -371,7 +288,6 @@ class _HomePageState extends State<HomePage> {
     if (year % 100 != 0) return true;
     return year % 400 == 0;
   }
-
   String? calculateNewDiff(String? dueDate, String periodDate){
     final diff;
     final currentDate = DateTime.now();
@@ -394,7 +310,6 @@ class _HomePageState extends State<HomePage> {
       return "error2";
     }
   }
-
   String getDaysRemainingMessage(Invoice invoice) {
     final currentDate = DateTime.now();
     final formattedDate = DateFormat('yyyy-MM-dd').format(currentDate);
@@ -834,18 +749,10 @@ class _HomePageState extends State<HomePage> {
     return sum;
   }
 
-  int _currentPage = 0;
+
 
   @override
   Widget build(BuildContext context) {
-    List<List<Invoice>> categorizedInvoices = [
-      upcomingInvoices,
-      todayInvoices,
-      approachingDueInvoices,
-      paymentDueInvoices,
-      overdueInvoices
-    ];
-    List<Invoice> selectedInvoices = categorizedInvoices[_currentPage];
     savingsValue = incomeValue * 0.2;
     wishesValue = incomeValue  * 0.3;
     needsValue = incomeValue * 0.5;
@@ -923,6 +830,7 @@ class _HomePageState extends State<HomePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text("Özet", style: GoogleFonts.montserrat(fontSize: 20.sp, fontWeight: FontWeight.bold)),
+              Text("10 Kasım - 10 Aralık", style: GoogleFonts.montserrat(fontSize: 16.sp, fontWeight: FontWeight.bold)),
               SizedBox(height: 20.h),
               Container(
                 padding: EdgeInsets.all(10),
@@ -1223,6 +1131,33 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               SizedBox(height: 20.h),
+              Text("Hareketlerim", style: GoogleFonts.montserrat(fontSize: 20.sp, fontWeight: FontWeight.bold)),
+              SizedBox(height: 20.h),
+              Container(
+                padding: EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.grey[850] // Dark mode color
+                      : Colors.white, // Light mode color
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.black.withOpacity(0.5) // Dark mode shadow color
+                          : Colors.grey.withOpacity(0.5), // Light mode shadow color
+                      spreadRadius: 5,
+                      blurRadius: 7,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                  ],
+                ),
+              ),
+              SizedBox(height: 20.h),
               Text("Faturalarım", style: GoogleFonts.montserrat(fontSize: 20.sp, fontWeight: FontWeight.bold)),
               //ListView.builder(shrinkWrap: true, physics: NeverScrollableScrollPhysics(), itemCount: invoices.length,itemBuilder: (context, index) {return Text(invoices[index].toDisplayString());},),
               SizedBox(height: 20.h),
@@ -1245,39 +1180,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
-                child: Column(
-                  children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        getTitleForIndex(_currentPage),
-                        style: GoogleFonts.montserrat(fontSize: 17, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    IntrinsicHeight(
-                        child: selectedInvoices.isEmpty
-                            ? Center(child: Text('${getTitleForIndex(_currentPage)} sınıfına ait bir fatura bulunmuyor.'))
-                            : SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: selectedInvoices.map((invoice) {
-                              return Padding(
-                                padding: EdgeInsets.fromLTRB(10.w, 0, 10.w, 0),
-                                child: InvoiceCard(
-                                  invoice: invoice,
-                                  onDelete: () => payInvoice(invoice, invoice.id, invoice.periodDate, invoice.dueDate),
-                                  onEdit: () => showEditInvoice(invoice.id, invoice.periodDate, invoice.dueDate),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                        ),
-                    const SizedBox(height: 20),
-                    buildIndicator(5, _currentPage),
-                  ]
-                ),
+                child: InvoicePage(),
               ),
               const SizedBox(height: 20)
             ],
@@ -1440,6 +1343,462 @@ class InvoiceCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class InvoicePage extends StatefulWidget {
+  @override
+  _InvoicePageState createState() => _InvoicePageState();
+}
+
+class _InvoicePageState extends State<InvoicePage> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showRightArrow = false;
+  bool _showLeftArrow = false;
+  bool _isTouching = false;
+  final GlobalKey _intrinsicHeightKey = GlobalKey();
+  final GlobalKey _scrollWidthKey = GlobalKey();
+  double? _height;
+  double? _width;
+  double? _widthIntrinsic;
+  int _currentPage = 0;
+  double _rightArrowOpacity = 0.0;
+  double _leftArrowOpacity = 0.0;
+  List<Invoice> upcomingInvoices = [];
+  List<Invoice> todayInvoices = [];
+  List<Invoice> approachingDueInvoices = [];
+  List<Invoice> paymentDueInvoices = [];
+  List<Invoice> overdueInvoices = [];
+  List<Invoice> selectedInvoices = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInvoices(); // Load invoices from SharedPreferences
+  }
+
+  Future<void> addSampleInvoice() async {
+    try {
+      print("DEBUG: Starting addSampleInvoice");
+      final prefs = await SharedPreferences.getInstance();
+      print("DEBUG: SharedPreferences instance obtained");
+
+      final sampleInvoice = Invoice(
+        id: 1,
+        name: 'Sample Invoice',
+        price: '100.0',
+        periodDate: '2024-12-12',
+        category: 'category',
+        difference: 'diff',
+        subCategory: 'sub',
+        dueDate: null,
+      );
+
+      final invoicesJson = prefs.getStringList('invoices') ?? [];
+      print("DEBUG: Initial invoicesJson: $invoicesJson");
+
+      invoicesJson.add(jsonEncode(sampleInvoice.toJson()));
+      print("DEBUG: Updated invoicesJson: $invoicesJson");
+
+      await prefs.setStringList('invoices', invoicesJson);
+      print("DEBUG: Invoices saved to SharedPreferences");
+    } catch (e) {
+      print("ERROR: $e");
+    }
+  }
+
+  Future<void> _loadInvoices() async {
+    final prefs = await SharedPreferences.getInstance();
+    final invoicesJson = prefs.getStringList('invoices') ?? [];
+    setState(() {
+      selectedInvoices =
+          invoicesJson.map((e) => Invoice.fromJson(jsonDecode(e))).toList();
+    });
+    _getHeight(); // Recalculate height after loading
+    _getWidth();
+    categorizeInvoices(selectedInvoices);
+  }
+
+  void categorizeInvoices(List<Invoice> faturalar) {
+    print("upcomingInvoices:${upcomingInvoices.length}\n"
+        "todayInvoices:${todayInvoices.length}\n"
+        "approachingDueInvoices:${approachingDueInvoices.length}\n"
+        "paymentDueInvoices:${paymentDueInvoices.length}\n"
+        "overdueInvoices:${overdueInvoices.length}");
+    DateTime today = DateTime.now();
+    today = DateTime(today.year, today.month, today.day);
+
+    // 1. Upcoming Invoice Date (those with PeriodDate before today)
+    upcomingInvoices = faturalar.where((invoice) {
+      print("AJAX1");
+      DateTime periodDate = DateTime.parse(invoice.periodDate);
+      return periodDate.isAfter(today);
+    }).toList();
+
+    // 2. Invoice Day (with PeriodDate today)
+    todayInvoices = faturalar.where((invoice) {
+      print("AJAX2");
+      DateTime periodDate = DateTime.parse(invoice.periodDate);
+      return periodDate.day == today.day && periodDate.month == today.month && periodDate.year == today.year;
+    }).toList();
+
+    // 3. Approaching Due Date (those with DueDate data and this date is before today)
+    approachingDueInvoices = faturalar.where((invoice) {
+      print("AJAX3");
+      if (invoice.dueDate!= null) {
+        DateTime periodDate = DateTime.parse(invoice.periodDate!);
+        DateTime dueDate = DateTime.parse(invoice.dueDate!);
+        return periodDate.isBefore(today) && today.isBefore(dueDate);
+      }
+      return false;
+    }).toList();
+
+    // 4. Payment Due Date (those with DueDate data and this date is today)
+    paymentDueInvoices = faturalar.where((invoice) {
+      print("AJAX4");
+      if (invoice.dueDate!= null) {
+        DateTime dueDate = DateTime.parse(invoice.dueDate!);
+        return dueDate.day == today.day && dueDate.month == today.month && dueDate.year == today.year;
+      }
+      return false;
+    }).toList();
+
+    // 5. Overdue Invoices (Invoices with DueDate data that are overdue or invoices without DueDate data but with an overdue PeriodDate)
+    overdueInvoices = faturalar.where((invoice) {
+      print("AJAX");
+      if (invoice.dueDate != null) {
+        DateTime periodDate = DateTime.parse(invoice.periodDate!);
+        DateTime dueDate = DateTime.parse(invoice.dueDate!);
+        return dueDate.isBefore(today) && periodDate.isBefore(today);
+      } else {
+        return false;
+      }
+    }).toList();
+
+    print("upcomingInvoices:${upcomingInvoices.length}\n"
+        "todayInvoices:${todayInvoices.length}\n"
+        "approachingDueInvoices:${approachingDueInvoices.length}\n"
+        "paymentDueInvoices:${paymentDueInvoices.length}\n"
+        "overdueInvoices:${overdueInvoices.length}");
+  }
+
+  Future<void> _saveInvoices() async {
+    final prefs = await SharedPreferences.getInstance();
+    final invoicesJson =
+    selectedInvoices.map((e) => jsonEncode(e.toJson())).toList();
+    await prefs.setStringList('invoices', invoicesJson);
+  }
+
+  void _deleteInvoice(Invoice invoice) {
+    setState(() {
+      selectedInvoices.remove(invoice);
+    });
+    _saveInvoices(); // Save updated list to SharedPreferences
+    _getHeight(); // Recalculate height
+  }
+
+  void _getHeight() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final RenderBox? renderBox =
+      _intrinsicHeightKey.currentContext?.findRenderObject() as RenderBox?;
+      setState(() {
+        _height = renderBox?.size.height;
+        _widthIntrinsic = renderBox?.size.width;
+      });
+    });
+  }
+
+  void _getWidth() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final RenderBox? renderBox =
+      _scrollWidthKey.currentContext?.findRenderObject() as RenderBox?;
+      setState(() {
+        _width = (renderBox!.size.width - _widthIntrinsic!)!;
+      });
+    });
+  }
+
+  Widget buildIndicator(int itemCount, int currentIndex) {
+    return GestureDetector(
+      onHorizontalDragEnd: (details) {
+        if (details.primaryVelocity != null && details.primaryVelocity! < 0) {
+          // Swiped left
+          if (_currentPage < itemCount - 1) {
+            setState(() {
+              _currentPage++;
+            });
+          } else {
+            setState(() {
+              _currentPage = 0;
+            });
+          }
+        } else if (details.primaryVelocity != null && details.primaryVelocity! > 0) {
+          // Swiped right
+          if (_currentPage > 0) {
+            setState(() {
+              _currentPage--;
+            });
+          } else {
+            setState(() {
+              _currentPage = itemCount - 1;
+            });
+          }
+        }
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.green.withOpacity(0.2), // Highlight color for the touchable area
+          borderRadius: BorderRadius.all(Radius.circular(20)),
+        ),
+        padding: EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
+        child: IntrinsicWidth(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(itemCount, (index) {
+              return Container(
+                width: 8.0,
+                height: 8.0,
+                margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 2.0),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: (currentIndex % itemCount == index)
+                      ? Color.fromARGB(125, 0, 149, 30)
+                      : Colors.grey,
+                ),
+              );
+            }),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String getTitleForIndex(int index) {
+    switch (index) {
+      case 0:
+        return "Fatura Tarihi Yaklaşan";
+      case 1:
+        return "Fatura Günü";
+      case 2:
+        return "Son Ödeme Tarihi Yaklaşan";
+      case 3:
+        return "Son Ödeme Günü";
+      case 4:
+        return "Tarihi Geçmiş Faturalar";
+      default:
+        return "null";
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    List<List<Invoice>> categorizedInvoices = [
+      upcomingInvoices,
+      todayInvoices,
+      approachingDueInvoices,
+      paymentDueInvoices,
+      overdueInvoices
+    ];
+    double width = _width ?? 0.0;
+    selectedInvoices = categorizedInvoices[_currentPage];
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            getTitleForIndex(_currentPage),
+            style: GoogleFonts.montserrat(fontSize: 17, fontWeight: FontWeight.bold),
+          ),
+        ),
+        const SizedBox(height: 20),
+        IntrinsicHeight(
+          key: _intrinsicHeightKey,
+          child: selectedInvoices.isEmpty
+              ? GestureDetector(
+            onHorizontalDragEnd: (details) {
+              if (details.velocity.pixelsPerSecond.dx < 0) {
+                // User swiped left
+                setState(() {
+                  _currentPage++; // Increment the current page
+                  // Ensure the current page does not exceed the maximum page count
+                  if (_currentPage >= 5) {
+                    _currentPage = 0; // Set to last page if exceeded
+                  }
+                });
+              } else if (details.velocity.pixelsPerSecond.dx > 0) {
+                // User swiped right
+                setState(() {
+                  _currentPage--; // Decrement the current page
+                  // Ensure the current page does not go below 0
+                  if (_currentPage < 0) {
+                    _currentPage = 0; // Set to first page if below 0
+                  }
+                });
+              }
+            },
+            child: Container(
+              height: _height,
+              child: Center(
+                child: Text('Add Sample Invoice'),
+              ),
+            ),
+          )
+              : NotificationListener<ScrollNotification>(
+            onNotification: (scrollNotification) {
+              if (scrollNotification is ScrollUpdateNotification) {
+                double currentOffset = scrollNotification.metrics.pixels;
+                width = selectedInvoices.length == 1 ? 20 : width;
+                print("currentOffset : $currentOffset");
+                print("selectedInvoices.length : ${selectedInvoices.length}");
+                if (currentOffset < width) {
+                  setState(() {
+                    _showRightArrow = false;
+                    _rightArrowOpacity = 0.0;
+                  });
+                } else if (currentOffset >= width && currentOffset < (width + 90)) {
+                  setState(() {
+                    _showRightArrow = true;
+                    _rightArrowOpacity = (currentOffset - width) / ((width + 90) - width);
+                  });
+                } else if (currentOffset >= (width + 90)) {
+                  setState(() {
+                    _showRightArrow = true;
+                    _rightArrowOpacity = 1.0;
+                  });
+                }
+
+                if (currentOffset < 0) {
+                  if (currentOffset > -100) {
+                    // User is scrolling to the left but not beyond -100
+                    setState(() {
+                      _showLeftArrow = true;
+                      _leftArrowOpacity = (currentOffset.abs()) / 100;
+                    });
+                  } else if (currentOffset <= -100 && !_isTouching) {
+                    // User has scrolled more than -100, go to the last page (4)
+                    if (_currentPage == 0) {
+                      setState(() {
+                        _currentPage = 4;
+                        _showLeftArrow = false;
+                      });
+                    } else {
+                      setState(() {
+                        _currentPage--;
+                        _showLeftArrow = false;
+                      });
+                    }
+                  }
+                }
+
+
+                if (_rightArrowOpacity == 1.0 && !_isTouching) {
+                  int nextPage = (_currentPage + 1) % categorizedInvoices.length;
+                  if (_currentPage != nextPage) {
+                    setState(() {
+                      _currentPage = nextPage;
+                      _showRightArrow = false;
+                    });
+                  }
+                }
+              }
+              return false;
+            },
+                child: Listener(
+                  behavior: HitTestBehavior.translucent,
+                  onPointerDown: (event) {
+                    setState(() {
+                      _isTouching = true; // User started touching the screen
+                    });
+                  },
+                  onPointerUp: (event) {
+                    setState(() {
+                      _isTouching = false; // User stopped touching the screen
+                    });
+                  },
+                  child: Stack(
+                    children: [
+                      SingleChildScrollView(
+                        controller: _scrollController,
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          key: _scrollWidthKey,
+                          children: selectedInvoices.length == 1
+                              ? [
+                            // Add extra width to the container if there is only one InvoiceCard
+                            SizedBox(width: (_widthIntrinsic! - 200.w)/2),
+                            Padding(
+                              padding: EdgeInsets.fromLTRB(10, 0, 50, 0),
+                              child: InvoiceCard(
+                                invoice: selectedInvoices.first,
+                                onDelete: () => _deleteInvoice(selectedInvoices.first),
+                                onEdit: () {
+                                  // Handle edit logic
+                                },
+                              ),
+                            ),
+                          ]
+                              : selectedInvoices.map((invoice) {
+                            return Padding(
+                              padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
+                              child: InvoiceCard(
+                                invoice: invoice,
+                                onDelete: () => _deleteInvoice(invoice),
+                                onEdit: () {
+                                  // Handle edit logic
+                                },
+                              ),
+                            );
+                          }).toList(),
+                        ),
+
+                      ),
+                      if (_showLeftArrow)
+                        Positioned(
+                          left:10,
+                          top:((_height! / 2)-20).toDouble(),
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 10.0),
+                            child: AnimatedOpacity(
+                              opacity: _leftArrowOpacity,
+                              duration: Duration(milliseconds: 300),
+                              child: Icon(
+                                Icons.arrow_back_ios,
+                                color: Colors.green,
+                                size: 40,
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (_showRightArrow)
+                        Positioned(
+                          right:10,
+                          top:((_height! / 2)-20).toDouble(),
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 10.0),
+                            child: AnimatedOpacity(
+                              opacity: _rightArrowOpacity,
+                              duration: Duration(milliseconds: 300),
+                              child: Icon(
+                                Icons.arrow_forward_ios,
+                                color: Colors.green,
+                                size: 40,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+        ),
+        const SizedBox(height: 20),
+        buildIndicator(5, _currentPage),
+        if (_height != null)
+          Text('Height of IntrinsicHeight: ${_height!.toString()} px'),
+      ],
     );
   }
 }
