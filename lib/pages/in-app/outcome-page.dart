@@ -2059,9 +2059,8 @@ class _OutcomePageState extends State<OutcomePage> {
                                         ),
                                       ),
                                     );
-                                  }).toList(),
+                                  }).toList()
                                 )
-
                               ],
                             ),
                           ),

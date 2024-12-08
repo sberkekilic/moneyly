@@ -86,7 +86,7 @@ class Invoice {
 
     // Check if faturaDonemiDate is before the current date
     if (currentDate.isAfter(faturaDonemiDate)) {
-      invoice.difference = "0"; // Set difference to 0 if the invoice date is in the past
+      invoice.difference = (-faturaDonemiDate.difference(currentDate).inDays).toString();
       return invoice.difference;
     }
 
