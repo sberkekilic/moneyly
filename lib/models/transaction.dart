@@ -121,10 +121,92 @@ class TransactionService {
     transactions.removeWhere((t) => t.id == id);
     await saveTransactions(transactions);
   }
+
+  // Function to validate and adjust the day
+  static DateTime _validateDay(int day, DateTime referenceDate) {
+    final lastDayOfMonth = DateTime(referenceDate.year, referenceDate.month + 1, 0).day;
+    if (day > lastDayOfMonth) day = lastDayOfMonth;
+
+    DateTime validatedDate = DateTime(referenceDate.year, referenceDate.month, day);
+
+    if (validatedDate.weekday == DateTime.saturday) {
+      validatedDate = validatedDate.add(Duration(days: 2));
+    } else if (validatedDate.weekday == DateTime.sunday) {
+      validatedDate = validatedDate.add(Duration(days: 1));
+    }
+
+    return validatedDate;
+  }
+
+  // Create a list of Transactions from incomeMap
+  static Future<List<Transaction>> _createTransactions() async {
+    Map<String, List<Map<String, dynamic>>> incomeMap = {};
+    final prefs = await SharedPreferences.getInstance();
+    final ab2 = prefs.getString('incomeMap') ?? "0";
+    String? startDateString = prefs.getString('startDate');
+    String? endDateString = prefs.getString('endDate');
+
+    if (ab2.isNotEmpty) {
+      final decodedData = json.decode(ab2);
+      if (decodedData is Map<String, dynamic>) {
+        incomeMap = {};
+        decodedData.forEach((key, value) {
+          if (value is List<dynamic>) {
+            incomeMap[key] = List<Map<String, dynamic>>.from(value.map((e) => Map<String, dynamic>.from(e)));
+          }
+        });
+      }
+      print('Final incomeMap: ${jsonEncode(incomeMap)}');
+    }
+
+    if (startDateString == null || endDateString == null) {
+      print('Start date or end date is missing!');
+      return [];
+    }
+
+    DateTime startDate = DateTime.parse(startDateString);
+    DateTime endDate = DateTime.parse(endDateString);
+    List<Transaction> transactions = [];
+
+    for (DateTime currentDate = startDate;
+    currentDate.isBefore(endDate) || currentDate.isAtSameMomentAs(endDate);
+    currentDate = DateTime(currentDate.year, currentDate.month + 1, 1)) {
+
+      incomeMap.forEach((key, incomeList) {
+        if (incomeList == null || incomeList.isEmpty) return;
+
+        for (var income in incomeList) {
+          int day = income['day'] ?? 1;
+          DateTime transactionDate = _validateDay(day, currentDate);
+
+          if (transactionDate.isAfter(endDate)) continue;
+
+          double amount = NumberFormat.decimalPattern('tr_TR').parse(income['amount'].toString()) as double;
+
+          transactions.add(Transaction(
+            id: DateTime.now().millisecondsSinceEpoch,
+            date: transactionDate,
+            amount: amount,
+            installment: null,
+            currency: 'TRY',
+            description: 'Income',
+            isSurplus: true,
+            isFromInvoice: false,
+            initialInstallmentDate: null,
+          ));
+        }
+      });
+    }
+
+    return transactions;
+  }
+
+  // Public method to generate transactions and save them
+  static Future<void> generateAndSaveTransactions() async {
+    List<Transaction> transactions = await _createTransactions();
+    await saveTransactions(transactions);
+  }
 }
-
-
-
 
 class TransactionCard extends StatelessWidget {
   final Transaction transaction;
@@ -166,11 +248,6 @@ class TransactionCard extends StatelessWidget {
                       DateFormat('MMM yyyy').format(transaction.date),
                       style: GoogleFonts.montserrat(fontSize: 10.sp),
                     ),
-                    // Time (bottom)
-                    Text(
-                      DateFormat('HH:mm:ss').format(transaction.date),
-                      style: GoogleFonts.montserrat(fontSize: 8.sp),
-                    ),
                   ],
                 ),
                 SizedBox(width: 16),
@@ -198,7 +275,7 @@ class TransactionCard extends StatelessWidget {
                   children: [
                     // Amount (top)
                     Text(
-                      NumberFormat.currency(name: transaction.currency).format(transaction.amount),
+                      NumberFormat("#,##0.00", "tr_TR").format(transaction.amount),
                       style: GoogleFonts.montserrat(fontSize: 12.sp, color: amountColor),
                     ),
                     Text(

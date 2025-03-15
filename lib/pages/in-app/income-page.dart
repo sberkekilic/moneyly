@@ -20,8 +20,8 @@ class IncomePage extends StatefulWidget {
 }
 
 class _IncomePageState extends State<IncomePage> {
-  Map<String, List<String>> incomeMap = {};
-  Map<String, List<String>> summedIncomeMap = {};
+  Map<String, List<Map<String, dynamic>>> incomeMap = {};
+  Map<String, List<Map<String, dynamic>>> summedIncomeMap = {};
   String selectedTitle = 'Toplam';
   String selectedKey = "";
   String newSelectedOption = "İş";
@@ -67,26 +67,30 @@ class _IncomePageState extends State<IncomePage> {
         if (decodedData is Map<String, dynamic>) {
           decodedData.forEach((key, value) {
             if (value is List<dynamic>) {
-              incomeMap[key] = value.cast<String>();
+              // We need to check if each list item is a Map
+              incomeMap[key] = value
+                  .where((item) => item is Map<String, dynamic>)
+                  .cast<Map<String, dynamic>>()
+                  .toList();
             }
             if (incomeMap.containsKey(key) && incomeMap[key]!.isNotEmpty) {
               String valueToParse = '';
-              if (incomeMap.containsKey(
-                      selectedKey.isNotEmpty ? selectedKey : key) &&
-                  incomeMap[selectedKey.isNotEmpty ? selectedKey : key]!
-                      .isNotEmpty) {
-                valueToParse =
-                    incomeMap[selectedKey.isNotEmpty ? selectedKey : key]![0];
-                incomeValue = NumberFormat.decimalPattern('tr_TR')
-                    .parse(valueToParse) as double;
+              if (incomeMap.containsKey(selectedKey.isNotEmpty ? selectedKey : key) &&
+                  incomeMap[selectedKey.isNotEmpty ? selectedKey : key]!.isNotEmpty) {
+
+                valueToParse = incomeMap[selectedKey.isNotEmpty ? selectedKey : key]![0]["amount"];
+                incomeValue = NumberFormat.decimalPattern('tr_TR').parse(valueToParse) as double;
               } // Take the first (and only) string from the list
               selectedKey = key;
               double sum = 0.0;
               incomeMap.values.forEach((values) {
                 values.forEach((value) {
-                  double parsedValue = NumberFormat.decimalPattern('tr_TR')
-                      .parse(value) as double;
-                  sum += parsedValue;
+                  if (value is Map<String, dynamic>) {
+                    // Ensure we are accessing "amount" correctly from the map
+                    double parsedValue = NumberFormat.decimalPattern('tr_TR')
+                        .parse(value["amount"].toString()) as double;
+                    sum += parsedValue;
+                  }
                 });
               });
               incomeValue = sum;
@@ -98,22 +102,33 @@ class _IncomePageState extends State<IncomePage> {
         }
       }
 
+      // Calculate the total number of values in incomeMap
       totalValues = incomeMap.values.fold<int>(
         0,
             (count, list) => count + list.length,
       );
 
+      // Calculate the sum for each key in incomeMap
       for (var key in incomeMap.keys) {
         double sum = 0.0;
 
         // Iterate over each value list for the current key
         for (var value in incomeMap[key]!) {
-          double parsedValue = NumberFormat.decimalPattern('tr_TR').parse(value) as double;
-          sum += parsedValue; // Sum the parsed values
+          if (value is Map<String, dynamic>) {
+            // Extract the "amount" value from the map
+            String amountStr = value["amount"].toString(); // Ensure the amount is a String
+            double parsedValue = NumberFormat.decimalPattern('tr_TR').parse(amountStr) as double;
+
+            sum += parsedValue; // Add the parsed value to the sum
+          }
         }
 
         // Store the sum as a string in the new map
-        summedIncomeMap[key] = [NumberFormat.decimalPattern('tr_TR').format(sum)];
+        summedIncomeMap[key] = [
+          {
+            "amount": NumberFormat.decimalPattern('tr_TR').format(sum),
+          }
+        ];
       }
     });
   }
@@ -155,11 +170,12 @@ class _IncomePageState extends State<IncomePage> {
                       final newKey = keyController.text;
                       String newValue = valueController.text;
                       setState(() {
-                        // Only update the value at the specified index
-                        newValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(NumberFormat.decimalPattern('tr_TR')
-                                .parse(newValue) as double);
-                        incomeMap[key]![index] = newValue;
 
+                        // Only update the value at the specified index
+                        newValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2)
+                            .format(NumberFormat.decimalPattern('tr_TR').parse(newValue) as double);
+
+                        incomeMap[key]![index]["amount"] = newValue;
                         // Save the modified incomeMap to SharedPreferences
                         prefs.setString('incomeMap', jsonEncode(incomeMap));
                       });
@@ -251,9 +267,9 @@ class _IncomePageState extends State<IncomePage> {
     nameController.text = formattedIncomeValue;
     String firstKey = "";
     List<double> valuesOfFirstKey = [];
-    List<String> workValue = incomeMap['İş'] ?? ['0'];
-    List<String> scholarshipValue = incomeMap['Burs'] ?? ['0'];
-    List<String> pensionValue = incomeMap['Emekli'] ?? ['0'];
+    List<String> workValue = incomeMap['İş']?.map((e) => e["amount"].toString()).toList() ?? ['0'];
+    List<String> scholarshipValue = incomeMap['Burs']?.map((e) => e["amount"].toString()).toList() ?? ['0'];
+    List<String> pensionValue = incomeMap['Emekli']?.map((e) => e["amount"].toString()).toList() ?? ['0'];
     double workDoubleValue;
     if (workValue.isNotEmpty && workValue[0].isNotEmpty){
       try{
@@ -329,7 +345,7 @@ class _IncomePageState extends State<IncomePage> {
       firstKey = incomeMap.keys.first;
       valuesOfFirstKey = incomeMap[firstKey]!
           .map((value) =>
-              NumberFormat.decimalPattern('tr_TR').parse(value) as double)
+              NumberFormat.decimalPattern('tr_TR').parse(value["amount"]) as double)
           .toList();
       sumOfFirstKey =
           valuesOfFirstKey.reduce((value, accumulator) => value + accumulator);
@@ -435,15 +451,9 @@ class _IncomePageState extends State<IncomePage> {
                                                       if (incomeMap.containsKey(
                                                           newSelectedOption)) {
                                                         // Update the existing value
-                                                        incomeMap[
-                                                            newSelectedOption] = [
-                                                          newName
-                                                        ];
+                                                        incomeMap[newSelectedOption] = [{"amount": newName}];
                                                       } else {
-                                                        incomeMap[
-                                                            newSelectedOption] = [
-                                                          newName
-                                                        ];
+                                                        incomeMap[newSelectedOption] = [{"amount": newName}];
                                                       }
                                                       prefs.setString(
                                                           'incomeMap',
@@ -473,32 +483,18 @@ class _IncomePageState extends State<IncomePage> {
                                                         await SharedPreferences
                                                             .getInstance();
                                                     setState(() {
-                                                      String newName =
-                                                          nameController.text;
-                                                      if (newSelectedOption
-                                                          .isEmpty) {
+                                                      String newName = nameController.text;
+                                                      if (newSelectedOption.isEmpty) {
                                                         // Get the first key from the incomeMap if newSelectedOption is empty
-                                                        newSelectedOption =
-                                                            incomeMap
-                                                                .keys.first;
+                                                        newSelectedOption = incomeMap.keys.first;
                                                       }
-                                                      if (incomeMap.containsKey(
-                                                          newSelectedOption)) {
+                                                      if (incomeMap.containsKey(newSelectedOption)) {
                                                         // Update the existing value
-                                                        incomeMap[
-                                                            newSelectedOption] = [
-                                                          newName
-                                                        ];
+                                                        incomeMap[newSelectedOption] = [{"amount": newName}];
                                                       } else {
-                                                        incomeMap[
-                                                            newSelectedOption] = [
-                                                          newName
-                                                        ];
+                                                        incomeMap[newSelectedOption] = [{"amount": newName}];
                                                       }
-                                                      prefs.setString(
-                                                          'incomeMap',
-                                                          jsonEncode(
-                                                              incomeMap));
+                                                      prefs.setString('incomeMap', jsonEncode(incomeMap));
                                                       nameController.clear();
                                                       isEditing = false;
                                                       focusNode.unfocus();
@@ -573,9 +569,9 @@ class _IncomePageState extends State<IncomePage> {
                                                       CircularPercentIndicator(
                                                         radius: 30,
                                                         lineWidth: 7.0,
-                                                        percent: (NumberFormat.decimalPattern('tr_TR').parse(entry.value[i]) as double) / incomeValue,
+                                                        percent: (NumberFormat.decimalPattern('tr_TR').parse(entry.value[i]["amount"] ?? '0') as double) / incomeValue,
                                                         center: Text(
-                                                          "%${(((NumberFormat.decimalPattern('tr_TR').parse(entry.value[i]) as double) / incomeValue) * 100).toStringAsFixed(0)}",
+                                                          "%${(((NumberFormat.decimalPattern('tr_TR').parse(entry.value[i]["amount"] ?? '0') as double) / incomeValue) * 100).toStringAsFixed(0)}",
                                                           style: GoogleFonts.montserrat(
                                                             color: Colors.black,
                                                             fontSize: 16,
@@ -600,7 +596,7 @@ class _IncomePageState extends State<IncomePage> {
                                                               ),
                                                             ),
                                                             Text(
-                                                              NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(parseTurkishDouble(entry.value[i])), // The specific income value, e.g., "25.000" or "200"
+                                                              NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(parseTurkishDouble(entry.value[i]["amount"] ?? '0')), // The specific income value, e.g., "25.000" or "200"
                                                               style: GoogleFonts.montserrat(
                                                                 color: Colors.black,
                                                                 fontSize: 18.sp,
@@ -617,7 +613,7 @@ class _IncomePageState extends State<IncomePage> {
                                                         child: IconButton(
                                                           onPressed: () {
                                                             setState(() {
-                                                              editIncome(entry.key, entry.value[i], i);
+                                                              editIncome(entry.key, entry.value[i]["amount"] ?? '0', i);
                                                             });
                                                           },
                                                           icon: Icon(Icons.edit),
@@ -826,7 +822,7 @@ class _IncomePageState extends State<IncomePage> {
                                                         incomeMap[newSelectedOption] = []; // Initialize the list if it doesn't exist
                                                       }
                                                       if (newName.isNotEmpty){
-                                                        incomeMap[newSelectedOption]!.add(newName);
+                                                        incomeMap[newSelectedOption]!.add({"amount": newName});
                                                         prefs.setString('incomeMap', jsonEncode(incomeMap));
                                                         isIncomeAdding = false;
                                                         incomeController.clear();

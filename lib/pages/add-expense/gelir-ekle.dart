@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:moneyly/routes/routes.dart';
 import 'package:number_text_input_formatter/number_text_input_formatter.dart';
 import 'package:provider/provider.dart';
+import 'package:pull_down_button/pull_down_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../blocs/income-selections.dart';
@@ -35,18 +36,25 @@ class _AddIncomeState extends State<AddIncome> {
   ];
 
   int digitCount = 0;
+  int? selectedDay;
 
   TextEditingController textController = TextEditingController();
 
-  Map<String, List<String>> incomeMap = {};
+  Map<String, List<Map<String, dynamic>>> incomeMap = {};
 
   Future<void> goToNextPage(BuildContext context, IncomeSelectionsBloc selections, SelectedOption selectedOption) async {
     final prefs = await SharedPreferences.getInstance();
     if (!incomeMap.containsKey(newSelectedTitle)) {
       incomeMap[newSelectedTitle] = []; // Initialize the list if it doesn't exist
     }
-    incomeMap[newSelectedTitle]!.add(incomeController.text);
-    prefs.setString('incomeMap', jsonEncode(incomeMap));
+
+    // Add income value along with the day of the month
+    incomeMap[newSelectedTitle]!.add({
+      "amount": incomeController.text, // Convert input to double
+      "day": selectedDay
+    });
+
+    await prefs.setString('incomeMap', jsonEncode(incomeMap));
 
     // Navigate to the next page
     context.go('/subs');
@@ -365,6 +373,39 @@ class _AddIncomeState extends State<AddIncome> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                        "Ayın hangi günü?",
+                                        style: TextStyle(
+                                          fontFamily: 'Keep Calm',
+                                          fontSize: 16.sp,
+                                        )
+                                    ),
+                                  ),
+                                  SizedBox(height: 10.h),
+                                  PullDownButton(
+                                    itemBuilder: (context) {
+                                      return List.generate(31, (index) {
+                                        int day = index + 1;
+                                        return PullDownMenuItem(
+                                          title: 'Day $day',
+                                          onTap: () {
+                                            setState(() {
+                                              selectedDay = day;
+                                            });
+                                          },
+                                        );
+                                      });
+                                    },
+                                    buttonBuilder: (context, showMenu) => TextButton(
+                                      onPressed: showMenu,
+                                      child: Text(
+                                        selectedDay != null ? "Selected Day: $selectedDay" : "Select a Day",
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 10.h),
                                   Align(
                                     alignment: Alignment.centerLeft,
                                     child: Text(

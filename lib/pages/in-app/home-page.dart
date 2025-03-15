@@ -26,7 +26,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<Invoice> invoices = [];
-  Map<String, List<String>> incomeMap = {};
+  Map<String, List<Map<String, dynamic>>> incomeMap = {};
   String selectedKey = "";
   List<String> sharedPreferencesData = [];
   List<String> desiredKeys = [
@@ -237,20 +237,25 @@ class _HomePageState extends State<HomePage> {
       if (ab2.isNotEmpty) {
         final decodedData = json.decode(ab2);
         if (decodedData is Map<String, dynamic>) {
+          incomeMap = {};
           decodedData.forEach((key, value) {
             if (value is List<dynamic>) {
-              incomeMap[key] = value.cast<String>();
+              incomeMap[key] = List<Map<String, dynamic>>.from(value.map((e) => Map<String, dynamic>.from(e)));
             }
             if (incomeMap.containsKey(key) && incomeMap[key]!.isNotEmpty) {
-              String valueToParse = incomeMap[selectedKey.isNotEmpty ? selectedKey : key]![0]; // Take the first (and only) string from the list
+              // Get the first amount from the list (use the 'amount' field inside the map)
+              String valueToParse = incomeMap[selectedKey.isNotEmpty ? selectedKey : key]![0]["amount"];
               selectedKey = key;
               incomeValue = NumberFormat.decimalPattern('tr_TR').parse(valueToParse) as double;
               double sum = 0.0;
               for (var values in incomeMap.values) {
                 for (var value in values) {
-                  // Replace ',' with '.' and parse as double
-                  double parsedValue = NumberFormat.decimalPattern('tr_TR').parse(value) as double;
-                  sum += parsedValue;
+                  // Parse the "amount" field as double
+                  String amount = value["amount"];
+                  if (amount.isNotEmpty) {
+                    double parsedValue = NumberFormat.decimalPattern('tr_TR').parse(amount).toDouble();
+                    sum += parsedValue;
+                  }
                 }
               }
               incomeValue = sum;
@@ -259,6 +264,7 @@ class _HomePageState extends State<HomePage> {
             }
           });
         }
+        print('Final incomeMap: ${jsonEncode(incomeMap)}');
       }
       if (savedInvoicesJson != null) {
         setState(() {
@@ -300,6 +306,19 @@ class _HomePageState extends State<HomePage> {
         });
       }
       loadSharedPreferencesData(actualDesiredKeys);
+    });
+
+    // Clear the existing transactions before loading new data
+    setState(() {
+      transactions.clear(); // Clear the existing transaction list
+    });
+
+    await TransactionService.generateAndSaveTransactions();
+    // Load the transactions again from storage
+    List<Transaction> loadedTransactions = await TransactionService.loadTransactions();
+
+    setState(() {
+      transactions = loadedTransactions; // Update the transaction list with new data
     });
 
   }
@@ -793,6 +812,19 @@ class _HomePageState extends State<HomePage> {
 
     return sum;
   }
+  double calculateTotalAmount(List<Transaction> transactions) {
+    return transactions.fold(0.0, (sum, transaction) => sum + transaction.amount);
+  }
+  double getTotalSurplusAmountByCurrency(List<Transaction> transactions, String currency) {
+    return transactions
+        .where((t) => t.isSurplus && t.currency == currency) // Filter by isSurplus and currency
+        .fold(0.0, (sum, t) => sum + t.amount); // Sum the amounts
+  }
+  double gettotalDearthAmountByCurrency(List<Transaction> transactions, String currency) {
+    return transactions
+        .where((t) => t.isSurplus == false && t.currency == currency) // Filter by isSurplus and currency
+        .fold(0.0, (sum, t) => sum + t.amount); // Sum the amounts
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -800,10 +832,14 @@ class _HomePageState extends State<HomePage> {
     double sumOfBills = calculateCategorySum(invoices, 'Faturalar');
     double sumOfOthers = calculateCategorySum(invoices, 'Diğer Giderler');
     double outcomeValue = sumOfSubs+sumOfBills+sumOfOthers;
-    double netProfit = incomeValue - outcomeValue;
-    String formattedIncomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(incomeValue);
-    String formattedOutcomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(outcomeValue);
-    String formattedProfitValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(netProfit);
+    double outcomeValue2 = calculateTotalAmount(transactions);
+    double netProfit = incomeValue - outcomeValue2; //OLD NET PROFIT
+    double totalSurplusTRY = getTotalSurplusAmountByCurrency(transactions, 'TRY');
+    double totalDearthTRY = gettotalDearthAmountByCurrency(transactions, 'TRY');
+    double netProfitTransaction = totalSurplusTRY - totalDearthTRY;
+    String formattedIncomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(totalSurplusTRY);
+    String formattedOutcomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(totalDearthTRY);
+    String formattedProfitValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(netProfitTransaction);
     String formattedSumOfSubs = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfSubs);
     String formattedSumOfBills = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfBills);
     String formattedSumOfOthers = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfOthers);
@@ -813,6 +849,8 @@ class _HomePageState extends State<HomePage> {
     int incomeYuzdesi = (incomeValue * 100).toInt();
     int netProfitYuzdesi = (netProfit * 100).toInt();
     int bolum;
+
+
 
     if (incomeValue != 0.0) {
       double bolumDouble = netProfit / incomeValue;
@@ -880,6 +918,21 @@ class _HomePageState extends State<HomePage> {
       });
 
     }
+    void _resetDateRange() async {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Clear the saved dates from SharedPreferences
+      await prefs.remove('startDate');
+      await prefs.remove('endDate');
+
+      // Reset the date range in the UI
+      setState(() {
+        startDate = null;
+        endDate = null;
+        _load(); //Reload the UI so expense can be refresh
+      });
+    }
+
     void _showDateRangePicker() async {
       showDialog(
         context: context,
@@ -930,20 +983,28 @@ class _HomePageState extends State<HomePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text("Özet", style: GoogleFonts.montserrat(fontSize: 20.sp, fontWeight: FontWeight.bold)),
-              GestureDetector(
-                onTap: _showDateRangePicker,
-                child: FutureBuilder<String>(
-                  future: _formatDateRange(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Text('Loading...');
-                    } else if (snapshot.hasError) {
-                      return Text('Error: ${snapshot.error}');
-                    } else {
-                      return Text(snapshot.data ?? 'Pick a Date Range');
-                    }
-                  },
-                )
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: _showDateRangePicker,
+                    child: FutureBuilder<String>(
+                      future: _formatDateRange(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return Text('Loading...');
+                        } else if (snapshot.hasError) {
+                          return Text('Error: ${snapshot.error}');
+                        } else {
+                          return Text(snapshot.data ?? 'Pick a Date Range');
+                        }
+                      },
+                    )
+                  ),
+                  ElevatedButton(
+                      onPressed: _resetDateRange,
+                      child: Text("Reset", style: GoogleFonts.montserrat(fontSize: 12.sp, fontWeight: FontWeight.w500))
+                  )
+                ],
               ),
               SizedBox(height: 20.h),
               Container(
@@ -1003,7 +1064,7 @@ class _HomePageState extends State<HomePage> {
                               animationDuration: 1000,
                               percent: bolum/100,
                               trailing: Text(
-                                  netProfit < 0 ? "-%${bolum.abs()}" : "%${bolum.abs()}",
+                                  netProfitTransaction < 0 ? "-%${bolum.abs()}" : "%${bolum.abs()}",
                                   style: GoogleFonts.montserrat(
                                   color: Colors.black,
                                   fontSize: 18,
@@ -2117,6 +2178,8 @@ class TransactionWidget extends StatefulWidget {
   _TransactionWidgetState createState() => _TransactionWidgetState();
 }
 class _TransactionWidgetState extends State<TransactionWidget> {
+  Map<String, List<Map<String, dynamic>>> incomeMap = {};
+  double incomeValue = 0.0;
   List<Transaction> transactions = [];
   final _formKey = GlobalKey<FormState>();
   int? editingTransactionId;
@@ -2137,8 +2200,31 @@ class _TransactionWidgetState extends State<TransactionWidget> {
 
   Future<void> _loadTransactions() async {
     final prefs = await SharedPreferences.getInstance();
+    final ab2 = prefs.getString('incomeMap') ?? '0';
     final ab14 = prefs.getString('startDate');
     final ab15 = prefs.getString('endDate');
+
+    if (ab2.isNotEmpty) {
+      final decodedData = json.decode(ab2);
+      if (decodedData is Map<String, dynamic>) {
+        incomeMap = {};
+        decodedData.forEach((key, value) {
+          if (value is List<dynamic>) {
+            incomeMap[key] = List<Map<String, dynamic>>.from(value.map((e) => Map<String, dynamic>.from(e)));
+          }
+        });
+      }
+      print('Final incomeMap: ${jsonEncode(incomeMap)}');
+    }
+
+    if (ab2 != null && ab2.isNotEmpty) {
+      final decodedData = json.decode(ab2);
+      if (decodedData is Map<String, dynamic>) {
+        setState(() {
+          incomeMap = Map<String, List<Map<String, dynamic>>>.from(decodedData);
+        });
+      }
+    }
 
     if (ab14 != null && ab15 != null) {
       setState(() {
@@ -2158,9 +2244,6 @@ class _TransactionWidgetState extends State<TransactionWidget> {
       transactions = loadedTransactions; // Update the transaction list with new data
     });
   }
-
-
-
   Future<void> _saveTransaction() async {
     if (_formKey.currentState?.validate() ?? false) {
       int newId = (transactions.isEmpty ? 0 : transactions.last.id) + 1;
@@ -2464,6 +2547,88 @@ class _TransactionWidgetState extends State<TransactionWidget> {
     return null; // Return null if no end date is found
   }
 
+  // Function to validate and adjust the day
+  DateTime _validateDay(int day, DateTime referenceDate) {
+    final lastDayOfMonth = DateTime(referenceDate.year, referenceDate.month + 1, 0).day;
+
+    // Ensure the day is within the valid range
+    if (day > lastDayOfMonth) {
+      day = lastDayOfMonth;
+    }
+
+    DateTime validatedDate = DateTime(referenceDate.year, referenceDate.month, day);
+
+    // If it's Saturday (6) or Sunday (7), move to the next Monday
+    if (validatedDate.weekday == DateTime.saturday) {
+      validatedDate = validatedDate.add(Duration(days: 2)); // Move to Monday
+    } else if (validatedDate.weekday == DateTime.sunday) {
+      validatedDate = validatedDate.add(Duration(days: 1)); // Move to Monday
+    }
+
+    return validatedDate;
+  }
+
+  // Create a list of Transactions from incomeMap
+  Future<List<Transaction>> _createTransactions() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? startDateString = prefs.getString('startDate');
+    String? endDateString = prefs.getString('endDate');
+
+    if (startDateString == null || endDateString == null) {
+      print('Start date or end date is missing!');
+      return [];
+    }
+
+    DateTime startDate = DateTime.parse(startDateString);
+    DateTime endDate = DateTime.parse(endDateString);
+
+    List<Transaction> transactions = [];
+
+    print('Processing transactions from $startDate to $endDate');
+
+    for (DateTime currentDate = startDate;
+    currentDate.isBefore(endDate) || currentDate.isAtSameMomentAs(endDate);
+    currentDate = DateTime(currentDate.year, currentDate.month + 1, 1)) {
+
+      print('Processing month: ${currentDate.month}-${currentDate.year}');
+
+      incomeMap.forEach((key, incomeList) {
+        if (incomeList == null || incomeList.isEmpty) {
+          print('Skipping key: $key because it has no data');
+          return;
+        }
+
+        for (var income in incomeList) {
+          int day = income['day'] ?? 1;
+          DateTime transactionDate = _validateDay(day, currentDate);
+
+          if (transactionDate.isAfter(endDate)) {
+            print('Skipping transaction beyond end date: $transactionDate');
+            continue;
+          }
+
+          double amount = NumberFormat.decimalPattern('tr_TR').parse(income['amount'].toString()) as double;
+
+          transactions.add(Transaction(
+            id: DateTime.now().millisecondsSinceEpoch,
+            date: transactionDate,
+            amount: amount,
+            installment: null,
+            currency: 'TRY',
+            description: 'Income',
+            isSurplus: true,
+            isFromInvoice: false,
+            initialInstallmentDate: null,
+          ));
+
+          print('Added transaction: $transactionDate, Amount: $amount');
+        }
+      });
+    }
+
+    return transactions;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -2479,10 +2644,6 @@ class _TransactionWidgetState extends State<TransactionWidget> {
               final startDate = snapshot.data?[0]; // Get the start date from the list of results
               final endDate = snapshot.data?[1];   // Get the end date from the list of results
 
-              if (startDate == null || endDate == null) {
-                return Text('No date range selected');
-              }
-
               // Fetch transactions after the dates are loaded
               return FutureBuilder<List<Transaction>>(
                 future: TransactionService.loadTransactions(),
@@ -2491,15 +2652,15 @@ class _TransactionWidgetState extends State<TransactionWidget> {
                     return CircularProgressIndicator(); // Show loading spinner while fetching transactions
                   } else if (transactionsSnapshot.hasError) {
                     return Text('Error: ${transactionsSnapshot.error}');
-                  } else if (!transactionsSnapshot.hasData || transactionsSnapshot.data!.isEmpty) {
-                    return Text('No transactions found.');
                   } else {
-                    final transactions = transactionsSnapshot.data!;
-
+                    List<Transaction> transactions = transactionsSnapshot.data!;
                     return Column(
                       children: [
-                        Text(DateFormat('yyyy-MM-dd').format(startDate!)),
-                        Text(DateFormat('yyyy-MM-dd').format(endDate!)),
+                        Text(startDate != null ? DateFormat('yyyy-MM-dd').format(startDate) : 'No start date'),
+                        Text(endDate != null ? DateFormat('yyyy-MM-dd').format(endDate) : 'No end date'),
+                        Text(
+                            transactions.map((e) => e.toDisplayString()).join("\n\n")
+                        ),
                         ListView(
                           padding: EdgeInsets.zero,
                           physics: const NeverScrollableScrollPhysics(),
@@ -2561,6 +2722,7 @@ class _TransactionWidgetState extends State<TransactionWidget> {
                         ),
                       ],
                     );
+
                   }
                 },
               );
@@ -2570,5 +2732,4 @@ class _TransactionWidgetState extends State<TransactionWidget> {
       ],
     );
   }
-
 }
