@@ -12,6 +12,9 @@ class Transaction {
   double amount;
   int? installment;
   String currency;
+  String subcategory;
+  String category;
+  String title;
   String description;
   bool isSurplus;
   bool isFromInvoice;
@@ -24,7 +27,10 @@ class Transaction {
     this.installment,
     required this.isFromInvoice,
     required this.currency,
+    required this.subcategory,
+    required this.category,
     required this.description,
+    required this.title,
     required this.isSurplus,
     required this.initialInstallmentDate,
   });
@@ -36,6 +42,9 @@ class Transaction {
     'amount': amount,
     'installment': installment,
     'currency': currency,
+    'subcategory': subcategory,
+    'category': category,
+    'title': title,
     'description': description,
     'isSurplus': isSurplus,
     'isFromInvoice': isFromInvoice,
@@ -49,6 +58,9 @@ class Transaction {
     amount: json['amount'],
     installment: json['installment'],
     currency: json['currency'],
+    subcategory: json['subcategory'],
+    category: json['category'],
+    title: json['title'],
     description: json['description'],
     isSurplus: json['isSurplus'],
     isFromInvoice: json['isFromInvoice'],
@@ -57,7 +69,7 @@ class Transaction {
         : null,
   );
   String toDisplayString() {
-    return 'ID: $id\nDate: $date\nAmount: $amount\nInstallment: ${installment  ?? 'N/A'}\nCurrency: $currency\ndescription: $description\nisSurplus: $isSurplus\nInstallmentDate: ${initialInstallmentDate  ?? 'N/A'}';
+    return 'ID: $id\nDate: $date\nAmount: $amount\nInstallment: ${installment  ?? 'N/A'}\nCurrency: $currency\nSubcategory: $subcategory\nCategory: $category\nTitle: $title\ndescription: $description\nisSurplus: $isSurplus\nInstallmentDate: ${initialInstallmentDate  ?? 'N/A'}';
   }
   // Method to get the current installment period
   String getCurrentInstallmentPeriod() {
@@ -189,6 +201,9 @@ class TransactionService {
             amount: amount,
             installment: null,
             currency: 'TRY',
+            subcategory: 'Maaş',
+            category: 'Gelir',
+            title: 'Maaş',
             description: 'Income',
             isSurplus: true,
             isFromInvoice: false,

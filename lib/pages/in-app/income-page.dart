@@ -24,6 +24,7 @@ class _IncomePageState extends State<IncomePage> {
   Map<String, List<Map<String, dynamic>>> summedIncomeMap = {};
   String selectedTitle = 'Toplam';
   String selectedKey = "";
+  int? selectedDay;
   String newSelectedOption = "İş";
   double incomeValue = 0.0;
   String formattedIncomeValue = "";
@@ -79,6 +80,7 @@ class _IncomePageState extends State<IncomePage> {
                   incomeMap[selectedKey.isNotEmpty ? selectedKey : key]!.isNotEmpty) {
 
                 valueToParse = incomeMap[selectedKey.isNotEmpty ? selectedKey : key]![0]["amount"];
+                selectedDay = incomeMap[selectedKey.isNotEmpty ? selectedKey : key]![0]["day"];
                 incomeValue = NumberFormat.decimalPattern('tr_TR').parse(valueToParse) as double;
               } // Take the first (and only) string from the list
               selectedKey = key;
@@ -490,9 +492,9 @@ class _IncomePageState extends State<IncomePage> {
                                                       }
                                                       if (incomeMap.containsKey(newSelectedOption)) {
                                                         // Update the existing value
-                                                        incomeMap[newSelectedOption] = [{"amount": newName}];
+                                                        incomeMap[newSelectedOption] = [{"amount": newName, "day": 100}];
                                                       } else {
-                                                        incomeMap[newSelectedOption] = [{"amount": newName}];
+                                                        incomeMap[newSelectedOption] = [{"amount": newName, "day": 200}];
                                                       }
                                                       prefs.setString('incomeMap', jsonEncode(incomeMap));
                                                       nameController.clear();
@@ -522,6 +524,7 @@ class _IncomePageState extends State<IncomePage> {
                                             )),
                                       ],
                                     ),
+                                    Text(selectedDay.toString()),
                                     SizedBox(height: 10),
                                     SizedBox(
                                       child: LinearPercentIndicator(

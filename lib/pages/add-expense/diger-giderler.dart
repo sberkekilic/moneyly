@@ -248,7 +248,7 @@ class _OtherExpensesState extends State<OtherExpenses> {
     Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
     _selectedBillingDay = invoice.getPeriodDay();
     _selectedDueDay = invoice.getDueDay();
-    invoice.periodDate = formatPeriodDate(_selectedBillingDay ?? 0, _selectedBillingMonth ?? 0);
+    invoice.periodDate = formatPeriodDate(_selectedBillingDay ?? 0);
     if (_selectedDueDay != null) {
       invoice.dueDate = formatDueDate(_selectedDueDay, invoice.periodDate);
     }
@@ -524,13 +524,13 @@ class _OtherExpensesState extends State<OtherExpenses> {
                           if (_selectedDueDay != null) {
                             editInvoice(
                               id,
-                              formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                              formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!)),
+                              formatPeriodDate(_selectedBillingDay!),
+                              formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!)),
                             );
                           } else {
                             editInvoice(
                               id,
-                              formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
+                              formatPeriodDate(_selectedBillingDay!),
                               null, // or provide any default value you want for dueDate when _selectedDueDay is null
                             );
                           }
@@ -739,9 +739,10 @@ class _OtherExpensesState extends State<OtherExpenses> {
     return year % 400 == 0;
   }
 
-  String formatPeriodDate(int day, int month) {
+  String formatPeriodDate(int day) {
     final currentDate = DateTime.now();
     int year = currentDate.year;
+    int month = currentDate.month;
 
     if (month > 12) {
       month = 1;
@@ -1339,11 +1340,25 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                     child: Column(
                                                                       crossAxisAlignment: CrossAxisAlignment.start,
                                                                       children: [
-                                                                        Text(
-                                                                            "Başlangıç Tarihi",
-                                                                            style: GoogleFonts.montserrat(
-                                                                              fontSize: 15.sp,
-                                                                            )
+                                                                        Row(
+                                                                          children: [
+                                                                            Expanded(
+                                                                              child: Text(
+                                                                                  "Başlangıç Tarihi",
+                                                                                  style: GoogleFonts.montserrat(
+                                                                                    fontSize: 15.sp,
+                                                                                  )
+                                                                              ),
+                                                                            ),
+                                                                            Expanded(
+                                                                              child: Text(
+                                                                                  "Son Ödeme Tarihi",
+                                                                                  style: GoogleFonts.montserrat(
+                                                                                    fontSize: 15.sp,
+                                                                                  )
+                                                                              ),
+                                                                            ),
+                                                                          ],
                                                                         ),
                                                                         SizedBox(height: 5.h),
                                                                         Row(
@@ -1394,60 +1409,6 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                             ),
                                                                             SizedBox(width: 20.w),
                                                                             Expanded(
-                                                                                child: PullDownButton(
-                                                                                  itemBuilder: (context) => monthsList
-                                                                                      .map(
-                                                                                        (month) => PullDownMenuItem(
-                                                                                        onTap: () {
-                                                                                          platformPriceFocusNode.unfocus();
-                                                                                          textFocusNode.unfocus();
-                                                                                          setState(() {
-                                                                                            _selectedBillingMonth = month;
-                                                                                          });
-                                                                                        },
-                                                                                        title: monthNames[month - 1]
-                                                                                    ),
-                                                                                  ).toList(),
-                                                                                  buttonBuilder: (context, showMenu) => ElevatedButton(
-                                                                                    style: ElevatedButton.styleFrom(
-                                                                                      backgroundColor: Colors.white,
-                                                                                      shape: RoundedRectangleBorder(
-                                                                                        borderRadius: BorderRadius.circular(20),
-                                                                                      ),
-                                                                                      side: BorderSide(width: 2),
-                                                                                    ),
-                                                                                    onPressed: showMenu,
-                                                                                    child: Row(
-                                                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                                                      children: [
-                                                                                        Text(
-                                                                                            _selectedBillingMonth == null
-                                                                                                ? "Ay"
-                                                                                                : monthNames[_selectedBillingMonth! - 1],
-                                                                                            style: TextStyle(
-                                                                                                color: Colors.black
-                                                                                            )
-                                                                                        ),
-                                                                                        Icon(Icons.arrow_drop_down, color: Colors.black)
-                                                                                      ],
-                                                                                    ),
-                                                                                  ),
-                                                                                )
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                        SizedBox(height: 10.h),
-                                                                        Text(
-                                                                            "Son Ödeme Tarihi",
-                                                                            style: GoogleFonts.montserrat(
-                                                                              fontSize: 15.sp,
-                                                                            )
-                                                                        ),
-                                                                        SizedBox(height: 5.h),
-                                                                        Row(
-                                                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                                          children: [
-                                                                            Expanded(
                                                                               flex:1,
                                                                               child: PullDownButton(
                                                                                 itemBuilder: (context) => daysList
@@ -1489,74 +1450,70 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                                 ),
                                                                               ),
                                                                             ),
-                                                                            SizedBox(width: 20.w),
-                                                                            Expanded(
-                                                                              flex:1,
-                                                                              child: Row(
-                                                                                mainAxisAlignment: MainAxisAlignment.end,
-                                                                                children: [
-                                                                                  IconButton(
-                                                                                    onPressed: () {
-                                                                                      setState(() {
-                                                                                        int maxId = 0; // Initialize with the lowest possible value
-                                                                                        for (var invoice in invoices) {
-                                                                                          if (invoice.id > maxId) {
-                                                                                            maxId = invoice.id;
-                                                                                          }
-                                                                                        }
-                                                                                        int newId = maxId + 1;
-                                                                                        final text = textController.text.trim();
-                                                                                        final priceText = platformPriceController.text.trim();
-                                                                                        num parsedPrice = NumberFormat.decimalPattern('tr_TR').parse(priceText) ?? 0;
-                                                                                        double dprice = parsedPrice is double
-                                                                                            ? parsedPrice
-                                                                                            : parsedPrice.toDouble();
-                                                                                        String price = dprice.toStringAsFixed(2);
-                                                                                        final invoice = Invoice(
-                                                                                          id: newId,
-                                                                                          price: price,
-                                                                                          subCategory: 'Kira',
-                                                                                          category: "Diğer Giderler",
-                                                                                          name: text,
-                                                                                          periodDate: formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                                                                                          dueDate: _selectedDueDay != null && _selectedBillingDay != null && _selectedBillingMonth != null
-                                                                                              ? formatDueDate(
-                                                                                              _selectedDueDay!,
-                                                                                              formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!)
-                                                                                          )
-                                                                                              : null,
-                                                                                          difference: "abo2",
-                                                                                        );
-                                                                                        onSave(invoice);
-                                                                                        if (text.isNotEmpty && priceText.isNotEmpty) {
-                                                                                          setState(() {
-                                                                                            isEditingList = false; // Add a corresponding entry for the new item
-                                                                                            textController.clear();
-                                                                                            platformPriceController.clear();
-                                                                                            isTextFormFieldVisible = false;
-                                                                                            isAddButtonActive = false;
-                                                                                          });
-                                                                                        }
-                                                                                      });
-                                                                                    },
-                                                                                    icon: const Icon(Icons.check_circle, size: 26),
-                                                                                  ),
-                                                                                  IconButton(
-                                                                                    onPressed: () {
-                                                                                      setState(() {
-                                                                                        isTextFormFieldVisible = false;
-                                                                                        isAddButtonActive = false;
-                                                                                        textController.clear();
-                                                                                        platformPriceController.clear();
-                                                                                      });
-                                                                                    },
-                                                                                    icon: const Icon(Icons.cancel, size: 26),
-                                                                                  ),
-                                                                                ],
-                                                                              ),
-                                                                            )
                                                                           ],
-                                                                        )
+                                                                        ),
+                                                                        Row(
+                                                                          mainAxisAlignment: MainAxisAlignment.end,
+                                                                          children: [
+                                                                            IconButton(
+                                                                              onPressed: () {
+                                                                                setState(() {
+                                                                                  int maxId = 0; // Initialize with the lowest possible value
+                                                                                  for (var invoice in invoices) {
+                                                                                    if (invoice.id > maxId) {
+                                                                                      maxId = invoice.id;
+                                                                                    }
+                                                                                  }
+                                                                                  int newId = maxId + 1;
+                                                                                  final text = textController.text.trim();
+                                                                                  final priceText = platformPriceController.text.trim();
+                                                                                  num parsedPrice = NumberFormat.decimalPattern('tr_TR').parse(priceText) ?? 0;
+                                                                                  double dprice = parsedPrice is double
+                                                                                      ? parsedPrice
+                                                                                      : parsedPrice.toDouble();
+                                                                                  String price = dprice.toStringAsFixed(2);
+                                                                                  final invoice = Invoice(
+                                                                                    id: newId,
+                                                                                    price: price,
+                                                                                    subCategory: 'Kira',
+                                                                                    category: "Diğer Giderler",
+                                                                                    name: text,
+                                                                                    periodDate: formatPeriodDate(_selectedBillingDay!),
+                                                                                    dueDate: _selectedDueDay != null && _selectedBillingDay != null && _selectedBillingMonth != null
+                                                                                        ? formatDueDate(
+                                                                                        _selectedDueDay!,
+                                                                                        formatPeriodDate(_selectedBillingDay!)
+                                                                                    )
+                                                                                        : null,
+                                                                                    difference: "abo2",
+                                                                                  );
+                                                                                  onSave(invoice);
+                                                                                  if (text.isNotEmpty && priceText.isNotEmpty) {
+                                                                                    setState(() {
+                                                                                      isEditingList = false; // Add a corresponding entry for the new item
+                                                                                      textController.clear();
+                                                                                      platformPriceController.clear();
+                                                                                      isTextFormFieldVisible = false;
+                                                                                      isAddButtonActive = false;
+                                                                                    });
+                                                                                  }
+                                                                                });
+                                                                              },
+                                                                              icon: const Icon(Icons.check_circle, size: 26),
+                                                                            ),
+                                                                            IconButton(
+                                                                              onPressed: () {
+                                                                                setState(() {
+                                                                                  isTextFormFieldVisible = false;
+                                                                                  isAddButtonActive = false;
+                                                                                  textController.clear();
+                                                                                  platformPriceController.clear();
+                                                                                });
+                                                                              },
+                                                                              icon: const Icon(Icons.cancel, size: 26),
+                                                                            ),
+                                                                          ],
+                                                                        ),
                                                                       ],
                                                                     ),
                                                                   ),
@@ -1847,11 +1804,25 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                   child: Column(
                                                                     crossAxisAlignment: CrossAxisAlignment.start,
                                                                     children: [
-                                                                      Text(
-                                                                          "Başlangıç Tarihi",
-                                                                          style: GoogleFonts.montserrat(
-                                                                            fontSize: 15.sp,
-                                                                          )
+                                                                      Row(
+                                                                        children: [
+                                                                          Expanded(
+                                                                            child: Text(
+                                                                                "Başlangıç Tarihi",
+                                                                                style: GoogleFonts.montserrat(
+                                                                                  fontSize: 15.sp,
+                                                                                )
+                                                                            ),
+                                                                          ),
+                                                                          Expanded(
+                                                                            child: Text(
+                                                                                "Son Ödeme Tarihi",
+                                                                                style: GoogleFonts.montserrat(
+                                                                                  fontSize: 15.sp,
+                                                                                )
+                                                                            ),
+                                                                          ),
+                                                                        ],
                                                                       ),
                                                                       SizedBox(height: 5.h),
                                                                       Row(
@@ -1902,60 +1873,6 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                           ),
                                                                           SizedBox(width: 20.w),
                                                                           Expanded(
-                                                                              child: PullDownButton(
-                                                                                itemBuilder: (context) => monthsList
-                                                                                    .map(
-                                                                                      (month) => PullDownMenuItem(
-                                                                                      onTap: () {
-                                                                                        platformPriceFocusNode.unfocus();
-                                                                                        textFocusNode.unfocus();
-                                                                                        setState(() {
-                                                                                          _selectedBillingMonth = month;
-                                                                                        });
-                                                                                      },
-                                                                                      title: monthNames[month - 1]
-                                                                                  ),
-                                                                                ).toList(),
-                                                                                buttonBuilder: (context, showMenu) => ElevatedButton(
-                                                                                  style: ElevatedButton.styleFrom(
-                                                                                    backgroundColor: Colors.white,
-                                                                                    shape: RoundedRectangleBorder(
-                                                                                      borderRadius: BorderRadius.circular(20),
-                                                                                    ),
-                                                                                    side: BorderSide(width: 2),
-                                                                                  ),
-                                                                                  onPressed: showMenu,
-                                                                                  child: Row(
-                                                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                                                    children: [
-                                                                                      Text(
-                                                                                          _selectedBillingMonth == null
-                                                                                              ? "Ay"
-                                                                                              : monthNames[_selectedBillingMonth! - 1],
-                                                                                          style: TextStyle(
-                                                                                              color: Colors.black
-                                                                                          )
-                                                                                      ),
-                                                                                      Icon(Icons.arrow_drop_down, color: Colors.black)
-                                                                                    ],
-                                                                                  ),
-                                                                                ),
-                                                                              )
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                      SizedBox(height: 10.h),
-                                                                      Text(
-                                                                          "Son Ödeme Tarihi",
-                                                                          style: GoogleFonts.montserrat(
-                                                                            fontSize: 15.sp,
-                                                                          )
-                                                                      ),
-                                                                      SizedBox(height: 5.h),
-                                                                      Row(
-                                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                                        children: [
-                                                                          Expanded(
                                                                             flex:1,
                                                                             child: PullDownButton(
                                                                               itemBuilder: (context) => daysList
@@ -1997,74 +1914,70 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                               ),
                                                                             ),
                                                                           ),
-                                                                          SizedBox(width: 20.w),
-                                                                          Expanded(
-                                                                            flex:1,
-                                                                            child: Row(
-                                                                              mainAxisAlignment: MainAxisAlignment.end,
-                                                                              children: [
-                                                                                IconButton(
-                                                                                  onPressed: () {
-                                                                                    setState(() {
-                                                                                      int maxId = 0; // Initialize with the lowest possible value
-                                                                                      for (var invoice in invoices) {
-                                                                                        if (invoice.id > maxId) {
-                                                                                          maxId = invoice.id;
-                                                                                        }
-                                                                                      }
-                                                                                      int newId = maxId + 1;
-                                                                                      final text = textController.text.trim();
-                                                                                      final priceText = platformPriceController.text.trim();
-                                                                                      num parsedPrice = NumberFormat.decimalPattern('tr_TR').parse(priceText) ?? 0;
-                                                                                      double dprice = parsedPrice is double
-                                                                                          ? parsedPrice
-                                                                                          : parsedPrice.toDouble();
-                                                                                      String price = dprice.toStringAsFixed(2);
-                                                                                      final invoice = Invoice(
-                                                                                        id: newId,
-                                                                                        price: price,
-                                                                                        subCategory: 'Mutfak',
-                                                                                        category: "Diğer Giderler",
-                                                                                        name: text,
-                                                                                        periodDate: formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                                                                                        dueDate: _selectedDueDay != null && _selectedBillingDay != null && _selectedBillingMonth != null
-                                                                                            ? formatDueDate(
-                                                                                            _selectedDueDay!,
-                                                                                            formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!)
-                                                                                        )
-                                                                                            : null,
-                                                                                        difference: "abo2",
-                                                                                      );
-                                                                                      onSave(invoice);
-                                                                                      if (text.isNotEmpty && priceText.isNotEmpty) {
-                                                                                        setState(() {
-                                                                                          isEditingListND = false; // Add a corresponding entry for the new item
-                                                                                          textController.clear();
-                                                                                          platformPriceController.clear();
-                                                                                          isTextFormFieldVisibleND = false;
-                                                                                          isAddButtonActiveND = false;
-                                                                                        });
-                                                                                      }
-                                                                                    });
-                                                                                  },
-                                                                                  icon: const Icon(Icons.check_circle, size: 26),
-                                                                                ),
-                                                                                IconButton(
-                                                                                  onPressed: () {
-                                                                                    setState(() {
-                                                                                      isTextFormFieldVisibleND = false;
-                                                                                      isAddButtonActiveND = false;
-                                                                                      textController.clear();
-                                                                                      platformPriceController.clear();
-                                                                                    });
-                                                                                  },
-                                                                                  icon: const Icon(Icons.cancel, size: 26),
-                                                                                ),
-                                                                              ],
-                                                                            ),
-                                                                          )
                                                                         ],
-                                                                      )
+                                                                      ),
+                                                                      Row(
+                                                                        mainAxisAlignment: MainAxisAlignment.end,
+                                                                        children: [
+                                                                          IconButton(
+                                                                            onPressed: () {
+                                                                              setState(() {
+                                                                                int maxId = 0; // Initialize with the lowest possible value
+                                                                                for (var invoice in invoices) {
+                                                                                  if (invoice.id > maxId) {
+                                                                                    maxId = invoice.id;
+                                                                                  }
+                                                                                }
+                                                                                int newId = maxId + 1;
+                                                                                final text = textController.text.trim();
+                                                                                final priceText = platformPriceController.text.trim();
+                                                                                num parsedPrice = NumberFormat.decimalPattern('tr_TR').parse(priceText) ?? 0;
+                                                                                double dprice = parsedPrice is double
+                                                                                    ? parsedPrice
+                                                                                    : parsedPrice.toDouble();
+                                                                                String price = dprice.toStringAsFixed(2);
+                                                                                final invoice = Invoice(
+                                                                                  id: newId,
+                                                                                  price: price,
+                                                                                  subCategory: 'Mutfak',
+                                                                                  category: "Diğer Giderler",
+                                                                                  name: text,
+                                                                                  periodDate: formatPeriodDate(_selectedBillingDay!),
+                                                                                  dueDate: _selectedDueDay != null && _selectedBillingDay != null && _selectedBillingMonth != null
+                                                                                      ? formatDueDate(
+                                                                                      _selectedDueDay!,
+                                                                                      formatPeriodDate(_selectedBillingDay!)
+                                                                                  )
+                                                                                      : null,
+                                                                                  difference: "abo2",
+                                                                                );
+                                                                                onSave(invoice);
+                                                                                if (text.isNotEmpty && priceText.isNotEmpty) {
+                                                                                  setState(() {
+                                                                                    isEditingListND = false; // Add a corresponding entry for the new item
+                                                                                    textController.clear();
+                                                                                    platformPriceController.clear();
+                                                                                    isTextFormFieldVisibleND = false;
+                                                                                    isAddButtonActiveND = false;
+                                                                                  });
+                                                                                }
+                                                                              });
+                                                                            },
+                                                                            icon: const Icon(Icons.check_circle, size: 26),
+                                                                          ),
+                                                                          IconButton(
+                                                                            onPressed: () {
+                                                                              setState(() {
+                                                                                isTextFormFieldVisibleND = false;
+                                                                                isAddButtonActiveND = false;
+                                                                                textController.clear();
+                                                                                platformPriceController.clear();
+                                                                              });
+                                                                            },
+                                                                            icon: const Icon(Icons.cancel, size: 26),
+                                                                          ),
+                                                                        ],
+                                                                      ),
                                                                     ],
                                                                   ),
                                                                 ),
@@ -2354,11 +2267,25 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                   child: Column(
                                                                     crossAxisAlignment: CrossAxisAlignment.start,
                                                                     children: [
-                                                                      Text(
-                                                                          "Başlangıç Tarihi",
-                                                                          style: GoogleFonts.montserrat(
-                                                                            fontSize: 15.sp,
-                                                                          )
+                                                                      Row(
+                                                                        children: [
+                                                                          Expanded(
+                                                                            child: Text(
+                                                                                "Başlangıç Tarihi",
+                                                                                style: GoogleFonts.montserrat(
+                                                                                  fontSize: 15.sp,
+                                                                                )
+                                                                            ),
+                                                                          ),
+                                                                          Expanded(
+                                                                            child: Text(
+                                                                                "Son Ödeme Tarihi",
+                                                                                style: GoogleFonts.montserrat(
+                                                                                  fontSize: 15.sp,
+                                                                                )
+                                                                            ),
+                                                                          ),
+                                                                        ],
                                                                       ),
                                                                       SizedBox(height: 5.h),
                                                                       Row(
@@ -2409,60 +2336,6 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                           ),
                                                                           SizedBox(width: 20.w),
                                                                           Expanded(
-                                                                              child: PullDownButton(
-                                                                                itemBuilder: (context) => monthsList
-                                                                                    .map(
-                                                                                      (month) => PullDownMenuItem(
-                                                                                      onTap: () {
-                                                                                        platformPriceFocusNode.unfocus();
-                                                                                        textFocusNode.unfocus();
-                                                                                        setState(() {
-                                                                                          _selectedBillingMonth = month;
-                                                                                        });
-                                                                                      },
-                                                                                      title: monthNames[month - 1]
-                                                                                  ),
-                                                                                ).toList(),
-                                                                                buttonBuilder: (context, showMenu) => ElevatedButton(
-                                                                                  style: ElevatedButton.styleFrom(
-                                                                                    backgroundColor: Colors.white,
-                                                                                    shape: RoundedRectangleBorder(
-                                                                                      borderRadius: BorderRadius.circular(20),
-                                                                                    ),
-                                                                                    side: BorderSide(width: 2),
-                                                                                  ),
-                                                                                  onPressed: showMenu,
-                                                                                  child: Row(
-                                                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                                                    children: [
-                                                                                      Text(
-                                                                                          _selectedBillingMonth == null
-                                                                                              ? "Ay"
-                                                                                              : monthNames[_selectedBillingMonth! - 1],
-                                                                                          style: TextStyle(
-                                                                                              color: Colors.black
-                                                                                          )
-                                                                                      ),
-                                                                                      Icon(Icons.arrow_drop_down, color: Colors.black)
-                                                                                    ],
-                                                                                  ),
-                                                                                ),
-                                                                              )
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                      SizedBox(height: 10.h),
-                                                                      Text(
-                                                                          "Son Ödeme Tarihi",
-                                                                          style: GoogleFonts.montserrat(
-                                                                            fontSize: 15.sp,
-                                                                          )
-                                                                      ),
-                                                                      SizedBox(height: 5.h),
-                                                                      Row(
-                                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                                        children: [
-                                                                          Expanded(
                                                                             flex:1,
                                                                             child: PullDownButton(
                                                                               itemBuilder: (context) => daysList
@@ -2504,74 +2377,70 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                               ),
                                                                             ),
                                                                           ),
-                                                                          SizedBox(width: 20.w),
-                                                                          Expanded(
-                                                                            flex:1,
-                                                                            child: Row(
-                                                                              mainAxisAlignment: MainAxisAlignment.end,
-                                                                              children: [
-                                                                                IconButton(
-                                                                                  onPressed: () {
-                                                                                    setState(() {
-                                                                                      int maxId = 0; // Initialize with the lowest possible value
-                                                                                      for (var invoice in invoices) {
-                                                                                        if (invoice.id > maxId) {
-                                                                                          maxId = invoice.id;
-                                                                                        }
-                                                                                      }
-                                                                                      int newId = maxId + 1;
-                                                                                      final text = textController.text.trim();
-                                                                                      final priceText = platformPriceController.text.trim();
-                                                                                      num parsedPrice = NumberFormat.decimalPattern('tr_TR').parse(priceText) ?? 0;
-                                                                                      double dprice = parsedPrice is double
-                                                                                          ? parsedPrice
-                                                                                          : parsedPrice.toDouble();
-                                                                                      String price = dprice.toStringAsFixed(2);
-                                                                                      final invoice = Invoice(
-                                                                                        id: newId,
-                                                                                        price: price,
-                                                                                        subCategory: 'Yeme İçme',
-                                                                                        category: "Diğer Giderler",
-                                                                                        name: text,
-                                                                                        periodDate: formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                                                                                        dueDate: _selectedDueDay != null && _selectedBillingDay != null && _selectedBillingMonth != null
-                                                                                            ? formatDueDate(
-                                                                                            _selectedDueDay!,
-                                                                                            formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!)
-                                                                                        )
-                                                                                            : null,
-                                                                                        difference: "abo2",
-                                                                                      );
-                                                                                      onSave(invoice);
-                                                                                      if (text.isNotEmpty && priceText.isNotEmpty) {
-                                                                                        setState(() {
-                                                                                          isEditingListRD = false; // Add a corresponding entry for the new item
-                                                                                          textController.clear();
-                                                                                          platformPriceController.clear();
-                                                                                          isTextFormFieldVisibleRD = false;
-                                                                                          isAddButtonActiveRD = false;
-                                                                                        });
-                                                                                      }
-                                                                                    });
-                                                                                  },
-                                                                                  icon: const Icon(Icons.check_circle, size: 26),
-                                                                                ),
-                                                                                IconButton(
-                                                                                  onPressed: () {
-                                                                                    setState(() {
-                                                                                      isTextFormFieldVisibleRD = false;
-                                                                                      isAddButtonActiveRD = false;
-                                                                                      textController.clear();
-                                                                                      platformPriceController.clear();
-                                                                                    });
-                                                                                  },
-                                                                                  icon: const Icon(Icons.cancel, size: 26),
-                                                                                ),
-                                                                              ],
-                                                                            ),
-                                                                          )
                                                                         ],
-                                                                      )
+                                                                      ),
+                                                                      Row(
+                                                                        mainAxisAlignment: MainAxisAlignment.end,
+                                                                        children: [
+                                                                          IconButton(
+                                                                            onPressed: () {
+                                                                              setState(() {
+                                                                                int maxId = 0; // Initialize with the lowest possible value
+                                                                                for (var invoice in invoices) {
+                                                                                  if (invoice.id > maxId) {
+                                                                                    maxId = invoice.id;
+                                                                                  }
+                                                                                }
+                                                                                int newId = maxId + 1;
+                                                                                final text = textController.text.trim();
+                                                                                final priceText = platformPriceController.text.trim();
+                                                                                num parsedPrice = NumberFormat.decimalPattern('tr_TR').parse(priceText) ?? 0;
+                                                                                double dprice = parsedPrice is double
+                                                                                    ? parsedPrice
+                                                                                    : parsedPrice.toDouble();
+                                                                                String price = dprice.toStringAsFixed(2);
+                                                                                final invoice = Invoice(
+                                                                                  id: newId,
+                                                                                  price: price,
+                                                                                  subCategory: 'Yeme İçme',
+                                                                                  category: "Diğer Giderler",
+                                                                                  name: text,
+                                                                                  periodDate: formatPeriodDate(_selectedBillingDay!),
+                                                                                  dueDate: _selectedDueDay != null && _selectedBillingDay != null && _selectedBillingMonth != null
+                                                                                      ? formatDueDate(
+                                                                                      _selectedDueDay!,
+                                                                                      formatPeriodDate(_selectedBillingDay!)
+                                                                                  )
+                                                                                      : null,
+                                                                                  difference: "abo2",
+                                                                                );
+                                                                                onSave(invoice);
+                                                                                if (text.isNotEmpty && priceText.isNotEmpty) {
+                                                                                  setState(() {
+                                                                                    isEditingListRD = false; // Add a corresponding entry for the new item
+                                                                                    textController.clear();
+                                                                                    platformPriceController.clear();
+                                                                                    isTextFormFieldVisibleRD = false;
+                                                                                    isAddButtonActiveRD = false;
+                                                                                  });
+                                                                                }
+                                                                              });
+                                                                            },
+                                                                            icon: const Icon(Icons.check_circle, size: 26),
+                                                                          ),
+                                                                          IconButton(
+                                                                            onPressed: () {
+                                                                              setState(() {
+                                                                                isTextFormFieldVisibleRD = false;
+                                                                                isAddButtonActiveRD = false;
+                                                                                textController.clear();
+                                                                                platformPriceController.clear();
+                                                                              });
+                                                                            },
+                                                                            icon: const Icon(Icons.cancel, size: 26),
+                                                                          ),
+                                                                        ],
+                                                                      ),
                                                                     ],
                                                                   ),
                                                                 ),
@@ -2861,11 +2730,25 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                   child: Column(
                                                                     crossAxisAlignment: CrossAxisAlignment.start,
                                                                     children: [
-                                                                      Text(
-                                                                          "Başlangıç Tarihi",
-                                                                          style: GoogleFonts.montserrat(
-                                                                            fontSize: 15.sp,
-                                                                          )
+                                                                      Row(
+                                                                        children: [
+                                                                          Expanded(
+                                                                            child: Text(
+                                                                                "Başlangıç Tarihi",
+                                                                                style: GoogleFonts.montserrat(
+                                                                                  fontSize: 15.sp,
+                                                                                )
+                                                                            ),
+                                                                          ),
+                                                                          Expanded(
+                                                                            child: Text(
+                                                                                "Son Ödeme Tarihi",
+                                                                                style: GoogleFonts.montserrat(
+                                                                                  fontSize: 15.sp,
+                                                                                )
+                                                                            ),
+                                                                          ),
+                                                                        ],
                                                                       ),
                                                                       SizedBox(height: 5.h),
                                                                       Row(
@@ -2916,60 +2799,6 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                           ),
                                                                           SizedBox(width: 20.w),
                                                                           Expanded(
-                                                                              child: PullDownButton(
-                                                                                itemBuilder: (context) => monthsList
-                                                                                    .map(
-                                                                                      (month) => PullDownMenuItem(
-                                                                                      onTap: () {
-                                                                                        platformPriceFocusNode.unfocus();
-                                                                                        textFocusNode.unfocus();
-                                                                                        setState(() {
-                                                                                          _selectedBillingMonth = month;
-                                                                                        });
-                                                                                      },
-                                                                                      title: monthNames[month - 1]
-                                                                                  ),
-                                                                                ).toList(),
-                                                                                buttonBuilder: (context, showMenu) => ElevatedButton(
-                                                                                  style: ElevatedButton.styleFrom(
-                                                                                    backgroundColor: Colors.white,
-                                                                                    shape: RoundedRectangleBorder(
-                                                                                      borderRadius: BorderRadius.circular(20),
-                                                                                    ),
-                                                                                    side: BorderSide(width: 2),
-                                                                                  ),
-                                                                                  onPressed: showMenu,
-                                                                                  child: Row(
-                                                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                                                    children: [
-                                                                                      Text(
-                                                                                          _selectedBillingMonth == null
-                                                                                              ? "Ay"
-                                                                                              : monthNames[_selectedBillingMonth! - 1],
-                                                                                          style: TextStyle(
-                                                                                              color: Colors.black
-                                                                                          )
-                                                                                      ),
-                                                                                      Icon(Icons.arrow_drop_down, color: Colors.black)
-                                                                                    ],
-                                                                                  ),
-                                                                                ),
-                                                                              )
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                      SizedBox(height: 10.h),
-                                                                      Text(
-                                                                          "Son Ödeme Tarihi",
-                                                                          style: GoogleFonts.montserrat(
-                                                                            fontSize: 15.sp,
-                                                                          )
-                                                                      ),
-                                                                      SizedBox(height: 5.h),
-                                                                      Row(
-                                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                                        children: [
-                                                                          Expanded(
                                                                             flex:1,
                                                                             child: PullDownButton(
                                                                               itemBuilder: (context) => daysList
@@ -3011,74 +2840,70 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                               ),
                                                                             ),
                                                                           ),
-                                                                          SizedBox(width: 20.w),
-                                                                          Expanded(
-                                                                            flex:1,
-                                                                            child: Row(
-                                                                              mainAxisAlignment: MainAxisAlignment.end,
-                                                                              children: [
-                                                                                IconButton(
-                                                                                  onPressed: () {
-                                                                                    setState(() {
-                                                                                      int maxId = 0; // Initialize with the lowest possible value
-                                                                                      for (var invoice in invoices) {
-                                                                                        if (invoice.id > maxId) {
-                                                                                          maxId = invoice.id;
-                                                                                        }
-                                                                                      }
-                                                                                      int newId = maxId + 1;
-                                                                                      final text = textController.text.trim();
-                                                                                      final priceText = platformPriceController.text.trim();
-                                                                                      num parsedPrice = NumberFormat.decimalPattern('tr_TR').parse(priceText) ?? 0;
-                                                                                      double dprice = parsedPrice is double
-                                                                                          ? parsedPrice
-                                                                                          : parsedPrice.toDouble();
-                                                                                      String price = dprice.toStringAsFixed(2);
-                                                                                      final invoice = Invoice(
-                                                                                        id: newId,
-                                                                                        price: price,
-                                                                                        subCategory: 'Eğlence',
-                                                                                        category: "Diğer Giderler",
-                                                                                        name: text,
-                                                                                        periodDate: formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                                                                                        dueDate: _selectedDueDay != null && _selectedBillingDay != null && _selectedBillingMonth != null
-                                                                                            ? formatDueDate(
-                                                                                            _selectedDueDay!,
-                                                                                            formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!)
-                                                                                        )
-                                                                                            : null,
-                                                                                        difference: "abo2",
-                                                                                      );
-                                                                                      onSave(invoice);
-                                                                                      if (text.isNotEmpty && priceText.isNotEmpty) {
-                                                                                        setState(() {
-                                                                                          isEditingListTH = false; // Add a corresponding entry for the new item
-                                                                                          textController.clear();
-                                                                                          platformPriceController.clear();
-                                                                                          isTextFormFieldVisibleTH = false;
-                                                                                          isAddButtonActiveTH = false;
-                                                                                        });
-                                                                                      }
-                                                                                    });
-                                                                                  },
-                                                                                  icon: const Icon(Icons.check_circle, size: 26),
-                                                                                ),
-                                                                                IconButton(
-                                                                                  onPressed: () {
-                                                                                    setState(() {
-                                                                                      isTextFormFieldVisibleTH = false;
-                                                                                      isAddButtonActiveTH = false;
-                                                                                      textController.clear();
-                                                                                      platformPriceController.clear();
-                                                                                    });
-                                                                                  },
-                                                                                  icon: const Icon(Icons.cancel, size: 26),
-                                                                                ),
-                                                                              ],
-                                                                            ),
-                                                                          )
                                                                         ],
-                                                                      )
+                                                                      ),
+                                                                      Row(
+                                                                        mainAxisAlignment: MainAxisAlignment.end,
+                                                                        children: [
+                                                                          IconButton(
+                                                                            onPressed: () {
+                                                                              setState(() {
+                                                                                int maxId = 0; // Initialize with the lowest possible value
+                                                                                for (var invoice in invoices) {
+                                                                                  if (invoice.id > maxId) {
+                                                                                    maxId = invoice.id;
+                                                                                  }
+                                                                                }
+                                                                                int newId = maxId + 1;
+                                                                                final text = textController.text.trim();
+                                                                                final priceText = platformPriceController.text.trim();
+                                                                                num parsedPrice = NumberFormat.decimalPattern('tr_TR').parse(priceText) ?? 0;
+                                                                                double dprice = parsedPrice is double
+                                                                                    ? parsedPrice
+                                                                                    : parsedPrice.toDouble();
+                                                                                String price = dprice.toStringAsFixed(2);
+                                                                                final invoice = Invoice(
+                                                                                  id: newId,
+                                                                                  price: price,
+                                                                                  subCategory: 'Eğlence',
+                                                                                  category: "Diğer Giderler",
+                                                                                  name: text,
+                                                                                  periodDate: formatPeriodDate(_selectedBillingDay!),
+                                                                                  dueDate: _selectedDueDay != null && _selectedBillingDay != null && _selectedBillingMonth != null
+                                                                                      ? formatDueDate(
+                                                                                      _selectedDueDay!,
+                                                                                      formatPeriodDate(_selectedBillingDay!)
+                                                                                  )
+                                                                                      : null,
+                                                                                  difference: "abo2",
+                                                                                );
+                                                                                onSave(invoice);
+                                                                                if (text.isNotEmpty && priceText.isNotEmpty) {
+                                                                                  setState(() {
+                                                                                    isEditingListTH = false; // Add a corresponding entry for the new item
+                                                                                    textController.clear();
+                                                                                    platformPriceController.clear();
+                                                                                    isTextFormFieldVisibleTH = false;
+                                                                                    isAddButtonActiveTH = false;
+                                                                                  });
+                                                                                }
+                                                                              });
+                                                                            },
+                                                                            icon: const Icon(Icons.check_circle, size: 26),
+                                                                          ),
+                                                                          IconButton(
+                                                                            onPressed: () {
+                                                                              setState(() {
+                                                                                isTextFormFieldVisibleTH = false;
+                                                                                isAddButtonActiveTH = false;
+                                                                                textController.clear();
+                                                                                platformPriceController.clear();
+                                                                              });
+                                                                            },
+                                                                            icon: const Icon(Icons.cancel, size: 26),
+                                                                          ),
+                                                                        ],
+                                                                      ),
                                                                     ],
                                                                   ),
                                                                 ),
@@ -3365,11 +3190,25 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                   child: Column(
                                                                     crossAxisAlignment: CrossAxisAlignment.start,
                                                                     children: [
-                                                                      Text(
-                                                                          "Başlangıç Tarihi",
-                                                                          style: GoogleFonts.montserrat(
-                                                                            fontSize: 15.sp,
-                                                                          )
+                                                                      Row(
+                                                                        children: [
+                                                                          Expanded(
+                                                                            child: Text(
+                                                                                "Başlangıç Tarihi",
+                                                                                style: GoogleFonts.montserrat(
+                                                                                  fontSize: 15.sp,
+                                                                                )
+                                                                            ),
+                                                                          ),
+                                                                          Expanded(
+                                                                            child: Text(
+                                                                                "Son Ödeme Tarihi",
+                                                                                style: GoogleFonts.montserrat(
+                                                                                  fontSize: 15.sp,
+                                                                                )
+                                                                            ),
+                                                                          ),
+                                                                        ],
                                                                       ),
                                                                       SizedBox(height: 5.h),
                                                                       Row(
@@ -3420,60 +3259,6 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                           ),
                                                                           SizedBox(width: 20.w),
                                                                           Expanded(
-                                                                              child: PullDownButton(
-                                                                                itemBuilder: (context) => monthsList
-                                                                                    .map(
-                                                                                      (month) => PullDownMenuItem(
-                                                                                      onTap: () {
-                                                                                        platformPriceFocusNode.unfocus();
-                                                                                        textFocusNode.unfocus();
-                                                                                        setState(() {
-                                                                                          _selectedBillingMonth = month;
-                                                                                        });
-                                                                                      },
-                                                                                      title: monthNames[month - 1]
-                                                                                  ),
-                                                                                ).toList(),
-                                                                                buttonBuilder: (context, showMenu) => ElevatedButton(
-                                                                                  style: ElevatedButton.styleFrom(
-                                                                                    backgroundColor: Colors.white,
-                                                                                    shape: RoundedRectangleBorder(
-                                                                                      borderRadius: BorderRadius.circular(20),
-                                                                                    ),
-                                                                                    side: BorderSide(width: 2),
-                                                                                  ),
-                                                                                  onPressed: showMenu,
-                                                                                  child: Row(
-                                                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                                                    children: [
-                                                                                      Text(
-                                                                                          _selectedBillingMonth == null
-                                                                                              ? "Ay"
-                                                                                              : monthNames[_selectedBillingMonth! - 1],
-                                                                                          style: TextStyle(
-                                                                                              color: Colors.black
-                                                                                          )
-                                                                                      ),
-                                                                                      Icon(Icons.arrow_drop_down, color: Colors.black)
-                                                                                    ],
-                                                                                  ),
-                                                                                ),
-                                                                              )
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                      SizedBox(height: 10.h),
-                                                                      Text(
-                                                                          "Son Ödeme Tarihi",
-                                                                          style: GoogleFonts.montserrat(
-                                                                            fontSize: 15.sp,
-                                                                          )
-                                                                      ),
-                                                                      SizedBox(height: 5.h),
-                                                                      Row(
-                                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                                        children: [
-                                                                          Expanded(
                                                                             flex:1,
                                                                             child: PullDownButton(
                                                                               itemBuilder: (context) => daysList
@@ -3515,74 +3300,70 @@ class _OtherExpensesState extends State<OtherExpenses> {
                                                                               ),
                                                                             ),
                                                                           ),
-                                                                          SizedBox(width: 20.w),
-                                                                          Expanded(
-                                                                            flex:1,
-                                                                            child: Row(
-                                                                              mainAxisAlignment: MainAxisAlignment.end,
-                                                                              children: [
-                                                                                IconButton(
-                                                                                  onPressed: () {
-                                                                                    setState(() {
-                                                                                      int maxId = 0; // Initialize with the lowest possible value
-                                                                                      for (var invoice in invoices) {
-                                                                                        if (invoice.id > maxId) {
-                                                                                          maxId = invoice.id;
-                                                                                        }
-                                                                                      }
-                                                                                      int newId = maxId + 1;
-                                                                                      final text = textController.text.trim();
-                                                                                      final priceText = platformPriceController.text.trim();
-                                                                                      num parsedPrice = NumberFormat.decimalPattern('tr_TR').parse(priceText) ?? 0;
-                                                                                      double dprice = parsedPrice is double
-                                                                                          ? parsedPrice
-                                                                                          : parsedPrice.toDouble();
-                                                                                      String price = dprice.toStringAsFixed(2);
-                                                                                      final invoice = Invoice(
-                                                                                        id: newId,
-                                                                                        price: price,
-                                                                                        subCategory: 'Diğer',
-                                                                                        category: "Diğer Giderler",
-                                                                                        name: text,
-                                                                                        periodDate: formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                                                                                        dueDate: _selectedDueDay != null && _selectedBillingDay != null && _selectedBillingMonth != null
-                                                                                            ? formatDueDate(
-                                                                                            _selectedDueDay!,
-                                                                                            formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!)
-                                                                                        )
-                                                                                            : null,
-                                                                                        difference: "abo2",
-                                                                                      );
-                                                                                      onSave(invoice);
-                                                                                      if (text.isNotEmpty && priceText.isNotEmpty) {
-                                                                                        setState(() {
-                                                                                          isEditingListOther = false; // Add a corresponding entry for the new item
-                                                                                          textController.clear();
-                                                                                          platformPriceController.clear();
-                                                                                          isTextFormFieldVisibleOther = false;
-                                                                                          isAddButtonActiveOther = false;
-                                                                                        });
-                                                                                      }
-                                                                                    });
-                                                                                  },
-                                                                                  icon: const Icon(Icons.check_circle, size: 26),
-                                                                                ),
-                                                                                IconButton(
-                                                                                  onPressed: () {
-                                                                                    setState(() {
-                                                                                      isTextFormFieldVisibleOther = false;
-                                                                                      isAddButtonActiveOther = false;
-                                                                                      textController.clear();
-                                                                                      platformPriceController.clear();
-                                                                                    });
-                                                                                  },
-                                                                                  icon: const Icon(Icons.cancel, size: 26),
-                                                                                ),
-                                                                              ],
-                                                                            ),
-                                                                          )
                                                                         ],
-                                                                      )
+                                                                      ),
+                                                                      Row(
+                                                                        mainAxisAlignment: MainAxisAlignment.end,
+                                                                        children: [
+                                                                          IconButton(
+                                                                            onPressed: () {
+                                                                              setState(() {
+                                                                                int maxId = 0; // Initialize with the lowest possible value
+                                                                                for (var invoice in invoices) {
+                                                                                  if (invoice.id > maxId) {
+                                                                                    maxId = invoice.id;
+                                                                                  }
+                                                                                }
+                                                                                int newId = maxId + 1;
+                                                                                final text = textController.text.trim();
+                                                                                final priceText = platformPriceController.text.trim();
+                                                                                num parsedPrice = NumberFormat.decimalPattern('tr_TR').parse(priceText) ?? 0;
+                                                                                double dprice = parsedPrice is double
+                                                                                    ? parsedPrice
+                                                                                    : parsedPrice.toDouble();
+                                                                                String price = dprice.toStringAsFixed(2);
+                                                                                final invoice = Invoice(
+                                                                                  id: newId,
+                                                                                  price: price,
+                                                                                  subCategory: 'Diğer',
+                                                                                  category: "Diğer Giderler",
+                                                                                  name: text,
+                                                                                  periodDate: formatPeriodDate(_selectedBillingDay!),
+                                                                                  dueDate: _selectedDueDay != null && _selectedBillingDay != null && _selectedBillingMonth != null
+                                                                                      ? formatDueDate(
+                                                                                      _selectedDueDay!,
+                                                                                      formatPeriodDate(_selectedBillingDay!)
+                                                                                  )
+                                                                                      : null,
+                                                                                  difference: "abo2",
+                                                                                );
+                                                                                onSave(invoice);
+                                                                                if (text.isNotEmpty && priceText.isNotEmpty) {
+                                                                                  setState(() {
+                                                                                    isEditingListOther = false; // Add a corresponding entry for the new item
+                                                                                    textController.clear();
+                                                                                    platformPriceController.clear();
+                                                                                    isTextFormFieldVisibleOther = false;
+                                                                                    isAddButtonActiveOther = false;
+                                                                                  });
+                                                                                }
+                                                                              });
+                                                                            },
+                                                                            icon: const Icon(Icons.check_circle, size: 26),
+                                                                          ),
+                                                                          IconButton(
+                                                                            onPressed: () {
+                                                                              setState(() {
+                                                                                isTextFormFieldVisibleOther = false;
+                                                                                isAddButtonActiveOther = false;
+                                                                                textController.clear();
+                                                                                platformPriceController.clear();
+                                                                              });
+                                                                            },
+                                                                            icon: const Icon(Icons.cancel, size: 26),
+                                                                          ),
+                                                                        ],
+                                                                      ),
                                                                     ],
                                                                   ),
                                                                 ),

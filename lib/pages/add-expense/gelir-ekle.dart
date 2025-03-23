@@ -262,7 +262,19 @@ class _AddIncomeState extends State<AddIncome> {
     if (loadedIncomeData!.isNotEmpty) {
       Map<String, dynamic> decodedData = json.decode(loadedIncomeData);
       if (decodedData.containsKey(newSelectedTitle)) {
-        incomeController.text = decodedData[newSelectedTitle].join(', ');
+        List<dynamic> incomeList = decodedData[newSelectedTitle];
+        if (incomeList.isNotEmpty){
+          Map<String, dynamic> firstIncomeItem = incomeList[0];
+          String amount = firstIncomeItem['amount'];
+          incomeController.text = amount;
+          if (firstIncomeItem.containsKey('day')) {
+            selectedDay = firstIncomeItem['day'];
+          }
+        } else {
+          incomeController.text = "0,00";
+        }
+      } else {
+        incomeController.text = "0,00";
       }
     } else{
       incomeController.text = "0,00";

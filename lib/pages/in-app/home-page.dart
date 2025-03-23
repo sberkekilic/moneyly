@@ -267,7 +267,7 @@ class _HomePageState extends State<HomePage> {
         print('Final incomeMap: ${jsonEncode(incomeMap)}');
       }
       if (savedInvoicesJson != null) {
-        setState(() {
+        setState(() async {
           invoices = savedInvoicesJson.map((json) => Invoice.fromJson(jsonDecode(json))).toList();
           setState(() {
             invoices.forEach((invoice) {
@@ -290,9 +290,15 @@ class _HomePageState extends State<HomePage> {
           });
           categorizeInvoices(invoices);
           transactions.clear();
-          transactions = mergeInvoicesToTransactions(invoices, transactions);
-          if (startDate != null && endDate != null) {
 
+          if (startDate != null && endDate != null) {
+            await TransactionService.generateAndSaveTransactions();
+            // Load the transactions again from storage
+            List<Transaction> loadedTransactions = await TransactionService.loadTransactions();
+
+            setState(() {
+              transactions = mergeInvoicesToTransactions(invoices, loadedTransactions); // Update the transaction list with new data
+            });
             transactions = transactions.where((transaction) {
               print("COXK: $startDate and $endDate");
               final date = transaction.date;
@@ -308,18 +314,9 @@ class _HomePageState extends State<HomePage> {
       loadSharedPreferencesData(actualDesiredKeys);
     });
 
-    // Clear the existing transactions before loading new data
-    setState(() {
-      transactions.clear(); // Clear the existing transaction list
-    });
 
-    await TransactionService.generateAndSaveTransactions();
-    // Load the transactions again from storage
-    List<Transaction> loadedTransactions = await TransactionService.loadTransactions();
 
-    setState(() {
-      transactions = loadedTransactions; // Update the transaction list with new data
-    });
+
 
   }
   Future<void> saveInvoices() async {
@@ -334,7 +331,10 @@ class _HomePageState extends State<HomePage> {
           id: invoice.id,
           amount: double.parse(invoice.price),
           description: invoice.subCategory,
-          currency: invoice.name,
+          currency: 'TRY',
+          subcategory: invoice.subCategory,
+          category: invoice.category,
+          title: invoice.name,
           date: (invoice.dueDate != null && invoice.dueDate!.isNotEmpty)
               ? DateTime.parse(invoice.dueDate!)
               : (invoice.periodDate != null && invoice.periodDate!.isNotEmpty)
@@ -812,6 +812,18 @@ class _HomePageState extends State<HomePage> {
 
     return sum;
   }
+  double sumAmountForCategory(List<Transaction> transactions, String category) {
+    double sum = 0;
+
+    for (var transaction in transactions) {
+      if (transaction.category == category) {
+        sum += transaction.amount;
+      }
+    }
+
+    return sum;
+  }
+
   double calculateTotalAmount(List<Transaction> transactions) {
     return transactions.fold(0.0, (sum, transaction) => sum + transaction.amount);
   }
@@ -828,21 +840,24 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    double sumOfSubs = calculateCategorySum(invoices, 'Abonelikler');
+    double sumOfSubs = calculateCategorySum(invoices, 'Abonelikler'); // OLD SUM OF SUBS
+    double sumOfSubsTransaction = sumAmountForCategory(transactions, 'Abonelikler'); // NEW SUM OF SUBS
     double sumOfBills = calculateCategorySum(invoices, 'Faturalar');
+    double sumOfBillsTransaction = sumAmountForCategory(transactions, 'Faturalar'); // NEW SUM OF SUBS
     double sumOfOthers = calculateCategorySum(invoices, 'Diğer Giderler');
+    double sumOfOthersTransaction = sumAmountForCategory(transactions, 'Diğer Giderler'); // NEW SUM OF SUBS
     double outcomeValue = sumOfSubs+sumOfBills+sumOfOthers;
     double outcomeValue2 = calculateTotalAmount(transactions);
     double netProfit = incomeValue - outcomeValue2; //OLD NET PROFIT
-    double totalSurplusTRY = getTotalSurplusAmountByCurrency(transactions, 'TRY');
-    double totalDearthTRY = gettotalDearthAmountByCurrency(transactions, 'TRY');
-    double netProfitTransaction = totalSurplusTRY - totalDearthTRY;
+    double totalSurplusTRY = getTotalSurplusAmountByCurrency(transactions, 'TRY'); //NEW INCOME
+    double totalDearthTRY = gettotalDearthAmountByCurrency(transactions, 'TRY'); //NEW OUTCOME
+    double netProfitTransaction = totalSurplusTRY - totalDearthTRY; // NEW NET PROFIT
     String formattedIncomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(totalSurplusTRY);
     String formattedOutcomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(totalDearthTRY);
     String formattedProfitValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(netProfitTransaction);
-    String formattedSumOfSubs = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfSubs);
-    String formattedSumOfBills = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfBills);
-    String formattedSumOfOthers = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfOthers);
+    String formattedSumOfSubs = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfSubsTransaction);
+    String formattedSumOfBills = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfBillsTransaction);
+    String formattedSumOfOthers = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfOthersTransaction);
     String formattedSavingsValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(savingsValue);
     String formattedWishesValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(wishesValue);
     String formattedNeedsValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(needsValue);
@@ -853,7 +868,7 @@ class _HomePageState extends State<HomePage> {
 
 
     if (incomeValue != 0.0) {
-      double bolumDouble = netProfit / incomeValue;
+      double bolumDouble = netProfitTransaction / totalSurplusTRY;
       if (bolumDouble.isFinite) {
         bolum = (bolumDouble.abs() * 100).toInt();
         netProfit = incomeValue * bolumDouble;
@@ -934,33 +949,95 @@ class _HomePageState extends State<HomePage> {
     }
 
     void _showDateRangePicker() async {
+      final prefs = await SharedPreferences.getInstance();
+      final startDateStr = prefs.getString('startDate');
+      final endDateStr = prefs.getString('endDate');
+
+      // Parse stored dates (if available)
+      DateTime? startDate = startDateStr != null ? DateTime.parse(startDateStr) : null;
+      DateTime? endDate = endDateStr != null ? DateTime.parse(endDateStr) : null;
+
       showDialog(
         context: context,
         builder: (context) {
-          return AlertDialog(
-            title: Text('Pick a Date Range'),
-            content: SizedBox(
-              width: double.maxFinite,
-              height: 400,
-              child: SfDateRangePicker(
-                selectionMode: DateRangePickerSelectionMode.range,
-                onSelectionChanged: _onDateRangeSelected,
-                showActionButtons: true,
-                onSubmit: (value) {
-                 setState(() {
-                   Navigator.pop(context);
-                   _load();
-                 });
-                },
-                onCancel: () {
-                  Navigator.pop(context);
-                },
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Pick a Date Range',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 16),
+                  SfDateRangePicker(
+                    backgroundColor: Color(0xFFFCF5FD),
+                    selectionMode: DateRangePickerSelectionMode.range,
+                    onSelectionChanged: _onDateRangeSelected,
+                    showActionButtons: false,
+                    initialSelectedRange: startDate != null && endDate != null
+                        ? PickerDateRange(startDate, endDate)
+                        : null, // Set initial range if available
+                    headerStyle: DateRangePickerHeaderStyle(
+                      backgroundColor: Color(0xFFFCF5FD),
+                      textAlign: TextAlign.center,
+                      textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue),
+                    ),
+                    monthViewSettings: DateRangePickerMonthViewSettings(
+                      weekendDays: [6, 7],
+                      firstDayOfWeek: 1,
+                      showTrailingAndLeadingDates: true,
+                      viewHeaderStyle: DateRangePickerViewHeaderStyle(
+                        backgroundColor: Colors.blue.withOpacity(0.1),
+                        textStyle: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+                      ),
+                    ),
+                    selectionColor: Colors.blueAccent.withOpacity(0.5),
+                    startRangeSelectionColor: Colors.blue,
+                    endRangeSelectionColor: Colors.blue,
+                    rangeSelectionColor: Colors.blue.withOpacity(0.2),
+                    todayHighlightColor: Colors.red,
+                    toggleDaySelection: true,
+                    showNavigationArrow: true,
+                  ),
+                  SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('Cancel', style: TextStyle(color: Colors.grey[700])),
+                      ),
+                      SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            Navigator.pop(context);
+                            _load();
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: Text('Confirm', style: TextStyle(color: Colors.white)),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           );
         },
       );
     }
+
     Future<String> _formatDateRange() async{
       final prefs = await SharedPreferences.getInstance();
       final startDateStr = prefs.getString('startDate');
@@ -1048,7 +1125,7 @@ class _HomePageState extends State<HomePage> {
                               textAlign: TextAlign.center,
                             ),
                             Text(
-                              formattedProfitValue, // KALAN BİLGİSİ
+                              formattedProfitValue == "0,00" ? "---" : formattedProfitValue, // KALAN BİLGİSİ
                               style: GoogleFonts.montserrat(
                                 fontSize: 24.sp,
                                 fontWeight: FontWeight.bold,
@@ -1104,7 +1181,7 @@ class _HomePageState extends State<HomePage> {
                                 FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Text(
-                                    formattedIncomeValue, // GELİR BİLGİSİ
+                                    formattedIncomeValue == "0,00" ? "---" : formattedIncomeValue, // GELİR BİLGİSİ
                                     style: GoogleFonts.montserrat(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 20.sp,
@@ -1142,7 +1219,7 @@ class _HomePageState extends State<HomePage> {
                                 FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Text(
-                                    formattedOutcomeValue, // GİDER BİLGİSİ
+                                    formattedOutcomeValue == "0,00" ? "---" : formattedOutcomeValue, // GİDER BİLGİSİ
                                     style: GoogleFonts.montserrat(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 20.sp,
@@ -1187,7 +1264,9 @@ class _HomePageState extends State<HomePage> {
                                           animation: true,
                                           lineHeight: 9.h,
                                           animationDuration: 1000,
-                                          percent: (outcomeValue != 0) ? (sumOfSubs / outcomeValue) : 0,
+                                          percent: (totalDearthTRY != 0 && totalDearthTRY != null) ?
+                                          (sumOfSubsTransaction != null && sumOfSubsTransaction != 0 ? sumOfSubsTransaction / totalDearthTRY : 0)
+                                              : 0,
                                           barRadius: const Radius.circular(10),
                                           progressColor: const Color(0xFFFF8C00),
                                         ),
@@ -1195,7 +1274,7 @@ class _HomePageState extends State<HomePage> {
                                         FittedBox(
                                           fit: BoxFit.scaleDown,
                                           child: Text(
-                                            formattedSumOfSubs,
+                                            formattedSumOfSubs == "0,00" ? "---" : formattedSumOfSubs,
                                             style: GoogleFonts.montserrat(
                                               fontWeight: FontWeight.bold,
                                               fontSize: maxFontSize,
@@ -1233,7 +1312,9 @@ class _HomePageState extends State<HomePage> {
                                           animation: true,
                                           lineHeight: 9.h,
                                           animationDuration: 1000,
-                                          percent: (outcomeValue != 0) ? (sumOfBills / outcomeValue) : 0,
+                                          percent: (totalDearthTRY != 0 && totalDearthTRY != null) ?
+                                          (sumOfBillsTransaction != null && sumOfBillsTransaction != 0 ? sumOfBillsTransaction / totalDearthTRY : 0)
+                                              : 0,
                                           barRadius: const Radius.circular(10),
                                           progressColor: const Color(0xFFFFA500),
                                         ),
@@ -1241,7 +1322,7 @@ class _HomePageState extends State<HomePage> {
                                         FittedBox(
                                           fit: BoxFit.scaleDown,
                                           child: Text(
-                                            formattedSumOfBills,
+                                            formattedSumOfBills == "0,00" ? "---" : formattedSumOfBills,
                                             style: GoogleFonts.montserrat(
                                               fontWeight: FontWeight.bold,
                                               fontSize: maxFontSize,
@@ -1279,7 +1360,9 @@ class _HomePageState extends State<HomePage> {
                                           animation: true,
                                           lineHeight: 9.h,
                                           animationDuration: 1000,
-                                          percent: (outcomeValue != 0) ? (sumOfOthers / outcomeValue) : 0,
+                                          percent: (totalDearthTRY != 0 && totalDearthTRY != null) ?
+                                          (sumOfOthersTransaction != null && sumOfOthersTransaction != 0 ? sumOfOthersTransaction / totalDearthTRY : 0)
+                                              : 0,
                                           barRadius: const Radius.circular(10),
                                           progressColor: const Color(0xFFFFD700),
                                         ),
@@ -1287,7 +1370,7 @@ class _HomePageState extends State<HomePage> {
                                         FittedBox(
                                           fit: BoxFit.scaleDown,
                                           child: Text(
-                                            formattedSumOfOthers,
+                                            formattedSumOfOthers == "0,00" ? "---" : formattedSumOfOthers,
                                             style: GoogleFonts.montserrat(
                                               fontWeight: FontWeight.bold,
                                               fontSize: maxFontSize,
@@ -2255,6 +2338,9 @@ class _TransactionWidgetState extends State<TransactionWidget> {
             ? int.tryParse(_installmentController.text)
             : null,
         currency: currency,
+        subcategory: 'DEBUG_SUBCATEGORY',
+        category: 'DEBUG_CATEGORY',
+        title: 'DEBUG_TITLE',
         description: _descriptionController.text,
         isSurplus: isSurplus,
         isFromInvoice: isFromInvoice,
@@ -2284,18 +2370,6 @@ class _TransactionWidgetState extends State<TransactionWidget> {
       selectedDate = null;
     });
   }
-  void _editTransaction(Transaction transaction) {
-    setState(() {
-      editingTransactionId = transaction.id;
-      _amountController.text = transaction.amount.toString();
-      _descriptionController.text = transaction.description;
-      _installmentController.text = transaction.installment?.toString() ?? '';
-      currency = transaction.currency;
-      isSurplus = transaction.isSurplus;
-      selectedDate = transaction.initialInstallmentDate;
-    });
-    _showEditTransactionDialog();
-  }
   Future<void> _pickDate() async {
     DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -2310,222 +2384,351 @@ class _TransactionWidgetState extends State<TransactionWidget> {
     }
   }
   void _showAddTransactionDialog() {
+    final _formKey = GlobalKey<FormState>();
+
+    // Controllers for the text fields
+    TextEditingController _amountController = TextEditingController();
+    TextEditingController _descriptionController = TextEditingController();
+    TextEditingController _installmentController = TextEditingController();
+
+    // Default values for variables
+    DateTime? selectedDate = DateTime.now();
+    bool isSurplus = false;
+    bool isFromInvoice = false;
+    String currency = 'USD';
+    String selectedCategory = 'Abonelikler';  // Default category
+    String selectedSubcategory = 'TV';  // Default subcategory
+
+    final Map<String, List<String>> categoryMap = {
+      "Abonelikler": ["TV", "Oyun", "Müzik"],
+      "Faturalar": ["Ev Faturaları", "İnternet", "Telefon"],
+      "Diğer Giderler": ["Kira", "Mutfak", "Yeme İçme", "Eğlence", "Diğer"],
+      "Gelir": ["İş", "Burs", "Emekli", "Maaş"],
+    };
+
+    void _pickDate(BuildContext context, Function(DateTime) onDateSelected) async {
+      DateTime? picked = await showDatePicker(
+        context: context,
+        initialDate: selectedDate ?? DateTime.now(),
+        firstDate: DateTime(2000),
+        lastDate: DateTime(2050),
+      );
+      if (picked != null) {
+        onDateSelected(picked);
+      }
+    }
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Add Transaction'),
-          content: SingleChildScrollView(
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextFormField(
-                    controller: _amountController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(labelText: 'Amount'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter an amount';
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: _descriptionController,
-                    decoration: InputDecoration(labelText: 'Description'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a description';
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: _installmentController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(labelText: 'Installment (optional)'),
-                  ),
-                  DropdownButtonFormField<String>(
-                    value: currency,
-                    items: ['USD', 'EUR', 'TRY']
-                        .map((currency) => DropdownMenuItem(
-                      value: currency,
-                      child: Text(currency),
-                    ))
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        currency = value ?? 'USD';
-                      });
-                    },
-                    decoration: InputDecoration(labelText: 'Currency'),
-                  ),
-                  Row(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          title: Text('Add Transaction', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          content: StatefulBuilder(
+            builder: (context, setState) {
+              return SingleChildScrollView(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Surplus'),
-                      Switch(
-                        value: isSurplus,
-                        onChanged: (value) {
-                          setState(() {
-                            isSurplus = value;
-                          });
-                        },
+                      _buildTextField(_amountController, 'Amount', keyboardType: TextInputType.number),
+                      _buildTextField(_descriptionController, 'Description'),
+                      _buildTextField(_installmentController, 'Installment (optional)', keyboardType: TextInputType.number),
+
+                      SizedBox(height: 10),
+                      _buildDropdown(
+                        'Currency',
+                        currency,
+                        ['USD', 'EUR', 'TRY'],
+                            (value) => setState(() => currency = value!),
                       ),
+
+                      SizedBox(height: 10),
+                      _buildDropdown(
+                        'Category',
+                        selectedCategory,
+                        categoryMap.keys.toList(),
+                            (value) => setState(() {
+                          selectedCategory = value!;
+                          selectedSubcategory = categoryMap[selectedCategory]!.first;
+                        }),
+                      ),
+
+                      SizedBox(height: 10),
+                      _buildDropdown(
+                        'Subcategory',
+                        selectedSubcategory,
+                        categoryMap[selectedCategory]!,
+                            (value) => setState(() => selectedSubcategory = value!),
+                      ),
+
+                      SizedBox(height: 10),
+                      _buildSwitchTile('Surplus', isSurplus, (value) => setState(() => isSurplus = value)),
+                      _buildSwitchTile('From Invoice', isFromInvoice, (value) => setState(() => isFromInvoice = value)),
+
+                      SizedBox(height: 10),
+                      _buildDateTile('Date', selectedDate, () => _pickDate(context, (date) => setState(() => selectedDate = date))),
                     ],
                   ),
-                  Row(
-                    children: [
-                      Text(selectedDate != null
-                          ? 'Date: ${DateFormat.yMMMd().format(selectedDate!)}'
-                          : 'Pick Installment Date'),
-                      IconButton(
-                        icon: Icon(Icons.calendar_today),
-                        onPressed: _pickDate,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-              },
-              child: Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Cancel', style: TextStyle(color: Colors.redAccent)),
             ),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
               onPressed: () {
                 if (_formKey.currentState!.validate()) {
-                  _saveTransaction();
-                  Navigator.of(context).pop(); // Close dialog
+                  // Save the transaction
+                  Transaction newTransaction = Transaction(
+                    id: DateTime.now().millisecondsSinceEpoch,
+                    amount: double.parse(_amountController.text),
+                    description: _descriptionController.text,
+                    title: _descriptionController.text,  // You can set a title based on description or another field
+                    installment: _installmentController.text.isNotEmpty
+                        ? int.tryParse(_installmentController.text)
+                        : null,
+                    currency: currency,
+                    isSurplus: isSurplus,
+                    isFromInvoice: isFromInvoice,
+                    category: selectedCategory,
+                    subcategory: selectedSubcategory,
+                    date: selectedDate!,
+                    initialInstallmentDate: selectedDate, // Assuming it's the same as the selected date
+                  );
+
+                  // Call the save function (this should be implemented in your service layer)
+                  TransactionService.addTransaction(newTransaction);
+                  Navigator.of(context).pop(); // Close the dialog
                 }
               },
-              child: Text('Save'),
+              child: Text('Save', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
       },
     );
   }
-  void _showEditTransactionDialog() {
+  void _showEditTransactionDialog(Transaction transaction) {
+    final _formKey = GlobalKey<FormState>();
+
+    TextEditingController _amountController = TextEditingController(text: transaction.amount.toString());
+    TextEditingController _descriptionController = TextEditingController(text: transaction.description);
+    TextEditingController _titleController = TextEditingController(text: transaction.title);
+    TextEditingController _installmentController = TextEditingController(text: transaction.installment?.toString() ?? '');
+    DateTime? selectedDate = transaction.date;
+    DateTime? initialInstallmentDate = transaction.initialInstallmentDate;
+    bool isSurplus = transaction.isSurplus;
+    bool isFromInvoice = transaction.isFromInvoice;
+    String currency = transaction.currency;
+    String selectedCategory = transaction.category;
+    String selectedSubcategory = transaction.subcategory;
+
+    final Map<String, List<String>> categoryMap = {
+      "Abonelikler": ["TV", "Oyun", "Müzik"],
+      "Faturalar": ["Ev Faturaları", "İnternet", "Telefon"],
+      "Diğer Giderler": ["Kira", "Mutfak", "Yeme İçme", "Eğlence", "Diğer"],
+      "Gelir": ["İş", "Burs", "Emekli", "Maaş"],
+    };
+
+    void _pickDate(BuildContext context, Function(DateTime) onDateSelected) async {
+      DateTime? picked = await showDatePicker(
+        context: context,
+        initialDate: selectedDate ?? DateTime.now(),
+        firstDate: DateTime(2000),
+        lastDate: DateTime(2050),
+      );
+      if (picked != null) {
+        onDateSelected(picked);
+      }
+    }
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Edit Transaction'),
-          content: SingleChildScrollView(
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextFormField(
-                    controller: _amountController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(labelText: 'Amount'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter an amount';
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: _descriptionController,
-                    decoration: InputDecoration(labelText: 'Description'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a description';
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: _installmentController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(labelText: 'Installment (optional)'),
-                  ),
-                  DropdownButtonFormField<String>(
-                    value: currency,
-                    items: ['USD', 'EUR', 'TRY']
-                        .map((currency) => DropdownMenuItem(
-                      value: currency,
-                      child: Text(currency),
-                    ))
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        currency = value ?? 'USD';
-                      });
-                    },
-                    decoration: InputDecoration(labelText: 'Currency'),
-                  ),
-                  Row(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          title: Text('Edit Transaction', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          content: StatefulBuilder(
+            builder: (context, setState) {
+              return SingleChildScrollView(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Surplus'),
-                      Switch(
-                        value: isSurplus,
-                        onChanged: (value) {
-                          setState(() {
-                            isSurplus = value;
-                          });
-                        },
+                      _buildTextField(_titleController, 'Title'),
+                      _buildTextField(_amountController, 'Amount', keyboardType: TextInputType.number),
+                      _buildTextField(_descriptionController, 'Description'),
+                      _buildTextField(_installmentController, 'Installment (optional)', keyboardType: TextInputType.number),
+
+                      SizedBox(height: 10),
+                      _buildDropdown(
+                        'Currency',
+                        currency,
+                        ['USD', 'EUR', 'TRY'],
+                            (value) => setState(() => currency = value!),
                       ),
+
+                      SizedBox(height: 10),
+                      _buildDropdown(
+                        'Category',
+                        selectedCategory,
+                        categoryMap.keys.toList(),
+                            (value) => setState(() {
+                          selectedCategory = value!;
+                          selectedSubcategory = categoryMap[selectedCategory]!.first;
+                        }),
+                      ),
+
+                      SizedBox(height: 10),
+                      _buildDropdown(
+                        'Subcategory',
+                        selectedSubcategory,
+                        categoryMap[selectedCategory]!,
+                            (value) => setState(() => selectedSubcategory = value!),
+                      ),
+
+                      SizedBox(height: 10),
+                      _buildSwitchTile('Surplus', isSurplus, (value) => setState(() => isSurplus = value)),
+                      _buildSwitchTile('From Invoice', isFromInvoice, (value) => setState(() => isFromInvoice = value)),
+
+                      SizedBox(height: 10),
+                      _buildDateTile('Date', selectedDate, () => _pickDate(context, (date) => setState(() => selectedDate = date))),
+                      _buildDateTile('Installment Date', initialInstallmentDate, () => _pickDate(context, (date) => setState(() => initialInstallmentDate = date))),
                     ],
                   ),
-                  Row(
-                    children: [
-                      Text(selectedDate != null
-                          ? 'Date: ${DateFormat.yMMMd().format(selectedDate!)}'
-                          : 'Pick Installment Date'),
-                      IconButton(
-                        icon: Icon(Icons.calendar_today),
-                        onPressed: _pickDate,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-              },
-              child: Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Cancel', style: TextStyle(color: Colors.redAccent)),
             ),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
               onPressed: () {
-                if (_formKey.currentState!.validate()) {
-                  // Find the transaction with the editingTransactionId
-                  Transaction transaction = transactions.firstWhere((transaction) => transaction.id == editingTransactionId);
-                  // Update the transaction with new values
-                  setState(() {
-                    transaction.amount = double.parse(_amountController.text);
-                    transaction.description = _descriptionController.text;
-                    transaction.installment = _installmentController.text.isNotEmpty
-                    ? int.tryParse(_installmentController.text)
-                        : null;
-                    transaction.currency = currency;
-                    transaction.isSurplus = isSurplus;
-                    transaction.initialInstallmentDate = selectedDate;
-                  });
-
-                  // Save the updated transaction (replace this with your save logic)
-                  TransactionService.updateTransaction(transaction);
-                  Navigator.of(context).pop(); // Close dialog
+                if (!_formKey.currentState!.validate()) {
+                  print("Form validation failed!");
+                  return;
                 }
+
+                setState(() {
+                  transaction.amount = double.parse(_amountController.text);
+                  transaction.description = _descriptionController.text;
+                  transaction.title = _titleController.text;
+                  transaction.currency = currency;
+                  transaction.isSurplus = isSurplus;
+                  transaction.isFromInvoice = isFromInvoice;
+                  transaction.category = selectedCategory;
+                  transaction.subcategory = selectedSubcategory;
+                  transaction.date = selectedDate!;
+                  transaction.initialInstallmentDate = initialInstallmentDate;
+
+                  // Ensure installment is properly set
+                  transaction.installment = _installmentController.text.isNotEmpty
+                      ? int.tryParse(_installmentController.text)
+                      : null;
+
+                  if (_installmentController.text.trim().isEmpty) {
+                    transaction.installment = null;
+                  }
+                });
+
+                TransactionService.updateTransaction(transaction);
+                Navigator.of(context).pop();
               },
-              child: Text('Save'),
+
+              child: Text('Save', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
       },
+    );
+  }
+  Widget _buildTextField(TextEditingController controller, String label, {TextInputType keyboardType = TextInputType.text}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          labelText: label,
+          filled: true,
+          fillColor: Colors.grey[100],
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+          validator: (value) {
+            if (label == "Installment (optional)") {
+              // Allow empty value for installment
+              if (value == null || value.isEmpty) {
+                return null; // No error if empty
+              }
+              // Check if the value is a valid number
+              final int? parsedValue = int.tryParse(value);
+              if (parsedValue == null) {
+                return 'Please enter a valid number for $label';
+              }
+            } else {
+              // For other fields, enforce required validation
+              if (value == null || value.isEmpty) {
+                return 'Please enter $label';
+              }
+            }
+            return null;
+          }
+      ),
+    );
+  }
+  Widget _buildDropdown(String label, String value, List<String> items, Function(String?) onChanged) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: Colors.grey[100],
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+  Widget _buildSwitchTile(String label, bool value, Function(bool) onChanged) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(fontSize: 16)),
+          Switch(value: value, onChanged: onChanged),
+        ],
+      ),
+    );
+  }
+  Widget _buildDateTile(String label, DateTime? date, Function() onTap) {
+    return ListTile(
+      title: Text(date != null ? '$label: ${DateFormat.yMMMd().format(date)}' : 'Pick $label'),
+      leading: Icon(Icons.calendar_today, color: Colors.blueAccent),
+      tileColor: Colors.grey[100],
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      onTap: onTap,
     );
   }
 
@@ -2537,7 +2740,6 @@ class _TransactionWidgetState extends State<TransactionWidget> {
     }
     return null; // Return null if no start date is found
   }
-
   Future<DateTime?> _getEndDate() async {
     final prefs = await SharedPreferences.getInstance();
     final endDateString = prefs.getString('endDate');
@@ -2615,6 +2817,9 @@ class _TransactionWidgetState extends State<TransactionWidget> {
             amount: amount,
             installment: null,
             currency: 'TRY',
+            subcategory: 'subcategory2',
+            category: 'category2',
+            title: 'title2',
             description: 'Income',
             isSurplus: true,
             isFromInvoice: false,
@@ -2683,7 +2888,7 @@ class _TransactionWidgetState extends State<TransactionWidget> {
                                         label: 'Delete',
                                       ),
                                       SlidableAction(
-                                        onPressed: (context) => _editTransaction(transaction),
+                                        onPressed: (context) => _showEditTransactionDialog(transaction),
                                         borderRadius: BorderRadius.circular(10),
                                         backgroundColor: Color(0xFF21B7CA),
                                         foregroundColor: Colors.white,
