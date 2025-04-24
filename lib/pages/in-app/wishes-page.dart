@@ -53,17 +53,19 @@ class _WishesPageState extends State<WishesPage> {
   double totalCurrencySum = 0.0;
   int selectedCurrencyIndex = 0;
 
-  Future<void> addBankData(String bankName, Map<String, double> goal, String currency, String selectedSymbol) async {
+  Future<void> addBankData(String bankName, String currency, String selectedSymbol, bool isDebit, double creditLimit, int cutoffDate) async {
     final prefs = await SharedPreferences.getInstance();
     print("AAAAAA 1 : $_nextId");
     final bankData = {
       'id': _nextId++,
       'bankName': bankName,
-      'goal': goal,
       'selectedTab': currency,
       'selectedSymbol': selectedSymbol,
       'isEditing': false,
       'isAddButtonActive': false,
+      'isDebit' : isDebit,
+      'creditLimit': creditLimit,
+      'cutoffDate': cutoffDate,
     };
     print("AAAAAA 2 : $_nextId");
     bankDataList.add(bankData);
@@ -74,6 +76,102 @@ class _WishesPageState extends State<WishesPage> {
       prefs.setString('bankDataList', bankDataListJson);
       prefs.setStringList('selectedTabList', selectedTabList);
     });
+  }
+  void _showAddBankDialog() {
+    TextEditingController bankNameController = TextEditingController();
+    TextEditingController creditLimitController = TextEditingController();
+    String selectedCurrency = dropDownValue;
+    bool isDebit = false; //Varsayılan banka hesabı
+    int selectedCutoffDate = 1; //Varsayılan hesap kesim günü
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                title: Text("Add Bank"),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: bankNameController,
+                      decoration: InputDecoration(labelText: "Bank Name"),
+                    ),
+                    DropdownButton<String>(
+                      value: selectedCurrency,
+                      items: ["USD", "EUR", "Türk Lirası"] // Modify based on available currencies
+                          .map((String currency) => DropdownMenuItem(
+                        value: currency,
+                        child: Text(currency),
+                      ))
+                          .toList(),
+                      onChanged: (value) {
+                        selectedCurrency = value!;
+                      },
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(isDebit ? "Debit Account" : "Credit Account"),
+                        Switch(
+                          value: isDebit, // False = Debit, True = Credit
+                          onChanged: (value) {
+                            setState(() {
+                              isDebit = value;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                    if (!isDebit) ...[ // Show only for credit accounts
+                      TextField(
+                        controller: creditLimitController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(labelText: "Credit Limit"),
+                      ),
+                      DropdownButton<int>(
+                        value: selectedCutoffDate,
+                        items: List.generate(28, (index) => index + 1)
+                            .map((day) => DropdownMenuItem(
+                          value: day,
+                          child: Text("Cutoff Date: $day"),
+                        ))
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedCutoffDate = value!;
+                          });
+                        },
+                      ),
+                    ]
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text("Cancel"),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      String bankName = bankNameController.text.trim();
+                      double creditLimit = isDebit ? 0.0 : (double.tryParse(creditLimitController.text) ?? 0.0);
+
+                      if (bankName.isNotEmpty) {
+                        addBankData(bankName, selectedCurrency, "", isDebit, creditLimit, selectedCutoffDate);
+                        Navigator.of(context).pop();
+                      }
+                    },
+                    child: Text("Add"),
+                  ),
+                ],
+              );
+            },
+        );
+      },
+    );
   }
   Future<void> deleteBankData(int id) async {
     final prefs = await SharedPreferences.getInstance();
@@ -813,25 +911,22 @@ class _WishesPageState extends State<WishesPage> {
                         child: InkWell(
                           onTap: () {
                             setState(() {
-                              // Add a new bank directly with default name and 0 percent
-                              final bankName = "Bank Name ${bankDataList.length + 1}";
-                              print("TEK ADDBANKDATA ÇALIŞTI");
-                              addBankData(bankName, {'Türk Lirası':0.0}, dropDownValue, "");
+                              _showAddBankDialog();
                             });
                           },
                           child: SizedBox(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text("Banka Ekle",
-                                    style: GoogleFonts.montserrat(
-                                        color: Colors.black,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.normal)),
-                                Icon(Icons.add_circle),
-                              ],
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text("Banka Ekle",
+                                      style: GoogleFonts.montserrat(
+                                          color: Colors.black,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.normal)),
+                                  Icon(Icons.add_circle),
+                                ],
+                              ),
                             ),
-                          ),
                         ),
                       ),
                     ),

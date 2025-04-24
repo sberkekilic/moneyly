@@ -7,6 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttericon/font_awesome_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:moneyly/models/transaction.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:pull_down_button/pull_down_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,6 +23,10 @@ class OutcomePage extends StatefulWidget {
 }
 
 class _OutcomePageState extends State<OutcomePage> {
+  List<Map<String, dynamic>> bankAccounts = [];
+  Map<String, dynamic>? selectedAccount;
+  bool isLoading = true; // Flag to indicate loading state
+
   final List<Invoice> invoices = [];
   int biggestIndex = 0;
   final TextEditingController textController = TextEditingController();
@@ -134,6 +139,9 @@ class _OutcomePageState extends State<OutcomePage> {
     'Aralık',
   ];
 
+  Map<String, List<Map<String, dynamic>>> userCategories = {};
+  final TextEditingController subcategoryController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -216,6 +224,9 @@ class _OutcomePageState extends State<OutcomePage> {
     final ab37 = prefs.getStringList('entertainmentPriceList2') ?? [];
     final ab38 = prefs.getStringList('otherPriceList2') ?? [];
     final ab39 = prefs.getStringList('invoices') ?? [];
+    final String? data = prefs.getString("userCategories");
+    String? accountDataListJson = prefs.getString('accountDataList');
+    String? accountData = prefs.getString('selectedAccount');
     setState(() {
       selectedTitle = labelForOption(SelectedOption.values[ab1]);
       sumOfTV = ab3;
@@ -263,6 +274,83 @@ class _OutcomePageState extends State<OutcomePage> {
           print("OUTCOME-PAGE 3| invoices:${invoices}");
         } catch (e) {
           print("Error: $e");
+        }
+      }
+      if (data != null) {
+        setState(() {
+          userCategories = Map<String, List<Map<String, dynamic>>>.from(
+            (jsonDecode(data) as Map).map((key, value) =>
+                MapEntry(key as String, List<Map<String, dynamic>>.from(value))),
+          );
+        });
+      }
+      // Handle account data list
+      if (accountDataListJson != null) {
+        try {
+          List<Map<String, dynamic>> decodedData = List<Map<String, dynamic>>.from(jsonDecode(accountDataListJson));
+          print('Tüm Hesaplar: $decodedData');
+          bankAccounts = decodedData.toSet().toList();
+
+          if (accountData != null) {
+            final Map<String, dynamic> accountFromPrefs = Map<String, dynamic>.from(jsonDecode(accountData));
+            print('Saved account data: $accountFromPrefs');
+
+            // Only proceed if we have both bankId and accountId
+            if (accountFromPrefs['bankId'] != null && accountFromPrefs['accountId'] != null) {
+              // Find the bank first
+              final bank = bankAccounts.firstWhere(
+                    (bank) => bank['bankId'] == accountFromPrefs['bankId'],
+                orElse: () => {},
+              );
+
+              if (bank.isNotEmpty) {
+                // Then find the specific account within that bank
+                final accounts = bank['accounts'] as List?;
+                if (accounts != null) {
+                  final account = accounts.firstWhere(
+                        (acc) => acc['accountId'] == accountFromPrefs['accountId'],
+                    orElse: () => {},
+                  );
+
+                  if (account.isNotEmpty) {
+                    // Combine bank info with account info
+                    selectedAccount = {
+                      ...account,
+                      'bankId': bank['bankId'],
+                      'bankName': bank['bankName'],
+                      // Include any other bank fields you need
+                    };
+                  }
+                }
+              }
+            }
+          }
+
+          setState(() => isLoading = false);
+        } catch (e) {
+          print('Error decoding account data: $e');
+          setState(() => isLoading = false);
+        }
+      } else {
+        setState(() => isLoading = false);
+      }
+
+      print('Seçili hesap: $accountData');
+      print('Selected account1: $selectedAccount');
+
+      if (accountData != null && selectedAccount == null) {
+        final savedData = jsonDecode(accountData);
+
+        // Check if accountId exists and is not null
+        if (savedData['accountId'] != null) {
+          final account = _findAccountById(savedData['accountId']);
+          if (account != null) {
+            setState(() {
+              selectedAccount = account;
+            });
+          }
+        } else {
+          print('Warning: savedData contains null accountId: $savedData');
         }
       }
     });
@@ -371,25 +459,39 @@ class _OutcomePageState extends State<OutcomePage> {
     return sum;
   }
 
-  double calculateCategorySum(List<Invoice> invoices, String category) {
-    double sum = 0.0;
+  double calculateTotalPrice() {
+    double total = 0.0;
 
-    for (var invoice in invoices) {
-      if (invoice.category == category) {
-        double price = double.parse(invoice.price);
-        sum += price;
+    userCategories.forEach((category, entries) {
+      for (var entry in entries) {
+        final price = double.tryParse(entry['amount'].toString());
+        if (price != null) {
+          total += price;
+        }
+      }
+    });
+
+    return total;
+  }
+
+  double calculateCategoryTotal(String category) {
+    double total = 0.0;
+
+    if (userCategories.containsKey(category)) {
+      for (var entry in userCategories[category]!) {
+        final price = double.tryParse(entry['amount'].toString());
+        if (price != null) total += price;
       }
     }
 
-    return sum;
+    return total;
   }
+
+
 
   @override
   Widget build(BuildContext context) {
-    sumOfSubs = calculateCategorySum(invoices, 'Abonelikler');
-    sumOfBills = calculateCategorySum(invoices, 'Faturalar');
-    sumOfOthers = calculateCategorySum(invoices, 'Diğer Giderler');
-    outcomeValue = sumOfSubs+sumOfBills+sumOfOthers;
+    outcomeValue = calculateTotalPrice();
     subsPercent = (outcomeValue != 0) ? ((sumOfSubs / outcomeValue) * 100).round() : 0;
     billsPercent = (outcomeValue != 0) ? ((sumOfBills / outcomeValue) * 100).round() : 0;
     othersPercent = (outcomeValue != 0) ? ((sumOfOthers / outcomeValue) * 100).round() : 0;
@@ -505,523 +607,355 @@ class _OutcomePageState extends State<OutcomePage> {
       return sonOdeme = '${calculatedDate.year}-${calculatedDate.month.toString().padLeft(2, '0')}-${calculatedDate.day.toString().padLeft(2, '0')}';
     }
 
-    void _showEditDialog(BuildContext context, int index, int page, int orderIndex, int id) {
-      String caterogyName = "";
-      if(page == 1){
-        switch (orderIndex) {
-          case 1:
-            caterogyName = "TV";
-            break;
-          case 2:
-            caterogyName = "Gaming";
-            break;
-          case 3:
-            caterogyName = "Music";
-            break;
-        }
-      } else if (page == 2){
-        switch (orderIndex) {
-          case 1:
-            caterogyName = "Home Bills";
-            break;
-          case 2:
-            caterogyName = "Internet";
-            break;
-          case 3:
-            caterogyName = "Phone";
-            break;
-        }
-      } else if (page == 3){
-        switch (orderIndex) {
-          case 1:
-            caterogyName = "Rent";
-            break;
-          case 2:
-            caterogyName = "Kitchen";
-            break;
-          case 3:
-            caterogyName = "Catering";
-            break;
-          case 4:
-            caterogyName = "Entertainment";
-            break;
-          case 5:
-            caterogyName = "Other";
-            break;
-        }
+    Future<void> _saveSelectedAccount(Map<String, dynamic> account) async {
+      // First get the actual account ID - might be nested in an 'accounts' array
+      final dynamic accountId = account['accountId'] ??
+          (account['accounts'] as List?)?.firstOrNull?['accountId'];
+
+      // Get bank ID - might be at top level
+      final dynamic bankId = account['bankId'];
+
+      if (accountId == null || bankId == null) {
+        print('Cannot save account - missing IDs. Full account data: $account');
+        return;
       }
 
-      TextEditingController selectedEditController = TextEditingController();
-      TextEditingController selectedPriceController = TextEditingController();
-      Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
-      _selectedBillingMonth = invoice.getPeriodMonth();
-      _selectedBillingDay = invoice.getPeriodDay();
-      _selectedDueDay = invoice.getDueDay();
-      invoice.periodDate = formatPeriodDate(_selectedBillingDay ?? 0, _selectedBillingMonth ?? 0);
-      if (_selectedDueDay != null) {
-        invoice.dueDate = formatDueDate(_selectedDueDay, invoice.periodDate);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('selectedAccount', jsonEncode({
+        'accountId': accountId,
+        'bankId': bankId,
+      }));
+      print('Successfully saved account: $accountId from bank: $bankId');
+    }
+
+    Future<void> _saveToPrefs() async {
+      final prefs = await SharedPreferences.getInstance();
+      try {
+        final jsonString = jsonEncode(bankAccounts);
+        await prefs.setString('accountDataList', jsonString);
+        print('[DEBUG] Saved accountDataList: $jsonString');
+      } catch (e) {
+        print('[ERROR] Failed to save accountDataList: $e');
       }
+    }
+
+    Future<void> _saveCategoriesToPrefs() async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('userCategories', jsonEncode(userCategories));
+    }
+
+    void _addSubcategory(String category, String subcategory) async {
+      // Create a new subcategory entry
+      Map<String, dynamic> entry = {
+        "subcategory": subcategory,
+      };
+
+      // Add the new subcategory to the category
+      if (userCategories.containsKey(category)) {
+        userCategories[category]!.add(entry);
+      } else {
+        userCategories[category] = [entry];
+      }
+
+      setState(() {});
+      await _saveToPrefs();
+    }
+
+
+    void _addEntry(String category, String subcategory, String title, double amount) async {
+      print('[DEBUG] Starting _addEntry');
+      print('[DEBUG] Selected Account: ${selectedAccount?['accountId']}');
+      print('[DEBUG] BankAccounts before: ${jsonEncode(bankAccounts)}');
+      // First ensure we have a selected account
+      if (selectedAccount == null) {
+        print('No account selected');
+        return;
+      }
+      // Create transaction entry
+      final transaction = Transaction(
+          transactionId: DateTime.now().millisecondsSinceEpoch,
+          date: DateTime.now(),
+          amount: amount,
+          isFromInvoice: false,
+          currency: 'TRY',
+          subcategory: subcategory,
+          category: category,
+          description: 'deneme description',
+          title: title,
+          isSurplus: false,
+          initialInstallmentDate: null
+      );
+
+      // Update the selected account's transactions
       setState(() {
-        _updateDaysListForSelectedMonth();
+        print('[DEBUG] Starting account update');
+        // Find the account in bankAccounts
+        for (var bank in bankAccounts) {
+          print('[DEBUG] Checking bank: ${bank['bankId']}');
+          if (bank['bankId'] == selectedAccount!['bankId']) {
+            print('[DEBUG] Found matching bank');
+            final accounts = bank['accounts'] as List?;
+            if (accounts != null) {
+              for (var account in accounts) {
+                print('[DEBUG] Checking account: ${account['accountId']}');
+                if (account['accountId'] == selectedAccount!['accountId']) {
+                  print('[DEBUG] Found matching account');
+                  // Initialize transactions list if null
+                  account['transactions'] ??= [];
+                  print('[DEBUG] Transactions before add: ${account['transactions'].length}');
+                  // Add new transaction
+                  account['transactions'].add(transaction);
+                  print('[DEBUG] Transactions after add: ${account['transactions'].length}');
+                  // Update the balance
+                  account['balance'] = (account['balance'] ?? 0.0) + amount;
+                  print('[DEBUG] New balance: ${account['balance']}');
+
+                  // Update the selectedAccount reference
+                  selectedAccount = {
+                    ...account,
+                    'bankId': bank['bankId'],
+                    'bankName': bank['bankName'],
+                    'currency': bank['currency'],
+                    'isDebit': bank['isDebit'],
+                    'creditLimit': bank['creditLimit'],
+                    'cutoffDate': bank['cutoffDate'],
+                  };
+                  print('[DEBUG] Updated selectedAccount');
+                  break;
+                }
+              }
+            }
+          }
+        }
       });
 
-      if(page == 1){
-        switch (orderIndex) {
-          case 1:
-            TextEditingController editController =
-            TextEditingController(text: invoice.name);
-            TextEditingController priceController =
-            TextEditingController(text: invoice.price);
-            selectedEditController = editController;
-            selectedPriceController = priceController;
-            break;
-          case 2:
-            TextEditingController NDeditController =
-            TextEditingController(text: gameTitleList[index]);
-            TextEditingController NDpriceController =
-            TextEditingController(text: gamePriceList[index]);
-            selectedEditController = NDeditController;
-            selectedPriceController = NDpriceController;
-            break;
-          case 3:
-            TextEditingController RDeditController =
-            TextEditingController(text: musicTitleList[index]);
-            TextEditingController RDpriceController =
-            TextEditingController(text: musicPriceList[index]);
-            selectedEditController = RDeditController;
-            selectedPriceController = RDpriceController;
-            break;
-        }
-      } else if (page == 2){
-        switch (orderIndex) {
-          case 1:
-            TextEditingController editController =
-            TextEditingController(text: invoice.name);
-            TextEditingController priceController =
-            TextEditingController(text: invoice.price);
-            selectedEditController = editController;
-            selectedPriceController = priceController;
-            break;
-          case 2:
-            TextEditingController NDeditController =
-            TextEditingController(text: internetTitleList[index]);
-            TextEditingController NDpriceController =
-            TextEditingController(text: internetPriceList[index]);
-            selectedEditController = NDeditController;
-            selectedPriceController = NDpriceController;
-            break;
-          case 3:
-            TextEditingController RDeditController =
-            TextEditingController(text: phoneTitleList[index]);
-            TextEditingController RDpriceController =
-            TextEditingController(text: phonePriceList[index]);
-            selectedEditController = RDeditController;
-            selectedPriceController = RDpriceController;
-            break;
-        }
-      } else if (page == 3){
-        switch (orderIndex) {
-          case 1:
-            TextEditingController editController =
-            TextEditingController(text: invoice.name);
-            TextEditingController priceController =
-            TextEditingController(text: invoice.price);
-            selectedEditController = editController;
-            selectedPriceController = priceController;
-            break;
-          case 2:
-            TextEditingController NDeditController =
-            TextEditingController(text: kitchenTitleList[index]);
-            TextEditingController NDpriceController =
-            TextEditingController(text: kitchenPriceList[index]);
-            selectedEditController = NDeditController;
-            selectedPriceController = NDpriceController;
-            break;
-          case 3:
-            TextEditingController RDeditController =
-            TextEditingController(text: cateringTitleList[index]);
-            TextEditingController RDpriceController =
-            TextEditingController(text: cateringPriceList[index]);
-            selectedEditController = RDeditController;
-            selectedPriceController = RDpriceController;
-            break;
-          case 4:
-            TextEditingController THeditController =
-            TextEditingController(text: entertainmentTitleList[index]);
-            TextEditingController THpriceController =
-            TextEditingController(text: entertainmentPriceList[index]);
-            selectedEditController = THeditController;
-            selectedPriceController = THpriceController;
-            break;
-          case 5:
-            TextEditingController otherEditController =
-            TextEditingController(text: otherTitleList[index]);
-            TextEditingController otherPriceController =
-            TextEditingController(text: otherPriceList[index]);
-            selectedEditController = otherEditController;
-            selectedPriceController = otherPriceController;
-            break;
-        }
+      print('[DEBUG] BankAccounts after: ${jsonEncode(bankAccounts)}');
+
+      // Save to SharedPreferences
+      await _saveToPrefs();
+      await _saveSelectedAccount(selectedAccount!);
+
+      // Also save to userCategories if needed
+      if (userCategories.containsKey(category)) {
+        userCategories[category]!.add({
+          "subcategory": subcategory,
+          "title": title,
+          "amount": amount,
+        });
+      } else {
+        userCategories[category] = [{
+          "subcategory": subcategory,
+          "title": title,
+          "amount": amount,
+        }];
       }
+
+      // Save categories separately if needed
+      await _saveCategoriesToPrefs();
+    }
+
+    void _editEntry(String category, int index, Map<String, dynamic> updatedEntry) {
+      setState(() {
+        userCategories[category]![index] = updatedEntry;
+      });
+      _saveToPrefs();
+    }
+
+    void _deleteEntry(String category, int index) {
+      setState(() {
+        userCategories[category]!.removeAt(index);
+        // Eğer kategori tamamen boş kaldıysa istersen onu da sil
+        if (userCategories[category]!.isEmpty) {
+          userCategories.remove(category);
+        }
+      });
+      _saveToPrefs();
+    }
+
+    void _showAddDialog(BuildContext context) {
+      final TextEditingController categoryController = TextEditingController();
+      final TextEditingController subcategoryController = TextEditingController();
+      final TextEditingController titleController = TextEditingController();
+      final TextEditingController priceController = TextEditingController();
 
       showDialog(
         context: context,
-        builder: (BuildContext context) {
-          return StatefulBuilder( //TO UPDATE DAYS LIST
-            builder: (context, setState) {
-              return AlertDialog(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)
+        builder: (context) {
+          return AlertDialog(
+            title: const Text("Yeni Gider Ekle"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: categoryController,
+                  decoration: const InputDecoration(labelText: "Kategori"),
                 ),
-                title: Text(
-                  'Edit $caterogyName',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                TextField(
+                  controller: subcategoryController,
+                  decoration: const InputDecoration(labelText: "Alt Kategori"),
                 ),
-                content: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          "Item",
-                          style: GoogleFonts.montserrat(fontSize: 18),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      TextFormField(
-                        controller: selectedEditController,
-                        decoration: InputDecoration(
-                          hintText: "e.g., Subscription",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            borderSide: const BorderSide(width: 2, color: Colors.black),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        ),
-                        style: GoogleFonts.montserrat(fontSize: 18),
-                      ),
-                      const SizedBox(height: 10),
-                      Align(alignment: Alignment.centerLeft, child: Text("Price",style: GoogleFonts.montserrat(fontSize: 18))),
-                      const SizedBox(height: 10),
-                      TextFormField(
-                        controller: selectedPriceController,
-                        decoration: InputDecoration(
-                          hintText: "e.g., 10.00",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            borderSide: const BorderSide(width: 2, color: Colors.black),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        ),
-                        style: GoogleFonts.montserrat(fontSize: 18),
-                        keyboardType: TextInputType.number,
-                      ),
-                      const SizedBox(height: 10),
-                      Align(alignment: Alignment.centerLeft, child: Text("Period Date",style: GoogleFonts.montserrat(fontSize: 18))),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: DropdownButtonFormField<int>(
-                              value: _selectedBillingDay,
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedBillingDay = value;
-                                });
-                              },
-                              items: daysList.map((day) {
-                                return DropdownMenuItem<int>(
-                                  value: day,
-                                  child: Text(day.toString()),
-                                );
-                              }).toList(),
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                  borderSide: const BorderSide(width: 2, color: Colors.black),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: DropdownButtonFormField<int>(
-                              value: _selectedBillingMonth,
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedBillingMonth = value;
-                                  _updateDaysListForSelectedMonth();
-                                });
-                              },
-                              items: monthsList.map((month) {
-                                return DropdownMenuItem<int>(
-                                  value: month,
-                                  child: Text(month.toString()),
-                                );
-                              }).toList(),
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                  borderSide: const BorderSide(width: 2, color: Colors.black),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Align(alignment: Alignment.centerLeft, child: Text("Due Date",style: GoogleFonts.montserrat(fontSize: 18))),
-                      const SizedBox(height: 10),
-                      DropdownButtonFormField<int>(
-                        value: _selectedDueDay,
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedDueDay = value;
-                          });
-                        },
-                        items: [
-                          DropdownMenuItem<int>(
-                            value: null,
-                              child: Text("None")
-                          ),
-                          ...daysList.map((day) {
-                            return DropdownMenuItem<int>(
-                              value: day,
-                              child: Text(day.toString()),
-                            );
-                          }).toList(),
-                        ],
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            borderSide: const BorderSide(width: 2, color: Colors.black),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                        ),
-                      ),
-                    ],
-                  ),
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(labelText: "Başlık"),
                 ),
-                actions: [
-                  IconButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      icon: const Icon(Icons.cancel)
-                  ),
-                  IconButton(
-                      onPressed: () {
-                        setState(() {
-                          if(page == 1){
-                            switch (orderIndex){
-                              case 1:
-                                final priceText = selectedPriceController.text.trim();
-                                double dprice = double.tryParse(priceText) ?? 0.0;
-                                String price = dprice.toStringAsFixed(2);
-                                String name = selectedEditController.text;
-                                invoice.name = name;
-                                invoice.price = price;
-                                if (_selectedDueDay != null) {
-                                  editInvoice(
-                                    id,
-                                    formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                                    formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!)),
-                                  );
-                                } else {
-                                  editInvoice(
-                                    id,
-                                    formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                                    null, // or provide any default value you want for dueDate when _selectedDueDay is null
-                                  );
-                                }
-                                break;
-                              case 2:
-                                final priceText = selectedPriceController.text.trim();
-                                double dprice = double.tryParse(priceText) ?? 0.0;
-                                String price = dprice.toStringAsFixed(2);
-                                gameTitleList[index] = selectedEditController.text;
-                                gamePriceList[index] = price;
-                                break;
-                              case 3:
-                                final priceText = selectedPriceController.text.trim();
-                                double dprice = double.tryParse(priceText) ?? 0.0;
-                                String price = dprice.toStringAsFixed(2);
-                                musicTitleList[index] = selectedEditController.text;
-                                musicPriceList[index] = price;
-                                break;
-                            }
-                          } else if (page == 2){
-                            switch (orderIndex){
-                              case 1:
-                                final priceText = selectedPriceController.text.trim();
-                                double dprice = double.tryParse(priceText) ?? 0.0;
-                                String price = dprice.toStringAsFixed(2);
-                                String name = selectedEditController.text;
-                                invoice.name = name;
-                                invoice.price = price;
-                                if (_selectedDueDay != null) {
-                                  editInvoice(
-                                    id,
-                                    formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                                    formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!)),
-                                  );
-                                } else {
-                                  editInvoice(
-                                    id,
-                                    formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                                    null, // or provide any default value you want for dueDate when _selectedDueDay is null
-                                  );
-                                }
-                                break;
-                              case 2:
-                                final priceText = selectedPriceController.text.trim();
-                                double dprice = double.tryParse(priceText) ?? 0.0;
-                                String price = dprice.toStringAsFixed(2);
-                                internetTitleList[index] = selectedEditController.text;
-                                internetPriceList[index] = price;
-                                break;
-                              case 3:
-                                final priceText = selectedPriceController.text.trim();
-                                double dprice = double.tryParse(priceText) ?? 0.0;
-                                String price = dprice.toStringAsFixed(2);
-                                phoneTitleList[index] = selectedEditController.text;
-                                phonePriceList[index] = price;
-                                break;
-                            }
-                          } else if (page == 3){
-                            switch (orderIndex){
-                              case 1:
-                                final priceText = selectedPriceController.text.trim();
-                                double dprice = double.tryParse(priceText) ?? 0.0;
-                                String price = dprice.toStringAsFixed(2);
-                                String name = selectedEditController.text;
-                                invoice.name = name;
-                                invoice.price = price;
-                                if (_selectedDueDay != null) {
-                                  editInvoice(
-                                    id,
-                                    formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                                    formatDueDate(_selectedDueDay, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!)),
-                                  );
-                                } else {
-                                  editInvoice(
-                                    id,
-                                    formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                                    null, // or provide any default value you want for dueDate when _selectedDueDay is null
-                                  );
-                                }
-                                break;
-                              case 2:
-                                final priceText = selectedPriceController.text.trim();
-                                double dprice = double.tryParse(priceText) ?? 0.0;
-                                String price = dprice.toStringAsFixed(2);
-                                kitchenTitleList[index] = selectedEditController.text;
-                                kitchenPriceList[index] = price;
-                                break;
-                              case 3:
-                                final priceText = selectedPriceController.text.trim();
-                                double dprice = double.tryParse(priceText) ?? 0.0;
-                                String price = dprice.toStringAsFixed(2);
-                                cateringTitleList[index] = selectedEditController.text;
-                                cateringPriceList[index] = price;
-                                break;
-                              case 4:
-                                final priceText = selectedPriceController.text.trim();
-                                double dprice = double.tryParse(priceText) ?? 0.0;
-                                String price = dprice.toStringAsFixed(2);
-                                entertainmentTitleList[index] = selectedEditController.text;
-                                entertainmentPriceList[index] = price;
-                                break;
-                              case 5:
-                                final priceText = selectedPriceController.text.trim();
-                                double dprice = double.tryParse(priceText) ?? 0.0;
-                                String price = dprice.toStringAsFixed(2);
-                                otherTitleList[index] = selectedEditController.text;
-                                otherPriceList[index] = price;
-                                break;
-                            }
-                          }
-                        });
-                        saveInvoices();
-                        Navigator.pop(context);
-                      },
-                      icon: const Icon(Icons.save)
-                  ),
-                  IconButton(
-                      onPressed: () {
-                        setState(() {
-                          if(page == 1 && totalSubsElement != 1){
-                            switch (orderIndex){
-                              case 1:
-                                removeInvoice(id);
-                                break;
-                              case 2:
-                                gameTitleList.removeAt(index);
-                                gamePriceList.removeAt(index);
-                                break;
-                              case 3:
-                                musicTitleList.removeAt(index);
-                                musicPriceList.removeAt(index);
-                                break;
-                            }
-                          } else if (page == 2 && totalBillsElement != 1){
-                            switch (orderIndex){
-                              case 1:
-                                removeInvoice(id);
-                                break;
-                              case 2:
-                                internetTitleList.removeAt(index);
-                                internetPriceList.removeAt(index);
-                                break;
-                              case 3:
-                                phoneTitleList.removeAt(index);
-                                phonePriceList.removeAt(index);
-                                break;
-                            }
-                          } else if (page == 3 && totalOthersElement != 1){
-                            switch (orderIndex){
-                              case 1:
-                                removeInvoice(id);
-                                break;
-                              case 2:
-                                kitchenTitleList.removeAt(index);
-                                kitchenPriceList.removeAt(index);
-                                break;
-                              case 3:
-                                cateringTitleList.removeAt(index);
-                                cateringPriceList.removeAt(index);
-                                break;
-                              case 4:
-                                entertainmentTitleList.removeAt(index);
-                                entertainmentPriceList.removeAt(index);
-                                break;
-                              case 5:
-                                otherTitleList.removeAt(index);
-                                otherPriceList.removeAt(index);
-                                break;
-                            }
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Delete operation not allowed."),
-                              ),
-                            );
-                          }
-                          Navigator.of(context).pop();
-                        });
-                      },
-                      icon: const Icon(Icons.delete_forever)
-                  )
-                ],
-              );
-            },
+                TextField(
+                  controller: priceController,
+                  decoration: const InputDecoration(labelText: "Fiyat"),
+                  keyboardType: TextInputType.number,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  _addEntry(
+                    categoryController.text.trim(),
+                    subcategoryController.text.trim(),
+                    titleController.text,
+                    double.tryParse(priceController.text) ?? 0.0, // Make sure price is parsed to double
+                  );
+                  Navigator.of(context).pop();
+                },
+                child: const Text("Ekle"),
+              ),
+            ],
           );
         },
       );
     }
+
+    void _showEditDialog(BuildContext context, String category, String subcategory, int index) {
+      final data = userCategories[category]!.firstWhere((entry) => entry["subcategory"] == subcategory);
+      final TextEditingController titleController = TextEditingController(text: data["title"]);
+      final TextEditingController priceController = TextEditingController(text: data["amount"] != null ? data["amount"].toString() : "");
+
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text("Gideri Düzenle"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(labelText: "Başlık"),
+                ),
+                TextField(
+                  controller: priceController,
+                  decoration: const InputDecoration(labelText: "Fiyat"),
+                  keyboardType: TextInputType.number,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  _deleteEntry(category, index);
+                  Navigator.of(context).pop();
+                },
+                child: const Text("Sil", style: TextStyle(color: Colors.red)),
+              ),
+              TextButton(
+                onPressed: () {
+                  _editEntry(category, index, {
+                    "title": titleController.text,
+                    "amount": priceController.text,
+                  });
+                  Navigator.of(context).pop();
+                },
+                child: const Text("Kaydet"),
+              ),
+            ],
+          );
+        },
+      );
+    }
+
+    void _showAddSubcategoryDialog(String category) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Alt Kategori Ekle"),
+            content: TextField(
+              controller: subcategoryController,
+              decoration: InputDecoration(labelText: "Alt kategori ismi"),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  if (subcategoryController.text.trim().isNotEmpty) {
+                    _addSubcategory(category, subcategoryController.text.trim());
+                    Navigator.pop(context); // Close the dialog
+                  }
+                },
+                child: Text("Ekle"),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context); // Close the dialog
+                },
+                child: Text("İptal"),
+              ),
+            ],
+          );
+        },
+      );
+    }
+
+    void _showAddExpenseDialog(BuildContext context, String category, int index) {
+      final TextEditingController titleController = TextEditingController();
+      final TextEditingController amountController = TextEditingController();
+
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text("Gider Ekle"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(labelText: "Başlık"),
+                ),
+                TextField(
+                  controller: amountController,
+                  decoration: const InputDecoration(labelText: "Fiyat"),
+                  keyboardType: TextInputType.number,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text("İptal"),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final title = titleController.text.trim();
+                  final amount = double.tryParse(amountController.text.trim());
+                  if (title.isNotEmpty && amount != null) {
+                    setState(() {
+                      userCategories[category]![index]["title"] = title;
+                      userCategories[category]![index]["amount"] = amount;
+                    });
+                  }
+                  setState(() {});
+                  await _saveToPrefs();
+                  Navigator.of(context).pop();
+                },
+                child: const Text("Kaydet"),
+              ),
+            ],
+          );
+        },
+      );
+    }
+
 
     for (Invoice invoice in invoices) {
       print('Before ID: ${invoice.id}, Subcategory: ${invoice.subCategory}');
@@ -1044,2759 +978,328 @@ class _OutcomePageState extends State<OutcomePage> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+              Text(
+                userCategories.entries.map((entry) {
+                  final category = entry.key;
+                  final items = entry.value.map((item) {
+                    return item.entries.map((e) => '${e.key}: ${e.value}').join(', ');
+                  }).join(' | ');
+                  return '$category - $items';
+                }).join(' | '),
+                style: GoogleFonts.montserrat(fontSize: 14),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 10,
+              ),
               SizedBox(height: 20.h),
-              Container(
-                padding: EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.grey[850] // Dark mode color
-                      : Colors.white, // Light mode color
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.black.withOpacity(0.5) // Dark mode shadow color
-                          : Colors.grey.withOpacity(0.5), // Light mode shadow color
-                      spreadRadius: 5,
-                      blurRadius: 7,
-                      offset: const Offset(0, 3),
+              bankAccounts.isEmpty
+                  ? const Text("Banka hesabı bulunamadı.")
+                  : Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: DropdownButtonFormField<int>(
+                  value: selectedAccount?['accountId'],
+                  decoration: InputDecoration(
+                    labelText: "Choose an account",
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        color: Color(0xFFF0EAD6)
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Tüm Giderler",
-                              style: GoogleFonts.montserrat(
-                                color: Colors.black,
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            Text(
-                              formattedOutcomeValue,
-                              style: GoogleFonts.montserrat(
-                                color: Colors.black,
-                                fontSize: 24.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,  // Stretch column to take full width
-                              children: [
-                                Stack(
-                                  children: [
-                                    LinearPercentIndicator(
-                                      padding: EdgeInsets.zero,
-                                      percent: percentages[0],
-                                      backgroundColor: Colors.transparent,
-                                      progressColor: const Color(0xFFFF8C00),
-                                      lineHeight: 10.h,
-                                      barRadius: const Radius.circular(10),
-                                    ),
-                                    LinearPercentIndicator(
-                                      padding: EdgeInsets.zero,
-                                      percent: percentages[1] + percentages[2],
-                                      progressColor: const Color(0xFFFFA500),
-                                      backgroundColor: Colors.transparent,
-                                      lineHeight: 10.h,
-                                      barRadius: const Radius.circular(10),
-                                    ),
-                                    LinearPercentIndicator(
-                                      padding: EdgeInsets.zero,
-                                      percent: percentages[2],
-                                      progressColor: const Color(0xFFFFD700),
-                                      backgroundColor: Colors.transparent,
-                                      lineHeight: 10.h,
-                                      barRadius: const Radius.circular(10),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 5.h),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      flex: (percentages[2] * 100).toInt(),
-                                      child: Text(
-                                        "%${(percentages[2] * 100).toStringAsFixed(0)}",
-                                        textAlign: TextAlign.center,
-                                        style: GoogleFonts.montserrat(
-                                            fontSize: 12.sp,
-                                            fontWeight: FontWeight.bold,
-                                          color: Theme.of(context).brightness == Brightness.dark
-                                              ? Colors.grey[850] // Dark mode color
-                                              : Colors.black, // Light mode color
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: (percentages[1] * 100).toInt(),
-                                      child: Text(
-                                        "%${(percentages[1] * 100).toStringAsFixed(0)}",
-                                        textAlign: TextAlign.center,
-                                        style: GoogleFonts.montserrat(
-                                            fontSize: 12.sp,
-                                            fontWeight: FontWeight.bold,
-                                          color: Theme.of(context).brightness == Brightness.dark
-                                              ? Colors.grey[850] // Dark mode color
-                                              : Colors.black, // Light mode color
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: ((percentages[2] * 100)+(percentages[1] * 100)).toInt(),
-                                      child: Text(
-                                        "%${((percentages[2] * 100)+(percentages[1] * 100)).toStringAsFixed(0)}",
-                                        textAlign: TextAlign.center,
-                                        style: GoogleFonts.montserrat(
-                                            fontSize: 12.sp,
-                                            fontWeight: FontWeight.bold,
-                                          color: Theme.of(context).brightness == Brightness.dark
-                                              ? Colors.grey[850] // Dark mode color
-                                              : Colors.black, // Light mode color
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            )
-                            //Text("$percentages", style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold)), DEBUG FOR PERCENTAGES
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    if (largestVariable == "subsPercent" && mediumVariable == "billsPercent")
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.all(10),
-                            child: Row(
-                              children: [
-                                CircularPercentIndicator(
-                                  radius: 30,
-                                  lineWidth: 7.0,
-                                  percent: 0,
-                                  center: Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
-                                  progressColor: smallestColor,
-                                ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("Diğer Giderler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("$formattedSumOfOthers / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
-                                  ],
-                                )
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.all(10),
-                            child: Row(
-                              children: [
-                                CircularPercentIndicator(
-                                  radius: 30,
-                                  lineWidth: 7.0,
-                                  percent: 0,
-                                  center: Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
-                                  progressColor: mediumColor,
-                                ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("Faturalar", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("$formattedSumOfBills / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
-                                  ],
-                                )
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.all(10),
-                            child: Row(
-                              children: [
-                                CircularPercentIndicator(
-                                  radius: 30,
-                                  lineWidth: 7.0,
-                                  percent: 0,
-                                  center: Text("%${((sumOfSubs/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
-                                  progressColor: biggestColor,
-                                ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("Abonelikler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("$formattedSumOfSubs / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
-                                  ],
-                                )
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    if (largestVariable == "subsPercent" && mediumVariable == "othersPercent")
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.all(10),
-                            child: Row(
-                              children: [
-                                CircularPercentIndicator(
-                                  radius: 30,
-                                  lineWidth: 7.0,
-                                  percent: 0,
-                                  center: Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
-                                  progressColor: smallestColor,
-                                ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("Faturalar", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("$formattedSumOfBills / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
-                                  ],
-                                )
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.all(10),
-                            child: Row(
-                              children: [
-                                CircularPercentIndicator(
-                                  radius: 30,
-                                  lineWidth: 7.0,
-                                  percent: 0,
-                                  center: Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
-                                  progressColor: mediumColor,
-                                ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("Diğer Giderler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("$formattedSumOfOthers / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
-                                  ],
-                                )
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.all(10),
-                            child: Row(
-                              children: [
-                                CircularPercentIndicator(
-                                  radius: 30,
-                                  lineWidth: 7.0,
-                                  percent: 0,
-                                  center: Text("%${((sumOfSubs/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
-                                  progressColor: biggestColor,
-                                ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("Abonelikler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("$formattedSumOfSubs / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
-                                  ],
-                                )
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    if (largestVariable == "billsPercent" && mediumVariable == "subsPercent")
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.all(10),
-                            child: Row(
-                              children: [
-                                CircularPercentIndicator(
-                                  radius: 30,
-                                  lineWidth: 7.0,
-                                  percent: 0,
-                                  center: Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
-                                  progressColor: smallestColor,
-                                ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("Diğer Giderler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("$formattedSumOfOthers / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
-                                  ],
-                                )
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.all(10),
-                            child: Row(
-                              children: [
-                                CircularPercentIndicator(
-                                  radius: 30,
-                                  lineWidth: 7.0,
-                                  percent: 0,
-                                  center: Text("%${((sumOfSubs/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
-                                  progressColor: mediumColor,
-                                ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("Abonelikler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("$formattedSumOfSubs / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
-                                  ],
-                                )
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.all(10),
-                            child: Row(
-                              children: [
-                                CircularPercentIndicator(
-                                  radius: 30,
-                                  lineWidth: 7.0,
-                                  percent: 0,
-                                  center: Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
-                                  progressColor: biggestColor,
-                                ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("Faturalar", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("$formattedSumOfBills / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
-                                  ],
-                                )
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    if (largestVariable == "billsPercent" && mediumVariable == "othersPercent")
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.all(10),
-                            child: Row(
-                              children: [
-                                CircularPercentIndicator(
-                                  radius: 30,
-                                  lineWidth: 7.0,
-                                  percent: 0,
-                                  center: Text("%${((sumOfSubs/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
-                                  progressColor: smallestColor,
-                                ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("Abonelikler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("$formattedSumOfSubs / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
-                                  ],
-                                )
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.all(10),
-                            child: Row(
-                              children: [
-                                CircularPercentIndicator(
-                                  radius: 30,
-                                  lineWidth: 7.0,
-                                  percent: 0,
-                                  center: Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
-                                  progressColor: mediumColor,
-                                ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("Diğer Giderler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("$formattedSumOfOthers / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
-                                  ],
-                                )
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.all(10),
-                            child: Row(
-                              children: [
-                                CircularPercentIndicator(
-                                  radius: 30,
-                                  lineWidth: 7.0,
-                                  percent: 0,
-                                  center: Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
-                                  progressColor: biggestColor,
-                                ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("Faturalar", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("$formattedSumOfBills / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
-                                  ],
-                                )
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    if (largestVariable == "othersPercent" && mediumVariable == "subsPercent")
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.all(10),
-                            child: Row(
-                              children: [
-                                CircularPercentIndicator(
-                                  radius: 30,
-                                  lineWidth: 7.0,
-                                  percent: 0,
-                                  center: Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
-                                  progressColor: smallestColor,
-                                ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("Faturalar", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("$formattedSumOfBills / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
-                                  ],
-                                )
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.all(10),
-                            child: Row(
-                              children: [
-                                CircularPercentIndicator(
-                                  radius: 30,
-                                  lineWidth: 7.0,
-                                  percent: 0,
-                                  center: Text("%${((sumOfSubs/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
-                                  progressColor: mediumColor,
-                                ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("Abonelikler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("$formattedSumOfSubs / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
-                                  ],
-                                )
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.all(10),
-                            child: Row(
-                              children: [
-                                CircularPercentIndicator(
-                                  radius: 30,
-                                  lineWidth: 7.0,
-                                  percent: 0,
-                                  center: Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
-                                  progressColor: biggestColor,
-                                ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("Diğer Giderler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("$formattedSumOfOthers / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
-                                  ],
-                                )
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    if (largestVariable == "othersPercent" && mediumVariable == "billsPercent")
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: smallestSoftColor,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.all(10),
-                            child: Row(
-                              children: [
-                                CircularPercentIndicator(
-                                  animation: true,
-                                  circularStrokeCap: CircularStrokeCap.round,
-                                  radius: 23.sp,
-                                  lineWidth: 6.w,
-                                  percent: sumOfSubs/outcomeValue,
-                                  center: Text(
-                                    "%${((sumOfSubs/outcomeValue)*100).toStringAsFixed(0)}",
-                                    style: GoogleFonts.montserrat(
-                                      color: Colors.black,
-                                      fontSize: (sumOfSubs/outcomeValue)*100 == 100
-                                          ? 8.sp
-                                          : 11.sp,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  progressColor: smallestColor,
-                                ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "Abonelikler",
-                                      style: GoogleFonts.montserrat(
-                                        color: Colors.black,
-                                        fontSize: 15.sp,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    Text(
-                                      "$formattedSumOfSubs / $formattedOutcomeValue",
-                                      style: GoogleFonts.montserrat(
-                                        color: Colors.black,
-                                        fontSize: 14.sp,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    )
-                                  ],
-                                )
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: mediumSoftColor,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.all(10),
-                            child: Row(
-                              children: [
-                                CircularPercentIndicator(
-                                  radius: 23.sp,
-                                  lineWidth: 6.w,
-                                  percent: sumOfBills/outcomeValue,
-                                  center: Text(
-                                      "%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}",
-                                      style: GoogleFonts.montserrat(
-                                          color: Colors.black,
-                                          fontSize: (sumOfSubs/outcomeValue)*100 == 100
-                                              ? 8.sp
-                                              : 11.sp,
-                                          fontWeight: FontWeight.w600
-                                      )
-                                  ),
-                                  progressColor: mediumColor,
-                                ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                        "Faturalar",
-                                        style: GoogleFonts.montserrat(
-                                            color: Colors.black,
-                                            fontSize: 15.sp,
-                                            fontWeight: FontWeight.w600
-                                        )
-                                    ),
-                                    Text(
-                                        "$formattedSumOfBills / $formattedOutcomeValue",
-                                        style: GoogleFonts.montserrat(
-                                            color: Colors.black,
-                                            fontSize: 14.sp,
-                                            fontWeight: FontWeight.w500
-                                        )
-                                    )
-                                  ],
-                                )
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: biggestSoftColor,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.all(10),
-                            child: Row(
-                              children: [
-                                CircularPercentIndicator(
-                                  radius: 23.sp,
-                                  lineWidth: 6.w,
-                                  percent: sumOfOthers/outcomeValue,
-                                  center: Text(
-                                      "%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}",
-                                      style: GoogleFonts.montserrat(
-                                          color: Colors.black,
-                                          fontSize: (sumOfSubs/outcomeValue)*100 == 100
-                                              ? 8.sp
-                                              : 11.sp,
-                                          fontWeight: FontWeight.w600
-                                      )
-                                  ),
-                                  progressColor: biggestColor,
-                                ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                        "Diğer Giderler",
-                                        style: GoogleFonts.montserrat(
-                                            color: Colors.black,
-                                            fontSize: 15.sp,
-                                            fontWeight: FontWeight.w600
-                                        )
-                                    ),
-                                    Text(
-                                        "$formattedSumOfOthers / $formattedOutcomeValue",
-                                        style: GoogleFonts.montserrat(
-                                            color: Colors.black,
-                                            fontSize: 14.sp,
-                                            fontWeight: FontWeight.w500
-                                        )
-                                    )
-                                  ],
-                                )
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    if (largestVariable == mediumVariable && mediumVariable == smallestVariable)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.all(10),
-                            child: Row(
-                              children: [
-                                CircularPercentIndicator(
-                                  radius: 30,
-                                  lineWidth: 7.0,
-                                  percent: 0,
-                                  center: Text("%${((sumOfSubs/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
-                                  progressColor: smallestColor,
-                                ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("Abonelikler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("$formattedSumOfSubs / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
-                                  ],
-                                )
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.all(10),
-                            child: Row(
-                              children: [
-                                CircularPercentIndicator(
-                                  radius: 30,
-                                  lineWidth: 7.0,
-                                  percent: 0,
-                                  center: Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
-                                  progressColor: mediumColor,
-                                ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("Faturalar", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("$formattedSumOfBills / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
-                                  ],
-                                )
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.all(10),
-                            child: Row(
-                              children: [
-                                CircularPercentIndicator(
-                                  radius: 30,
-                                  lineWidth: 7.0,
-                                  percent: 0,
-                                  center: Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}",style: GoogleFonts.montserrat(color: Colors.black, fontSize: (sumOfSubs/outcomeValue)*100 == 100 ? 12 : 16, fontWeight: FontWeight.w600)),
-                                  progressColor: biggestColor,
-                                ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("Diğer Giderler", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                    Text("$formattedSumOfOthers / $formattedOutcomeValue", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600))
-                                  ],
-                                )
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                  ],
+                  ),
+                  items: bankAccounts.expand<DropdownMenuItem<int>>((bank) {
+                    return (bank['accounts'] as List?)?.map((account) {
+                      return DropdownMenuItem<int>(
+                        value: account['accountId'],
+                        child: Text("${bank['bankName']} - ${account['name']}"),
+                      );
+                    }) ?? [];
+                  }).toList(),
+                  onChanged: (selectedAccountId) {
+                    if (selectedAccountId != null) {
+                      final account = _findAccountById(selectedAccountId);
+                      if (account != null) {
+                        setState(() {
+                          selectedAccount = account;
+                        });
+                        _saveSelectedAccount(account);
+                      }
+                    }
+                  },
                 ),
               ),
-              const SizedBox(height: 20),
-              Text("Abonelikler", style: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.bold)),
-              //Text('Period Dates: ${invoices.map((invoice) => invoice.periodDate.toString()).join(', ')}'),
-              //Text(invoices.map((invoice) => '\nID: ${invoice.id}''\nName: ${invoice.name}''\nCategory: ${invoice.category}''\nSubcategory: ${invoice.subCategory}''\nDifference: ${invoice.difference}''\nPeriod: ${invoice.periodDate}\n').join(' | '),),
-              const SizedBox(height: 10),
-              Container(
-                padding: EdgeInsets.all(10),
+              userCategories.isEmpty
+                  ? Container(
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.grey[850] // Dark mode color
-                      : Colors.white, // Light mode color
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.black.withOpacity(0.5) // Dark mode shadow color
-                          : Colors.grey.withOpacity(0.5), // Light mode shadow color
-                      spreadRadius: 5,
-                      blurRadius: 7,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
+                  color: Colors.redAccent.withOpacity(0.1),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        color: variableNames[0] == "subsPercent"
-                          ? smallestSoftColor
-                            : variableNames[1] == "subsPercent"
-                          ? mediumSoftColor
-                            :biggestSoftColor
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                    formattedSumOfSubs,
-                                    style: GoogleFonts.montserrat(
-                                        fontSize: 19.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black
-                                    )
-                                ),
-                                Text(
-                                    formattedOutcomeValue,
-                                    style: GoogleFonts.montserrat(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black
-                                    )
-                                ),
-                              ],
-                            ),
-                            SizedBox(
-                              child: LinearPercentIndicator(
-                                padding: const EdgeInsets.only(right: 10),
-                                backgroundColor: const Color(0xffc6c6c7),
-                                animation: true,
-                                lineHeight: 10,
-                                animationDuration: 1000,
-                                percent: sumOfSubs/outcomeValue,
-                                trailing: Text("%${((sumOfSubs/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                barRadius: const Radius.circular(10),
-                                progressColor: variableNames[0] == "subsPercent"
-                                    ? smallestColor
-                                    : variableNames[1] == "subsPercent"
-                                    ? mediumColor
-                                    :biggestColor
-                              ),
-                            ),
-                          ],
+                child: Center(
+                  child: Text(
+                    "Lütfen önce kategori ekleyin.",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.redAccent,
+                    ),
+                  ),
+                ),
+              )
+                  : Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: const Color(0xFFF0EAD6),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Tüm Giderler",
+                        style: GoogleFonts.montserrat(
+                          color: Colors.black,
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                    ),
-                    SizedBox(height: 10),
-                    ListView(
-                      padding: EdgeInsets.zero,
-                      physics: const NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      children: [
-                        if(invoices.isNotEmpty)
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(200, 255, 243, 152),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.all(10),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(left:10, top:10),
-                                  child: Text("TV", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                                ),
-                                SizedBox(height: 20),
-                                ListView(
-                                  padding: EdgeInsets.zero,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  shrinkWrap: true,
-                                  children: idsWithTVTargetCategory.map((id) {
-                                    Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
-                                    return Padding(
-                                      padding: const EdgeInsets.only(bottom: 10),
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Color.fromARGB(255, 255, 226, 3),
-                                          borderRadius: BorderRadius.circular(20),
-                                        ),
-                                        child: Column(
-                                          children: [
-                                            Row(
-                                              children: [
-                                                Flexible(
-                                                  flex:2,
-                                                  child: ListTile(
-                                                    dense: true,
-                                                    title: Text("Name", style: TextStyle(color: Colors.black)),
-                                                    subtitle: Text(
-                                                        invoice.name,
-                                                      style: GoogleFonts.montserrat(fontSize: 16.sp, color: Colors.black),
-                                                      overflow: TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                ),
-                                                Flexible(
-                                                  flex:2,
-                                                  child: ListTile(
-                                                    dense: true,
-                                                    title: Text("Amount", style: TextStyle(color: Colors.black)),
-                                                    subtitle: Text(
-                                                        invoice.price,
-                                                      style: GoogleFonts.montserrat(fontSize: 16.sp, color: Colors.black),
-                                                      overflow: TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            Row(
-                                              children: [
-                                                Flexible(
-                                                  flex:2,
-                                                  child: ListTile(
-                                                    dense: true,
-                                                    title: Text("Period Date", style: TextStyle(color: Colors.black)),
-                                                    subtitle: Text(
-                                                        invoice.periodDate,
-                                                      style: GoogleFonts.montserrat(fontSize: 16.sp, color: Colors.black),
-                                                      overflow: TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                ),
-                                                Flexible(
-                                                  flex:2,
-                                                  child: ListTile(
-                                                    dense: true,
-                                                    title: Text("Due Date", style: TextStyle(color: Colors.black)),
-                                                    subtitle: Text(
-                                                        invoice.dueDate ?? "N/A",
-                                                      style: GoogleFonts.montserrat(fontSize: 16.sp, color: Colors.black),
-                                                      overflow: TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                )
-                                              ],
-                                            ),
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                color: Color.fromARGB(200, 255, 200, 0),
-                                                borderRadius: BorderRadius.circular(20),
-                                              ),
-                                              padding: EdgeInsets.only(left: 20,right: 20),
-                                              child: SizedBox(
-                                                child: Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                  children: [
-                                                    Text("Düzenle", style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black)),
-                                                    IconButton(
-                                                      splashRadius: 0.0001,
-                                                      padding: EdgeInsets.zero,
-                                                      constraints: BoxConstraints(minWidth: 23, maxWidth: 23),
-                                                      icon: Icon(Icons.edit, size: 21, color: Colors.black),
-                                                      onPressed: () {
-                                                        print("TV: ${context}, $id");
-                                                        _showEditDialog(context, idsWithTVTargetCategory.indexOf(id), 1, 1, id);
-                                                      },
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  }).toList()
-                                )
-                              ],
-                            ),
-                          ),
-                        if(gameTitleList.isNotEmpty)
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("Gaming", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                              const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                              ListView.builder(
-                                padding: EdgeInsets.zero,
-                                physics: const NeverScrollableScrollPhysics(),
-                                shrinkWrap: true,
-                                itemCount: gameTitleList.length + 1, // +1 for the "Abonelik Ekle" row
-                                itemBuilder: (context, index) {
-                                  if (index < gameTitleList.length) {
-                                    return Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Flexible(
-                                              flex: 2,
-                                              fit: FlexFit.tight,
-                                              child: Text(
-                                                gameTitleList[index],
-                                                style: GoogleFonts.montserrat(fontSize: 20),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            Flexible(
-                                              flex: 2,
-                                              fit: FlexFit.tight,
-                                              child: Text(
-                                                textAlign: TextAlign.right,
-                                                gamePriceList[index],
-                                                style: GoogleFonts.montserrat(fontSize: 20),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 20),
-                                            IconButton(
-                                              splashRadius: 0.0001,
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                              icon: const Icon(Icons.edit, size: 21),
-                                              onPressed: () {
-                                                _showEditDialog(context, index, 1, 2, 0); // Show the edit dialog
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                        const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                      ],
-                                    );
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ],
-                          ),
-                        if(musicTitleList.isNotEmpty)
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("Music", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                              const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                              ListView.builder(
-                                padding: EdgeInsets.zero,
-                                physics: const NeverScrollableScrollPhysics(),
-                                shrinkWrap: true,
-                                itemCount: musicTitleList.length + 1, // +1 for the "Abonelik Ekle" row
-                                itemBuilder: (context, index) {
-                                  if (index < musicTitleList.length) {
-                                    return Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Flexible(
-                                              flex: 2,
-                                              fit: FlexFit.tight,
-                                              child: Text(
-                                                musicTitleList[index],
-                                                style: GoogleFonts.montserrat(fontSize: 20),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            Flexible(
-                                              flex: 2,
-                                              fit: FlexFit.tight,
-                                              child: Text(
-                                                textAlign: TextAlign.right,
-                                                musicPriceList[index],
-                                                style: GoogleFonts.montserrat(fontSize: 20),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 20),
-                                            IconButton(
-                                              splashRadius: 0.0001,
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                              icon: const Icon(Icons.edit, size: 21),
-                                              onPressed: () {
-                                                _showEditDialog(context, index, 1, 3, 0); // Show the edit dialog
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                        const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                      ],
-                                    );
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ],
-                          ),
-                        SizedBox(height: 10),
-                        if(!isSubsAddActive)
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(200, 255, 200, 0),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.only(left: 20,right: 20),
-                            child: SizedBox(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text("Abonelik Ekle", style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w600,color: Colors.black)),
-                                  IconButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        isSubsAddActive = true;
-                                      });
-                                    },
-                                    icon: const Icon(Icons.add_circle, color: Colors.black),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        if(isSubsAddActive)
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.all(10),
+                      Text(
+                        "${calculateTotalPrice().toStringAsFixed(2)} ₺",
+                        style: GoogleFonts.montserrat(
+                          color: Colors.black,
+                          fontSize: 24.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: userCategories.entries.map((entry) {
+                          final category = entry.key;
+                          final categoryTotal = calculateCategoryTotal(category);
+                          final total = calculateTotalPrice();
+                          final percentage = total > 0 ? (categoryTotal / total) : 0.0;
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    PullDownButton(
-                                      itemBuilder: (context) => subsItems
-                                          .map(
-                                              (item) => PullDownMenuItem(
-                                              onTap: () {
-                                              setState(() {
-                                              dropdownvaluesubs = item;
-                                              });
-                                              },
-                                              title: item.toString()
-                                              )
-                                      ).toList(),
-                                      buttonBuilder: (context, showMenu) => ElevatedButton.icon(
-                                        onPressed: showMenu,
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.amber,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(20),
-                                          ),
-                                        ),
-                                        icon: const Icon(Icons.keyboard_arrow_down),
-                                        label: Text(dropdownvaluesubs),
+                                    Text(
+                                      category,
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.black87,
                                       ),
                                     ),
-                                    Wrap(
-                                      children: [
-                                        if (!hasSubsCategorySelected)
-                                          IconButton(
-                                            onPressed: () {
-                                              setState(() {
-                                                hasSubsCategorySelected = true;
-                                              });
-                                            },
-                                            icon: const Icon(Icons.arrow_downward, size: 26),
-                                          ),
-                                        IconButton(
-                                          onPressed: () {
-                                            setState(() {
-                                              isSubsAddActive = false;
-                                              hasSubsCategorySelected = false;
-                                              textController.clear();
-                                              platformPriceController.clear();
-                                            });
-                                          },
-                                          icon: const Icon(Icons.cancel, size: 26),
-                                        ),
-                                      ],
+                                    Text(
+                                      "%${(percentage * 100).toStringAsFixed(2)}",
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
                                     ),
                                   ],
                                 ),
-                                if (hasSubsCategorySelected)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 10.0),
-                                    child: Column(
-                                      children: [
-                                        Padding(
-                                          padding: EdgeInsets.all(10),
-                                          child: Row(
-                                            children: [
-                                              Expanded(
-                                                  child: Text("Item")
-                                              ),
-                                              SizedBox(width: 20.w),
-                                              Expanded(
-                                                  child: Text("Price")
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child: TextFormField(
-                                                controller: textController,
-                                                decoration: InputDecoration(
-                                                    filled: true,
-                                                    isDense: true,
-                                                    fillColor: Colors.white,
-                                                    contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
-                                                    enabledBorder: OutlineInputBorder(
-                                                      borderRadius: BorderRadius.circular(15),
-                                                      borderSide: BorderSide(color: Colors.amber, width: 3),
-                                                    ),
-                                                    focusedBorder: OutlineInputBorder(
-                                                      borderRadius: BorderRadius.circular(15),
-                                                      borderSide: BorderSide(color: Colors.black, width: 3),
-                                                    ),
-                                                    border: OutlineInputBorder(
-                                                      borderRadius: BorderRadius.circular(15),
-                                                    ),
-                                                    hintText: 'ABA',
-                                                    hintStyle: TextStyle(color: Colors.black)
-                                                ),
-                                              ),
-                                            ),
-                                            SizedBox(width: 20.w),
-                                            Expanded(
-                                              child: TextFormField(
-                                                controller: platformPriceController,
-                                                keyboardType: TextInputType.number,
-                                                decoration: InputDecoration(
-                                                    filled: true,
-                                                    isDense: true,
-                                                    fillColor: Colors.white,
-                                                    contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
-                                                    enabledBorder: OutlineInputBorder(
-                                                      borderRadius: BorderRadius.circular(15),
-                                                      borderSide: BorderSide(color: Colors.amber, width: 3),
-                                                    ),
-                                                    focusedBorder: OutlineInputBorder(
-                                                      borderRadius: BorderRadius.circular(15),
-                                                      borderSide: BorderSide(color: Colors.black, width: 3),
-                                                    ),
-                                                    border: OutlineInputBorder(
-                                                      borderRadius: BorderRadius.circular(15),
-                                                    ),
-                                                    hintText: 'GAG',
-                                                    hintStyle: TextStyle(color: Colors.black)
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        Padding(
-                                          padding: EdgeInsets.all(10),
-                                          child: Row(
-                                            children: [
-                                              Expanded(
-                                                  child: Text("Başlangıç Günü")
-                                              ),
-                                              SizedBox(width: 20.w),
-                                              Expanded(
-                                                  child: Text("Başlangıç Ayı")
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                                child: PullDownButton(
-                                                  itemBuilder: (context) => daysList
-                                                      .map(
-                                                        (day) => PullDownMenuItem(
-                                                        onTap: () {
-                                                          setState(() {
-                                                            _selectedBillingDay = day;
-                                                          });
-                                                        },
-                                                        title: day.toString()
-                                                    ),
-                                                  ).toList(),
-                                                  buttonBuilder: (context, showMenu) => ElevatedButton(
-                                                    onPressed: showMenu,
-                                                    style: ElevatedButton.styleFrom(
-                                                      backgroundColor: Colors.white,
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius: BorderRadius.circular(20),
-                                                      ),
-                                                    ),
-                                                    child: Row(
-                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                      children: [
-                                                        Text(
-                                                            _selectedBillingDay == null
-                                                                ? "Gün"
-                                                                : _selectedBillingDay.toString(),
-                                                            style: TextStyle(
-                                                                color: Colors.black
-                                                            )
-                                                        ),
-                                                        Icon(
-                                                            Icons.arrow_drop_down,
-                                                            color: Colors.black
-                                                        )
-                                                      ],
-                                                    ),
-                                                  ),
-                                                )
-                                            ),
-                                            SizedBox(width: 20.w),
-                                            Expanded(
-                                                child: PullDownButton(
-                                                  itemBuilder: (context) => monthsList
-                                                      .map(
-                                                        (month) => PullDownMenuItem(
-                                                        onTap: () {
-                                                          setState(() {
-                                                            _selectedBillingMonth = month;
-                                                          });
-                                                        },
-                                                        title: monthNames[month - 1]
-                                                    ),
-                                                  ).toList(),
-                                                  buttonBuilder: (context, showMenu) => ElevatedButton(
-                                                    style: ElevatedButton.styleFrom(
-                                                      backgroundColor: Colors.white,
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius: BorderRadius.circular(20),
-                                                      ),
-                                                    ),
-                                                    onPressed: showMenu,
-                                                    child: Row(
-                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                      children: [
-                                                        Text(
-                                                            _selectedBillingMonth == null
-                                                                ? "Ay"
-                                                                : monthNames[_selectedBillingMonth! - 1],
-                                                            style: TextStyle(
-                                                                color: Colors.black
-                                                            )
-                                                        ),
-                                                        Icon(Icons.arrow_drop_down, color: Colors.black)
-                                                      ],
-                                                    ),
-                                                  ),
-                                                )
-                                            ),
-                                          ],
-                                        ),
-                                        Padding(
-                                          padding: EdgeInsets.all(10),
-                                          child: Align(
-                                            alignment: Alignment.centerLeft,
-                                              child: Text("Son Ödeme Günü")
-                                          ),
-                                        ),
-                                        Row(
-                                            children: [
-                                              Expanded(
-                                                  child: PullDownButton(
-                                                    itemBuilder: (context) => daysList
-                                                        .map(
-                                                          (day) => PullDownMenuItem(
-                                                          onTap: () {
-                                                            setState(() {
-                                                              _selectedDueDay = day;
-                                                            });
-                                                          },
-                                                          title: day.toString()
-                                                      ),
-                                                    ).toList(),
-                                                    buttonBuilder: (context, showMenu) => ElevatedButton(
-                                                      onPressed: showMenu,
-                                                      style: ElevatedButton.styleFrom(
-                                                        backgroundColor: Colors.white,
-                                                        shape: RoundedRectangleBorder(
-                                                          borderRadius: BorderRadius.circular(20),
-                                                        ),
-                                                      ),
-                                                      child: Row(
-                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                        children: [
-                                                          Text(
-                                                              _selectedDueDay == null
-                                                                  ? "Gün"
-                                                                  : _selectedDueDay.toString(),
-                                                              style: TextStyle(
-                                                                  color: Colors.black
-                                                              )
-                                                          ),
-                                                          Icon(Icons.arrow_drop_down, color: Colors.black)
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ),
-                                              ),
-                                              SizedBox(width: 20.w),
-                                              Expanded(
-                                                child: ElevatedButton(
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor: Colors.white,
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius: BorderRadius.circular(20),
-                                                    ),
-                                                  ),
-                                                  onPressed: () async {
-                                                    final prefs = await SharedPreferences.getInstance();
-                                                    setState(() {
-                                                      int maxId = 0; // Initialize with the lowest possible value
-                                                      for (var invoice in invoices) {
-                                                        if (invoice.id > maxId) {
-                                                          maxId = invoice.id;
-                                                        }
-                                                      }
-                                                      int newId = maxId + 1;
-                                                      final text = textController.text.trim();
-                                                      final priceText = platformPriceController.text.trim();
-                                                      double dprice = double.tryParse(priceText) ?? 0.0;
-                                                      String price = dprice.toStringAsFixed(2);
-                                                      if (text.isNotEmpty && priceText.isNotEmpty && dropdownvaluesubs == "Film, Dizi ve TV") {
-                                                        final invoice = Invoice(
-                                                            id: newId,
-                                                            price: price,
-                                                            subCategory: 'TV',
-                                                            category: 'Abonelikler',
-                                                            name: text,
-                                                            periodDate: formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                                                            dueDate: _selectedDueDay != null
-                                                                ? formatDueDate(_selectedDueDay!, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!))
-                                                                : null,
-                                                            difference: "tv2"
-                                                        );
-                                                        onSave(invoice);
-                                                        if (text.isNotEmpty && priceText.isNotEmpty) {
-                                                          setState(() {
-                                                            textController.clear();
-                                                            platformPriceController.clear();
-                                                            isSubsAddActive = false;
-                                                            hasSubsCategorySelected = false;
-                                                          });
-                                                        }
-                                                      } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvaluesubs == "Oyun") {
-                                                        setState(() {
-                                                          gameTitleList.add(text);
-                                                          gamePriceList.add(price);
-                                                          prefs.setStringList('gameTitleList2', gameTitleList);
-                                                          prefs.setStringList('gamePriceList2', gamePriceList);
-                                                          textController.clear();
-                                                          platformPriceController.clear();
-                                                          isSubsAddActive = false;
-                                                          hasSubsCategorySelected = false;
-                                                          _load();
-                                                        });
-                                                      } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvaluesubs == "Müzik") {
-                                                        setState(() {
-                                                          musicTitleList.add(text);
-                                                          musicPriceList.add(price);
-                                                          prefs.setStringList('musicTitleList2', musicTitleList);
-                                                          prefs.setStringList('musicPriceList2', musicPriceList);
-                                                          textController.clear();
-                                                          platformPriceController.clear();
-                                                          isSubsAddActive = false;
-                                                          hasSubsCategorySelected = false;
-                                                          _load();
-                                                        });
-                                                      }
-                                                    });
-                                                  },
-                                                  child: Icon(Icons.check_circle, size: 26, color: Colors.black),
-                                                ),
-                                              )
-                                            ],
-                                        )
-                                      ],
-                                    ),
-                                  ),
+                                const SizedBox(height: 4),
+                                LinearPercentIndicator(
+                                  padding: EdgeInsets.zero,
+                                  lineHeight: 10,
+                                  percent: percentage.clamp(0.0, 1.0),
+                                  progressColor: Colors.orangeAccent,
+                                  backgroundColor: Colors.orangeAccent.withOpacity(0.3),
+                                  barRadius: const Radius.circular(8),
+                                ),
                               ],
                             ),
-                          )
-                      ],
-                    ),
-                  ],
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 20),
-              Text("Faturalar", style: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.grey[850] // Dark mode color
-                      : Colors.white, // Light mode color
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.black.withOpacity(0.5) // Dark mode shadow color
-                          : Colors.grey.withOpacity(0.5), // Light mode shadow color
-                      spreadRadius: 5,
-                      blurRadius: 7,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                          color: variableNames[0] == "billsPercent"
-                              ? smallestSoftColor
-                              : variableNames[1] == "billsPercent"
-                              ? mediumSoftColor
-                              :biggestSoftColor
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                    formattedSumOfBills,
-                                    style: GoogleFonts.montserrat(
-                                        fontSize: 19.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black
-                                    )
-                                ),
-                                Text(
-                                    formattedOutcomeValue,
-                                    style: GoogleFonts.montserrat(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black
-                                    )
-                                ),
-                              ],
-                            ),
-                            SizedBox(
-                              child: LinearPercentIndicator(
-                                padding: const EdgeInsets.only(right: 10),
-                                backgroundColor: const Color(0xffc6c6c7),
-                                animation: true,
-                                lineHeight: 10,
-                                animationDuration: 1000,
-                                percent: sumOfBills/outcomeValue,
-                                trailing: Text("%${((sumOfBills/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                barRadius: const Radius.circular(10),
-                                progressColor: variableNames[0] == "billsPercent"
-                                    ? smallestColor
-                                    : variableNames[1] == "billsPercent"
-                                    ? mediumColor
-                                    :biggestColor
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    ListView(
-                      padding: EdgeInsets.zero,
-                      physics: const NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      children: [
-                        if(invoices.isNotEmpty)
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(120, 255, 204, 148),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.all(10),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(left:10, top:10),
-                                  child: Text("Home Bills", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                                ),
-                                SizedBox(height: 20),
-                                ListView(
-                                  padding: EdgeInsets.zero,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  shrinkWrap: true,
-                                  children: idsWithHBTargetCategory.map((id) {
-                                    Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
-                                    return Padding(
-                                      padding: const EdgeInsets.only(bottom: 10),
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Color.fromARGB(200, 255, 199, 138),
-                                          borderRadius: BorderRadius.circular(20),
-                                        ),
-                                        child: Column(
-                                          children: [
-                                            Row(
-                                              children: [
-                                                Flexible(
-                                                  flex:2,
-                                                  child: ListTile(
-                                                    dense: true,
-                                                    title: Text("Name", style: TextStyle(color: Colors.black)),
-                                                    subtitle: Text(
-                                                      invoice.name,
-                                                      style: GoogleFonts.montserrat(fontSize: 16.sp, color: Colors.black),
-                                                      overflow: TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                ),
-                                                Flexible(
-                                                  flex:2,
-                                                  child: ListTile(
-                                                    dense: true,
-                                                    title: Text("Amount", style: TextStyle(color: Colors.black)),
-                                                    subtitle: Text(
-                                                      invoice.price,
-                                                      style: GoogleFonts.montserrat(fontSize: 16.sp, color: Colors.black),
-                                                      overflow: TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            Row(
-                                              children: [
-                                                Flexible(
-                                                  flex:2,
-                                                  child: ListTile(
-                                                    dense: true,
-                                                    title: Text("Period Date", style: TextStyle(color: Colors.black)),
-                                                    subtitle: Text(
-                                                      invoice.periodDate,
-                                                      style: GoogleFonts.montserrat(fontSize: 16.sp, color: Colors.black),
-                                                      overflow: TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                ),
-                                                Flexible(
-                                                  flex:2,
-                                                  child: ListTile(
-                                                    dense: true,
-                                                    title: Text("Due Date", style: TextStyle(color: Colors.black)),
-                                                    subtitle: Text(
-                                                      invoice.dueDate ?? "N/A",
-                                                      style: GoogleFonts.montserrat(fontSize: 16.sp, color: Colors.black),
-                                                      overflow: TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                )
-                                              ],
-                                            ),
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                color: Color.fromARGB(200, 255, 176, 89),
-                                                borderRadius: BorderRadius.circular(20),
-                                              ),
-                                              padding: EdgeInsets.only(left: 20,right: 20),
-                                              child: SizedBox(
-                                                child: Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                  children: [
-                                                    Text("Düzenle", style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black)),
-                                                    IconButton(
-                                                      splashRadius: 0.0001,
-                                                      padding: EdgeInsets.zero,
-                                                      constraints: BoxConstraints(minWidth: 23, maxWidth: 23),
-                                                      icon: Icon(Icons.edit, size: 21, color: Colors.black),
-                                                      onPressed: () {
-                                                        _showEditDialog(context, idsWithHBTargetCategory.indexOf(id), 1, 1, id);
-                                                      },
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                              ],
-                            ),
-                          ),
-                        if(internetTitleList.isNotEmpty)
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("Internet", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                              const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                              ListView.builder(
-                                padding: EdgeInsets.zero,
-                                physics: const NeverScrollableScrollPhysics(),
-                                shrinkWrap: true,
-                                itemCount: internetTitleList.length + 1, // +1 for the "Abonelik Ekle" row
-                                itemBuilder: (context, index) {
-                                  if (index < internetTitleList.length) {
-                                    return Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Flexible(
-                                              flex: 2,
-                                              fit: FlexFit.tight,
-                                              child: Text(
-                                                internetTitleList[index],
-                                                style: GoogleFonts.montserrat(fontSize: 20),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            Flexible(
-                                              flex: 2,
-                                              fit: FlexFit.tight,
-                                              child: Text(
-                                                textAlign: TextAlign.right,
-                                                internetPriceList[index],
-                                                style: GoogleFonts.montserrat(fontSize: 20),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 20),
-                                            IconButton(
-                                              splashRadius: 0.0001,
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                              icon: const Icon(Icons.edit, size: 21),
-                                              onPressed: () {
-                                                _showEditDialog(context, index, 2, 2, 0); // Show the edit dialog
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                        const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                      ],
-                                    );
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ],
-                          ),
-                        if(phoneTitleList.isNotEmpty)
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("Phone", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                              const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                              ListView.builder(
-                                padding: EdgeInsets.zero,
-                                physics: const NeverScrollableScrollPhysics(),
-                                shrinkWrap: true,
-                                itemCount: phoneTitleList.length + 1, // +1 for the "Abonelik Ekle" row
-                                itemBuilder: (context, index) {
-                                  if (index < phoneTitleList.length) {
-                                    return Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Flexible(
-                                              flex: 2,
-                                              fit: FlexFit.tight,
-                                              child: Text(
-                                                phoneTitleList[index],
-                                                style: GoogleFonts.montserrat(fontSize: 20),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            Flexible(
-                                              flex: 2,
-                                              fit: FlexFit.tight,
-                                              child: Text(
-                                                textAlign: TextAlign.right,
-                                                phonePriceList[index],
-                                                style: GoogleFonts.montserrat(fontSize: 20),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 20),
-                                            IconButton(
-                                              splashRadius: 0.0001,
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                              icon: const Icon(Icons.edit, size: 21),
-                                              onPressed: () {
-                                                _showEditDialog(context, index, 2, 3, 0); // Show the edit dialog
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                        const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                      ],
-                                    );
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ],
-                          ),
-                        SizedBox(height: 10),
-                        if(!isBillsAddActive)
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(200, 255, 176, 89),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.only(left: 20,right: 20),
-                            child: SizedBox(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text("Fatura Ekle", style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black)),
-                                  IconButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        isBillsAddActive = true;
-                                      });
-                                    },
-                                    icon: const Icon(Icons.add_circle, color: Colors.black),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        if(isBillsAddActive)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Container(
-                                  child:DropdownButton(
-                                    value: dropdownvaluebills,
-                                    icon:const Icon(Icons.keyboard_arrow_down),
-                                    items: billsItems.map((String items) {
-                                      return DropdownMenuItem(
-                                        value: items,
-                                        child: Text(items),
-                                      );
-                                    }).toList(),
-                                    onChanged: (String? newValue) {
-                                      setState(() {
-                                        dropdownvaluebills = newValue!;
-                                      });
-                                    },
-                                  )
-                              ),
-                              Wrap(
-                                children: [
-                                  if(!hasBillsCategorySelected)
-                                    IconButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          isBillsAddActive = true;
-                                          hasBillsCategorySelected = true;
-                                        });
-                                      },
-                                      icon: const Icon(Icons.arrow_downward, size: 26),
-                                    ),
-                                  if(!hasBillsCategorySelected)
-                                    IconButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          isBillsAddActive = false;
-                                          hasBillsCategorySelected = false;
-                                        });
-                                      },
-                                      icon: const Icon(Icons.cancel, size: 26),
-                                    ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        if(hasBillsCategorySelected)
-                          Container(
-                            padding: const EdgeInsets.only(top:10, bottom:10),
-                            child: Column(
-                              children: [
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(
-                                      child: TextFormField(
-                                        controller: textController,
-                                        decoration: const InputDecoration(
-                                          border: InputBorder.none,
-                                          hintText: 'ABA',
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: TextFormField(
-                                        controller: platformPriceController,
-                                        keyboardType: TextInputType.number, // Show numeric keyboard
-                                        decoration: const InputDecoration(
-                                          border: InputBorder.none,
-                                          hintText: 'GAG',
-                                        ),
-                                      ),
-                                    ),
-                                    Wrap(
-                                      children: [
-                                        IconButton(
-                                          onPressed: () async{
-                                            final prefs = await SharedPreferences.getInstance();
-                                            setState((){
-                                              int maxId = 0; // Initialize with the lowest possible value
-                                              for (var invoice in invoices) {
-                                                if (invoice.id > maxId) {
-                                                  maxId = invoice.id;
-                                                }
-                                              }
-                                              int newId = maxId + 1;
-                                              final text = textController.text.trim();
-                                              final priceText = platformPriceController.text.trim();
-                                              double dprice = double.tryParse(priceText) ?? 0.0;
-                                              String price = dprice.toStringAsFixed(2);
+              ListView(
+                physics: const NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                children: userCategories.entries.map((entry) {
+                  final category = entry.key;
+                  final subcategories = entry.value;
 
-                                              if (text.isNotEmpty && priceText.isNotEmpty && dropdownvaluebills == "Ev Faturaları") {
-                                                final invoice = Invoice(
-                                                    id: newId,
-                                                    price: price,
-                                                    subCategory: 'Ev Faturaları',
-                                                    category: "Faturalar",
-                                                    name: text,
-                                                    periodDate: formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!),
-                                                    dueDate: _selectedDueDay != null
-                                                        ? formatDueDate(_selectedDueDay!, formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!))
-                                                        : null,
-                                                    difference: "fa2"
-                                                );
-                                                onSave(invoice);
-                                                if (text.isNotEmpty && priceText.isNotEmpty) {
-                                                  textController.clear();
-                                                  platformPriceController.clear();
-                                                  //isTextFormFieldVisible = false;
-                                                  isBillsAddActive = false;
-                                                  hasBillsCategorySelected = false;
-                                                }
-                                              } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvaluebills == "İnternet") {
-                                                setState(() {
-                                                  internetTitleList.add(text);
-                                                  internetPriceList.add(price);
-                                                  prefs.setStringList('internetTitleList2', internetTitleList);
-                                                  prefs.setStringList('internetPriceList2', internetPriceList);
-                                                  textController.clear();
-                                                  platformPriceController.clear();
-                                                  //isTextFormFieldVisible = false;
-                                                  isBillsAddActive = false;
-                                                  hasBillsCategorySelected = false;
-                                                  _load();
-                                                });
-                                              } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvaluebills == "Telefon") {
-                                                setState(() {
-                                                  phoneTitleList.add(text);
-                                                  phonePriceList.add(price);
-                                                  prefs.setStringList('phoneTitleList2', phoneTitleList);
-                                                  prefs.setStringList('phonePriceList2', phonePriceList);
-                                                  textController.clear();
-                                                  platformPriceController.clear();
-                                                  //isTextFormFieldVisible = false;
-                                                  isBillsAddActive = false;
-                                                  hasBillsCategorySelected = false;
-                                                  _load();
-                                                });
-                                              }
-                                            });
-                                          },
-                                          icon: const Icon(Icons.check_circle, size: 26),
-                                        ),
-                                        IconButton(
-                                          onPressed: () {
-                                            setState(() {
-                                              //isTextFormFieldVisible = false;
-                                              isBillsAddActive = false;
-                                              hasBillsCategorySelected = false;
-                                              textController.clear();
-                                              platformPriceController.clear();
-                                            });
-                                          },
-                                          icon: const Icon(Icons.cancel, size: 26),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: DropdownButtonFormField<int>(
-                                        value: null,
-                                        onChanged: (value) {
-                                          setState(() {
-                                            _selectedBillingDay = value;
-                                          });
-                                        },
-                                        items: daysList.map((day) {
-                                          return DropdownMenuItem<int>(
-                                            value: day,
-                                            child: Text(day.toString()),
-                                          );
-                                        }).toList(),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: DropdownButtonFormField<int>(
-                                        value: null,
-                                        onChanged: (value) {
-                                          setState(() {
-                                            _selectedBillingMonth = value;
-                                          });
-                                        },
-                                        items: monthsList.map((month) {
-                                          return DropdownMenuItem<int>(
-                                            value: month,
-                                            child: Text(month.toString()),
-                                          );
-                                        }).toList(),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 10),
-                                DropdownButtonFormField<int>(
-                                  value: null,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _selectedDueDay = value;
-                                    });
-                                  },
-                                  items: daysList.map((day) {
-                                    return DropdownMenuItem<int>(
-                                      value: day,
-                                      child: Text(day.toString()),
-                                    );
-                                  }).toList(),
-                                ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    )
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text("Diğer Giderler", style: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.grey[850] // Dark mode color
-                      : Colors.white, // Light mode color
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.black.withOpacity(0.5) // Dark mode shadow color
-                          : Colors.grey.withOpacity(0.5), // Light mode shadow color
-                      spreadRadius: 5,
-                      blurRadius: 7,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                          color: variableNames[0] == "othersPercent"
-                              ? smallestSoftColor
-                              : variableNames[1] == "othersPercent"
-                              ? mediumSoftColor
-                              :biggestSoftColor
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                    formattedSumOfOthers,
-                                    style: GoogleFonts.montserrat(
-                                        fontSize: 19.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black
-                                    )
-                                ),
-                                Text(
-                                    formattedOutcomeValue,
-                                    style: GoogleFonts.montserrat(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black
-                                    )
-                                ),
-                              ],
-                            ),
-                            SizedBox(
-                              child: LinearPercentIndicator(
-                                padding: const EdgeInsets.only(right: 10),
-                                backgroundColor: const Color(0xffc6c6c7),
-                                animation: true,
-                                lineHeight: 10,
-                                animationDuration: 1000,
-                                percent: sumOfOthers/outcomeValue,
-                                trailing: Text("%${((sumOfOthers/outcomeValue)*100).toStringAsFixed(0)}", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                                barRadius: const Radius.circular(10),
-                                progressColor: variableNames[0] == "othersPercent"
-                                    ? smallestColor
-                                    : variableNames[1] == "othersPercent"
-                                    ? mediumColor
-                                    :biggestColor
-                              ),
-                            ),
-                          ],
+                  return Container(
+                    margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 0),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF7F8FA),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 6,
+                          offset: Offset(0, 3),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    ListView(
-                      padding: EdgeInsets.zero,
-                      physics: const NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      children: [
-                        if(invoices.isNotEmpty)
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(120, 255, 171, 138),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.all(10),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(left:10, top:10),
-                                  child: Text("Rent", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                                ),
-                                SizedBox(height: 20),
-                                ListView(
-                                  padding: EdgeInsets.zero,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  shrinkWrap: true,
-                                  children: idsWithRentTargetCategory.map((id) {
-                                    Invoice invoice = invoices.firstWhere((invoice) => invoice.id == id);
-                                    return Padding(
-                                      padding: const EdgeInsets.only(bottom: 10),
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Color.fromARGB(255, 255, 127, 77),
-                                          borderRadius: BorderRadius.circular(20),
-                                        ),
-                                        child: Column(
-                                          children: [
-                                            Row(
-                                              children: [
-                                                Flexible(
-                                                  flex:2,
-                                                  child: ListTile(
-                                                    dense: true,
-                                                    title: Text("Name", style: TextStyle(color: Colors.black)),
-                                                    subtitle: Text(
-                                                      invoice.name,
-                                                      style: GoogleFonts.montserrat(fontSize: 16.sp, color: Colors.black),
-                                                      overflow: TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                ),
-                                                Flexible(
-                                                  flex:2,
-                                                  child: ListTile(
-                                                    dense: true,
-                                                    title: Text("Amount", style: TextStyle(color: Colors.black)),
-                                                    subtitle: Text(
-                                                      invoice.price,
-                                                      style: GoogleFonts.montserrat(fontSize: 16.sp, color: Colors.black),
-                                                      overflow: TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            Row(
-                                              children: [
-                                                Flexible(
-                                                  flex:2,
-                                                  child: ListTile(
-                                                    dense: true,
-                                                    title: Text("Period Date", style: TextStyle(color: Colors.black)),
-                                                    subtitle: Text(
-                                                      invoice.periodDate,
-                                                      style: GoogleFonts.montserrat(fontSize: 16.sp, color: Colors.black),
-                                                      overflow: TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                ),
-                                                Flexible(
-                                                  flex:2,
-                                                  child: ListTile(
-                                                    dense: true,
-                                                    title: Text("Due Date", style: TextStyle(color: Colors.black)),
-                                                    subtitle: Text(
-                                                      invoice.dueDate ?? "N/A",
-                                                      style: GoogleFonts.montserrat(fontSize: 16.sp, color: Colors.black),
-                                                      overflow: TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                )
-                                              ],
-                                            ),
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                color: Color.fromARGB(200, 247, 69, 0),
-                                                borderRadius: BorderRadius.circular(20),
-                                              ),
-                                              padding: EdgeInsets.only(left: 20,right: 20),
-                                              child: SizedBox(
-                                                child: Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                  children: [
-                                                    Text("Düzenle", style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black)),
-                                                    IconButton(
-                                                      splashRadius: 0.0001,
-                                                      padding: EdgeInsets.zero,
-                                                      constraints: BoxConstraints(minWidth: 23, maxWidth: 23),
-                                                      icon: Icon(Icons.edit, size: 21, color: Colors.black),
-                                                      onPressed: () {
-                                                        _showEditDialog(context, idsWithRentTargetCategory.indexOf(id), 1, 1, id);
-                                                      },
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  }).toList()
-                                ),
-                              ],
-                            ),
-                          ),
-                        if(kitchenTitleList.isNotEmpty)
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("Kitchen", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                              const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                              ListView.builder(
-                                padding: EdgeInsets.zero,
-                                physics: const NeverScrollableScrollPhysics(),
-                                shrinkWrap: true,
-                                itemCount: kitchenTitleList.length + 1, // +1 for the "Abonelik Ekle" row
-                                itemBuilder: (context, index) {
-                                  if (index < kitchenTitleList.length) {
-                                    return Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Flexible(
-                                              flex: 2,
-                                              fit: FlexFit.tight,
-                                              child: Text(
-                                                kitchenTitleList[index],
-                                                style: GoogleFonts.montserrat(fontSize: 20),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            Flexible(
-                                              flex: 2,
-                                              fit: FlexFit.tight,
-                                              child: Text(
-                                                textAlign: TextAlign.right,
-                                                kitchenPriceList[index],
-                                                style: GoogleFonts.montserrat(fontSize: 20),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 20),
-                                            IconButton(
-                                              splashRadius: 0.0001,
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                              icon: const Icon(Icons.edit, size: 21),
-                                              onPressed: () {
-                                                _showEditDialog(context, index, 3, 2, 0); // Show the edit dialog
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                        const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                      ],
-                                    );
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ],
-                          ),
-                        if(cateringTitleList.isNotEmpty)
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("Catering", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                              const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                              ListView.builder(
-                                padding: EdgeInsets.zero,
-                                physics: const NeverScrollableScrollPhysics(),
-                                shrinkWrap: true,
-                                itemCount: cateringTitleList.length + 1, // +1 for the "Abonelik Ekle" row
-                                itemBuilder: (context, index) {
-                                  if (index < cateringTitleList.length) {
-                                    return Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Flexible(
-                                              flex: 2,
-                                              fit: FlexFit.tight,
-                                              child: Text(
-                                                cateringTitleList[index],
-                                                style: GoogleFonts.montserrat(fontSize: 20),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            Flexible(
-                                              flex: 2,
-                                              fit: FlexFit.tight,
-                                              child: Text(
-                                                textAlign: TextAlign.right,
-                                                cateringPriceList[index],
-                                                style: GoogleFonts.montserrat(fontSize: 20),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 20),
-                                            IconButton(
-                                              splashRadius: 0.0001,
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                              icon: const Icon(Icons.edit, size: 21),
-                                              onPressed: () {
-                                                _showEditDialog(context, index, 3, 3, 0); // Show the edit dialog
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                        const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                      ],
-                                    );
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ],
-                          ),
-                        if(entertainmentTitleList.isNotEmpty)
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("Entertainment", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                              const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                              ListView.builder(
-                                padding: EdgeInsets.zero,
-                                physics: const NeverScrollableScrollPhysics(),
-                                shrinkWrap: true,
-                                itemCount: entertainmentTitleList.length + 1, // +1 for the "Abonelik Ekle" row
-                                itemBuilder: (context, index) {
-                                  if (index < entertainmentTitleList.length) {
-                                    return Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Flexible(
-                                              flex: 2,
-                                              fit: FlexFit.tight,
-                                              child: Text(
-                                                entertainmentTitleList[index],
-                                                style: GoogleFonts.montserrat(fontSize: 20),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            Flexible(
-                                              flex: 2,
-                                              fit: FlexFit.tight,
-                                              child: Text(
-                                                textAlign: TextAlign.right,
-                                                entertainmentPriceList[index],
-                                                style: GoogleFonts.montserrat(fontSize: 20),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 20),
-                                            IconButton(
-                                              splashRadius: 0.0001,
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                              icon: const Icon(Icons.edit, size: 21),
-                                              onPressed: () {
-                                                _showEditDialog(context, index, 3, 4, 0); // Show the edit dialog
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                        const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                      ],
-                                    );
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ],
-                          ),
-                        if(otherTitleList.isNotEmpty)
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("Others", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                              const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                              ListView.builder(
-                                padding: EdgeInsets.zero,
-                                physics: const NeverScrollableScrollPhysics(),
-                                shrinkWrap: true,
-                                itemCount: otherTitleList.length + 1, // +1 for the "Abonelik Ekle" row
-                                itemBuilder: (context, index) {
-                                  if (index < otherTitleList.length) {
-                                    return Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Flexible(
-                                              flex: 2,
-                                              fit: FlexFit.tight,
-                                              child: Text(
-                                                otherTitleList[index],
-                                                style: GoogleFonts.montserrat(fontSize: 20),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            Flexible(
-                                              flex: 2,
-                                              fit: FlexFit.tight,
-                                              child: Text(
-                                                textAlign: TextAlign.right,
-                                                otherPriceList[index],
-                                                style: GoogleFonts.montserrat(fontSize: 20),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 20),
-                                            IconButton(
-                                              splashRadius: 0.0001,
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(minWidth: 23, maxWidth: 23),
-                                              icon: const Icon(Icons.edit, size: 21),
-                                              onPressed: () {
-                                                _showEditDialog(context, index, 3, 5, 0); // Show the edit dialog
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                        const Divider(color: Color(0xffc6c6c7), thickness: 2, height: 20),
-                                      ],
-                                    );
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ],
-                          ),
-                        SizedBox(height: 10),
-                        if(!isOthersAddActive)
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(200, 247, 69, 0),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.only(left: 20,right: 20),
-                            child: SizedBox(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text("Diğer Gider Ekle", style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black)),
-                                  IconButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        isOthersAddActive = true;
-                                      });
-                                    },
-                                    icon: const Icon(Icons.add_circle, color: Colors.black),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        if(isOthersAddActive)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Container(
-                                  child:DropdownButton(
-                                    value: dropdownvalueothers,
-                                    icon:const Icon(Icons.keyboard_arrow_down),
-                                    items: othersItems.map((String items) {
-                                      return DropdownMenuItem(
-                                        value: items,
-                                        child: Text(items),
-                                      );
-                                    }).toList(),
-                                    onChanged: (String? newValue) {
-                                      setState(() {
-                                        dropdownvalueothers= newValue!;
-                                      });
-                                    },
-                                  )
-                              ),
-                              Wrap(
-                                children: [
-                                  if(!hasOthersCategorySelected)
-                                    IconButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          isOthersAddActive = true;
-                                          hasOthersCategorySelected = true;
-                                        });
-                                      },
-                                      icon: const Icon(Icons.arrow_downward, size: 26),
-                                    ),
-                                  if(!hasOthersCategorySelected)
-                                    IconButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          isOthersAddActive = false;
-                                          hasOthersCategorySelected = false;
-                                        });
-                                      },
-                                      icon: const Icon(Icons.cancel, size: 26),
-                                    ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        if(hasOthersCategorySelected)
-                          Container(
-                            padding: const EdgeInsets.only(top:10, bottom:10),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: textController,
-                                    decoration: const InputDecoration(
-                                      border: InputBorder.none,
-                                      hintText: 'ABA',
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: platformPriceController,
-                                    keyboardType: TextInputType.number, // Show numeric keyboard
-                                    decoration: const InputDecoration(
-                                      border: InputBorder.none,
-                                      hintText: 'GAG',
-                                    ),
-                                  ),
-                                ),
-                                Wrap(
-                                  children: [
-                                    IconButton(
-                                      onPressed: () async {
-                                        final prefs = await SharedPreferences.getInstance();
-                                        final text = textController.text.trim();
-                                        final priceText = platformPriceController.text.trim();
-                                        if (text.isNotEmpty && priceText.isNotEmpty && dropdownvalueothers == "Kira") {
-                                          double dprice = double.tryParse(priceText) ?? 0.0;
-                                          String price = dprice.toStringAsFixed(2);
-                                          setState(() {
-                                            rentTitleList.add(text);
-                                            rentPriceList.add(price);
-                                            prefs.setStringList('rentTitleList2', rentTitleList);
-                                            prefs.setStringList('rentPriceList2', rentPriceList);
-                                            textController.clear();
-                                            platformPriceController.clear();
-                                            //isTextFormFieldVisible = false;
-                                            isOthersAddActive = false;
-                                            hasOthersCategorySelected = false;
-                                            _load();
-                                          });
-                                        } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvalueothers == "Mutfak") {
-                                          double dprice = double.tryParse(priceText) ?? 0.0;
-                                          String price = dprice.toStringAsFixed(2);
-                                          setState(() {
-                                            kitchenTitleList.add(text);
-                                            kitchenPriceList.add(price);
-                                            prefs.setStringList('kitchenTitleList2', kitchenTitleList);
-                                            prefs.setStringList('kitchenPriceList2', kitchenPriceList);
-                                            textController.clear();
-                                            platformPriceController.clear();
-                                            //isTextFormFieldVisible = false;
-                                            isOthersAddActive = false;
-                                            hasOthersCategorySelected = false;
-                                            _load();
-                                          });
-                                        } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvalueothers == "Yeme İçme") {
-                                          double dprice = double.tryParse(priceText) ?? 0.0;
-                                          String price = dprice.toStringAsFixed(2);
-                                          setState(() {
-                                            cateringTitleList.add(text);
-                                            cateringPriceList.add(price);
-                                            prefs.setStringList('cateringTitleList2', cateringTitleList);
-                                            prefs.setStringList('cateringPriceList2', cateringPriceList);
-                                            textController.clear();
-                                            platformPriceController.clear();
-                                            //isTextFormFieldVisible = false;
-                                            isOthersAddActive = false;
-                                            hasOthersCategorySelected = false;
-                                            _load();
-                                          });
-                                        } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvalueothers == "Eğlence") {
-                                          double dprice = double.tryParse(priceText) ?? 0.0;
-                                          String price = dprice.toStringAsFixed(2);
-                                          setState(() {
-                                            entertainmentTitleList.add(text);
-                                            entertainmentPriceList.add(price);
-                                            prefs.setStringList('entertainmentTitleList2', entertainmentTitleList);
-                                            prefs.setStringList('entertainmentPriceList2', entertainmentPriceList);
-                                            textController.clear();
-                                            platformPriceController.clear();
-                                            //isTextFormFieldVisible = false;
-                                            isOthersAddActive = false;
-                                            hasOthersCategorySelected = false;
-                                            _load();
-                                          });
-                                        } else if (text.isNotEmpty && priceText.isNotEmpty && dropdownvalueothers == "Diğer") {
-                                          double dprice = double.tryParse(priceText) ?? 0.0;
-                                          String price = dprice.toStringAsFixed(2);
-                                          setState(() {
-                                            otherTitleList.add(text);
-                                            otherPriceList.add(price);
-                                            prefs.setStringList('otherTitleList2', otherTitleList);
-                                            prefs.setStringList('otherPriceList2', otherPriceList);
-                                            textController.clear();
-                                            platformPriceController.clear();
-                                            //isTextFormFieldVisible = false;
-                                            isOthersAddActive = false;
-                                            hasOthersCategorySelected = false;
-                                            _load();
-                                          });
-                                        }
-                                      },
-                                      icon: const Icon(Icons.check_circle, size: 26),
-                                    ),
-                                    IconButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          //isTextFormFieldVisible = false;
-                                          isOthersAddActive = false;
-                                          hasOthersCategorySelected = false;
-                                          textController.clear();
-                                          platformPriceController.clear();
-                                        });
-                                      },
-                                      icon: const Icon(Icons.cancel, size: 26),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
                       ],
-                    )
-                  ],
-                ),
-              ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Category Title
+                        Padding(
+                          padding: const EdgeInsets.only(left: 6.0, bottom: 6),
+                          child: Text(
+                            category,
+                            style: GoogleFonts.montserrat(
+                              color: const Color(0xFF333333),
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        const Divider(thickness: 1.2, color: Color(0xffd0d0d0)),
+                        ...subcategories.map((subcategoryData) {
+                          final subcategory = subcategoryData["subcategory"] ?? "";
+                          final title = subcategoryData["title"] ?? "";
+                          final amount = subcategoryData["amount"];
+                          final hasContent = title.isNotEmpty || amount != null;
+
+                          return Theme(
+                            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF2F2F2),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: ExpansionTile(
+                                tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                childrenPadding: const EdgeInsets.fromLTRB(16, 4, 12, 8),
+                                backgroundColor: Colors.white,
+                                collapsedBackgroundColor: const Color(0xFFF2F2F2),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                title: Text(
+                                  subcategory,
+                                  style: GoogleFonts.montserrat(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                children: [
+                                  if (hasContent)
+                                    Padding(
+                                      padding: const EdgeInsets.only(bottom: 6),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Flexible(
+                                            flex: 3,
+                                            child: Text(
+                                              title,
+                                              style: GoogleFonts.montserrat(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w500,
+                                                color: const Color(0xFF444444),
+                                              ),
+                                            ),
+                                          ),
+                                          Flexible(
+                                            flex: 2,
+                                            child: Text(
+                                              amount?.toString() ?? "",
+                                              style: GoogleFonts.montserrat(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w500,
+                                                color: const Color(0xFF00796B),
+                                              ),
+                                              textAlign: TextAlign.right,
+                                            ),
+                                          ),
+                                          IconButton(
+                                            splashRadius: 20,
+                                            icon: const Icon(Icons.edit, size: 20, color: Colors.grey),
+                                            onPressed: () {
+                                              _showEditDialog(
+                                                context,
+                                                category,
+                                                subcategory,
+                                                subcategories.indexOf(subcategoryData),
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: TextButton.icon(
+                                      onPressed: () {
+                                        _showAddExpenseDialog(context, category, subcategories.indexOf(subcategoryData));
+                                      },
+                                      icon: const Icon(Icons.add, size: 18, color: Color(0xFF00695C)),
+                                      label: const Text("Gider ekle", style: TextStyle(color: Color(0xFF00695C))),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            onPressed: () {
+                              _showAddSubcategoryDialog(category);
+                            },
+                            icon: const Icon(Icons.add, size: 18, color: Color(0xFF004D40)),
+                            label: const Text("Alt kategori ekle", style: TextStyle(color: Color(0xFF004D40))),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              )
             ],
           ),
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _showAddDialog(context);
+        },
+        child: const Icon(Icons.add),
+      ),
     );
+  }
+
+  Map<String, dynamic>? _findAccountById(int? accountId) {
+    if (accountId == null) {
+      print('Warning: _findAccountById called with null accountId');
+      return null;
+    }
+
+    for (var bank in bankAccounts) {
+      for (var account in bank['accounts'] ?? []) {
+        if (account['accountId'] == accountId) {
+          // Return a flattened structure with account + bank info
+          return {
+            ...account, // Spread all account fields
+            'bankId': bank['bankId'],
+            'bankName': bank['bankName'],
+            'currency': bank['currency'],
+            'isDebit': bank['isDebit'] ?? true,
+            'creditLimit': bank['creditLimit'] ?? false,
+            'cutoffDate': bank['cutoffDate'] ?? false,
+            // Don't include nested accounts array since we're selecting one account
+          };
+        }
+      }
+    }
+    return null;
   }
 }

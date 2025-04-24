@@ -1,11 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ui' as ui;
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:percent_indicator/percent_indicator.dart';
@@ -14,6 +11,8 @@ import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 
 
 import '../../blocs/income-selections.dart';
+import '../../models/invoice-page.dart';
+import '../../models/transaction-widget.dart';
 import '../../models/transaction.dart';
 import '../add-expense/faturalar.dart';
 
@@ -23,7 +22,6 @@ class HomePage extends StatefulWidget {
   @override
   State<HomePage> createState() => _HomePageState();
 }
-
 class _HomePageState extends State<HomePage> {
   List<Invoice> invoices = [];
   Map<String, List<Map<String, dynamic>>> incomeMap = {};
@@ -64,6 +62,10 @@ class _HomePageState extends State<HomePage> {
   List<Invoice> selectedInvoices = [];
   List<Transaction> transactions = [];
 
+  List<Map<String, dynamic>> bankAccounts = [];
+  Map<String, dynamic>? selectedAccount;
+  bool isLoading = true; // Flag to indicate loading state
+
   List<Invoice> upcomingInvoices = [];
   List<Invoice> todayInvoices = [];
   List<Invoice> approachingDueInvoices = [];
@@ -89,6 +91,21 @@ class _HomePageState extends State<HomePage> {
     _load();
   }
 
+  Future<List<Transaction>> _loadTransactionsFromAccountData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? accountDataString = prefs.getString('selectedAccount');
+    print("${accountDataString} is _loadTransactionsFromAccountData");
+
+    if (accountDataString == null) {
+      return [];  // Eğer 'selectedAccount' verisi yoksa boş liste döndürüyoruz.
+    }
+
+    final Map<String, dynamic> accountData = jsonDecode(accountDataString);
+    final List<dynamic> transactionsJson = accountData['transactions'] ?? [];
+
+    // JSON verisini Transaction modeline dönüştür
+    return transactionsJson.map((json) => Transaction.fromJson(json)).toList();
+  }
 
   void categorizeInvoices(List<Invoice> faturalar) {
     DateTime today = DateTime.now();
@@ -108,7 +125,7 @@ class _HomePageState extends State<HomePage> {
     // 3. Approaching Due Date (those with DueDate data and this date is before today)
     approachingDueInvoices = faturalar.where((invoice) {
       if (invoice.dueDate!= null) {
-        DateTime periodDate = DateTime.parse(invoice.periodDate!);
+        DateTime periodDate = DateTime.parse(invoice.periodDate);
         DateTime dueDate = DateTime.parse(invoice.dueDate!);
         return periodDate.isBefore(today) && today.isBefore(dueDate);
       }
@@ -127,7 +144,7 @@ class _HomePageState extends State<HomePage> {
     // 5. Overdue Invoices (Invoices with DueDate data that are overdue or invoices without DueDate data but with an overdue PeriodDate)
     overdueInvoices = faturalar.where((invoice) {
       if (invoice.dueDate != null) {
-        DateTime periodDate = DateTime.parse(invoice.periodDate!);
+        DateTime periodDate = DateTime.parse(invoice.periodDate);
         DateTime dueDate = DateTime.parse(invoice.dueDate!);
         return dueDate.isBefore(today) && periodDate.isBefore(today);
       } else {
@@ -140,17 +157,17 @@ class _HomePageState extends State<HomePage> {
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: Text("Are you sure?"),
-            content: Text("Do you really want to delete this invoice?"),
+            title: const Text("Are you sure?"),
+            content: const Text("Do you really want to delete this invoice?"),
             actions: [
               TextButton(
-                child: Text("Cancel"),
+                child: const Text("Cancel"),
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
               ),
               TextButton(
-                child: Text("Delete"),
+                child: const Text("Delete"),
                 onPressed: () {
                   setState(() {
                     invoices.removeWhere((item) => item.id == invoice.id);
@@ -213,111 +230,303 @@ class _HomePageState extends State<HomePage> {
     final ab14 = prefs.getString('startDate');
     final ab15 = prefs.getString('endDate');
     final savedInvoicesJson = prefs.getStringList('invoices');
-    final ab16 = prefs.getString('transactions');
+    String? accountDataListJson = prefs.getString('accountDataList');
+    String? accountData = prefs.getString('selectedAccount');
 
-    setState(() {
-      selectedTitle = labelForOption(SelectedOption.values[ab1]);
-      sumOfTV = ab3.toString();
-      sumOfGame = ab4.toString();
-      sumOfMusic = ab5.toString();
-      sumOfHome = ab6.toString();
-      sumOfInternet = ab7.toString();
-      sumOfPhone = ab8.toString();
-      sumOfRent = ab9.toString();
-      sumOfKitchen = ab10.toString();
-      sumOfCatering = ab11.toString();
-      sumOfEnt = ab12.toString();
-      sumOfOther = ab13.toString();
-      if (ab14 != null && ab15 != null) {
-        setState(() {
-          startDate = DateTime.parse(ab14);
-          endDate = DateTime.parse(ab15);
-        });
-      }
-      if (ab2.isNotEmpty) {
-        final decodedData = json.decode(ab2);
-        if (decodedData is Map<String, dynamic>) {
-          incomeMap = {};
-          decodedData.forEach((key, value) {
-            if (value is List<dynamic>) {
-              incomeMap[key] = List<Map<String, dynamic>>.from(value.map((e) => Map<String, dynamic>.from(e)));
+    // Load data from SharedPreferences asynchronously
+    selectedTitle = labelForOption(SelectedOption.values[ab1]);
+    sumOfTV = ab3.toString();
+    sumOfGame = ab4.toString();
+    sumOfMusic = ab5.toString();
+    sumOfHome = ab6.toString();
+    sumOfInternet = ab7.toString();
+    sumOfPhone = ab8.toString();
+    sumOfRent = ab9.toString();
+    sumOfKitchen = ab10.toString();
+    sumOfCatering = ab11.toString();
+    sumOfEnt = ab12.toString();
+    sumOfOther = ab13.toString();
+
+    if (ab14 != null && ab15 != null) {
+      startDate = DateTime.parse(ab14);
+      endDate = DateTime.parse(ab15);
+    }
+
+    // Async block for decoding and setting incomeMap
+    if (ab2.isNotEmpty) {
+      final decodedData = json.decode(ab2);
+      if (decodedData is Map<String, dynamic>) {
+        incomeMap = {};
+        decodedData.forEach((key, value) {
+          if (value is List<dynamic>) {
+            incomeMap[key] = List<Map<String, dynamic>>.from(value.map((e) => Map<String, dynamic>.from(e)));
+          }
+          if (incomeMap.containsKey(key) && incomeMap[key]!.isNotEmpty) {
+            // Get the first amount from the list
+            String? valueToParse;
+
+            final currentKey = selectedKey.isNotEmpty ? selectedKey : key;
+            final entryList = incomeMap[currentKey];
+
+            if (entryList != null && entryList.isNotEmpty) {
+              final amount = entryList[0]["amount"];
+              if (amount != null) {
+                valueToParse = amount;
+              } else {
+                print("amount is null for key: $currentKey");
+              }
+            } else {
+              print("No entries found for key: $currentKey");
             }
-            if (incomeMap.containsKey(key) && incomeMap[key]!.isNotEmpty) {
-              // Get the first amount from the list (use the 'amount' field inside the map)
-              String valueToParse = incomeMap[selectedKey.isNotEmpty ? selectedKey : key]![0]["amount"];
-              selectedKey = key;
-              incomeValue = NumberFormat.decimalPattern('tr_TR').parse(valueToParse) as double;
-              double sum = 0.0;
-              for (var values in incomeMap.values) {
-                for (var value in values) {
-                  // Parse the "amount" field as double
-                  String amount = value["amount"];
-                  if (amount.isNotEmpty) {
-                    double parsedValue = NumberFormat.decimalPattern('tr_TR').parse(amount).toDouble();
-                    sum += parsedValue;
-                  }
+
+            selectedKey = key;
+            try {
+              final parsed = NumberFormat.decimalPattern('tr_TR').parse(valueToParse!);
+              incomeValue = parsed.toDouble();
+            } catch (e) {
+              print("Parsing error: $e, value: $valueToParse");
+              incomeValue = 0.0; // ya da null yapacaksan double? incomeValue kullan
+            }
+            double sum = 0.0;
+            for (var values in incomeMap.values) {
+              for (var value in values) {
+                String amount = value["amount"];
+                if (amount.isNotEmpty) {
+                  double parsedValue = NumberFormat.decimalPattern('tr_TR').parse(amount).toDouble();
+                  sum += parsedValue;
                 }
               }
-              incomeValue = sum;
-            } else {
-              incomeValue = 0.0; // Default value if the key or value is not found
             }
-          });
-        }
-        print('Final incomeMap: ${jsonEncode(incomeMap)}');
-      }
-      if (savedInvoicesJson != null) {
-        setState(() async {
-          invoices = savedInvoicesJson.map((json) => Invoice.fromJson(jsonDecode(json))).toList();
-          setState(() {
-            invoices.forEach((invoice) {
-              if (invoice.dueDate != null){
-                invoice.updateDifference(invoice, invoice.periodDate, invoice.dueDate);
-              } else {
-                invoice.updateDifference(invoice, invoice.periodDate, null);
-              }
-            });
-
-            invoices.sort((a, b) {
-              int differenceA = int.parse(a.difference);
-              int differenceB = int.parse(b.difference);
-              return differenceA.compareTo(differenceB);
-            });
-
-            final invoiceJsonList = invoices.map((invoice) => jsonEncode(invoice.toJson())).toList();
-            prefs.setStringList('invoices', invoiceJsonList);
-
-          });
-          categorizeInvoices(invoices);
-          transactions.clear();
-
-          if (startDate != null && endDate != null) {
-            await TransactionService.generateAndSaveTransactions();
-            // Load the transactions again from storage
-            List<Transaction> loadedTransactions = await TransactionService.loadTransactions();
-
-            setState(() {
-              transactions = mergeInvoicesToTransactions(invoices, loadedTransactions); // Update the transaction list with new data
-            });
-            transactions = transactions.where((transaction) {
-              print("COXK: $startDate and $endDate");
-              final date = transaction.date;
-              return (date.isAfter(startDate!) || date.isAtSameMomentAs(startDate!)) &&
-                  (date.isBefore(endDate!) || date.isAtSameMomentAs(endDate!));
-            }).toList();
+            incomeValue = sum;
+          } else {
+            incomeValue = 0.0; // Default value if not found
           }
-          transactions.sort((a, b) => a.date.compareTo(b.date));
-          final jsonData = jsonEncode(transactions.map((t) => t.toJson()).toList());
-          prefs.setString('transactions', jsonData);
         });
       }
-      loadSharedPreferencesData(actualDesiredKeys);
+    }
+
+    // Handle saved invoices
+    if (savedInvoicesJson != null) {
+      List<Invoice> tempInvoices = savedInvoicesJson.map((json) => Invoice.fromJson(jsonDecode(json))).toList();
+      for (var invoice in tempInvoices) {
+        if (invoice.dueDate != null) {
+          invoice.updateDifference(invoice, invoice.periodDate, invoice.dueDate);
+        } else {
+          invoice.updateDifference(invoice, invoice.periodDate, null);
+        }
+      }
+      tempInvoices.sort((a, b) => int.parse(a.difference).compareTo(int.parse(b.difference)));
+      final invoiceJsonList = tempInvoices.map((invoice) => jsonEncode(invoice.toJson())).toList();
+      await prefs.setStringList('invoices', invoiceJsonList);
+
+      categorizeInvoices(tempInvoices);
+      transactions.clear();
+    }
+
+    // Handle account data list
+    if (accountDataListJson != null) {
+      try {
+        List<Map<String, dynamic>> decodedData = List<Map<String, dynamic>>.from(jsonDecode(accountDataListJson));
+        print('Tüm Hesaplar: $decodedData');
+        bankAccounts = decodedData.toSet().toList();
+
+        if (accountData != null) {
+          final Map<String, dynamic> accountFromPrefs = Map<String, dynamic>.from(jsonDecode(accountData));
+          print('Saved account data: $accountFromPrefs');
+
+          // Only proceed if we have both bankId and accountId
+          if (accountFromPrefs['bankId'] != null && accountFromPrefs['accountId'] != null) {
+            // Find the bank first
+            final bank = bankAccounts.firstWhere(
+                  (bank) => bank['bankId'] == accountFromPrefs['bankId'],
+              orElse: () => {},
+            );
+
+            if (bank.isNotEmpty) {
+              // Then find the specific account within that bank
+              final accounts = bank['accounts'] as List?;
+              if (accounts != null) {
+                final account = accounts.firstWhere(
+                      (acc) => acc['accountId'] == accountFromPrefs['accountId'],
+                  orElse: () => {},
+                );
+
+                if (account.isNotEmpty) {
+                  // Combine bank info with account info
+                  selectedAccount = {
+                    ...account,
+                    'bankId': bank['bankId'],
+                    'bankName': bank['bankName'],
+                    // Include any other bank fields you need
+                  };
+                }
+              }
+            }
+          }
+        }
+
+        setState(() => isLoading = false);
+      } catch (e) {
+        print('Error decoding account data: $e');
+        setState(() => isLoading = false);
+      }
+    } else {
+      setState(() => isLoading = false);
+    }
+
+    print('Seçili hesap: $accountData');
+    print('Selected account1: $selectedAccount');
+
+    if (accountData != null && selectedAccount == null) {
+      final savedData = jsonDecode(accountData);
+
+      // Check if accountId exists and is not null
+      if (savedData['accountId'] != null) {
+        final account = _findAccountById(savedData['accountId']);
+        if (account != null) {
+          setState(() {
+            selectedAccount = account;
+          });
+        }
+      } else {
+        print('Warning: savedData contains null accountId: $savedData');
+      }
+    }
+
+    if (startDate != null && endDate != null) {
+      // Load transactions from SharedPreferences instead of generating
+      List<Transaction> loadedTransactions = await _loadTransactionsFromAccountData();
+      print("Loaded Transactions: $loadedTransactions");
+
+      // Assign the loaded transactions to transactions
+      transactions = loadedTransactions;
+
+      transactions = transactions.where((transaction) {
+        print("COXK: $startDate and $endDate");
+        final date = DateTime(transaction.date.year, transaction.date.month, transaction.date.day); //Saat detayını çıkar
+        return (date.isAfter(startDate!) || date.isAtSameMomentAs(startDate!)) &&
+            (date.isBefore(endDate!) || date.isAtSameMomentAs(endDate!));
+      }).toList();
+    }
+
+    transactions.sort((a, b) => a.date.compareTo(b.date));
+    final jsonData = jsonEncode(transactions.map((t) => t.toJson()).toList());
+    prefs.setString('transactions', jsonData);
+
+    loadSharedPreferencesData(actualDesiredKeys);
+  }
+
+  // Save the selected account in SharedPreferences
+  Future<void> _saveSelectedAccount(Map<String, dynamic> account) async {
+    // First get the actual account ID - might be nested in an 'accounts' array
+    final dynamic accountId = account['accountId'] ??
+        (account['accounts'] as List?)?.firstOrNull?['accountId'];
+
+    // Get bank ID - might be at top level
+    final dynamic bankId = account['bankId'];
+
+    if (accountId == null || bankId == null) {
+      print('Cannot save account - missing IDs. Full account data: $account');
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('selectedAccount', jsonEncode({
+      'accountId': accountId,
+      'bankId': bankId,
+    }));
+    print('Successfully saved account: $accountId from bank: $bankId');
+  }
+
+  Map<String, dynamic>? _loadSelectedAccount(String? accountData) {
+    if (accountData == null) return null;
+
+    final savedAccount = jsonDecode(accountData);
+    // Find the matching account in your bankAccounts
+    for (var bank in bankAccounts) {
+      for (var account in bank['accounts'] ?? []) {
+        if (account['accountId'] == savedAccount['accountId']) {
+          return {
+            'bankId': bank['bankId'],
+            'bankName': bank['bankName'],
+            'currency': bank['currency'],
+            'isDebit': bank['isDebit'],
+            'creditLimit': bank['creditLimit'],
+            'cutoffDate': bank['cutoffDate'],
+            ...account,
+          };
+        }
+      }
+    }
+    return null;
+  }
+
+  List<Transaction> getTransactionsForSelectedAccount() {
+    if (selectedAccount == null) {
+      print('[DEBUG] No account selected');
+      return [];
+    }
+
+    print('[DEBUG] Looking for account ${selectedAccount!['accountId']} in bank ${selectedAccount!['bankId']}');
+
+    // Find the account in bankAccounts
+    for (var bank in bankAccounts) {
+      print('[DEBUG] Checking bank ${bank['bankId']}');
+
+      if (bank['bankId'] == selectedAccount!['bankId']) {
+        final accounts = bank['accounts'] as List?;
+        if (accounts == null) {
+          print('[DEBUG] No accounts found in bank');
+          continue;
+        }
+
+        print('[DEBUG] Found ${accounts.length} accounts in bank');
+
+        for (var account in accounts) {
+          print('[DEBUG] Checking account ${account['accountId']}');
+
+          if (account['accountId'] == selectedAccount!['accountId']) {
+            final transactions = account['transactions'] as List?;
+            if (transactions == null) {
+              print('[DEBUG] No transactions found in account');
+              return [];
+            }
+
+            print('[DEBUG] Found ${transactions.length} transactions in account');
+
+            final transactionList = transactions.map((t) {
+              try {
+                final transaction = Transaction.fromJson(t);
+                print('[DEBUG] Transaction ${transaction.transactionId}: '
+                    'Date: ${transaction.date}, '
+                    'Amount: ${transaction.amount}, '
+                    'Title: ${transaction.title}');
+                return transaction;
+              } catch (e) {
+                print('[ERROR] Failed to parse transaction: $e\nRaw data: $t');
+                return null;
+              }
+            }).where((t) => t != null).cast<Transaction>().toList();
+
+            print('[DEBUG] Successfully parsed ${transactionList.length} transactions');
+            return transactionList;
+          }
+        }
+      }
+    }
+
+    print('[DEBUG] Account not found in bankAccounts');
+    return [];
+  }
+
+  // Reset the selected account in SharedPreferences
+  void _resetSelectedAccount() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('selectedAccount'); // Remove the selected account data
+    setState(() {
+      selectedAccount = null; // Reset the selected account in the app
     });
-
-
-
-
-
+    _load(); //REFRESH PAGE
   }
   Future<void> saveInvoices() async {
     final invoicesCopy = invoices.toList();
@@ -328,7 +537,7 @@ class _HomePageState extends State<HomePage> {
   List<Transaction> mergeInvoicesToTransactions(List<Invoice> invoices, List<Transaction> transactions) {
     for (Invoice invoice in invoices) {
       transactions.add(Transaction(
-          id: invoice.id,
+          transactionId: invoice.id,
           amount: double.parse(invoice.price),
           description: invoice.subCategory,
           currency: 'TRY',
@@ -337,8 +546,8 @@ class _HomePageState extends State<HomePage> {
           title: invoice.name,
           date: (invoice.dueDate != null && invoice.dueDate!.isNotEmpty)
               ? DateTime.parse(invoice.dueDate!)
-              : (invoice.periodDate != null && invoice.periodDate!.isNotEmpty)
-              ? DateTime.parse(invoice.periodDate!)
+              : (invoice.periodDate.isNotEmpty)
+              ? DateTime.parse(invoice.periodDate)
               : DateTime.now(), // Fallback to current date if both are null or empty.
           isSurplus: false,
           isFromInvoice: true,
@@ -365,8 +574,8 @@ class _HomePageState extends State<HomePage> {
       diff = "0";
       return diff;
     } else if (dueDateKnown) {
-      if (dueDate != null && currentDate.isAfter(DateTime.parse(periodDate))) {
-        diff = (DateTime.parse(dueDate!).difference(currentDate).inDays + 1).toString();
+      if (currentDate.isAfter(DateTime.parse(periodDate))) {
+        diff = (DateTime.parse(dueDate).difference(currentDate).inDays + 1).toString();
         return diff;
       } else {
         return "error1";
@@ -765,7 +974,7 @@ class _HomePageState extends State<HomePage> {
           stringDueDate = DateFormat('yyyy-MM-dd').format(newDueDate);
         }
         String? diff = calculateNewDiff(stringDueDate, stringPeriodDate);
-        print("The delete has been confirmed. Current diff is : ${diff} while period date is now : ${stringPeriodDate}");
+        print("The delete has been confirmed. Current diff is : $diff while period date is now : $stringPeriodDate");
         final updatedInvoice = Invoice(
             id: invoice.id,
             price: invoice.price,
@@ -840,38 +1049,19 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    double sumOfSubs = calculateCategorySum(invoices, 'Abonelikler'); // OLD SUM OF SUBS
-    double sumOfSubsTransaction = sumAmountForCategory(transactions, 'Abonelikler'); // NEW SUM OF SUBS
-    double sumOfBills = calculateCategorySum(invoices, 'Faturalar');
-    double sumOfBillsTransaction = sumAmountForCategory(transactions, 'Faturalar'); // NEW SUM OF SUBS
-    double sumOfOthers = calculateCategorySum(invoices, 'Diğer Giderler');
-    double sumOfOthersTransaction = sumAmountForCategory(transactions, 'Diğer Giderler'); // NEW SUM OF SUBS
-    double outcomeValue = sumOfSubs+sumOfBills+sumOfOthers;
-    double outcomeValue2 = calculateTotalAmount(transactions);
-    double netProfit = incomeValue - outcomeValue2; //OLD NET PROFIT
-    double totalSurplusTRY = getTotalSurplusAmountByCurrency(transactions, 'TRY'); //NEW INCOME
-    double totalDearthTRY = gettotalDearthAmountByCurrency(transactions, 'TRY'); //NEW OUTCOME
+    double totalSurplusTRY = getTotalSurplusAmountByCurrency(transactions, selectedAccount?['currency'] ?? ""); //NEW INCOME
+    double totalDearthTRY = gettotalDearthAmountByCurrency(transactions, selectedAccount?['currency'] ??  ""); //NEW OUTCOME
     double netProfitTransaction = totalSurplusTRY - totalDearthTRY; // NEW NET PROFIT
     String formattedIncomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(totalSurplusTRY);
     String formattedOutcomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(totalDearthTRY);
     String formattedProfitValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(netProfitTransaction);
-    String formattedSumOfSubs = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfSubsTransaction);
-    String formattedSumOfBills = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfBillsTransaction);
-    String formattedSumOfOthers = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfOthersTransaction);
-    String formattedSavingsValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(savingsValue);
-    String formattedWishesValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(wishesValue);
-    String formattedNeedsValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(needsValue);
     int incomeYuzdesi = (incomeValue * 100).toInt();
-    int netProfitYuzdesi = (netProfit * 100).toInt();
     int bolum;
-
-
 
     if (incomeValue != 0.0) {
       double bolumDouble = netProfitTransaction / totalSurplusTRY;
       if (bolumDouble.isFinite) {
         bolum = (bolumDouble.abs() * 100).toInt();
-        netProfit = incomeValue * bolumDouble;
       } else {
         // Handle the case where bolumDouble is Infinity or NaN
         bolum = 0; // or any other appropriate value
@@ -879,41 +1069,7 @@ class _HomePageState extends State<HomePage> {
     } else {
       bolum = 0; // Handle the case where incomeValue is 0
     }
-    String formattedBolum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(bolum);
     incomeYuzdesi = incomeYuzdesi*10;
-
-    final List<String> texts = ["Abonelikler", "Faturalar", "Diğer"];
-    final List<String> formattedSums = [
-      formattedSumOfSubs,
-      formattedSumOfBills,
-      formattedSumOfOthers
-    ];
-
-    double calculateMaxFontSize(BoxConstraints constraints) {
-      double maxFontSize = 14.sp;
-      final textPainters = texts.map((text) {
-        return TextPainter(
-          text: TextSpan(
-            text: text,
-            style: GoogleFonts.montserrat(
-              fontWeight: FontWeight.normal,
-              fontSize: maxFontSize,
-            ),
-          ),
-          maxLines: 1,
-          textDirection: ui.TextDirection.ltr,
-        );
-      }).toList();
-
-      textPainters.forEach((painter) {
-        painter.layout(maxWidth: constraints.maxWidth / 3 - 20.w);
-        if (painter.didExceedMaxLines) {
-          maxFontSize = maxFontSize * (constraints.maxWidth / 3 - 20.w) / painter.size.width;
-        }
-      });
-
-      return maxFontSize;
-    }
 
     void _onDateRangeSelected(DateRangePickerSelectionChangedArgs args) async{
       final prefs = await SharedPreferences.getInstance();
@@ -969,31 +1125,31 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
+                  const Text(
                     'Pick a Date Range',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   SfDateRangePicker(
-                    backgroundColor: Color(0xFFFCF5FD),
+                    backgroundColor: const Color(0xFFFCF5FD),
                     selectionMode: DateRangePickerSelectionMode.range,
                     onSelectionChanged: _onDateRangeSelected,
                     showActionButtons: false,
                     initialSelectedRange: startDate != null && endDate != null
                         ? PickerDateRange(startDate, endDate)
                         : null, // Set initial range if available
-                    headerStyle: DateRangePickerHeaderStyle(
+                    headerStyle: const DateRangePickerHeaderStyle(
                       backgroundColor: Color(0xFFFCF5FD),
                       textAlign: TextAlign.center,
                       textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue),
                     ),
                     monthViewSettings: DateRangePickerMonthViewSettings(
-                      weekendDays: [6, 7],
+                      weekendDays: const [6, 7],
                       firstDayOfWeek: 1,
                       showTrailingAndLeadingDates: true,
                       viewHeaderStyle: DateRangePickerViewHeaderStyle(
                         backgroundColor: Colors.blue.withOpacity(0.1),
-                        textStyle: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+                        textStyle: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
                       ),
                     ),
                     selectionColor: Colors.blueAccent.withOpacity(0.5),
@@ -1004,7 +1160,7 @@ class _HomePageState extends State<HomePage> {
                     toggleDaySelection: true,
                     showNavigationArrow: true,
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -1012,7 +1168,7 @@ class _HomePageState extends State<HomePage> {
                         onPressed: () => Navigator.pop(context),
                         child: Text('Cancel', style: TextStyle(color: Colors.grey[700])),
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       ElevatedButton(
                         onPressed: () {
                           setState(() {
@@ -1026,7 +1182,7 @@ class _HomePageState extends State<HomePage> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: Text('Confirm', style: TextStyle(color: Colors.white)),
+                        child: const Text('Confirm', style: TextStyle(color: Colors.white)),
                       ),
                     ],
                   ),
@@ -1052,6 +1208,13 @@ class _HomePageState extends State<HomePage> {
       return 'Pick a Date Range';
     }
 
+    Widget _compactInfo(String label, dynamic value) {
+      return Text(
+        "$label: $value",
+        style: const TextStyle(fontSize: 13),
+      );
+    }
+
     return Scaffold(
       body: SingleChildScrollView(
         child: Container(
@@ -1068,7 +1231,7 @@ class _HomePageState extends State<HomePage> {
                       future: _formatDateRange(),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState == ConnectionState.waiting) {
-                          return Text('Loading...');
+                          return const Text('Loading...');
                         } else if (snapshot.hasError) {
                           return Text('Error: ${snapshot.error}');
                         } else {
@@ -1085,7 +1248,7 @@ class _HomePageState extends State<HomePage> {
               ),
               SizedBox(height: 20.h),
               Container(
-                padding: EdgeInsets.all(10),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
                   color: Theme.of(context).brightness == Brightness.dark
@@ -1108,7 +1271,7 @@ class _HomePageState extends State<HomePage> {
                     Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
-                        color: Color.fromARGB(125, 155, 228, 242),
+                        color: const Color.fromARGB(125, 155, 228, 242),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(20),
@@ -1153,16 +1316,16 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                     ),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     Row(
                       children: [
                         Expanded(
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Color.fromARGB(120, 152, 255, 170),
+                              color: const Color.fromARGB(120, 152, 255, 170),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            padding: EdgeInsets.all(10),
+                            padding: const EdgeInsets.all(10),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -1192,11 +1355,11 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ),
                         ),
-                        SizedBox(width: 10),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Color.fromARGB(120, 152, 255, 170),
+                              color: const Color.fromARGB(120, 152, 255, 170),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             padding: const EdgeInsets.all(10),
@@ -1231,180 +1394,43 @@ class _HomePageState extends State<HomePage> {
                           ),
                         )
                       ],
-                    ),
-                    SizedBox(height: 10),
-                    LayoutBuilder(
-                          builder: (context, constraints) {
-                            final maxFontSize = calculateMaxFontSize(constraints);
-                            return Row(
-                              children: [
-                                Expanded(
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(20),
-                                      color: Color.fromARGB(125, 255, 204, 178)
-                                    ),
-                                    padding: EdgeInsets.all(10),
-                                    child: Column(
-                                      children: [
-                                        FittedBox(
-                                          fit: BoxFit.contain,
-                                          child: Text(
-                                            "Abonelikler",
-                                            style: GoogleFonts.montserrat(
-                                              fontWeight: FontWeight.normal,
-                                              fontSize: maxFontSize,
-                                            ),
-                                          ),
-                                        ),
-                                        SizedBox(height: 5.h),
-                                        LinearPercentIndicator(
-                                          padding: EdgeInsets.zero,
-                                          backgroundColor: const Color(0xffc6c6c7),
-                                          animation: true,
-                                          lineHeight: 9.h,
-                                          animationDuration: 1000,
-                                          percent: (totalDearthTRY != 0 && totalDearthTRY != null) ?
-                                          (sumOfSubsTransaction != null && sumOfSubsTransaction != 0 ? sumOfSubsTransaction / totalDearthTRY : 0)
-                                              : 0,
-                                          barRadius: const Radius.circular(10),
-                                          progressColor: const Color(0xFFFF8C00),
-                                        ),
-                                        SizedBox(height: 5.h),
-                                        FittedBox(
-                                          fit: BoxFit.scaleDown,
-                                          child: Text(
-                                            formattedSumOfSubs == "0,00" ? "---" : formattedSumOfSubs,
-                                            style: GoogleFonts.montserrat(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: maxFontSize,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: 10),
-                                Expanded(
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(20),
-                                        color: Color.fromARGB(125, 255, 204, 178)
-                                    ),
-                                    padding: EdgeInsets.all(10),
-                                    child: Column(
-                                      children: [
-                                        FittedBox(
-                                          fit: BoxFit.scaleDown,
-                                          child: Text(
-                                            "Faturalar",
-                                            style: GoogleFonts.montserrat(
-                                              fontWeight: FontWeight.normal,
-                                              fontSize: maxFontSize,
-                                            ),
-                                          ),
-                                        ),
-                                        SizedBox(height: 5.h),
-                                        LinearPercentIndicator(
-                                          padding: EdgeInsets.zero,
-                                          backgroundColor: const Color(0xffc6c6c7),
-                                          animation: true,
-                                          lineHeight: 9.h,
-                                          animationDuration: 1000,
-                                          percent: (totalDearthTRY != 0 && totalDearthTRY != null) ?
-                                          (sumOfBillsTransaction != null && sumOfBillsTransaction != 0 ? sumOfBillsTransaction / totalDearthTRY : 0)
-                                              : 0,
-                                          barRadius: const Radius.circular(10),
-                                          progressColor: const Color(0xFFFFA500),
-                                        ),
-                                        SizedBox(height: 5.h),
-                                        FittedBox(
-                                          fit: BoxFit.scaleDown,
-                                          child: Text(
-                                            formattedSumOfBills == "0,00" ? "---" : formattedSumOfBills,
-                                            style: GoogleFonts.montserrat(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: maxFontSize,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: 10),
-                                Expanded(
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(20),
-                                        color: Color.fromARGB(125, 255, 204, 178)
-                                    ),
-                                    padding: EdgeInsets.all(10),
-                                    child: Column(
-                                      children: [
-                                        FittedBox(
-                                          fit: BoxFit.scaleDown,
-                                          child: Text(
-                                            "Diğer",
-                                            style: GoogleFonts.montserrat(
-                                              fontWeight: FontWeight.normal,
-                                              fontSize: maxFontSize,
-                                            ),
-                                          ),
-                                        ),
-                                        SizedBox(height: 5.h),
-                                        LinearPercentIndicator(
-                                          padding: EdgeInsets.zero,
-                                          backgroundColor: const Color(0xffc6c6c7),
-                                          animation: true,
-                                          lineHeight: 9.h,
-                                          animationDuration: 1000,
-                                          percent: (totalDearthTRY != 0 && totalDearthTRY != null) ?
-                                          (sumOfOthersTransaction != null && sumOfOthersTransaction != 0 ? sumOfOthersTransaction / totalDearthTRY : 0)
-                                              : 0,
-                                          barRadius: const Radius.circular(10),
-                                          progressColor: const Color(0xFFFFD700),
-                                        ),
-                                        SizedBox(height: 5.h),
-                                        FittedBox(
-                                          fit: BoxFit.scaleDown,
-                                          child: Text(
-                                            formattedSumOfOthers == "0,00" ? "---" : formattedSumOfOthers,
-                                            style: GoogleFonts.montserrat(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: maxFontSize,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
+                    )
                   ],
                 ),
               ),
               SizedBox(height: 20.h),
-              Text("Hareketlerim", style: GoogleFonts.montserrat(fontSize: 20.sp, fontWeight: FontWeight.bold)),
-              SizedBox(height: 20.h),
-              Container(
-                padding: EdgeInsets.all(10),
+              bankAccounts.isEmpty
+              ? Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: Colors.redAccent.withOpacity(0.1),
+                ),
+                child: Center(
+                  child: Text(
+                    "Lütfen önce hesap ekleyin.",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.redAccent,
+                    ),
+                  ),
+                ),
+              )
+                  : Container(
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
                   color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.grey[850] // Dark mode color
-                      : Colors.white, // Light mode color
+                      ? Colors.grey[850]
+                      : Colors.white,
                   boxShadow: [
                     BoxShadow(
                       color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.black.withOpacity(0.5) // Dark mode shadow color
-                          : Colors.grey.withOpacity(0.5), // Light mode shadow color
-                      spreadRadius: 5,
-                      blurRadius: 7,
+                          ? Colors.black.withOpacity(0.5)
+                          : Colors.grey.withOpacity(0.3),
+                      spreadRadius: 3,
+                      blurRadius: 6,
                       offset: const Offset(0, 3),
                     ),
                   ],
@@ -1412,17 +1438,102 @@ class _HomePageState extends State<HomePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Center(
+                      child: isLoading
+                          ? const CircularProgressIndicator()
+                          : bankAccounts.isEmpty
+                          ? const Text("No accounts available.")
+                          : Wrap(
+                        runSpacing: 8,
+                        children: [
+                          DropdownButtonFormField<int>(
+                            value: selectedAccount?['accountId'],
+                            decoration: InputDecoration(
+                              labelText: "Choose an account",
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            items: bankAccounts.expand<DropdownMenuItem<int>>((bank) {
+                              return (bank['accounts'] as List?)?.map((account) {
+                                return DropdownMenuItem<int>(
+                                  value: account['accountId'],
+                                  child: Text("${bank['bankName']} - ${account['name']}"),
+                                );
+                              }) ?? [];
+                            }).toList(),
+                            onChanged: (selectedAccountId) {
+                              if (selectedAccountId != null) {
+                                final account = _findAccountById(selectedAccountId);
+                                if (account != null) {
+                                  setState(() {
+                                    selectedAccount = account;
+                                  });
+                                  _saveSelectedAccount(account);
+                                }
+                              }
+                            },
+                          ),
+                          if (selectedAccount != null)
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context).brightness == Brightness.dark
+                                          ? Colors.grey[850]
+                                          : Colors.grey[200],
+                                      borderRadius: BorderRadius.circular(10),
+                                      boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 2)],
+                                    ),
+                                    padding: const EdgeInsets.all(10),
+                                    child: Wrap(
+                                      spacing: 16,
+                                      runSpacing: 4,
+                                      children: [
+                                        _compactInfo("Currency", selectedAccount!['currency']),
+                                        _compactInfo("Type", (selectedAccount?['isDebit'] ?? true) ? 'Debit' : 'Credit',),
+                                        if ((selectedAccount?['isDebit'] ?? true) == false)
+                                          _compactInfo("Credit Limit", selectedAccount!['creditLimit']),
+                                        if ((selectedAccount?['isDebit'] ?? true) == false)
+                                          _compactInfo("Cutoff Date", selectedAccount!['cutoffDate']),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                Flexible(
+                                  child: Align(
+                                    alignment: Alignment.centerRight,
+                                    child: TextButton.icon(
+                                      onPressed: _resetSelectedAccount,
+                                      icon: const Icon(Icons.refresh, size: 18),
+                                      label: const Text("Reset", style: TextStyle(fontSize: 13)),
+                                      style: TextButton.styleFrom(
+                                        minimumSize: const Size(0, 0),
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                        ],
+                      ),
+                    ),
                     TransactionWidget(
-                        transactions: transactions,
-                        invoices: invoices,
-                        startDate: startDate,
-                        endDate: endDate,
+                      transactions: getTransactionsForSelectedAccount(),
+                      invoices: invoices,
+                      startDate: startDate,
+                      endDate: endDate,
                     ),
                   ],
                 ),
               ),
               SizedBox(height: 20.h),
-              Text("Faturalarım", style: GoogleFonts.montserrat(fontSize: 20.sp, fontWeight: FontWeight.bold)),
+              Text("Yaklaşan Ödemeler", style: GoogleFonts.montserrat(fontSize: 20.sp, fontWeight: FontWeight.bold)),
               //ListView.builder(shrinkWrap: true, physics: NeverScrollableScrollPhysics(), itemCount: invoices.length,itemBuilder: (context, index) {return Text(invoices[index].toDisplayString());},),
               SizedBox(height: 20.h),
               Container(
@@ -1454,1487 +1565,31 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _reloadTransactionData() {
-  }
-}
-
-class InvoiceCard extends StatelessWidget {
-  final Invoice invoice;
-  final VoidCallback onDelete;
-  final VoidCallback onEdit;
-
-  InvoiceCard({super.key,
-    required this.invoice,
-    required this.onDelete,
-    required this.onEdit
-  }) {
-    faturaDonemi = DateTime.parse(invoice.periodDate);
-    if (invoice.dueDate != null){
-      sonOdeme = DateTime.parse(invoice.dueDate!);
+// Add this inside your _HomePageState class
+  Map<String, dynamic>? _findAccountById(int? accountId) {
+    if (accountId == null) {
+      print('Warning: _findAccountById called with null accountId');
+      return null;
     }
-  }
 
-  DateTime faturaDonemi = DateTime.now();
-  DateTime sonOdeme = DateTime.now();
-  bool isPaidActive = false;
-
-  String getDaysRemainingMessage2() {
-    final currentDate = DateTime.now();
-    final formattedCurrentDate = DateFormat('yyyy-MM-dd').format(currentDate);
-    final formattedPeriodDate = DateFormat('yyyy-MM-dd').format(faturaDonemi);
-    final dueDateKnown = invoice.dueDate != null;
-
-    if (currentDate.isBefore(faturaDonemi)) {
-      isPaidActive = false;
-      return "Fatura kesimine kalan gün";
-    } else if (dueDateKnown) {
-      isPaidActive = true;
-      if (currentDate.isBefore(sonOdeme)) {
-        return "Son ödeme tarihine kalan gün";
-      } else {
-        isPaidActive = true;
-        return "Ödeme için son gün";
-      }
-    } else if (formattedCurrentDate == formattedPeriodDate){
-      isPaidActive = true;
-      return "Ödeme dönemi";
-    } else {
-      return "Gecikme süresi";
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final daysRemainingMessage = getDaysRemainingMessage2();
-    return IntrinsicWidth(
-      child: Container(
-        width: 200.w,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          color: Color.fromARGB(125, 169, 219, 255),
-        ),
-        child: Column(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                color: Color.fromARGB(125, 70, 181, 255),
-              ),
-              child: ListTile(
-                dense: true,
-                title: Text(
-                  invoice.name,
-                  style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18.sp, fontWeight: FontWeight.w600),
-                ),
-                subtitle: Text(
-                  invoice.category,
-                  style: GoogleFonts.montserrat(color: Colors.black, fontSize: 14.sp, fontWeight: FontWeight.normal),
-                ),
-              ),
-            ),
-            ListTile(
-              dense: true,
-              title: Text(
-                "Fatura Dönemi",
-                style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16.sp, fontWeight: FontWeight.w600),
-              ),
-              subtitle: Text(
-                invoice.periodDate,
-                style: GoogleFonts.montserrat(color: Colors.black, fontSize: 14.sp, fontWeight: FontWeight.normal),
-              ),
-            ),
-            ListTile(
-              dense: true,
-              title: Text(
-                "Son Ödeme Tarihi",
-                style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16.sp, fontWeight: FontWeight.w600),
-              ),
-              subtitle: Text(
-                invoice.dueDate ?? "Bilinmiyor",
-                style: GoogleFonts.montserrat(color: Colors.black, fontSize: 14.sp, fontWeight: FontWeight.normal),
-              ),
-            ),
-            Flexible( // Use Flexible here
-              child: Container(
-                constraints: BoxConstraints(
-                  minHeight: 70.h,
-                ),
-                child: ListTile(
-                  title: Text(
-                    daysRemainingMessage,
-                    style: GoogleFonts.montserrat(color: Colors.black, fontSize: 14.sp, fontWeight: FontWeight.normal),
-                  ),
-                  subtitle: daysRemainingMessage != "Ödeme dönemi" ? Text(
-                    invoice.difference,
-                    style: GoogleFonts.montserrat(color: Colors.black, fontSize: 18.sp, fontWeight: FontWeight.bold),
-                  ) : null,
-                ),
-              ),
-            ),
-            SizedBox(height: 20.h),
-            Container(
-              padding: const EdgeInsets.all(10),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                color: Color.fromARGB(125, 173, 198, 255),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Center(
-                    child: SizedBox(
-                      width: 22.h,
-                      height: 22.h,
-                      child: IconButton(
-                        padding: EdgeInsets.zero, // Remove the default padding
-                        onPressed: onDelete,
-                        icon: Icon(Icons.done_rounded, size: 24),
-                      ),
-                    ),
-                  ),
-                  Center(
-                    child: SizedBox(
-                      width: 22.h,
-                      height: 22.h,
-                      child: IconButton(
-                        padding: EdgeInsets.zero, // Remove the default padding
-                        onPressed: onEdit,
-                        icon: Icon(Icons.edit_rounded, size: 24),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class InvoicePage extends StatefulWidget {
-  final VoidCallback onReload;
-
-  InvoicePage({required this.onReload});
-  @override
-  _InvoicePageState createState() => _InvoicePageState();
-}
-
-class _InvoicePageState extends State<InvoicePage> {
-  final ScrollController _scrollController = ScrollController();
-  bool _showRightArrow = false;
-  bool _showLeftArrow = false;
-  bool _isTouching = false;
-  final GlobalKey _intrinsicHeightKey = GlobalKey();
-  final Map<int, GlobalKey> _intrinsicHeightKeys = {};
-  final GlobalKey _scrollWidthKey = GlobalKey();
-  double? _height;
-  double? _width;
-  double? _widthIntrinsic;
-  int _currentPage = 0;
-  double _rightArrowOpacity = 0.0;
-  double _leftArrowOpacity = 0.0;
-  List<Invoice> upcomingInvoices = [];
-  List<Invoice> todayInvoices = [];
-  List<Invoice> approachingDueInvoices = [];
-  List<Invoice> paymentDueInvoices = [];
-  List<Invoice> overdueInvoices = [];
-  List<Invoice> selectedInvoices = [];
-  List<Invoice> originalInvoices = [];
-
-
-  @override
-  void initState() {
-    super.initState();
-    _loadInvoices(); // Load invoices from SharedPreferences
-    if (overdueInvoices.isNotEmpty){
-      _currentPage = 4;
-    } else if (paymentDueInvoices.isNotEmpty){
-      _currentPage = 3;
-    } else if (approachingDueInvoices.isNotEmpty){
-      _currentPage = 2;
-    } else if (todayInvoices.isNotEmpty){
-      _currentPage = 1;
-    } else {
-      _currentPage = 0;
-    }
-  }
-
-  Future<void> addSampleInvoice() async {
-    try {
-      print("DEBUG: Starting addSampleInvoice");
-      final prefs = await SharedPreferences.getInstance();
-      print("DEBUG: SharedPreferences instance obtained");
-
-      final sampleInvoice = Invoice(
-        id: 1,
-        name: 'Sample Invoice',
-        price: '100.0',
-        periodDate: '2024-12-12',
-        category: 'category',
-        difference: 'diff',
-        subCategory: 'sub',
-        dueDate: null,
-      );
-
-      final invoicesJson = prefs.getStringList('invoices') ?? [];
-      print("DEBUG: Initial invoicesJson: $invoicesJson");
-
-      invoicesJson.add(jsonEncode(sampleInvoice.toJson()));
-      print("DEBUG: Updated invoicesJson: $invoicesJson");
-
-      await prefs.setStringList('invoices', invoicesJson);
-      print("DEBUG: Invoices saved to SharedPreferences");
-    } catch (e) {
-      print("ERROR: $e");
-    }
-  }
-
-  Future<void> _loadInvoices() async {
-    final prefs = await SharedPreferences.getInstance();
-    final invoicesJson = prefs.getStringList('invoices') ?? [];
-    setState(() {
-      selectedInvoices = invoicesJson.map((e) => Invoice.fromJson(jsonDecode(e))).toList();
-      originalInvoices = invoicesJson.map((e) => Invoice.fromJson(jsonDecode(e))).toList();
-    });
-    print("HOME-PAGE 3| selectedInvoices:");
-    for (var invoice in selectedInvoices) {
-      print(invoice.toDisplayString());
-    }
-    _getHeightForAll();
-    _getWidth();
-    categorizeInvoices(selectedInvoices);
-  }
-
-  void _getHeightForAll() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Only calculate height for page 4
-      double maxHeight = 0.0;
-
-      // Ensure page 4 has a key for height measurement
-      if (!_intrinsicHeightKeys.containsKey(_currentPage)) {
-        _intrinsicHeightKeys[_currentPage] = GlobalKey();
-      }
-
-      final RenderBox? renderBox =
-      _intrinsicHeightKeys[_currentPage]?.currentContext?.findRenderObject() as RenderBox?;
-      final categoryHeight = renderBox?.size.height ?? 0.0;
-
-      // Check if the height is too large
-      if (categoryHeight > 800) { // Example threshold (e.g., 800px)
-        print('Page 4 has an unexpectedly large height: $categoryHeight');
-      }
-
-      setState(() {
-        _height = categoryHeight;
-      });
-    });
-  }
-
-  void categorizeInvoices(List<Invoice> faturalar) {
-    print("faturalar length : ${faturalar.length}");
-    DateTime today = DateTime.now();
-    today = DateTime(today.year, today.month, today.day);
-
-    // 1. Upcoming Invoice Date (those with PeriodDate before today)
-    upcomingInvoices = faturalar.where((invoice) {
-      print("AJAX1");
-      DateTime periodDate = DateTime.parse(invoice.periodDate);
-      return periodDate.isAfter(today);
-    }).toList();
-
-    // 2. Invoice Day (with PeriodDate today)
-    todayInvoices = faturalar.where((invoice) {
-      print("AJAX2");
-      DateTime periodDate = DateTime.parse(invoice.periodDate);
-      return periodDate.day == today.day && periodDate.month == today.month && periodDate.year == today.year;
-    }).toList();
-
-    // 3. Approaching Due Date (those with DueDate data and this date is before today)
-    approachingDueInvoices = faturalar.where((invoice) {
-      print("AJAX3");
-      if (invoice.dueDate!= null) {
-        DateTime periodDate = DateTime.parse(invoice.periodDate!);
-        DateTime dueDate = DateTime.parse(invoice.dueDate!);
-        return periodDate.isBefore(today) && today.isBefore(dueDate);
-      }
-      return false;
-    }).toList();
-
-    // 4. Payment Due Date (those with DueDate data and this date is today)
-    paymentDueInvoices = faturalar.where((invoice) {
-      print("AJAX4");
-      if (invoice.dueDate!= null) {
-        DateTime dueDate = DateTime.parse(invoice.dueDate!);
-        return dueDate.day == today.day && dueDate.month == today.month && dueDate.year == today.year;
-      }
-      return false;
-    }).toList();
-
-    // 5. Overdue Invoices (Invoices with DueDate data that are overdue or invoices without DueDate data but with an overdue PeriodDate)
-    overdueInvoices = faturalar.where((invoice) {
-      print("AJAX");
-      if (invoice.dueDate != null) {
-        DateTime periodDate = DateTime.parse(invoice.periodDate!);
-        DateTime dueDate = DateTime.parse(invoice.dueDate!);
-        return dueDate.isBefore(today) && periodDate.isBefore(today);
-      } else if (invoice.dueDate == null){
-        DateTime periodDate = DateTime.parse(invoice.periodDate!);
-        return periodDate.isBefore(today);
-      }
-      return false;
-    }).toList();
-
-    print("upcomingInvoices:${upcomingInvoices.length}\n"
-        "todayInvoices:${todayInvoices.length}\n"
-        "approachingDueInvoices:${approachingDueInvoices.length}\n"
-        "paymentDueInvoices:${paymentDueInvoices.length}\n"
-        "overdueInvoices:${overdueInvoices.length}");
-  }
-
-  String? calculateNewDiff(String? dueDate, String periodDate){
-    final diff;
-    final currentDate = DateTime.now();
-    final formattedDate = DateFormat('yyyy-MM-dd').format(currentDate);
-    final dueDateKnown = dueDate != null;
-    if (currentDate.isBefore(DateTime.parse(periodDate))) {
-      diff = (DateTime.parse(periodDate).difference(currentDate).inDays + 1).toString();
-      return diff;
-    } else if (formattedDate == periodDate) {
-      diff = "0";
-      return diff;
-    } else if (dueDateKnown) {
-      if (dueDate != null && currentDate.isAfter(DateTime.parse(periodDate))) {
-        diff = (DateTime.parse(dueDate!).difference(currentDate).inDays + 1).toString();
-        return diff;
-      } else {
-        return "error1";
-      }
-    } else {
-      return "error2";
-    }
-  }
-
-  Future<void> _saveInvoices() async {
-    final prefs = await SharedPreferences.getInstance();
-    final invoicesJson = originalInvoices.map((e) => jsonEncode(e.toJson())).toList();
-    await prefs.setStringList('invoices', invoicesJson);
-  }
-
-  void payInvoice(Invoice invoice, int id, String periodDate, String? dueDate) async {
-    for (var invoice in originalInvoices) {
-      print("IPA01\n${invoice.toDisplayString()}");
-    }
-    for (var invoice in selectedInvoices) {
-      print("IPA02\n${invoice.toDisplayString()}");
-    }
-    int index = originalInvoices.indexWhere((invoice) => invoice.id == id);
-    int index2 = selectedInvoices.indexWhere((invoice) => invoice.id == id);
-    // Debugging: Check the indices
-    print('Index in originalInvoices: $index');
-    print('Index in selectedInvoices: $index2');
-    bool confirmDelete = false;
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Disclaimer"),
-          content: Text("Are you sure you paid your invoice?\nID : ${invoice.id}\nInvoice name : ${invoice.name}\nInvoice amount : ${invoice.price}"),
-          actions: <Widget>[
-            TextButton(
-              child: const Text("No"),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text("Yes"),
-              onPressed: () {
-                setState(() {
-                  confirmDelete = true;
-                  Navigator.of(context).pop();
-                });
-              },
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmDelete) {
-      setState(() {
-        DateTime incrementMonth(DateTime date) {
-          // Calculate the next month
-          int nextMonth = date.month + 1;
-          int nextYear = date.year;
-
-          // Check if we need to increment the year
-          if (nextMonth > 12) {
-            nextMonth = 1;
-            nextYear++;
-          }
-
-          // Find the last day of the next month
-          int lastDayOfNextMonth = DateTime(nextYear, nextMonth + 1, 0).day;
-
-          // Adjust the day if the original date is the last day of the month
-          int adjustedDay = date.day > lastDayOfNextMonth ? lastDayOfNextMonth : date.day;
-
-          // Use the adjusted day of the next month
-          return DateTime(nextYear, nextMonth, adjustedDay);
+    for (var bank in bankAccounts) {
+      for (var account in bank['accounts'] ?? []) {
+        if (account['accountId'] == accountId) {
+          // Return a flattened structure with account + bank info
+          return {
+            ...account, // Spread all account fields
+            'bankId': bank['bankId'],
+            'bankName': bank['bankName'],
+            'currency': bank['currency'],
+            'isDebit': bank['isDebit'] ?? true,
+            'creditLimit': bank['creditLimit'] ?? false,
+            'cutoffDate': bank['cutoffDate'] ?? false,
+            // Don't include nested accounts array since we're selecting one account
+          };
         }
-        DateTime originalPeriodDate = DateTime.parse(invoice.periodDate);
-        DateTime newPeriodDate = incrementMonth(originalPeriodDate);
-        String stringPeriodDate = DateFormat('yyyy-MM-dd').format(newPeriodDate);
-        String? stringDueDate;
-        if (invoice.dueDate != null){
-          DateTime originalDueDate = DateTime.parse(invoice.dueDate!);
-          DateTime newDueDate = incrementMonth(originalDueDate);
-          stringDueDate = DateFormat('yyyy-MM-dd').format(newDueDate);
-        }
-        String? diff = calculateNewDiff(stringDueDate, stringPeriodDate);
-        print("The delete has been confirmed. Current diff is : ${diff} while period date is now : ${stringPeriodDate}");
-        final updatedInvoice = Invoice(
-            id: invoice.id,
-            price: invoice.price,
-            subCategory: invoice.subCategory,
-            category: invoice.category,
-            name: invoice.name,
-            periodDate: stringPeriodDate,
-            dueDate: stringDueDate,
-            difference: diff!
-        );
-        // Debugging: Print the updated invoice details
-        print('Updated Invoice: ${updatedInvoice.toString()}');
-        originalInvoices[index] = updatedInvoice;
-        selectedInvoices[index2] = updatedInvoice;
-        // Debugging: Verify the update
-        print('Updated originalInvoices at index $index: ${originalInvoices[index].name}');
-        print('Updated selectedInvoices at index $index2: ${selectedInvoices[index2].name}');
-        categorizeInvoices(selectedInvoices);
-        _saveInvoices();
-        _getHeight(_currentPage); // Recalculate height
-        widget.onReload; // UPDATE THE WIDGET BY CALLING _LOAD FUNCTION OF HOMEPAGESTATE
-      });
+      }
     }
-  }
-
-  void _getHeight(int categoryIndex) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final RenderBox? renderBox =
-      _intrinsicHeightKeys[categoryIndex]?.currentContext?.findRenderObject() as RenderBox?;
-      setState(() {
-        _height = renderBox?.size.height;
-        _widthIntrinsic = renderBox?.size.width;
-      });
-    });
-  }
-
-  void _getWidth() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final RenderBox? renderBox =
-      _scrollWidthKey.currentContext?.findRenderObject() as RenderBox?;
-      setState(() {
-        _width = (renderBox?.size.width ?? 0.0) - (_widthIntrinsic ?? 0.0);
-      });
-    });
-  }
-
-  Widget buildIndicator(int itemCount, int currentIndex) {
-    return GestureDetector(
-      onHorizontalDragEnd: (details) {
-        if (details.primaryVelocity != null && details.primaryVelocity! < 0) {
-          // Swiped left
-          if (_currentPage < itemCount - 1) {
-            setState(() {
-              _currentPage++;
-            });
-          } else {
-            setState(() {
-              _currentPage = 0;
-            });
-          }
-        } else if (details.primaryVelocity != null && details.primaryVelocity! > 0) {
-          // Swiped right
-          if (_currentPage > 0) {
-            setState(() {
-              _currentPage--;
-            });
-          } else {
-            setState(() {
-              _currentPage = itemCount - 1;
-            });
-          }
-        }
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.green.withOpacity(0.2), // Highlight color for the touchable area
-          borderRadius: BorderRadius.all(Radius.circular(20)),
-        ),
-        padding: EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
-        child: IntrinsicWidth(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(itemCount, (index) {
-              return Container(
-                width: 8.0,
-                height: 8.0,
-                margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 2.0),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: (currentIndex % itemCount == index)
-                      ? Color.fromARGB(125, 0, 149, 30)
-                      : Colors.grey,
-                ),
-              );
-            }),
-          ),
-        ),
-      ),
-    );
-  }
-
-  String getTitleForIndex(int index) {
-    switch (index) {
-      case 0:
-        return "Fatura Tarihi Yaklaşan";
-      case 1:
-        return "Fatura Günü";
-      case 2:
-        return "Son Ödeme Tarihi Yaklaşan";
-      case 3:
-        return "Son Ödeme Günü";
-      case 4:
-        return "Tarihi Geçmiş Faturalar";
-      default:
-        return "null";
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    _getHeightForAll();
-    List<List<Invoice>> categorizedInvoices = [
-      upcomingInvoices,
-      todayInvoices,
-      approachingDueInvoices,
-      paymentDueInvoices,
-      overdueInvoices
-    ];
-    double width = _width ?? 0.0;
-    double _dragDistance = 0.0; // To track the drag distance
-    final double _dragThreshold = 50.0; // Set your desired threshold
-    selectedInvoices = categorizedInvoices[_currentPage];
-    // If no key exists for the category, create one
-    if (!_intrinsicHeightKeys.containsKey(_currentPage)) {
-      _intrinsicHeightKeys[_currentPage] = GlobalKey();
-    }
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            getTitleForIndex(_currentPage),
-            style: GoogleFonts.montserrat(fontSize: 17, fontWeight: FontWeight.bold),
-          ),
-        ),
-        const SizedBox(height: 20),
-        IntrinsicHeight(
-          key: _intrinsicHeightKeys[_currentPage],
-          child: selectedInvoices.isEmpty
-              ? GestureDetector(
-            onHorizontalDragUpdate: (details) {
-              // Update the drag distance
-              _dragDistance += details.primaryDelta ?? 0;
-
-              // Check if the drag exceeds the threshold to change the page
-              if (_dragDistance > _dragThreshold) {
-                // Swiped right (moving to previous page)
-                setState(() {
-                  _currentPage--;
-                  if (_currentPage < 0) {
-                    _currentPage = 0; // Ensure it doesn't go below the first page
-                  }
-                });
-                _dragDistance = 0; // Reset the drag distance
-              } else if (_dragDistance < -_dragThreshold) {
-                // Swiped left (moving to next page)
-                setState(() {
-                  _currentPage++;
-                  if (_currentPage >= 5) {
-                    _currentPage = 0; // Wrap around to the first page if exceeded
-                  }
-                });
-                _dragDistance = 0; // Reset the drag distance
-              }
-            },
-            onHorizontalDragEnd: (details) {
-              // Reset the drag distance when the drag ends
-              _dragDistance = 0;
-            },
-
-            child: SingleChildScrollView(
-              scrollDirection: Axis.vertical, // Allow vertical scrolling
-              child: Container(
-                height: _height,
-                child: Center(
-                  child: Text('Add Sample Invoice'),
-                ),
-              ),
-            ),
-          )
-              : NotificationListener<ScrollNotification>(
-            onNotification: (scrollNotification) {
-              if (scrollNotification is ScrollUpdateNotification) {
-                double currentOffset = scrollNotification.metrics.pixels;
-                width = selectedInvoices.length == 1 ? 20 : width;
-                print("currentOffset : $currentOffset");
-                print("selectedInvoices.length : ${selectedInvoices.length}");
-                if (currentOffset < width) {
-                  setState(() {
-                    _showRightArrow = false;
-                    _rightArrowOpacity = 0.0;
-                  });
-                } else if (currentOffset >= width && currentOffset < (width + 90)) {
-                  setState(() {
-                    _showRightArrow = true;
-                    _rightArrowOpacity = (currentOffset - width) / ((width + 90) - width);
-                  });
-                } else if (currentOffset >= (width + 90)) {
-                  setState(() {
-                    _showRightArrow = true;
-                    _rightArrowOpacity = 1.0;
-                  });
-                }
-
-                if (currentOffset < 0) {
-                  if (currentOffset > -100) {
-                    // User is scrolling to the left but not beyond -100
-                    setState(() {
-                      _showLeftArrow = true;
-                      _leftArrowOpacity = (currentOffset.abs()) / 100;
-                    });
-                  } else if (currentOffset <= -100 && !_isTouching) {
-                    // User has scrolled more than -100, go to the last page (4)
-                    if (_currentPage == 0) {
-                      setState(() {
-                        _currentPage = 4;
-                        _showLeftArrow = false;
-                      });
-                    } else {
-                      setState(() {
-                        _currentPage--;
-                        _showLeftArrow = false;
-                      });
-                    }
-                  }
-                }
-
-
-                if (_rightArrowOpacity == 1.0 && !_isTouching) {
-                  int nextPage = (_currentPage + 1) % categorizedInvoices.length;
-                  if (_currentPage != nextPage) {
-                    setState(() {
-                      _currentPage = nextPage;
-                      _showRightArrow = false;
-                    });
-                  }
-                }
-              }
-              return false;
-            },
-            child: Listener(
-              behavior: HitTestBehavior.translucent,
-              onPointerDown: (event) {
-                setState(() {
-                  _isTouching = true; // User started touching the screen
-                });
-              },
-              onPointerUp: (event) {
-                setState(() {
-                  _isTouching = false; // User stopped touching the screen
-                });
-              },
-              child: Stack(
-                children: [
-                  SingleChildScrollView(
-                    controller: _scrollController,
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      key: _scrollWidthKey,
-                      children: selectedInvoices.length == 1
-                          ? [
-                        // Add extra width to the container if there is only one InvoiceCard
-                        SizedBox(width: (_widthIntrinsic != null ? (_widthIntrinsic! - 200.w) / 2 : 0)),
-
-                        Padding(
-                          padding: EdgeInsets.fromLTRB(10, 0, 50, 0),
-                          child: InvoiceCard(
-                            invoice: selectedInvoices.first,
-                            onDelete: () => payInvoice(selectedInvoices.first, selectedInvoices.first.id, selectedInvoices.first.periodDate, selectedInvoices.first.dueDate),
-                            onEdit: () {
-                              // Handle edit logic
-                            },
-                          ),
-                        ),
-                      ]
-                          : selectedInvoices.map((invoice) {
-                        return Padding(
-                          padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
-                          child: InvoiceCard(
-                            invoice: invoice,
-                            onDelete: () => payInvoice(invoice, invoice.id, invoice.periodDate, invoice.dueDate),
-                            onEdit: () {
-                              // Handle edit logic
-                            },
-                          ),
-                        );
-                      }).toList(),
-                    ),
-
-                  ),
-                  if (_showLeftArrow)
-                    Positioned(
-                      left:10,
-                      top:((_height! / 2)-20).toDouble(),
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 10.0),
-                        child: AnimatedOpacity(
-                          opacity: _leftArrowOpacity,
-                          duration: Duration(milliseconds: 300),
-                          child: Icon(
-                            Icons.arrow_back_ios,
-                            color: Colors.green,
-                            size: 40,
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (_showRightArrow)
-                    Positioned(
-                      right:10,
-                      top:((_height! / 2)-20).toDouble(),
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 10.0),
-                        child: AnimatedOpacity(
-                          opacity: _rightArrowOpacity,
-                          duration: Duration(milliseconds: 300),
-                          child: Icon(
-                            Icons.arrow_forward_ios,
-                            color: Colors.green,
-                            size: 40,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
-        buildIndicator(5, _currentPage),
-        if (_height != null)
-          Text('Height of IntrinsicHeight: ${_height!.toString()} px'),
-      ],
-    );
+    return null;
   }
 }
 
-class TransactionWidget extends StatefulWidget {
-  final List<Transaction> transactions;
-  final List<Invoice> invoices;
-  final DateTime? startDate;
-  final DateTime? endDate;
-
-  TransactionWidget({
-    required this.transactions,
-    required this.invoices,
-    this.startDate,
-    this.endDate,
-  });
-  @override
-  _TransactionWidgetState createState() => _TransactionWidgetState();
-}
-class _TransactionWidgetState extends State<TransactionWidget> {
-  Map<String, List<Map<String, dynamic>>> incomeMap = {};
-  double incomeValue = 0.0;
-  List<Transaction> transactions = [];
-  final _formKey = GlobalKey<FormState>();
-  int? editingTransactionId;
-  final TextEditingController _amountController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _installmentController = TextEditingController();
-  DateTime? selectedDate;
-  String currency = 'USD';
-  bool isSurplus = true;
-  bool isFromInvoice = false;
-  DateTime? startDate;
-  DateTime? endDate;
-  @override
-  void initState() {
-    super.initState();
-    _loadTransactions();
-  }
-
-  Future<void> _loadTransactions() async {
-    final prefs = await SharedPreferences.getInstance();
-    final ab2 = prefs.getString('incomeMap') ?? '0';
-    final ab14 = prefs.getString('startDate');
-    final ab15 = prefs.getString('endDate');
-
-    if (ab2.isNotEmpty) {
-      final decodedData = json.decode(ab2);
-      if (decodedData is Map<String, dynamic>) {
-        incomeMap = {};
-        decodedData.forEach((key, value) {
-          if (value is List<dynamic>) {
-            incomeMap[key] = List<Map<String, dynamic>>.from(value.map((e) => Map<String, dynamic>.from(e)));
-          }
-        });
-      }
-      print('Final incomeMap: ${jsonEncode(incomeMap)}');
-    }
-
-    if (ab2 != null && ab2.isNotEmpty) {
-      final decodedData = json.decode(ab2);
-      if (decodedData is Map<String, dynamic>) {
-        setState(() {
-          incomeMap = Map<String, List<Map<String, dynamic>>>.from(decodedData);
-        });
-      }
-    }
-
-    if (ab14 != null && ab15 != null) {
-      setState(() {
-        startDate = DateTime.parse(ab14);
-        endDate = DateTime.parse(ab15);
-      });
-    }
-
-    // Clear the existing transactions before loading new data
-    setState(() {
-      transactions.clear(); // Clear the existing transaction list
-    });
-
-    List<Transaction> loadedTransactions = await TransactionService.loadTransactions();
-
-    setState(() {
-      transactions = loadedTransactions; // Update the transaction list with new data
-    });
-  }
-  Future<void> _saveTransaction() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      int newId = (transactions.isEmpty ? 0 : transactions.last.id) + 1;
-      Transaction transaction = Transaction(
-        id: newId,
-        date: DateTime.now(),
-        amount: double.parse(_amountController.text),
-        installment: _installmentController.text.isNotEmpty
-            ? int.tryParse(_installmentController.text)
-            : null,
-        currency: currency,
-        subcategory: 'DEBUG_SUBCATEGORY',
-        category: 'DEBUG_CATEGORY',
-        title: 'DEBUG_TITLE',
-        description: _descriptionController.text,
-        isSurplus: isSurplus,
-        isFromInvoice: isFromInvoice,
-        initialInstallmentDate: selectedDate,
-      );
-      if (editingTransactionId == null) {
-        await TransactionService.addTransaction(transaction);
-      } else {
-        await TransactionService.updateTransaction(transaction);
-        editingTransactionId = null;
-      }
-      _clearForm();
-      //await _loadTransactions();
-    }
-  }
-  Future<void> _deleteTransaction(int id) async {
-    await TransactionService.deleteTransaction(id);
-    //await _loadTransactions();
-  }
-  void _clearForm() {
-    _amountController.clear();
-    _descriptionController.clear();
-    _installmentController.clear();
-    setState(() {
-      currency = 'USD';
-      isSurplus = true;
-      selectedDate = null;
-    });
-  }
-  Future<void> _pickDate() async {
-    DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: selectedDate ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    );
-    if (pickedDate != null) {
-      setState(() {
-        selectedDate = pickedDate;
-      });
-    }
-  }
-  void _showAddTransactionDialog() {
-    final _formKey = GlobalKey<FormState>();
-
-    // Controllers for the text fields
-    TextEditingController _amountController = TextEditingController();
-    TextEditingController _descriptionController = TextEditingController();
-    TextEditingController _installmentController = TextEditingController();
-
-    // Default values for variables
-    DateTime? selectedDate = DateTime.now();
-    bool isSurplus = false;
-    bool isFromInvoice = false;
-    String currency = 'USD';
-    String selectedCategory = 'Abonelikler';  // Default category
-    String selectedSubcategory = 'TV';  // Default subcategory
-
-    final Map<String, List<String>> categoryMap = {
-      "Abonelikler": ["TV", "Oyun", "Müzik"],
-      "Faturalar": ["Ev Faturaları", "İnternet", "Telefon"],
-      "Diğer Giderler": ["Kira", "Mutfak", "Yeme İçme", "Eğlence", "Diğer"],
-      "Gelir": ["İş", "Burs", "Emekli", "Maaş"],
-    };
-
-    void _pickDate(BuildContext context, Function(DateTime) onDateSelected) async {
-      DateTime? picked = await showDatePicker(
-        context: context,
-        initialDate: selectedDate ?? DateTime.now(),
-        firstDate: DateTime(2000),
-        lastDate: DateTime(2050),
-      );
-      if (picked != null) {
-        onDateSelected(picked);
-      }
-    }
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          title: Text('Add Transaction', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          content: StatefulBuilder(
-            builder: (context, setState) {
-              return SingleChildScrollView(
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildTextField(_amountController, 'Amount', keyboardType: TextInputType.number),
-                      _buildTextField(_descriptionController, 'Description'),
-                      _buildTextField(_installmentController, 'Installment (optional)', keyboardType: TextInputType.number),
-
-                      SizedBox(height: 10),
-                      _buildDropdown(
-                        'Currency',
-                        currency,
-                        ['USD', 'EUR', 'TRY'],
-                            (value) => setState(() => currency = value!),
-                      ),
-
-                      SizedBox(height: 10),
-                      _buildDropdown(
-                        'Category',
-                        selectedCategory,
-                        categoryMap.keys.toList(),
-                            (value) => setState(() {
-                          selectedCategory = value!;
-                          selectedSubcategory = categoryMap[selectedCategory]!.first;
-                        }),
-                      ),
-
-                      SizedBox(height: 10),
-                      _buildDropdown(
-                        'Subcategory',
-                        selectedSubcategory,
-                        categoryMap[selectedCategory]!,
-                            (value) => setState(() => selectedSubcategory = value!),
-                      ),
-
-                      SizedBox(height: 10),
-                      _buildSwitchTile('Surplus', isSurplus, (value) => setState(() => isSurplus = value)),
-                      _buildSwitchTile('From Invoice', isFromInvoice, (value) => setState(() => isFromInvoice = value)),
-
-                      SizedBox(height: 10),
-                      _buildDateTile('Date', selectedDate, () => _pickDate(context, (date) => setState(() => selectedDate = date))),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Cancel', style: TextStyle(color: Colors.redAccent)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              onPressed: () {
-                if (_formKey.currentState!.validate()) {
-                  // Save the transaction
-                  Transaction newTransaction = Transaction(
-                    id: DateTime.now().millisecondsSinceEpoch,
-                    amount: double.parse(_amountController.text),
-                    description: _descriptionController.text,
-                    title: _descriptionController.text,  // You can set a title based on description or another field
-                    installment: _installmentController.text.isNotEmpty
-                        ? int.tryParse(_installmentController.text)
-                        : null,
-                    currency: currency,
-                    isSurplus: isSurplus,
-                    isFromInvoice: isFromInvoice,
-                    category: selectedCategory,
-                    subcategory: selectedSubcategory,
-                    date: selectedDate!,
-                    initialInstallmentDate: selectedDate, // Assuming it's the same as the selected date
-                  );
-
-                  // Call the save function (this should be implemented in your service layer)
-                  TransactionService.addTransaction(newTransaction);
-                  Navigator.of(context).pop(); // Close the dialog
-                }
-              },
-              child: Text('Save', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        );
-      },
-    );
-  }
-  void _showEditTransactionDialog(Transaction transaction) {
-    final _formKey = GlobalKey<FormState>();
-
-    TextEditingController _amountController = TextEditingController(text: transaction.amount.toString());
-    TextEditingController _descriptionController = TextEditingController(text: transaction.description);
-    TextEditingController _titleController = TextEditingController(text: transaction.title);
-    TextEditingController _installmentController = TextEditingController(text: transaction.installment?.toString() ?? '');
-    DateTime? selectedDate = transaction.date;
-    DateTime? initialInstallmentDate = transaction.initialInstallmentDate;
-    bool isSurplus = transaction.isSurplus;
-    bool isFromInvoice = transaction.isFromInvoice;
-    String currency = transaction.currency;
-    String selectedCategory = transaction.category;
-    String selectedSubcategory = transaction.subcategory;
-
-    final Map<String, List<String>> categoryMap = {
-      "Abonelikler": ["TV", "Oyun", "Müzik"],
-      "Faturalar": ["Ev Faturaları", "İnternet", "Telefon"],
-      "Diğer Giderler": ["Kira", "Mutfak", "Yeme İçme", "Eğlence", "Diğer"],
-      "Gelir": ["İş", "Burs", "Emekli", "Maaş"],
-    };
-
-    void _pickDate(BuildContext context, Function(DateTime) onDateSelected) async {
-      DateTime? picked = await showDatePicker(
-        context: context,
-        initialDate: selectedDate ?? DateTime.now(),
-        firstDate: DateTime(2000),
-        lastDate: DateTime(2050),
-      );
-      if (picked != null) {
-        onDateSelected(picked);
-      }
-    }
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          title: Text('Edit Transaction', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          content: StatefulBuilder(
-            builder: (context, setState) {
-              return SingleChildScrollView(
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildTextField(_titleController, 'Title'),
-                      _buildTextField(_amountController, 'Amount', keyboardType: TextInputType.number),
-                      _buildTextField(_descriptionController, 'Description'),
-                      _buildTextField(_installmentController, 'Installment (optional)', keyboardType: TextInputType.number),
-
-                      SizedBox(height: 10),
-                      _buildDropdown(
-                        'Currency',
-                        currency,
-                        ['USD', 'EUR', 'TRY'],
-                            (value) => setState(() => currency = value!),
-                      ),
-
-                      SizedBox(height: 10),
-                      _buildDropdown(
-                        'Category',
-                        selectedCategory,
-                        categoryMap.keys.toList(),
-                            (value) => setState(() {
-                          selectedCategory = value!;
-                          selectedSubcategory = categoryMap[selectedCategory]!.first;
-                        }),
-                      ),
-
-                      SizedBox(height: 10),
-                      _buildDropdown(
-                        'Subcategory',
-                        selectedSubcategory,
-                        categoryMap[selectedCategory]!,
-                            (value) => setState(() => selectedSubcategory = value!),
-                      ),
-
-                      SizedBox(height: 10),
-                      _buildSwitchTile('Surplus', isSurplus, (value) => setState(() => isSurplus = value)),
-                      _buildSwitchTile('From Invoice', isFromInvoice, (value) => setState(() => isFromInvoice = value)),
-
-                      SizedBox(height: 10),
-                      _buildDateTile('Date', selectedDate, () => _pickDate(context, (date) => setState(() => selectedDate = date))),
-                      _buildDateTile('Installment Date', initialInstallmentDate, () => _pickDate(context, (date) => setState(() => initialInstallmentDate = date))),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Cancel', style: TextStyle(color: Colors.redAccent)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              onPressed: () {
-                if (!_formKey.currentState!.validate()) {
-                  print("Form validation failed!");
-                  return;
-                }
-
-                setState(() {
-                  transaction.amount = double.parse(_amountController.text);
-                  transaction.description = _descriptionController.text;
-                  transaction.title = _titleController.text;
-                  transaction.currency = currency;
-                  transaction.isSurplus = isSurplus;
-                  transaction.isFromInvoice = isFromInvoice;
-                  transaction.category = selectedCategory;
-                  transaction.subcategory = selectedSubcategory;
-                  transaction.date = selectedDate!;
-                  transaction.initialInstallmentDate = initialInstallmentDate;
-
-                  // Ensure installment is properly set
-                  transaction.installment = _installmentController.text.isNotEmpty
-                      ? int.tryParse(_installmentController.text)
-                      : null;
-
-                  if (_installmentController.text.trim().isEmpty) {
-                    transaction.installment = null;
-                  }
-                });
-
-                TransactionService.updateTransaction(transaction);
-                Navigator.of(context).pop();
-              },
-
-              child: Text('Save', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        );
-      },
-    );
-  }
-  Widget _buildTextField(TextEditingController controller, String label, {TextInputType keyboardType = TextInputType.text}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        decoration: InputDecoration(
-          labelText: label,
-          filled: true,
-          fillColor: Colors.grey[100],
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-          validator: (value) {
-            if (label == "Installment (optional)") {
-              // Allow empty value for installment
-              if (value == null || value.isEmpty) {
-                return null; // No error if empty
-              }
-              // Check if the value is a valid number
-              final int? parsedValue = int.tryParse(value);
-              if (parsedValue == null) {
-                return 'Please enter a valid number for $label';
-              }
-            } else {
-              // For other fields, enforce required validation
-              if (value == null || value.isEmpty) {
-                return 'Please enter $label';
-              }
-            }
-            return null;
-          }
-      ),
-    );
-  }
-  Widget _buildDropdown(String label, String value, List<String> items, Function(String?) onChanged) {
-    return DropdownButtonFormField<String>(
-      value: value,
-      items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
-      onChanged: onChanged,
-      decoration: InputDecoration(
-        labelText: label,
-        filled: true,
-        fillColor: Colors.grey[100],
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
-  }
-  Widget _buildSwitchTile(String label, bool value, Function(bool) onChanged) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: TextStyle(fontSize: 16)),
-          Switch(value: value, onChanged: onChanged),
-        ],
-      ),
-    );
-  }
-  Widget _buildDateTile(String label, DateTime? date, Function() onTap) {
-    return ListTile(
-      title: Text(date != null ? '$label: ${DateFormat.yMMMd().format(date)}' : 'Pick $label'),
-      leading: Icon(Icons.calendar_today, color: Colors.blueAccent),
-      tileColor: Colors.grey[100],
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      onTap: onTap,
-    );
-  }
-
-  Future<DateTime?> _getStartDate() async {
-    final prefs = await SharedPreferences.getInstance();
-    final startDateString = prefs.getString('startDate');
-    if (startDateString != null) {
-      return DateTime.parse(startDateString);
-    }
-    return null; // Return null if no start date is found
-  }
-  Future<DateTime?> _getEndDate() async {
-    final prefs = await SharedPreferences.getInstance();
-    final endDateString = prefs.getString('endDate');
-    if (endDateString != null) {
-      return DateTime.parse(endDateString);
-    }
-    return null; // Return null if no end date is found
-  }
-
-  // Function to validate and adjust the day
-  DateTime _validateDay(int day, DateTime referenceDate) {
-    final lastDayOfMonth = DateTime(referenceDate.year, referenceDate.month + 1, 0).day;
-
-    // Ensure the day is within the valid range
-    if (day > lastDayOfMonth) {
-      day = lastDayOfMonth;
-    }
-
-    DateTime validatedDate = DateTime(referenceDate.year, referenceDate.month, day);
-
-    // If it's Saturday (6) or Sunday (7), move to the next Monday
-    if (validatedDate.weekday == DateTime.saturday) {
-      validatedDate = validatedDate.add(Duration(days: 2)); // Move to Monday
-    } else if (validatedDate.weekday == DateTime.sunday) {
-      validatedDate = validatedDate.add(Duration(days: 1)); // Move to Monday
-    }
-
-    return validatedDate;
-  }
-
-  // Create a list of Transactions from incomeMap
-  Future<List<Transaction>> _createTransactions() async {
-    final prefs = await SharedPreferences.getInstance();
-    String? startDateString = prefs.getString('startDate');
-    String? endDateString = prefs.getString('endDate');
-
-    if (startDateString == null || endDateString == null) {
-      print('Start date or end date is missing!');
-      return [];
-    }
-
-    DateTime startDate = DateTime.parse(startDateString);
-    DateTime endDate = DateTime.parse(endDateString);
-
-    List<Transaction> transactions = [];
-
-    print('Processing transactions from $startDate to $endDate');
-
-    for (DateTime currentDate = startDate;
-    currentDate.isBefore(endDate) || currentDate.isAtSameMomentAs(endDate);
-    currentDate = DateTime(currentDate.year, currentDate.month + 1, 1)) {
-
-      print('Processing month: ${currentDate.month}-${currentDate.year}');
-
-      incomeMap.forEach((key, incomeList) {
-        if (incomeList == null || incomeList.isEmpty) {
-          print('Skipping key: $key because it has no data');
-          return;
-        }
-
-        for (var income in incomeList) {
-          int day = income['day'] ?? 1;
-          DateTime transactionDate = _validateDay(day, currentDate);
-
-          if (transactionDate.isAfter(endDate)) {
-            print('Skipping transaction beyond end date: $transactionDate');
-            continue;
-          }
-
-          double amount = NumberFormat.decimalPattern('tr_TR').parse(income['amount'].toString()) as double;
-
-          transactions.add(Transaction(
-            id: DateTime.now().millisecondsSinceEpoch,
-            date: transactionDate,
-            amount: amount,
-            installment: null,
-            currency: 'TRY',
-            subcategory: 'subcategory2',
-            category: 'category2',
-            title: 'title2',
-            description: 'Income',
-            isSurplus: true,
-            isFromInvoice: false,
-            initialInstallmentDate: null,
-          ));
-
-          print('Added transaction: $transactionDate, Amount: $amount');
-        }
-      });
-    }
-
-    return transactions;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        FutureBuilder<List<DateTime?>>(
-          future: Future.wait([_getStartDate(), _getEndDate()]),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return CircularProgressIndicator(); // Show a loading spinner while fetching data
-            } else if (snapshot.hasError) {
-              return Text('Error: ${snapshot.error}');
-            } else {
-              final startDate = snapshot.data?[0]; // Get the start date from the list of results
-              final endDate = snapshot.data?[1];   // Get the end date from the list of results
-
-              // Fetch transactions after the dates are loaded
-              return FutureBuilder<List<Transaction>>(
-                future: TransactionService.loadTransactions(),
-                builder: (context, transactionsSnapshot) {
-                  if (transactionsSnapshot.connectionState == ConnectionState.waiting) {
-                    return CircularProgressIndicator(); // Show loading spinner while fetching transactions
-                  } else if (transactionsSnapshot.hasError) {
-                    return Text('Error: ${transactionsSnapshot.error}');
-                  } else {
-                    List<Transaction> transactions = transactionsSnapshot.data!;
-                    return Column(
-                      children: [
-                        Text(startDate != null ? DateFormat('yyyy-MM-dd').format(startDate) : 'No start date'),
-                        Text(endDate != null ? DateFormat('yyyy-MM-dd').format(endDate) : 'No end date'),
-                        Text(
-                            transactions.map((e) => e.toDisplayString()).join("\n\n")
-                        ),
-                        ListView(
-                          padding: EdgeInsets.zero,
-                          physics: const NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          children: transactions.map((transaction) {
-                            return Padding(
-                              padding: EdgeInsets.only(bottom: 0),
-                              child: Container(
-                                child: Slidable(
-                                  key: ValueKey(transaction.id),
-                                  endActionPane: ActionPane(
-                                    motion: DrawerMotion(),
-                                    children: [
-                                      SlidableAction(
-                                        onPressed: (context) => _deleteTransaction(transaction.id),
-                                        borderRadius: BorderRadius.circular(10),
-                                        backgroundColor: Color(0xFFFE4A49),
-                                        foregroundColor: Colors.white,
-                                        icon: Icons.delete,
-                                        label: 'Delete',
-                                      ),
-                                      SlidableAction(
-                                        onPressed: (context) => _showEditTransactionDialog(transaction),
-                                        borderRadius: BorderRadius.circular(10),
-                                        backgroundColor: Color(0xFF21B7CA),
-                                        foregroundColor: Colors.white,
-                                        icon: Icons.edit,
-                                        label: 'Edit',
-                                      ),
-                                    ],
-                                  ),
-                                  child: TransactionCard(transaction: transaction),
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                        SizedBox(height: 10),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Color.fromARGB(120, 152, 255, 170),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          padding: EdgeInsets.only(left: 20, right: 20),
-                          child: SizedBox(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text("Hareket Ekle",
-                                    style: GoogleFonts.montserrat(
-                                        fontSize: 16, fontWeight: FontWeight.w600)),
-                                IconButton(
-                                  onPressed: () => _showAddTransactionDialog(),
-                                  icon: Icon(Icons.add_circle),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-
-                  }
-                },
-              );
-            }
-          },
-        ),
-      ],
-    );
-  }
-}

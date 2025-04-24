@@ -95,7 +95,7 @@ Future<String> getInitialLocation() async {
 
     if (value == null) {
       print("Key $key not found. Navigating to '/'");
-      return '/';  // Default route if any key is missing
+      return '/page6';  // Default route if any key is missing
     }
 
     // Special handling for the 'invoices' key

@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:moneyly/blocs/settings/settings-page.dart';
+import 'package:moneyly/pages/in-app/accounts-page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../blocs/income-selections.dart';
@@ -77,7 +78,7 @@ class _Page6State extends State<Page6> {
       case 3:
         return InvestmentPage();
       case 4:
-        return WishesPage();
+        return AccountsPage();
       default:
         return HomePage();
     }
@@ -350,13 +351,10 @@ class _Page6State extends State<Page6> {
                             borderRadius: BorderRadius.circular(20),
                           )
                               : null,
-                          child: const Padding(
-                            padding: EdgeInsets.only(top: 5, bottom: 5),
-                            child: Icon(FontAwesome.bank, size: 20),
-                          ),
+                          child: Icon(Icons.account_balance_wallet_sharp, size: 30),
                         ),
                       ),
-                      label: 'İstekler',
+                      label: 'Hesaplarım',
                     ),
                   ],
                 ),

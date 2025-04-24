@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Transaction {
-  int id;
+  int transactionId;
   DateTime date;
   double amount;
   int? installment;
@@ -21,7 +21,7 @@ class Transaction {
   DateTime? initialInstallmentDate;
 
   Transaction({
-    required this.id,
+    required this.transactionId,
     required this.date,
     required this.amount,
     this.installment,
@@ -37,7 +37,7 @@ class Transaction {
 
   // Convert Transaction to JSON
   Map<String, dynamic> toJson() => {
-    'id': id,
+    'transactionId': transactionId,
     'date': date.toIso8601String(),
     'amount': amount,
     'installment': installment,
@@ -53,7 +53,7 @@ class Transaction {
 
   // Create Transaction from JSON
   factory Transaction.fromJson(Map<String, dynamic> json) => Transaction(
-    id: json['id'],
+    transactionId: json['transactionId'],
     date: DateTime.parse(json['date']),
     amount: json['amount'],
     installment: json['installment'],
@@ -69,7 +69,7 @@ class Transaction {
         : null,
   );
   String toDisplayString() {
-    return 'ID: $id\nDate: $date\nAmount: $amount\nInstallment: ${installment  ?? 'N/A'}\nCurrency: $currency\nSubcategory: $subcategory\nCategory: $category\nTitle: $title\ndescription: $description\nisSurplus: $isSurplus\nInstallmentDate: ${initialInstallmentDate  ?? 'N/A'}';
+    return 'ID: $transactionId\nDate: $date\nAmount: $amount\nInstallment: ${installment  ?? 'N/A'}\nCurrency: $currency\nSubcategory: $subcategory\nCategory: $category\nTitle: $title\ndescription: $description\nisSurplus: $isSurplus\nInstallmentDate: ${initialInstallmentDate  ?? 'N/A'}';
   }
   // Method to get the current installment period
   String getCurrentInstallmentPeriod() {
@@ -88,6 +88,46 @@ class Transaction {
     int monthsDiff = DateTime.now().difference(initialInstallmentDate!).inDays ~/ 30;
     return monthsDiff + 1;
   }
+
+  Transaction copyWith({
+    int? transactionId,
+    DateTime? date,
+    double? amount,
+    int? installment,
+    String? currency,
+    String? subcategory,
+    String? category,
+    String? title,
+    String? description,
+    bool? isSurplus,
+    bool? isFromInvoice,
+    DateTime? initialInstallmentDate,
+  }) {
+    return Transaction(
+      transactionId: transactionId ?? this.transactionId,
+      date: date ?? this.date,
+      amount: amount ?? this.amount,
+      installment: installment ?? this.installment,
+      isFromInvoice: isFromInvoice ?? this.isFromInvoice,
+      currency: currency ?? this.currency,
+      subcategory: subcategory ?? this.subcategory,
+      category: category ?? this.category,
+      description: description ?? this.description,
+      title: title ?? this.title,
+      isSurplus: isSurplus ?? this.isSurplus,
+      initialInstallmentDate: initialInstallmentDate ?? this.initialInstallmentDate,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+          other is Transaction &&
+              runtimeType == other.runtimeType &&
+              transactionId == other.transactionId;
+
+  @override
+  int get hashCode => transactionId.hashCode;
 }
 
 class TransactionService {
@@ -120,7 +160,7 @@ class TransactionService {
   // Update an existing transaction
   static Future<void> updateTransaction(Transaction updatedTransaction) async {
     final transactions = await loadTransactions();
-    final index = transactions.indexWhere((t) => t.id == updatedTransaction.id);
+    final index = transactions.indexWhere((t) => t.transactionId == updatedTransaction.transactionId);
     if (index != -1) {
       transactions[index] = updatedTransaction;
       await saveTransactions(transactions);
@@ -130,7 +170,7 @@ class TransactionService {
   // Delete a transaction
   static Future<void> deleteTransaction(int id) async {
     final transactions = await loadTransactions();
-    transactions.removeWhere((t) => t.id == id);
+    transactions.removeWhere((t) => t.transactionId == id);
     await saveTransactions(transactions);
   }
 
@@ -196,7 +236,7 @@ class TransactionService {
           double amount = NumberFormat.decimalPattern('tr_TR').parse(income['amount'].toString()) as double;
 
           transactions.add(Transaction(
-            id: DateTime.now().millisecondsSinceEpoch,
+            transactionId: DateTime.now().millisecondsSinceEpoch,
             date: transactionDate,
             amount: amount,
             installment: null,
@@ -228,7 +268,7 @@ class TransactionCard extends StatelessWidget {
 
   TransactionCard({
     Key? key,
-    required this.transaction,
+    required this.transaction
   }) : super(key: key);
 
   @override
@@ -256,16 +296,16 @@ class TransactionCard extends StatelessWidget {
                     // Day (top)
                     Text(
                       DateFormat('d').format(transaction.date),
-                      style: GoogleFonts.montserrat(fontSize: 20.sp, fontWeight: FontWeight.bold),
+                      style: GoogleFonts.montserrat(fontSize: 16.sp, fontWeight: FontWeight.bold),
                     ),
                     // Month and Year (center)
                     Text(
                       DateFormat('MMM yyyy').format(transaction.date),
-                      style: GoogleFonts.montserrat(fontSize: 10.sp),
+                      style: GoogleFonts.montserrat(fontSize: 8.sp),
                     ),
                   ],
                 ),
-                SizedBox(width: 16),
+                SizedBox(width: 16.w),
                 // Center section: Currency
                 Expanded(
                   child: Column(
@@ -273,25 +313,25 @@ class TransactionCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        transaction.currency,
+                        transaction.title,
                         style: GoogleFonts.montserrat(fontSize: 12.sp, fontWeight: FontWeight.bold),
                       ),
                       Text(
                         transaction.description,
-                        style: GoogleFonts.montserrat(fontSize: 11.sp, fontWeight: FontWeight.w500),
+                        style: GoogleFonts.montserrat(fontSize: 8.sp, fontWeight: FontWeight.w400),
                       ),
                     ],
                   ),
                 ),
-                SizedBox(width: 16),
+                SizedBox(width: 16.w),
                 // Right section: Amount and Installment
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     // Amount (top)
                     Text(
-                      NumberFormat("#,##0.00", "tr_TR").format(transaction.amount),
-                      style: GoogleFonts.montserrat(fontSize: 12.sp, color: amountColor),
+                      NumberFormat("#,##0.00", "tr_TR").format(transaction.amount) + " " + transaction.currency,
+                      style: GoogleFonts.montserrat(fontSize: 10.sp, color: amountColor),
                     ),
                     Text(
                       transaction.getCurrentInstallmentPeriod(),

@@ -2555,7 +2555,25 @@ class _InvestmentPageState extends State<InvestmentPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
+                              selectedCategories.isEmpty
+                                  ? Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  color: Colors.redAccent.withOpacity(0.1),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    "Lütfen önce birikim ekleyin.",
+                                    style: GoogleFonts.montserrat(
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.redAccent,
+                                    ),
+                                  ),
+                                ),
+                              )
+                                  : Container(
                                 padding: EdgeInsets.zero,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(20),

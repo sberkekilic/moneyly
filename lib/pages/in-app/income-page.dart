@@ -13,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../blocs/income-selections.dart';
 import '../../blocs/settings/selected-index-cubit.dart';
+import '../../models/transaction.dart';
 
 class IncomePage extends StatefulWidget {
   @override
@@ -20,6 +21,10 @@ class IncomePage extends StatefulWidget {
 }
 
 class _IncomePageState extends State<IncomePage> {
+  List<Map<String, dynamic>> bankAccounts = [];
+  Map<String, dynamic>? selectedAccount;
+  bool isLoading = true; // Flag to indicate loading state
+
   Map<String, List<Map<String, dynamic>>> incomeMap = {};
   Map<String, List<Map<String, dynamic>>> summedIncomeMap = {};
   String selectedTitle = 'Toplam';
@@ -61,8 +66,12 @@ class _IncomePageState extends State<IncomePage> {
     final ab1 = prefs.getInt('selected_option') ?? SelectedOption.None.index;
     final ab2 = prefs.getString('incomeMap') ?? "0";
     final ab3 = prefs.getDouble('sumInvestValue') ?? 0.0;
+    String? accountDataListJson = prefs.getString('accountDataList');
+    String? accountData = prefs.getString('selectedAccount');
+
     setState(() {
       sumInvestValue = ab3;
+
       if (ab2.isNotEmpty) {
         final decodedData = json.decode(ab2);
         if (decodedData is Map<String, dynamic>) {
@@ -81,7 +90,13 @@ class _IncomePageState extends State<IncomePage> {
 
                 valueToParse = incomeMap[selectedKey.isNotEmpty ? selectedKey : key]![0]["amount"];
                 selectedDay = incomeMap[selectedKey.isNotEmpty ? selectedKey : key]![0]["day"];
-                incomeValue = NumberFormat.decimalPattern('tr_TR').parse(valueToParse) as double;
+                try {
+                  final parsed = NumberFormat.decimalPattern('tr_TR').parse(valueToParse);
+                  incomeValue = parsed.toDouble();
+                } catch (e) {
+                  print("Parsing error: $e, value: $valueToParse");
+                  incomeValue = 0.0; // ya da null yapacaksan double? incomeValue kullan
+                }
               } // Take the first (and only) string from the list
               selectedKey = key;
               double sum = 0.0;
@@ -89,8 +104,15 @@ class _IncomePageState extends State<IncomePage> {
                 values.forEach((value) {
                   if (value is Map<String, dynamic>) {
                     // Ensure we are accessing "amount" correctly from the map
-                    double parsedValue = NumberFormat.decimalPattern('tr_TR')
-                        .parse(value["amount"].toString()) as double;
+                    double parsedValue = 0.0;
+
+                    try {
+                      final parsed = NumberFormat.decimalPattern('tr_TR').parse(value["amount"].toString());
+                      parsedValue = parsed.toDouble();
+                    } catch (e) {
+                      print("Amount parse error: $e, value: ${value["amount"]}");
+                      parsedValue = 0.0; // veya null atanacaksa double? parsedValue
+                    }
                     sum += parsedValue;
                   }
                 });
@@ -102,6 +124,52 @@ class _IncomePageState extends State<IncomePage> {
             }
           });
         }
+      }
+
+      // Handle account data list
+      if (accountDataListJson != null) {
+        try {
+          List<Map<String, dynamic>> decodedData = List<Map<String, dynamic>>.from(jsonDecode(accountDataListJson));
+          print('Tüm Hesaplar: $decodedData');
+          // Remove duplicates by id
+          bankAccounts = decodedData.toSet().toList();
+
+          // If the account data is set (selectedAccount) and is not part of the list, reset it
+          if (accountData != null) {
+            final Map<String, dynamic> accountFromPrefs = Map<String, dynamic>.from(jsonDecode(accountData));
+            // Find the matching account in bankAccounts by id
+            try {
+              selectedAccount = bankAccounts.firstWhere(
+                      (account) => account['id'] == accountFromPrefs['id']
+              );
+            } catch (e) {
+              selectedAccount = null;
+            }
+          }
+          setState(() {
+            isLoading = false;
+          });
+        } catch (e) {
+          print('Error decoding account data: $e');
+          setState(() {
+            isLoading = false;
+          });
+        }
+      } else {
+        print('No account data found');
+        setState(() {
+          isLoading = false;
+        });
+      }
+
+      print('Seçili hesap: $accountData');
+      print('Selected account1: $selectedAccount');
+
+      if (accountData != null && selectedAccount == null) {
+        setState(() {
+          selectedAccount = Map<String, dynamic>.from(jsonDecode(accountData));
+          print('Selected account2: $selectedAccount');
+        });
       }
 
       // Calculate the total number of values in incomeMap
@@ -116,10 +184,26 @@ class _IncomePageState extends State<IncomePage> {
 
         // Iterate over each value list for the current key
         for (var value in incomeMap[key]!) {
+          double parseAmount(String amountStr) {
+            try {
+              // Eğer Türkçe formatta ("1.234,56") ise bu çalışır
+              return NumberFormat.decimalPattern('tr_TR').parse(amountStr).toDouble();
+            } catch (e1) {
+              try {
+                // İngilizce format gelirse: "1,234.56" → "1234.56"
+                final cleaned = amountStr.replaceAll('.', '').replaceAll(',', '.');
+                return double.parse(cleaned);
+              } catch (e2) {
+                print("Parse failed for: $amountStr\nError: $e2");
+                return 0.0;
+              }
+            }
+          }
+
           if (value is Map<String, dynamic>) {
             // Extract the "amount" value from the map
             String amountStr = value["amount"].toString(); // Ensure the amount is a String
-            double parsedValue = NumberFormat.decimalPattern('tr_TR').parse(amountStr) as double;
+            double parsedValue = parseAmount(amountStr);
 
             sum += parsedValue; // Add the parsed value to the sum
           }
@@ -246,9 +330,32 @@ class _IncomePageState extends State<IncomePage> {
     );
   }
 
+  Future<void> _saveAccounts() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('accountDataList', jsonEncode(bankAccounts));
+  }
+
+  Future<void> _addTransactionToAccount(int accountId, Transaction transaction) async {
+    try {
+      setState(() {
+        final accountIndex = bankAccounts.indexWhere((acc) => acc['id'] == accountId);
+        if (accountIndex != -1) {
+          bankAccounts[accountIndex]['transactions'] ??= [];
+          bankAccounts[accountIndex]['transactions'].add(transaction.toJson());
+        }
+      });
+      await _saveAccounts();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to add transaction: $e")),
+      );
+    }
+  }
+
   bool isEditing = false;
   bool isIncomeAdding = false;
   final TextEditingController nameController = TextEditingController();
+  final TextEditingController dayController = TextEditingController();
   final TextEditingController incomeController = TextEditingController();
   FocusNode focusNode = FocusNode();
 
@@ -346,8 +453,7 @@ class _IncomePageState extends State<IncomePage> {
     if (incomeMap.keys.isNotEmpty) {
       firstKey = incomeMap.keys.first;
       valuesOfFirstKey = incomeMap[firstKey]!
-          .map((value) =>
-              NumberFormat.decimalPattern('tr_TR').parse(value["amount"]) as double)
+          .map((value) => parseAmount(value["amount"]))
           .toList();
       sumOfFirstKey =
           valuesOfFirstKey.reduce((value, accumulator) => value + accumulator);
@@ -397,7 +503,25 @@ class _IncomePageState extends State<IncomePage> {
                   child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
+                            incomeMap.isEmpty
+                                ? Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                color: Colors.redAccent.withOpacity(0.1),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  "Lütfen önce gelir ekleyin.",
+                                  style: GoogleFonts.montserrat(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.redAccent,
+                                  ),
+                                ),
+                              ),
+                            )
+                                : Container(
                               decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(20),
                                   color: Color(0xFFF0EAD6)),
@@ -481,27 +605,43 @@ class _IncomePageState extends State<IncomePage> {
                                         GestureDetector(
                                             onTap: isEditing
                                                 ? () async {
-                                                    final prefs =
-                                                        await SharedPreferences
-                                                            .getInstance();
-                                                    setState(() {
-                                                      String newName = nameController.text;
-                                                      if (newSelectedOption.isEmpty) {
-                                                        // Get the first key from the incomeMap if newSelectedOption is empty
-                                                        newSelectedOption = incomeMap.keys.first;
-                                                      }
-                                                      if (incomeMap.containsKey(newSelectedOption)) {
-                                                        // Update the existing value
-                                                        incomeMap[newSelectedOption] = [{"amount": newName, "day": 100}];
-                                                      } else {
-                                                        incomeMap[newSelectedOption] = [{"amount": newName, "day": 200}];
-                                                      }
-                                                      prefs.setString('incomeMap', jsonEncode(incomeMap));
-                                                      nameController.clear();
-                                                      isEditing = false;
-                                                      focusNode.unfocus();
-                                                      _load();
-                                                    });
+                                              final prefs = await SharedPreferences.getInstance();
+                                              setState(() {
+                                                String newAmount = nameController.text; // Changed from newName to newAmount
+                                                int day = int.tryParse(dayController.text) ?? 1; // Get day value, default to 1
+
+                                                if (newSelectedOption.isEmpty) {
+                                                  newSelectedOption = incomeMap.keys.first;
+                                                }
+
+                                                if (incomeMap.containsKey(newSelectedOption)) {
+                                                  // Update the existing value with both amount and day
+                                                  incomeMap[newSelectedOption] = [{
+                                                    "amount": newAmount,
+                                                    "day": day, // Use the parsed day value
+                                                    // Keep existing account info if needed
+                                                    if (incomeMap[newSelectedOption]!.isNotEmpty)
+                                                      "account": incomeMap[newSelectedOption]![0]["account"],
+                                                    if (incomeMap[newSelectedOption]!.isNotEmpty)
+                                                      "accountID": incomeMap[newSelectedOption]![0]["accountID"],
+                                                  }];
+                                                } else {
+                                                  // Create new entry with both amount and day
+                                                  incomeMap[newSelectedOption] = [{
+                                                    "amount": newAmount,
+                                                    "day": day,
+                                                    "account": selectedAccount?['bankName'] ?? "Unknown",
+                                                    "accountID": selectedAccount?['id'] ?? "",
+                                                  }];
+                                                }
+
+                                                prefs.setString('incomeMap', jsonEncode(incomeMap));
+                                                nameController.clear();
+                                                dayController.clear(); // Clear day field too
+                                                isEditing = false;
+                                                focusNode.unfocus();
+                                                _load();
+                                              });
                                                   }
                                                 : () {
                                                     setState(() {
@@ -524,7 +664,11 @@ class _IncomePageState extends State<IncomePage> {
                                             )),
                                       ],
                                     ),
-                                    Text(selectedDay.toString()),
+                                    TextField(
+                                      controller: dayController,
+                                      keyboardType: TextInputType.number,
+                                      decoration: InputDecoration(labelText: "Day of Month (1-31)"),
+                                    ),
                                     SizedBox(height: 10),
                                     SizedBox(
                                       child: LinearPercentIndicator(
@@ -533,8 +677,8 @@ class _IncomePageState extends State<IncomePage> {
                                         animation: true,
                                         lineHeight: 10,
                                         animationDuration: 1000,
-                                        percent: 1,
-                                        trailing: Text("%100",
+                                        percent: 0,
+                                        trailing: Text("%??",
                                             style: GoogleFonts.montserrat(
                                                 color: Colors.black,
                                                 fontSize: 16,
@@ -664,70 +808,112 @@ class _IncomePageState extends State<IncomePage> {
                                   if (isIncomeAdding)
                                     Container(
                                       decoration: BoxDecoration(
-                                        color:
-                                        Color.fromARGB(120, 152, 255, 170),
+                                        color: Color.fromARGB(120, 152, 255, 170),
                                         borderRadius: BorderRadius.circular(20),
                                       ),
                                       padding: EdgeInsets.all(20),
                                       child: Column(
-                                        crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Row(
-                                            mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                             children: [
                                               Text("Gelir Türü",
                                                   style: GoogleFonts.montserrat(
-                                                      fontSize: 18,
-                                                      fontWeight:
-                                                      FontWeight.bold)),
+                                                      fontSize: 18, fontWeight: FontWeight.bold)),
                                               GestureDetector(
-                                                child: Icon(Icons.cancel,
-                                                    size: 26),
+                                                child: Icon(Icons.cancel, size: 26),
                                                 onTap: () {
                                                   setState(() {
-                                                    isIncomeAdding =
-                                                    !isIncomeAdding;
+                                                    isIncomeAdding = !isIncomeAdding;
                                                   });
                                                 },
                                               )
                                             ],
                                           ),
                                           SizedBox(height: 10),
+
+                                          // BANKA HESABI SEÇİMİ
+                                          if (bankAccounts.isEmpty)
+                                          Container(
+                                            padding: const EdgeInsets.all(20),
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(20),
+                                              color: Colors.redAccent.withOpacity(0.1),
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                "Lütfen önce hesap ekleyin.",
+                                                style: GoogleFonts.montserrat(
+                                                  fontSize: 16.sp,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.redAccent,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          if (bankAccounts.isNotEmpty)
+                                            Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text("Banka Hesabı",
+                                                    style: GoogleFonts.montserrat(
+                                                        fontSize: 18, fontWeight: FontWeight.bold)),
+                                                SizedBox(height: 10),
+                                                DropdownButtonFormField<Map<String, dynamic>>(
+                                                  value: selectedAccount,
+                                                  decoration: InputDecoration(
+                                                    labelText: "Hesap seç",
+                                                    isDense: true,
+                                                    contentPadding:
+                                                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                                    border: OutlineInputBorder(
+                                                      borderRadius: BorderRadius.circular(12),
+                                                    ),
+                                                  ),
+                                                  items: bankAccounts.map((account) {
+                                                    return DropdownMenuItem<Map<String, dynamic>>(
+                                                      value: account,
+                                                      child: Text(account['bankName']),
+                                                    );
+                                                  }).toList(),
+                                                  onChanged: (value) {
+                                                    setState(() {
+                                                      selectedAccount = value;
+                                                    });
+                                                  },
+                                                ),
+                                                SizedBox(height: 10),
+                                              ],
+                                            ),
                                           Row(
-                                            mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                            mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
                                               Expanded(
-                                                child:
-                                                CustomSlidingSegmentedControl<int>(
-                                                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.red),
-                                                  thumbDecoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.amber),
+                                                child: CustomSlidingSegmentedControl<int>(
+                                                  decoration: BoxDecoration(
+                                                      borderRadius: BorderRadius.circular(20), color: Colors.red),
+                                                  thumbDecoration: BoxDecoration(
+                                                      borderRadius: BorderRadius.circular(20),
+                                                      color: Colors.amber),
                                                   children: {
                                                     0: buildSegment('İş'),
                                                     1: buildSegment('Burs'),
                                                     2: buildSegment('Emekli'),
                                                   },
                                                   isStretch: true,
-                                                  onValueChanged:
-                                                      (segmentControlGroupValue) {
+                                                  onValueChanged: (segmentControlGroupValue) {
                                                     setState(() {
-                                                      this.segmentControlGroupValue =
-                                                          segmentControlGroupValue;
-                                                      switch (
-                                                      segmentControlGroupValue) {
+                                                      this.segmentControlGroupValue = segmentControlGroupValue;
+                                                      switch (segmentControlGroupValue) {
                                                         case 0:
-                                                          newSelectedOption =
-                                                          "İş";
+                                                          newSelectedOption = "İş";
                                                           break;
                                                         case 1:
-                                                          newSelectedOption =
-                                                          "Burs";
+                                                          newSelectedOption = "Burs";
                                                           break;
                                                         case 2:
-                                                          newSelectedOption =
-                                                          "Emekli";
+                                                          newSelectedOption = "Emekli";
                                                           break;
                                                       }
                                                     });
@@ -739,104 +925,105 @@ class _IncomePageState extends State<IncomePage> {
                                           SizedBox(height: 10),
                                           Text("Gelir Miktarı",
                                               style: GoogleFonts.montserrat(
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.bold)),
+                                                  fontSize: 18, fontWeight: FontWeight.bold)),
                                           SizedBox(height: 10),
                                           GestureDetector(
                                             onTap: () {
-                                              setState(() {
-                                                setState(() {});
-                                              });
-                                              incomeController.selection =
-                                                  TextSelection.fromPosition(
-                                                    TextPosition(
-                                                        offset: incomeController
-                                                            .text.length),
-                                                  );
+                                              incomeController.selection = TextSelection.fromPosition(
+                                                TextPosition(offset: incomeController.text.length),
+                                              );
                                               focusNode.requestFocus();
-                                              SystemChannels.textInput
-                                                  .invokeMethod(
-                                                  'TextInput.show');
+                                              SystemChannels.textInput.invokeMethod('TextInput.show');
                                             },
                                             child: Row(
                                               children: [
                                                 Expanded(
                                                   child: TextFormField(
                                                     maxLines: 1,
-                                                    controller:
-                                                    incomeController,
+                                                    controller: incomeController,
                                                     decoration: InputDecoration(
-                                                        filled: true,
-                                                        isDense: true,
-                                                        fillColor: Colors.white,
-                                                        contentPadding:
-                                                        EdgeInsets.fromLTRB(
-                                                            10, 20, 20, 0),
-                                                        enabledBorder:
-                                                        OutlineInputBorder(
-                                                          borderRadius:
-                                                          BorderRadius
-                                                              .circular(20),
-                                                          borderSide:
-                                                          BorderSide(
-                                                              color: Colors
-                                                                  .amber,
-                                                              width: 3),
-                                                        ),
-                                                        focusedBorder:
-                                                        OutlineInputBorder(
-                                                          borderRadius:
-                                                          BorderRadius
-                                                              .circular(20),
-                                                          borderSide:
-                                                          BorderSide(
-                                                              color: Colors
-                                                                  .black,
-                                                              width: 3),
-                                                        ),
-                                                        border:
-                                                        OutlineInputBorder(
-                                                          borderRadius:
-                                                          BorderRadius
-                                                              .circular(20),
-                                                        ),
-                                                        hintText: 'GAG',
-                                                        hintStyle: TextStyle(
-                                                            color:
-                                                            Colors.black)),
-                                                    keyboardType:
-                                                    TextInputType.number,
+                                                      filled: true,
+                                                      isDense: true,
+                                                      fillColor: Colors.white,
+                                                      contentPadding:
+                                                      EdgeInsets.fromLTRB(10, 20, 20, 0),
+                                                      enabledBorder: OutlineInputBorder(
+                                                        borderRadius: BorderRadius.circular(20),
+                                                        borderSide:
+                                                        BorderSide(color: Colors.amber, width: 3),
+                                                      ),
+                                                      focusedBorder: OutlineInputBorder(
+                                                        borderRadius: BorderRadius.circular(20),
+                                                        borderSide:
+                                                        BorderSide(color: Colors.black, width: 3),
+                                                      ),
+                                                      border: OutlineInputBorder(
+                                                        borderRadius: BorderRadius.circular(20),
+                                                      ),
+                                                      hintText: 'GAG',
+                                                      hintStyle: TextStyle(color: Colors.black),
+                                                    ),
+                                                    keyboardType: TextInputType.number,
                                                   ),
                                                 ),
-                                                SizedBox(width: 20.w),
+                                                SizedBox(width: 20),
                                                 ElevatedButton(
-                                                  style:
-                                                  ElevatedButton.styleFrom(
+                                                  style: ElevatedButton.styleFrom(
                                                     backgroundColor: Colors.white,
                                                     shape: RoundedRectangleBorder(
                                                       borderRadius: BorderRadius.circular(20),
                                                     ),
                                                   ),
                                                   onPressed: () async {
-                                                    final prefs = await SharedPreferences.getInstance();
-                                                    setState(() {
-                                                      String newName = incomeController.text;
-                                                      if (!incomeMap.containsKey(newSelectedOption)) {
-                                                        incomeMap[newSelectedOption] = []; // Initialize the list if it doesn't exist
-                                                      }
-                                                      if (newName.isNotEmpty){
-                                                        incomeMap[newSelectedOption]!.add({"amount": newName});
+                                                    final amount = double.tryParse(incomeController.text);
+
+                                                    if (amount != null && amount > 0 && selectedAccount != null) {
+                                                      // 1. Create a transaction record (like in your reference code)
+                                                      final transaction = Transaction(
+                                                        transactionId: DateTime.now().millisecondsSinceEpoch,
+                                                        date: DateTime.now(), // or use a selected date if available
+                                                        amount: amount,
+                                                        installment: null,
+                                                        currency: selectedAccount!['currency'] ?? 'USD', // or get from account
+                                                        subcategory: newSelectedOption,
+                                                        category: 'Income', // Explicitly set as income
+                                                        title: 'Income', // or get from a title field if available
+                                                        description: '',
+                                                        isSurplus: true,
+                                                        isFromInvoice: false,
+                                                        initialInstallmentDate: null,
+                                                      );
+
+                                                      // 2. Add transaction to the account (will handle balance update)
+                                                      await _addTransactionToAccount(selectedAccount!['id'], transaction);
+
+                                                      // 3. Update incomeMap (if still needed for other purposes)
+                                                      final prefs = await SharedPreferences.getInstance();
+                                                      setState(() {
+                                                        if (!incomeMap.containsKey(newSelectedOption)) {
+                                                          incomeMap[newSelectedOption] = [];
+                                                        }
+
+                                                        incomeMap[newSelectedOption]!.add({
+                                                          "amount": amount.toString(),
+                                                          "account": selectedAccount!['bankName'],
+                                                          "accountID": selectedAccount!['id'],
+                                                          "transactionID": transaction.transactionId.toString(),
+                                                          "day": DateTime.now().day,
+                                                        });
+
                                                         prefs.setString('incomeMap', jsonEncode(incomeMap));
                                                         isIncomeAdding = false;
                                                         incomeController.clear();
-                                                        _load();
-                                                      }
-                                                    });
+                                                        _load(); // Refresh the UI
+                                                      });
+                                                    } else {
+                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                        SnackBar(content: Text('Please enter a valid positive amount')),
+                                                      );
+                                                    }
                                                   },
-                                                  child: Icon(
-                                                      Icons.check_circle,
-                                                      size: 26,
-                                                      color: Colors.black),
+                                                  child: Icon(Icons.check_circle, size: 26, color: Colors.black),
                                                 )
                                               ],
                                             ),
@@ -864,6 +1051,27 @@ class _IncomePageState extends State<IncomePage> {
                 fontSize: 14, fontWeight: FontWeight.bold)),
       );
 }
+
+double parseAmount(dynamic amount) {
+  try {
+    if (amount == null) return 0.0;
+
+    String amountStr = amount.toString();
+
+    // İlk olarak Türkçe formatta parse etmeye çalış
+    return NumberFormat.decimalPattern('tr_TR').parse(amountStr).toDouble();
+  } catch (e1) {
+    try {
+      // Olmazsa manuel düzeltme yap ve parse et
+      final cleaned = amount.toString().replaceAll('.', '').replaceAll(',', '.');
+      return double.parse(cleaned);
+    } catch (e2) {
+      print("Parse error: $e2 → value: $amount");
+      return 0.0;
+    }
+  }
+}
+
 
 double parseTurkishDouble(String numberString) {
   // Create a NumberFormat instance for the Turkish locale
