@@ -1,11 +1,8 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../pages/add-expense/faturalar.dart';
 import 'transaction.dart';
 
@@ -25,6 +22,8 @@ class TransactionWidget extends StatefulWidget {
   _TransactionWidgetState createState() => _TransactionWidgetState();
 }
 class _TransactionWidgetState extends State<TransactionWidget> {
+  int currentPage = 0;
+  final int itemsPerPage = 5;
   Map<String, List<Map<String, dynamic>>> incomeMap = {};
   double incomeValue = 0.0;
   List<Transaction> transactions = [];
@@ -280,7 +279,6 @@ class _TransactionWidgetState extends State<TransactionWidget> {
       return !d.isAfter(m);
     }
 
-
     print('[DEBUG] Tüm işlemler (${transactions.length}):');
     transactions.forEach((t) => print(' - ${t.title} | ${t.date}'));
 
@@ -292,49 +290,119 @@ class _TransactionWidgetState extends State<TransactionWidget> {
 
     print('[DEBUG] Filtrelenmiş işlem sayısı: ${filteredTransactions.length}');
 
+    final totalPages = (filteredTransactions.length / itemsPerPage).ceil();
+
+    List<List<Transaction>> pagedData = List.generate(
+      totalPages,
+          (i) => filteredTransactions.skip(i * itemsPerPage).take(itemsPerPage).toList(),
+    );
 
     return Column(
       children: [
-        filteredTransactions.isEmpty
-            ? Text("Hiç işlem bulunamadı")
-            : ListView.builder(
-          shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
-          itemCount: filteredTransactions.length,
-          itemBuilder: (context, index) {
-            final transaction = filteredTransactions[index];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: Slidable(
-                key: ValueKey(transaction.transactionId),
-                endActionPane: ActionPane(
-                  motion: DrawerMotion(),
-                  children: [
-                    SlidableAction(
-                      onPressed: (context) =>
-                          _deleteTransaction(transaction.transactionId),
-                      borderRadius: BorderRadius.circular(10),
-                      backgroundColor: Color(0xFFFE4A49),
-                      foregroundColor: Colors.white,
-                      icon: Icons.delete,
-                      label: 'Sil',
-                    ),
-                    SlidableAction(
-                      onPressed: (context) =>
-                          _showEditTransactionDialog(transaction),
-                      borderRadius: BorderRadius.circular(10),
-                      backgroundColor: Color(0xFF21B7CA),
-                      foregroundColor: Colors.white,
-                      icon: Icons.edit,
-                      label: 'Düzenle',
-                    ),
-                  ],
+        if (filteredTransactions.isEmpty)
+          const Text("Hiç işlem bulunamadı")
+        else ...[
+          SizedBox(
+            height: 500, // Kart yüksekliği kadar sabit tut
+            child: PageView.builder(
+              itemCount: totalPages,
+              onPageChanged: (index) {
+                setState(() => currentPage = index);
+              },
+              itemBuilder: (context, pageIndex) {
+                final pageTransactions = pagedData[pageIndex];
+                return ListView.builder(
+                  itemCount: pageTransactions.length,
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 0),
+                  itemBuilder: (context, index) {
+                    final t = pageTransactions[index];
+                    final dateStr = DateFormat('yyyy-MM-dd').format(t.date);
+
+                    final bool isProvisioned = t.isProvisioned;
+                    final bool isIncome = t.isSurplus;
+
+                    final cardColor = isProvisioned
+                        ? Colors.orange[50]
+                        : isIncome
+                        ? Colors.green[50]
+                        : Colors.red[50];
+
+                    final textColor = isProvisioned
+                        ? Colors.orange
+                        : isIncome
+                        ? Colors.green
+                        : Colors.red;
+
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 9),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      color: cardColor,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    t.title,
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${t.category} > ${t.subcategory}',
+                                    style: const TextStyle(fontSize: 12, color: Colors.black87),
+                                  ),
+                                  Text(
+                                    t.description,
+                                    style: const TextStyle(fontSize: 12, color: Colors.black54),
+                                  ),
+                                  Text(
+                                    'Tarih: $dateStr',
+                                    style: const TextStyle(fontSize: 12, color: Colors.black45),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '${t.amount.toStringAsFixed(2)} ${t.currency}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: textColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 10, bottom: 4),
+            child: Column(
+              children: [
+                Text(
+                  "${(currentPage * itemsPerPage + 1).clamp(1, filteredTransactions.length)}"
+                      " - ${(currentPage * itemsPerPage + pagedData[currentPage].length)}"
+                      " / ${filteredTransactions.length}",
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-                child: TransactionCard(transaction: transaction),
-              ),
-            );
-          },
-        ),
+                const SizedBox(height: 4),
+                Text(
+                  "Sayfa ${currentPage + 1} / $totalPages",
+                  style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }

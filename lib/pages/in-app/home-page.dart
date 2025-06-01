@@ -65,6 +65,8 @@ class _HomePageState extends State<HomePage> {
   List<Map<String, dynamic>> bankAccounts = [];
   Map<String, dynamic>? selectedAccount;
   bool isLoading = true; // Flag to indicate loading state
+  bool isDebtVisible = false;
+  bool showDebtDetails = false;
 
   List<Invoice> upcomingInvoices = [];
   List<Invoice> todayInvoices = [];
@@ -230,7 +232,7 @@ class _HomePageState extends State<HomePage> {
     final ab14 = prefs.getString('startDate');
     final ab15 = prefs.getString('endDate');
     final savedInvoicesJson = prefs.getStringList('invoices');
-    String? accountDataListJson = prefs.getString('accountDataList');
+    String? accountDataListJson = prefs.getString('accountDataList'); //TÜM HESAP
     String? accountData = prefs.getString('selectedAccount');
 
     // Load data from SharedPreferences asynchronously
@@ -375,7 +377,7 @@ class _HomePageState extends State<HomePage> {
     }
 
     print('Seçili hesap: $accountData');
-    print('Selected account1: $selectedAccount');
+    debugPrint('Selected account1: $selectedAccount', wrapWidth: 1024);
 
     if (accountData != null && selectedAccount == null) {
       final savedData = jsonDecode(accountData);
@@ -552,7 +554,8 @@ class _HomePageState extends State<HomePage> {
           isSurplus: false,
           isFromInvoice: true,
           initialInstallmentDate: null,
-          installment: null
+          installment: null,
+          isProvisioned: false
       ));
     }
     return transactions;
@@ -1036,30 +1039,73 @@ class _HomePageState extends State<HomePage> {
   double calculateTotalAmount(List<Transaction> transactions) {
     return transactions.fold(0.0, (sum, transaction) => sum + transaction.amount);
   }
-  double getTotalSurplusAmountByCurrency(List<Transaction> transactions, String currency) {
+  double getTotalSurplusAmountByCurrency(List<Map<String, dynamic>> transactions, String currency, DateTime? startDate, DateTime? endDate) {
+
+    DateTime toDateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
+
     return transactions
-        .where((t) => t.isSurplus && t.currency == currency) // Filter by isSurplus and currency
-        .fold(0.0, (sum, t) => sum + t.amount); // Sum the amounts
+        .where((t) {
+      if (t['isSurplus'] != true) return false;
+      if (t['currency'] != currency) return false;
+
+      final DateTime txDate = toDateOnly(t['date'] is DateTime
+          ? t['date']
+          : DateTime.tryParse(t['date'].toString()) ?? DateTime.now());
+
+      if (startDate != null && txDate.isBefore(toDateOnly(startDate))) return false;
+      if (endDate != null && txDate.isAfter(toDateOnly(endDate))) return false;
+
+      return true;
+    })
+        .fold(0.0, (sum, t) => sum + (t['amount'] ?? 0.0));
   }
-  double gettotalDearthAmountByCurrency(List<Transaction> transactions, String currency) {
+
+  double getTotalDearthAmountByCurrency(List<Map<String, dynamic>> transactions, String currency, DateTime? startDate, DateTime? endDate) {
+
+    DateTime toDateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
+
     return transactions
-        .where((t) => t.isSurplus == false && t.currency == currency) // Filter by isSurplus and currency
-        .fold(0.0, (sum, t) => sum + t.amount); // Sum the amounts
+        .where((t) {
+      if (t['isSurplus'] == true) return false;
+      if (t['currency'] != currency) return false;
+
+      final DateTime txDate = toDateOnly(t['date'] is DateTime
+          ? t['date']
+          : DateTime.tryParse(t['date'].toString()) ?? DateTime.now());
+
+      if (startDate != null && txDate.isBefore(toDateOnly(startDate))) return false;
+      if (endDate != null && txDate.isAfter(toDateOnly(endDate))) return false;
+
+      return true;
+    })
+        .fold(0.0, (sum, t) => sum + (t['amount'] ?? 0.0));
   }
 
   @override
   Widget build(BuildContext context) {
-    double totalSurplusTRY = getTotalSurplusAmountByCurrency(transactions, selectedAccount?['currency'] ?? ""); //NEW INCOME
-    double totalDearthTRY = gettotalDearthAmountByCurrency(transactions, selectedAccount?['currency'] ??  ""); //NEW OUTCOME
-    double netProfitTransaction = totalSurplusTRY - totalDearthTRY; // NEW NET PROFIT
-    String formattedIncomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(totalSurplusTRY);
-    String formattedOutcomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(totalDearthTRY);
+    final currency = selectedAccount?['currency'] ?? "";
+    final transactions = List<Map<String, dynamic>>.from(selectedAccount?['transactions'] ?? []);
+    final debts = List<Map<String, dynamic>>.from(selectedAccount?['debts'] ?? []);
+    // Toplam miktar
+    final totalAmount = debts.fold<double>(
+      0,
+          (sum, debt) => sum + (debt['amount'] as num).toDouble(),
+    );
+    print(transactions);
+    final totalSurplus = getTotalSurplusAmountByCurrency(transactions, currency, startDate, endDate);
+    final totalDearth = getTotalDearthAmountByCurrency(transactions, currency, startDate, endDate);
+    double netProfitTransaction = totalSurplus - totalDearth; // NEW NET PROFIT
+    double remainingDebt = selectedAccount?['remainingDebt'] ?? 0.0;
+    double totalDebt = remainingDebt + totalAmount;
+    String formattedIncomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(totalSurplus);
+    String formattedOutcomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(totalDearth);
     String formattedProfitValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(netProfitTransaction);
+    String formattedRemainingDebt = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(totalDebt);
     int incomeYuzdesi = (incomeValue * 100).toInt();
     int bolum;
 
-    if (incomeValue != 0.0) {
-      double bolumDouble = netProfitTransaction / totalSurplusTRY;
+    if (totalSurplus != 0.0 || totalDearth != 0.0) {
+      double bolumDouble = netProfitTransaction / totalSurplus;
       if (bolumDouble.isFinite) {
         bolum = (bolumDouble.abs() * 100).toInt();
       } else {
@@ -1209,9 +1255,174 @@ class _HomePageState extends State<HomePage> {
     }
 
     Widget _compactInfo(String label, dynamic value) {
-      return Text(
-        "$label: $value",
-        style: const TextStyle(fontSize: 13),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: RichText(
+          text: TextSpan(
+            style: TextStyle(fontSize: 13, color: Colors.grey[800]),
+            children: [
+              TextSpan(text: "$label: ", style: const TextStyle(fontWeight: FontWeight.w600)),
+              TextSpan(text: "$value"),
+            ],
+          ),
+        ),
+      );
+    }
+
+    Widget _progressBar({
+      required String label,
+      required double progress,
+      required double maxValue,
+      required double currentValue,
+    }) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 8),
+          LinearProgressIndicator(
+            value: progress,
+            minHeight: 8,
+            backgroundColor: Colors.grey[300],
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+          ),
+          SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "${currentValue.toStringAsFixed(2)} / ${maxValue.toStringAsFixed(2)}",
+                style: TextStyle(fontSize: 14),
+              ),
+              Text(
+                "${(progress * 100).toStringAsFixed(1)}% Used",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
+    Widget _infoChip(IconData icon, String label, String value) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: Colors.blueAccent),
+            const SizedBox(width: 6),
+            Text(
+              "$label: ",
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 13),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget _creditUsageCard({
+      required String usageLabel,
+      required double progress,
+      required double maxValue,
+      required double currentValue,
+    }) {
+      final moneyFormat = NumberFormat.currency(locale: "tr_TR", symbol: "₺", decimalDigits: 2);
+
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.blue[50],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              usageLabel,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.blueAccent),
+            ),
+            const SizedBox(height: 8),
+            LinearProgressIndicator(
+              value: progress,
+              minHeight: 8,
+              backgroundColor: Colors.grey[300],
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "${moneyFormat.format(currentValue)} / ${moneyFormat.format(maxValue)}",
+                  style: const TextStyle(fontSize: 13),
+                ),
+                Text(
+                  "%${(progress * 100).toStringAsFixed(1)} Kullanıldı",
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+
+    void _showAccountInfo(BuildContext context) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("Kredi Kartı Bilgileri"),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _compactInfo("Para Birimi", currency),
+                  _compactInfo("Hesap Türü", (selectedAccount?['isDebit'] ?? true) ? 'Banka' : 'Kredi'),
+                  const Divider(),
+                  if ((selectedAccount?['isDebit'] ?? true) == false) ...[
+                    _compactInfo("Kredi Limiti", selectedAccount!['creditLimit']),
+                    _compactInfo("Kullanılabilir Kredi", selectedAccount!['availableCredit']),
+                    _compactInfo("Güncel Borç", selectedAccount!['currentDebt']),
+                    _compactInfo("Toplam Borç", selectedAccount!['totalDebt']),
+                    _compactInfo("Kalan Borç", selectedAccount!['remainingDebt']),
+                    _compactInfo("Minimum Ödeme", selectedAccount!['minPayment']),
+                    _compactInfo("Kalan Minimum Ödeme", selectedAccount!['remainingMinPayment']),
+                    const Divider(),
+                    _compactInfo("Önceki Borç", selectedAccount!['previousDebt']),
+                    _compactInfo("Önceki Kesim Tarihi", selectedAccount!['previousCutoffDate']),
+                    _compactInfo("Önceki Son Ödeme", selectedAccount!['previousDueDate']),
+                    _compactInfo("Yeni Kesim Tarihi", selectedAccount!['nextCutoffDate']),
+                    _compactInfo("Yeni Son Ödeme", selectedAccount!['nextDueDate']),
+                    _compactInfo("Aktif Kesim Tarihi", selectedAccount!['cutoffDate']),
+                  ],
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text("Kapat"),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
       );
     }
 
@@ -1279,13 +1490,44 @@ class _HomePageState extends State<HomePage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
-                              'Kalan',
-                              style: GoogleFonts.montserrat(
-                                  fontSize: 15.sp,
-                                  fontWeight: FontWeight.w600
-                              ),
-                              textAlign: TextAlign.center,
+                            Row(
+                              children: [
+                                Text(
+                                  'Kalan',
+                                  style: GoogleFonts.montserrat(
+                                      fontSize: 15.sp,
+                                      fontWeight: FontWeight.w600
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: isDebtVisible
+                                        ? Colors.orange.withOpacity(0.2)  // aktif renk
+                                        : Colors.grey.withOpacity(0.2),   // pasif renk
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black12,
+                                        blurRadius: 6,
+                                        offset: Offset(0, 2),
+                                      )
+                                    ],
+                                  ),
+                                  child: IconButton(
+                                    icon: Icon(
+                                      isDebtVisible ? Icons.visibility : Icons.visibility_off,
+                                      color: isDebtVisible ? Colors.orange.shade800 : Colors.grey,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        isDebtVisible = !isDebtVisible;
+                                      });
+                                    },
+                                    tooltip: isDebtVisible ? 'Borç durumunu gizle' : 'Borç durumunu göster',
+                                  ),
+                                ),
+                              ],
                             ),
                             Text(
                               formattedProfitValue == "0,00" ? "---" : formattedProfitValue, // KALAN BİLGİSİ
@@ -1295,6 +1537,19 @@ class _HomePageState extends State<HomePage> {
                               ),
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
+                            ),
+                            Visibility(
+                              visible: isDebtVisible,
+                              child: Text(
+                                  "Toplam Borç: ${formattedRemainingDebt}",
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.bold,
+                                  fontStyle: FontStyle.italic
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
                             ),
                             LinearPercentIndicator(
                               padding: const EdgeInsets.only(right: 10),
@@ -1394,7 +1649,149 @@ class _HomePageState extends State<HomePage> {
                           ),
                         )
                       ],
+                    ),
+                    const SizedBox(height: 10),
+                    debts.isEmpty
+                        ? Text(
+                      "Borç bilgisi yok",
+                      style: TextStyle(color: Colors.grey, fontSize: 14),
                     )
+                        : Visibility(
+                      visible: isDebtVisible,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.orange.shade100.withOpacity(0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Toplam Borç",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                                color: Colors.orange.shade900,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "Önceki Dönem Borcu",
+                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                                ),
+                                Text(
+                                  "${remainingDebt.toStringAsFixed(2)} ₺",
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 6),
+
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "Yeni Borçlar",
+                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                                ),
+                                Text(
+                                  "${totalAmount.toStringAsFixed(2)} ₺",
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            LinearProgressIndicator(
+                              value: totalDebt == 0 ? 0 : remainingDebt / totalDebt,
+                              backgroundColor: Colors.orange.shade100,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.orange.shade600),
+                              minHeight: 10,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: IconButton(
+                                icon: Icon(
+                                  showDebtDetails ? Icons.expand_less : Icons.expand_more,
+                                  color: Colors.orange.shade800,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    showDebtDetails = !showDebtDetails;
+                                  });
+                                },
+                                tooltip: showDebtDetails ? "Detayları Gizle" : "Detayları Göster",
+                              ),
+                            ),
+
+                            if (showDebtDetails)
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: debts.map((debt) {
+                                  final amount = (debt['amount'] as num).toDouble();
+                                  final title = debt['title'] ?? 'İsimsiz Borç';
+                                  final percent = totalAmount == 0 ? 0.0 : amount / totalAmount;
+
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        CircularPercentIndicator(
+                                          radius: 18,
+                                          lineWidth: 4,
+                                          percent: percent.clamp(0.0, 1.0),
+                                          center: Text(
+                                            '${(percent * 100).toStringAsFixed(0)}%',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.orange.shade800,
+                                            ),
+                                          ),
+                                          progressColor: Colors.orange.shade600,
+                                          backgroundColor: Colors.orange.shade200.withOpacity(0.3),
+                                          circularStrokeCap: CircularStrokeCap.round,
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          child: Text(
+                                            '$title - ${amount.toStringAsFixed(2)} ₺',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 15,
+                                              color: Colors.orange.shade900,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                          ],
+                        ),
+                      )
+                    ),
+                    const SizedBox(height: 10)
                   ],
                 ),
               ),
@@ -1477,47 +1874,139 @@ class _HomePageState extends State<HomePage> {
                             },
                           ),
                           if (selectedAccount != null)
-                            Row(
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                Expanded(
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(context).brightness == Brightness.dark
-                                          ? Colors.grey[850]
-                                          : Colors.grey[200],
-                                      borderRadius: BorderRadius.circular(10),
-                                      boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 2)],
-                                    ),
-                                    padding: const EdgeInsets.all(10),
-                                    child: Wrap(
-                                      spacing: 16,
-                                      runSpacing: 4,
-                                      children: [
-                                        _compactInfo("Currency", selectedAccount!['currency']),
-                                        _compactInfo("Type", (selectedAccount?['isDebit'] ?? true) ? 'Debit' : 'Credit',),
-                                        if ((selectedAccount?['isDebit'] ?? true) == false)
-                                          _compactInfo("Credit Limit", selectedAccount!['creditLimit']),
-                                        if ((selectedAccount?['isDebit'] ?? true) == false)
-                                          _compactInfo("Cutoff Date", selectedAccount!['cutoffDate']),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                Flexible(
-                                  child: Align(
-                                    alignment: Alignment.centerRight,
-                                    child: TextButton.icon(
-                                      onPressed: _resetSelectedAccount,
-                                      icon: const Icon(Icons.refresh, size: 18),
-                                      label: const Text("Reset", style: TextStyle(fontSize: 13)),
-                                      style: TextButton.styleFrom(
-                                        minimumSize: const Size(0, 0),
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).brightness == Brightness.dark
+                                        ? Colors.grey[850]
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.05),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
                                       ),
-                                    ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Wrap(
+                                        spacing: 12,
+                                        runSpacing: 12,
+                                        children: [
+                                          _infoChip(Icons.attach_money, "Para Birimi", currency),
+                                          _infoChip(
+                                            Icons.account_balance_wallet,
+                                            "Hesap Türü",
+                                            (selectedAccount?['isDebit'] ?? true) ? "Banka" : "Kredi",
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.info_outline, size: 20),
+                                            tooltip: "Hesap Bilgileri",
+                                            onPressed: () => _showAccountInfo(context),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          TextButton.icon(
+                                            onPressed: _resetSelectedAccount,
+                                            icon: const Icon(Icons.refresh, size: 18),
+                                            label: const Text("Sıfırla", style: TextStyle(fontSize: 13)),
+                                            style: TextButton.styleFrom(
+                                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                                                  ? Colors.white.withOpacity(0.05)
+                                                  : Colors.grey.withOpacity(0.1),
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                              visualDensity: VisualDensity.compact,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      if ((selectedAccount?['isDebit'] ?? true) == false)
+                                        _creditUsageCard(
+                                          usageLabel: "Kredi Kullanımı",
+                                          progress: selectedAccount!['availableCredit']! / selectedAccount!['creditLimit']!,
+                                          maxValue: selectedAccount!['creditLimit']!,
+                                          currentValue: selectedAccount!['availableCredit']!,
+                                        ),
+                                    ],
                                   ),
                                 ),
+                                const SizedBox(height: 8),
+                                if (selectedAccount?['previousCutoffDate'] != null &&
+                                    selectedAccount?['previousDueDate'] != null)
+                                  Builder(
+                                    builder: (context) {
+                                      final now = DateTime.now();
+                                      final inputFormat = DateFormat('dd/MM/yyyy');
+                                      final outputDateFormat = DateFormat("d MMMM", "tr_TR"); // Örn: 23 Mayıs
+                                      final moneyFormat = NumberFormat.currency(locale: "tr_TR", symbol: "₺", decimalDigits: 2);
+
+                                      final previousCutoff = inputFormat.parse(selectedAccount!['previousCutoffDate']);
+                                      final previousDue = inputFormat.parse(selectedAccount!['previousDueDate']);
+
+                                      // Son ödeme günü bugün veya geçtiyse kırmızı, değilse sarı
+                                      final isOverdue = now.isAfter(previousDue) || now.isAtSameMomentAs(previousDue);
+                                      final isInRange = now.isAfter(previousCutoff) && now.isBefore(previousDue);
+
+                                      if (!isOverdue) {
+                                        return Container(
+                                          decoration: BoxDecoration(
+                                            color: Theme.of(context).brightness == Brightness.dark
+                                                ? Colors.grey[850]
+                                                : Colors.grey[200],
+                                            borderRadius: BorderRadius.circular(10),
+                                            boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 2)],
+                                          ),
+                                          padding: const EdgeInsets.all(12),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.warning_rounded,
+                                                    color: isOverdue ? Colors.red : Colors.orange,
+                                                    size: 20,
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Text(
+                                                    "Son Ödeme: ${outputDateFormat.format(previousDue)}",
+                                                    style: TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                      color: isOverdue ? Colors.red : Colors.orange[800],
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Row(
+                                                children: [
+                                                  const Icon(Icons.payments_outlined, size: 20),
+                                                  const SizedBox(width: 8),
+                                                  Text(
+                                                    "Kalan Ekstre Borcu: ${moneyFormat.format(selectedAccount!['previousDebt'])}",
+                                                    style: const TextStyle(fontWeight: FontWeight.w500),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      } else {
+                                        return const SizedBox.shrink(); // Tarih aralığında değilse gizle
+                                      }
+                                    },
+                                  ),
+
                               ],
                             )
                         ],

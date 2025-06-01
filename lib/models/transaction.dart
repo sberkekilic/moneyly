@@ -19,6 +19,7 @@ class Transaction {
   bool isSurplus;
   bool isFromInvoice;
   DateTime? initialInstallmentDate;
+  bool isProvisioned;
 
   Transaction({
     required this.transactionId,
@@ -33,6 +34,7 @@ class Transaction {
     required this.title,
     required this.isSurplus,
     required this.initialInstallmentDate,
+    required this.isProvisioned,
   });
 
   // Convert Transaction to JSON
@@ -49,6 +51,7 @@ class Transaction {
     'isSurplus': isSurplus,
     'isFromInvoice': isFromInvoice,
     'initialInstallmentDate': initialInstallmentDate?.toIso8601String(),
+    'isProvisioned':isProvisioned
   };
 
   // Create Transaction from JSON
@@ -67,6 +70,7 @@ class Transaction {
     initialInstallmentDate: json['initialInstallmentDate'] != null
         ? DateTime.tryParse(json['initialInstallmentDate'])
         : null,
+      isProvisioned: json['isProvisioned']
   );
   String toDisplayString() {
     return 'ID: $transactionId\nDate: $date\nAmount: $amount\nInstallment: ${installment  ?? 'N/A'}\nCurrency: $currency\nSubcategory: $subcategory\nCategory: $category\nTitle: $title\ndescription: $description\nisSurplus: $isSurplus\nInstallmentDate: ${initialInstallmentDate  ?? 'N/A'}';
@@ -102,6 +106,7 @@ class Transaction {
     bool? isSurplus,
     bool? isFromInvoice,
     DateTime? initialInstallmentDate,
+    bool? isProvisioned
   }) {
     return Transaction(
       transactionId: transactionId ?? this.transactionId,
@@ -116,6 +121,7 @@ class Transaction {
       title: title ?? this.title,
       isSurplus: isSurplus ?? this.isSurplus,
       initialInstallmentDate: initialInstallmentDate ?? this.initialInstallmentDate,
+        isProvisioned: isProvisioned ?? this.isProvisioned
     );
   }
 
@@ -248,6 +254,7 @@ class TransactionService {
             isSurplus: true,
             isFromInvoice: false,
             initialInstallmentDate: null,
+              isProvisioned: false
           ));
         }
       });
