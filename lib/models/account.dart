@@ -3,6 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+import 'transaction.dart';
+
 class Account {
   int accountId;
   String name;
@@ -95,7 +97,9 @@ class Account {
       name: json['name'],
       type: json['type'],
       balance: (json['balance'] ?? 0.0).toDouble(),
-      transactions: json['transactions'] ?? [],
+      transactions: (json['transactions'] as List<dynamic>?)
+          ?.map((e) => Transaction.fromJson(e as Map<String, dynamic>))
+          .toList() ?? [],
       debts: json['debts'] ?? [],
       currency: json['currency'] ?? '',
       isDebit: json['isDebit'] ?? true,

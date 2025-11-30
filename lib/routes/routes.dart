@@ -7,6 +7,7 @@ import 'package:moneyly/pages/add-expense/abonelikler.dart';
 import 'package:moneyly/pages/add-expense/diger-giderler.dart';
 import 'package:moneyly/pages/add-expense/faturalar.dart';
 import 'package:moneyly/pages/add-expense/gelir-ekle.dart';
+import 'package:moneyly/pages/in-app/accounts-page.dart';
 import 'package:moneyly/pages/in-app/home-page.dart';
 import 'package:moneyly/pages/in-app/income-page.dart';
 import 'package:moneyly/pages/in-app/investment-page.dart';
@@ -72,6 +73,10 @@ GoRouter createRouter(String initialLocation, VoidCallback onThemeToggle) {
         GoRoute(
             path: '/investment',
             builder: (context, state) => InvestmentPage()
+        ),
+        GoRoute(
+            path: '/account',
+            builder: (context, state) => AccountsPage()
         ),
         GoRoute(
           path: '/settings',

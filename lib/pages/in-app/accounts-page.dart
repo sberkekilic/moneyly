@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -110,7 +111,6 @@ class _AccountsPageState extends State<AccountsPage> {
       _saveAccounts(); // Veriyi kaydetmek için gerekli
     });
   }
-
 
   Future<void> _addAccountToBank(int bankId, Account account) async {
     try {
@@ -245,114 +245,165 @@ class _AccountsPageState extends State<AccountsPage> {
     );
   }
 
-
   void _showEditAccountDialog(int bankId, int accountIndex) {
     final bank = bankAccounts.firstWhere((b) => b['bankId'] == bankId);
     final account = bank['accounts'][accountIndex];
 
-    TextEditingController nameController = TextEditingController(text: account['name']);
-    TextEditingController typeController = TextEditingController(text: account['type']);
-    TextEditingController balanceController = TextEditingController(text: account['balance'].toString());
-    TextEditingController creditLimitController = TextEditingController(text: account['creditLimit'].toString());
+    TextEditingController nameController = TextEditingController(text: account['name'] ?? '');
+    TextEditingController typeController = TextEditingController(text: account['type'] ?? '');
+    TextEditingController balanceController = TextEditingController(text: (account['balance'] ?? 0.0).toString());
+    TextEditingController creditLimitController = TextEditingController(text: (account['creditLimit'] ?? 0.0).toString());
+    TextEditingController availableCreditController = TextEditingController(text: (account['availableCredit'] ?? 0.0).toString());
+    TextEditingController remainingDebtController = TextEditingController(text: (account['remainingDebt'] ?? 0.0).toString());
+    TextEditingController minPaymentController = TextEditingController(text: (account['minPayment'] ?? 0.0).toString());
+    TextEditingController remainingMinPaymentController = TextEditingController(text: (account['remainingMinPayment'] ?? 0.0).toString());
+    TextEditingController previousDebtController = TextEditingController(text: (account['previousDebt'] ?? 0.0).toString());
+    TextEditingController totalDebtController = TextEditingController(text: (account['totalDebt'] ?? 0.0).toString());
+    TextEditingController currentDebtController = TextEditingController(text: (account['currentDebt'] ?? 0.0).toString());
 
-    String selectedCurrency = account['currency'];
-    bool isDebit = account['isDebit'];
-    int selectedCutoffDate = account['cutoffDate'];
+    String selectedCurrency = account['currency'] ?? 'TRY';
+    bool isDebit = account['isDebit'] ?? true;
+    int selectedCutoffDate = account['cutoffDate'] ?? 1;
 
     showDialog(
       context: context,
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: Text("Edit Account - ${bank['bankName']}"),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: nameController,
-                      decoration: InputDecoration(labelText: "Name"),
-                    ),
-                    TextField(
-                      controller: typeController,
-                      decoration: InputDecoration(labelText: "Type"),
-                    ),
-                    TextField(
-                      controller: balanceController,
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
-                      decoration: InputDecoration(labelText: "Balance"),
-                    ),
-                    DropdownButton<String>(
-                      value: selectedCurrency,
-                      items: ["USD", "EUR", "TRY"].map((currency) => DropdownMenuItem(
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            title: Text("Edit Account - ${bank['bankName']}"),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: InputDecoration(labelText: "Name"),
+                  ),
+                  TextField(
+                    controller: typeController,
+                    decoration: InputDecoration(labelText: "Type"),
+                  ),
+                  TextField(
+                    controller: balanceController,
+                    keyboardType: TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(labelText: "Balance"),
+                  ),
+                  DropdownButton<String>(
+                    value: selectedCurrency,
+                    items: ["TRY", "USD", "EUR"].map((currency) {
+                      return DropdownMenuItem(
                         value: currency,
                         child: Text(currency),
-                      )).toList(),
-                      onChanged: (value) => setState(() => selectedCurrency = value!),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(isDebit ? "Debit Account" : "Credit Account"),
-                        Switch(
-                          value: isDebit,
-                          onChanged: (value) => setState(() => isDebit = value),
-                        ),
-                      ],
-                    ),
-                    if (!isDebit) ...[
-                      TextField(
-                        controller: creditLimitController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(labelText: "Credit Limit"),
-                      ),
-                      DropdownButton<int>(
-                        value: selectedCutoffDate,
-                        items: List.generate(28, (index) => index + 1).map((day) => DropdownMenuItem(
-                          value: day,
-                          child: Text("Cutoff Date: $day"),
-                        )).toList(),
-                        onChanged: (value) => setState(() => selectedCutoffDate = value!),
+                      );
+                    }).toList(),
+                    onChanged: (value) => setState(() => selectedCurrency = value!),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(isDebit ? "Debit Account" : "Credit Account"),
+                      Switch(
+                        value: isDebit,
+                        onChanged: (value) => setState(() => isDebit = value),
                       ),
                     ],
+                  ),
+                  if (!isDebit) ...[
+                    TextField(
+                      controller: creditLimitController,
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(labelText: "Credit Limit"),
+                    ),
+                    TextField(
+                      controller: availableCreditController,
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(labelText: "Available Credit"),
+                    ),
+                    TextField(
+                      controller: remainingDebtController,
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(labelText: "Remaining Debt"),
+                    ),
+                    TextField(
+                      controller: minPaymentController,
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(labelText: "Min Payment"),
+                    ),
+                    TextField(
+                      controller: remainingMinPaymentController,
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(labelText: "Remaining Min Payment"),
+                    ),
+                    TextField(
+                      controller: previousDebtController,
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(labelText: "Previous Debt"),
+                    ),
+                    TextField(
+                      controller: totalDebtController,
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(labelText: "Total Debt"),
+                    ),
+                    TextField(
+                      controller: currentDebtController,
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(labelText: "Current Debt"),
+                    ),
+                    DropdownButton<int>(
+                      value: selectedCutoffDate,
+                      items: List.generate(28, (i) => i + 1).map((day) {
+                        return DropdownMenuItem(
+                          value: day,
+                          child: Text("Cutoff Date: $day"),
+                        );
+                      }).toList(),
+                      onChanged: (value) => setState(() => selectedCutoffDate = value!),
+                    ),
                   ],
-                ),
+                ],
               ),
-              actions: [
-                TextButton(onPressed: () => Navigator.of(context).pop(), child: Text("Cancel")),
-                TextButton(
-                  onPressed: () async {
-                    final name = nameController.text;
-                    final type = typeController.text;
-                    final balance = double.tryParse(balanceController.text) ?? 0.0;
-                    final creditLimit = isDebit ? 0.0 : (double.tryParse(creditLimitController.text) ?? 0.0);
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final updatedAccount = {
+                    'accountId': account['accountId'],
+                    'name': nameController.text,
+                    'type': typeController.text,
+                    'balance': double.tryParse(balanceController.text) ?? 0.0,
+                    'transactions': account['transactions'],
+                    'debts': account['debts'],
+                    'currency': selectedCurrency,
+                    'isDebit': isDebit,
+                    'creditLimit': isDebit ? null : double.tryParse(creditLimitController.text),
+                    'availableCredit': isDebit ? null : double.tryParse(availableCreditController.text),
+                    'remainingDebt': isDebit ? null : double.tryParse(remainingDebtController.text),
+                    'minPayment': isDebit ? null : double.tryParse(minPaymentController.text),
+                    'remainingMinPayment': isDebit ? null : double.tryParse(remainingMinPaymentController.text),
+                    'previousDebt': isDebit ? null : double.tryParse(previousDebtController.text),
+                    'totalDebt': isDebit ? null : double.tryParse(totalDebtController.text),
+                    'currentDebt': isDebit ? null : double.tryParse(currentDebtController.text),
+                    'cutoffDate': isDebit ? 1 : selectedCutoffDate,
+                    'previousCutoffDate': account['previousCutoffDate'],
+                    'nextCutoffDate': account['nextCutoffDate'],
+                    'previousDueDate': account['previousDueDate'],
+                    'nextDueDate': account['nextDueDate'],
+                  };
 
-                    if (name.isNotEmpty && type.isNotEmpty) {
-                      final updatedAccount = {
-                        'accountId': account['accountId'],
-                        'name': name,
-                        'type': type,
-                        'balance': balance,
-                        'currency': selectedCurrency,
-                        'isDebit': isDebit,
-                        'creditLimit': creditLimit,
-                        'cutoffDate': selectedCutoffDate,
-                        'transactions': account['transactions'],
-                      };
-
-                      bank['accounts'][accountIndex] = updatedAccount;
-                      _saveAccounts();
-                      _loadAccounts();
-                      Navigator.of(context).pop();
-                    }
-                  },
-                  child: Text("Update"),
-                ),
-              ],
-            );
-          },
-        );
+                  bank['accounts'][accountIndex] = updatedAccount;
+                  _saveAccounts();
+                  _loadAccounts();
+                  Navigator.of(context).pop();
+                },
+                child: Text("Update"),
+              ),
+            ],
+          );
+        });
       },
     );
   }
@@ -523,6 +574,7 @@ class _AccountsPageState extends State<AccountsPage> {
       },
     );
   }
+
   List<String> _getSubcategories(String category) {
     switch (category) {
       case 'Income':
@@ -539,199 +591,318 @@ class _AccountsPageState extends State<AccountsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Bank Accounts"),
-        backgroundColor: Colors.blueGrey[900], // Daha derin bir renk
-        elevation: 4,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.search),
-            onPressed: () {}, // Arama işlevi ekleyebilirsin
-          ),
-        ],
-      ),
       body: bankAccounts.isEmpty
           ? Center(
-        child: Text(
-          "No bank accounts added yet.",
-          style: TextStyle(
-            fontSize: 18,
-            color: Colors.blueGrey[700],
-          ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.account_balance_wallet,
+              size: 64,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              "No bank accounts yet",
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "Tap the + button to add your first account",
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[500],
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       )
           : ListView.builder(
         itemCount: bankAccounts.length,
         itemBuilder: (context, bankIndex) {
           final bank = bankAccounts[bankIndex];
-          return Card(
-            margin: EdgeInsets.all(12.0),
-            elevation: 5,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15), // Yuvarlatılmış köşeler
-            ),
-            color: Colors.blueGrey[50], // Soft light background
-            child: Theme(
-              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-              child: ExpansionTile(
-                key: ValueKey(bank['bankId']),
-                tilePadding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                leading: Icon(
-                  Icons.account_balance,
-                  color: Colors.blueGrey[800],
-                  size: 30,
-                ),
-                title: Text(
-                  bank['bankName'],
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: Colors.blueGrey[900],
-                  ),
-                ),
-                subtitle: Text(
-                  "${bank['accounts']?.length ?? 0} Accounts",
-                  style: TextStyle(color: Colors.blueGrey[700]),
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.edit, color: Colors.blue[800]),
-                      onPressed: () => _showBankDialog(editIndex: bankIndex),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.delete, color: Colors.red[800]),
-                      onPressed: () => _deleteBank(bankIndex),
-                    ),
-                  ],
-                ),
-                children: [
-                  // Add Account button
-                  Container(
-                    margin: EdgeInsets.symmetric(vertical: 4),
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: GlassmorphismContainer(
+              borderRadius: 20,
+              blur: 12,
+              borderColor: Colors.white.withOpacity(0.2),
+              child: Theme(
+                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                child: ExpansionTile(
+                  key: ValueKey(bank['bankId']),
+                  tilePadding: const EdgeInsets.fromLTRB(20, 8, 16, 8),
+                  leading: Container(
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(12),
-                        bottomRight: Radius.circular(12),
-                      ),
-                      color: Colors.blueGrey[100],
+                      color: Colors.blue[50],
+                      shape: BoxShape.circle,
                     ),
-                    child: ListTile(
-                      leading: Icon(
-                        Icons.add,
-                        color: Colors.blue[800],
-                      ),
-                      title: Text(
-                        "Add Account",
-                        style: TextStyle(color: Colors.blue[800]),
-                      ),
-                      onTap: () => _showAccountDialog(bank['bankId']),
+                    child: Icon(
+                      Icons.account_balance,
+                      color: Colors.blue[700],
+                      size: 24,
                     ),
                   ),
-              
-                  // Accounts list
-                  if (bank['accounts'] != null && bank['accounts'].isNotEmpty)
-                    ...bank['accounts'].map((accountData) {
-                      final account = Account.fromJson(accountData);
-                      return Card(
-                        margin: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        elevation: 3,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10), // Yuvarlatılmış köşeler
-                        ),
-                        color: Colors.teal[50], // Light background for accounts
-                        child: ExpansionTile(
-                          key: ValueKey(account.accountId),
-                          tilePadding: EdgeInsets.symmetric(horizontal: 24),
-                          leading: Icon(
-                            Icons.credit_card,
-                            color: Colors.teal[800],
-                            size: 30,
-                          ),
+                  title: Text(
+                    bank['bankName'],
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                  subtitle: Text(
+                    "${bank['accounts']?.length ?? 0} accounts",
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 13,
+                    ),
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.edit, size: 20, color: Colors.blueGrey[600]),
+                        onPressed: () => _showBankDialog(editIndex: bankIndex),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.delete, size: 20, color: Colors.red[400]),
+                        onPressed: () => _deleteBank(bankIndex),
+                      ),
+                    ],
+                  ),
+                  children: [
+                    // Add Account button
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      child: GlassmorphismContainer(
+                        borderRadius: 12,
+                        blur: 10,
+                        borderColor: Colors.white.withOpacity(0.2),
+                        child: ListTile(
+                          leading: Icon(Icons.add_circle_outline, color: Colors.blue[600]),
                           title: Text(
-                            account.name,
+                            "Add Account",
                             style: TextStyle(
+                              color: Colors.blue[600],
                               fontWeight: FontWeight.w500,
-                              color: Colors.teal[900],
-                              fontSize: 16,
                             ),
                           ),
-                          subtitle: Text(
-                            "${account.type} • ${account.balance!.toStringAsFixed(2)} ${account.currency}",
-                            style: TextStyle(color: Colors.teal[700]),
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: Icon(Icons.edit, size: 20, color: Colors.teal[800]),
-                                onPressed: () => _showEditAccountDialog(
-                                    bank['bankId'], bank['accounts'].indexOf(accountData)),
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.delete, size: 20, color: Colors.red[700]),
-                                onPressed: () => _deleteAccount(
-                                    bank['bankId'], bank['accounts'].indexOf(accountData)),
-                              ),
-                            ],
-                          ),
-                          children: [
-                            // Transactions list
-                            if (accountData['transactions'] != null && accountData['transactions'].isNotEmpty)
-                              ...accountData['transactions'].map((transactionData) {
-                                final transaction = Transaction.fromJson(transactionData);
-                                return Card(
-                                  margin: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                  color: Colors.grey[100], // Light background for transactions
-                                  child: ListTile(
-                                    leading: Icon(
-                                      transaction.isSurplus
-                                          ? Icons.arrow_upward
-                                          : Icons.arrow_downward,
-                                      color: transaction.isSurplus
-                                          ? Colors.green[800]
-                                          : Colors.red[800],
-                                    ),
-                                    title: Text(
-                                      transaction.title,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.grey[900],
-                                      ),
-                                    ),
-                                    subtitle: Text(
-                                      "${DateFormat('yyyy-MM-dd').format(transaction.date)} • ${transaction.category}",
-                                      style: TextStyle(color: Colors.grey[700]),
-                                    ),
-                                    trailing: Text(
-                                      "${transaction.isSurplus ? '+' : '-'}${transaction.amount.toStringAsFixed(2)}",
-                                      style: TextStyle(
-                                        color: transaction.isSurplus
-                                            ? Colors.green[800]
-                                            : Colors.red[800],
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                    onTap: () => _showEditTransactionDialog(account.accountId, transaction),
-                                  ),
-                                );
-                              }).toList(),
-                          ],
+                          onTap: () => _showAccountDialog(bank['bankId']),
                         ),
-                      );
-                    }).toList(),
-                ],
+                      ),
+                    ),
+
+                    // Accounts list
+                    if (bank['accounts'] != null && bank['accounts'].isNotEmpty)
+                      ...bank['accounts'].map((accountData) {
+                        final account = Account.fromJson(accountData);
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: GlassmorphismContainer(
+                            borderRadius: 16,
+                            blur: 10,
+                            borderColor: Colors.white.withOpacity(0.2),
+                            child: ExpansionTile(
+                              key: ValueKey(account.accountId),
+                              tilePadding: const EdgeInsets.fromLTRB(16, 0, 8, 0),
+                              leading: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: Colors.teal[50],
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.credit_card,
+                                  color: Colors.teal[700],
+                                  size: 20,
+                                ),
+                              ),
+                              title: Text(
+                                account.name,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.grey[800],
+                                  fontSize: 14,
+                                ),
+                              ),
+                              subtitle: Text(
+                                "${account.type} • ${account.balance!.toStringAsFixed(2)} ${account.currency}",
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 12,
+                                ),
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: Icon(Icons.edit, size: 18, color: Colors.blueGrey[500]),
+                                    onPressed: () => _showEditAccountDialog(
+                                      bank['bankId'],
+                                      bank['accounts'].indexOf(accountData),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.delete, size: 18, color: Colors.red[400]),
+                                    onPressed: () => _deleteAccount(
+                                      bank['bankId'],
+                                      bank['accounts'].indexOf(accountData),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              children: [
+                                // Transactions header
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        "Recent Transactions",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.grey[700],
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      Text(
+                                        "See All",
+                                        style: TextStyle(
+                                          color: Colors.blue[600],
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                // Transactions list
+                                if (accountData['transactions'] != null && accountData['transactions'].isNotEmpty)
+                                  ...accountData['transactions'].map((transactionData) {
+                                    final transaction = Transaction.fromJson(transactionData);
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      child: GlassmorphismContainer(
+                                        borderRadius: 10,
+                                        blur: 8,
+                                        borderColor: Colors.white.withOpacity(0.2),
+                                        child: ListTile(
+                                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                          leading: Container(
+                                            width: 36,
+                                            height: 36,
+                                            decoration: BoxDecoration(
+                                              color: transaction.isSurplus ? Colors.green[50] : Colors.red[50],
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(
+                                              transaction.isSurplus ? Icons.arrow_upward : Icons.arrow_downward,
+                                              color: transaction.isSurplus ? Colors.green[600] : Colors.red[600],
+                                              size: 18,
+                                            ),
+                                          ),
+                                          title: Text(
+                                            transaction.title,
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                          subtitle: Text(
+                                            "${DateFormat('MMM dd').format(transaction.date)} • ${transaction.category}",
+                                            style: TextStyle(
+                                              color: Colors.grey[600],
+                                              fontSize: 11,
+                                            ),
+                                          ),
+                                          trailing: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            crossAxisAlignment: CrossAxisAlignment.end,
+                                            children: [
+                                              Text(
+                                                "${transaction.isSurplus ? '+' : '-'}${transaction.amount.toStringAsFixed(2)}",
+                                                style: TextStyle(
+                                                  color: transaction.isSurplus ? Colors.green[700] : Colors.red[700],
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                              Text(
+                                                transaction.currency,
+                                                style: TextStyle(
+                                                  color: Colors.grey[500],
+                                                  fontSize: 10,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          onTap: () => _showEditTransactionDialog(account.accountId, transaction),
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                  ],
+                ),
               ),
             ),
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.blueGrey[800],
         onPressed: () => _showBankDialog(),
-        child: Icon(Icons.add, color: Colors.white),
+        backgroundColor: Colors.blue[600],
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+class GlassmorphismContainer extends StatelessWidget {
+  final Widget child;
+  final double borderRadius;
+  final double blur;
+  final Color borderColor;
+
+  const GlassmorphismContainer({
+    super.key,
+    required this.child,
+    this.borderRadius = 20,
+    this.blur = 12,
+    this.borderColor = Colors.white24,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(borderRadius),
+            border: Border.all(color: borderColor, width: 1),
+          ),
+          child: child,
+        ),
       ),
     );
   }

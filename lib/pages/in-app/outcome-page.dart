@@ -1,7 +1,6 @@
-// ignore_for_file: unused_import, avoid_unnecessary_containers
-
 import 'dart:convert';
 import 'dart:math' as math;
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -502,302 +501,383 @@ class _OutcomePageState extends State<OutcomePage> {
     return sum;
   }
 
-  void _addOrUpdateTransaction([Transaction? existing]) {
+  Future<Transaction?> _showTransactionDialog([Transaction? existing]) async {
+    bool isInstallment = false;
     bool isProvisioned = existing?.isProvisioned ?? false;
-    final formKey = GlobalKey<FormState>();
-    String? selectedCategory = existing?.category;
-    String? selectedSubcategory = existing?.subcategory;
+    String? selectedCategory = existing?.category ?? (userCategories.isNotEmpty ? userCategories.first.category : null);
+    String? selectedSubcategory = existing?.subcategory ??
+        (selectedCategory != null
+            ? userCategories.firstWhere((e) => e.category == selectedCategory, orElse: () => userCategories.first).subcategory
+            : null);
     final titleController = TextEditingController(text: existing?.title ?? '');
     final amountController = TextEditingController(text: existing?.amount.toString() ?? '');
     final TextEditingController installmentController = TextEditingController();
     DateTime? _installmentStartDate;
     DateTime? _selectedDate = existing?.date;
 
-    Future<void> _selectDate(BuildContext context, void Function(void Function()) setDialogState) async {
-      final DateTime? picked = await showDatePicker(
-        context: context,
-        initialDate: _selectedDate ?? DateTime.now(),
-        firstDate: DateTime(2000),
-        lastDate: DateTime(2050),
-      );
-      if (picked != null) {
-        setDialogState(() => _selectedDate = picked);
-      }
+    final formKey = GlobalKey<FormState>();
+
+    DateTime addMonthsSafe(DateTime date, int monthsToAdd) {
+      final newYear = date.year + ((date.month + monthsToAdd - 1) ~/ 12);
+      final newMonth = (date.month + monthsToAdd - 1) % 12 + 1;
+      final newDay = math.min(date.day, DateTime(newYear, newMonth + 1, 0).day);
+      return DateTime(newYear, newMonth, newDay);
     }
 
-    showDialog(
+    return showDialog<Transaction>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text(existing == null ? "Add Transaction" : "Edit Transaction"),
-        content: StatefulBuilder(
+      builder: (context) {
+        return StatefulBuilder(
           builder: (context, setDialogState) {
-            return SingleChildScrollView(
-              child: Form(
-                key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    DropdownButtonFormField<String>(
-                      value: selectedCategory,
-                      items: userCategories.map((e) => e.category).toSet().map((cat) {
-                        return DropdownMenuItem(value: cat, child: Text(cat));
-                      }).toList(),
-                      onChanged: (val) {
-                        setDialogState(() {
-                          selectedCategory = val;
-                          selectedSubcategory = null;
-                        });
-                      },
-                      decoration: const InputDecoration(labelText: 'Category'),
-                      validator: (val) => val == null ? 'Required' : null,
-                    ),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      value: selectedSubcategory,
-                      items: userCategories
-                          .where((e) => e.category == selectedCategory)
-                          .map((e) => e.subcategory)
-                          .toSet()
-                          .map((sub) => DropdownMenuItem(value: sub, child: Text(sub)))
-                          .toList(),
-                      onChanged: (val) => setDialogState(() => selectedSubcategory = val),
-                      decoration: const InputDecoration(labelText: 'Subcategory'),
-                      validator: (val) => val == null ? 'Required' : null,
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: titleController,
-                      decoration: const InputDecoration(labelText: 'Title'),
-                      validator: (val) => val == null || val.isEmpty ? 'Required' : null,
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: amountController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Amount'),
-                      validator: (val) => val == null || double.tryParse(val) == null ? 'Invalid' : null,
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: installmentController,
-                      decoration: const InputDecoration(
-                        labelText: 'Installment Count',
-                        hintText: 'E.g. 3 for 3 months',
-                      ),
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 8),
-                    CheckboxListTile(
-                      title: const Text("Provisioned Transaction?"),
-                      value: isProvisioned,
-                      onChanged: (val) => setDialogState(() => isProvisioned = val ?? false),
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                    const SizedBox(height: 8),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text("Installment Start Date"),
-                      subtitle: Text(
-                        _installmentStartDate != null
-                            ? DateFormat.yMd().format(_installmentStartDate!)
-                            : "Choose Date",
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.date_range),
-                        onPressed: () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate: DateTime.now(),
-                            firstDate: DateTime(2000),
-                            lastDate: DateTime(2100),
-                          );
-                          if (picked != null) {
-                            setDialogState(() {
-                              _installmentStartDate = picked;
-                            });
-                          }
+            Future<void> _selectDate(BuildContext context, void Function(void Function()) setDialogState) async {
+              final DateTime? picked = await showDatePicker(
+                context: context,
+                initialDate: _selectedDate ?? DateTime.now(),
+                firstDate: DateTime(2000),
+                lastDate: DateTime(2050),
+              );
+              if (picked != null) {
+                setDialogState(() => _selectedDate = picked);
+              }
+            }
+
+            return AlertDialog(
+              title: Text(existing == null ? "Add Transaction" : "Edit Transaction"),
+              content: SingleChildScrollView(
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      DropdownButtonFormField<String>(
+                        value: selectedCategory,
+                        items: userCategories.map((e) => e.category).toSet().map((cat) {
+                          return DropdownMenuItem(value: cat, child: Text(cat));
+                        }).toList(),
+                        onChanged: (val) {
+                          setDialogState(() {
+                            selectedCategory = val;
+                            // Yeni kategoriye göre ilk alt kategoriyi seç
+                            final subList = userCategories.where((e) => e.category == val).toList();
+                            selectedSubcategory = subList.isNotEmpty ? subList.first.subcategory : null;
+                          });
                         },
+                        decoration: const InputDecoration(labelText: 'Category'),
+                        validator: (val) => val == null ? 'Required' : null,
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text("Transaction Date"),
-                      subtitle: Text(
-                        _selectedDate != null
-                            ? DateFormat.yMd().format(_selectedDate!)
-                            : 'No date selected',
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        value: selectedSubcategory,
+                        items: userCategories
+                            .where((e) => e.category == selectedCategory)
+                            .map((e) => e.subcategory)
+                            .toSet()
+                            .map((sub) => DropdownMenuItem(value: sub, child: Text(sub)))
+                            .toList(),
+                        onChanged: (val) => setDialogState(() => selectedSubcategory = val),
+                        decoration: const InputDecoration(labelText: 'Subcategory'),
+                        validator: (val) => val == null ? 'Required' : null,
                       ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.date_range),
-                        onPressed: () => _selectDate(context, setDialogState),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: titleController,
+                        decoration: const InputDecoration(labelText: 'Title'),
+                        validator: (val) => val == null || val.isEmpty ? 'Required' : null,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: amountController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(labelText: 'Amount'),
+                        validator: (val) => val == null || double.tryParse(val) == null ? 'Invalid' : null,
+                      ),
+                      const SizedBox(height: 8),
+                      CheckboxListTile(
+                        title: const Text("Provisioned Transaction?"),
+                        value: isProvisioned,
+                        onChanged: (val) => setDialogState(() => isProvisioned = val ?? false),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      const SizedBox(height: 8),
+                      CheckboxListTile(
+                        title: const Text("Is Installment?"),
+                        value: isInstallment,
+                        onChanged: (val) => setDialogState(() => isInstallment = val ?? false),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      if (isInstallment) ...[
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: installmentController,
+                          decoration: const InputDecoration(
+                            labelText: 'Installment Count',
+                            hintText: 'E.g. 3 for 3 months',
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                        const SizedBox(height: 8),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text("Installment Start Date"),
+                          subtitle: Text(
+                            _installmentStartDate != null
+                                ? DateFormat.yMd().format(_installmentStartDate!)
+                                : "Choose Date",
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.date_range),
+                            onPressed: () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: DateTime.now(),
+                                firstDate: DateTime(2000),
+                                lastDate: DateTime(2100),
+                              );
+                              if (picked != null) {
+                                setDialogState(() {
+                                  _installmentStartDate = picked;
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 8),
+                      if (!isInstallment) ...[
+                        const SizedBox(height: 8),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text("Transaction Date"),
+                          subtitle: Text(
+                            _selectedDate != null
+                                ? DateFormat.yMd().format(_selectedDate!)
+                                : 'No date selected',
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.date_range),
+                            onPressed: () => _selectDate(context, setDialogState),
+                          ),
+                        ),
+                      ],
+
+                    ],
+                  ),
                 ),
               ),
-            );
-          },
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () async {
-              if (!formKey.currentState!.validate()) return;
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+                ElevatedButton(
+                  onPressed: () {
+                    if (!formKey.currentState!.validate()) return;
 
-              final isEditing = existing != null;
-              final amount = double.parse(amountController.text);
-              final int? installmentCount = int.tryParse(installmentController.text);
-              final DateTime baseDate = _installmentStartDate ?? _selectedDate ?? DateTime.now();
+                    final amount = double.parse(amountController.text);
+                    final int? installmentCount = isInstallment ? int.tryParse(installmentController.text) : null;
+                    final DateTime baseDate = isInstallment ? (_installmentStartDate ?? DateTime.now()) : (_selectedDate ?? DateTime.now());
 
-              DateTime addMonthsSafe(DateTime date, int monthsToAdd) {
-                final newYear = date.year + ((date.month + monthsToAdd - 1) ~/ 12);
-                final newMonth = (date.month + monthsToAdd - 1) % 12 + 1;
-                final newDay = math.min(date.day, DateTime(newYear, newMonth + 1, 0).day);
-                return DateTime(newYear, newMonth, newDay);
-              }
+                    int paidInstallmentCount = 0;
+                    final now = DateTime.now();
 
-              final now = DateTime.now();
-              int paidInstallmentCount = 0;
-              DateTime normalize(DateTime dt) => DateTime(dt.year, dt.month, dt.day);
-
-              if (installmentCount != null && installmentCount > 1) {
-                for (int i = 0; i < installmentCount; i++) {
-                  final installmentDate = addMonthsSafe(baseDate, i);
-                  if (addMonthsSafe(baseDate, i).isBefore(normalize(now))) {
-                    paidInstallmentCount++;
-                  }
-                }
-              }
-
-              final perInstallmentAmount = (installmentCount != null && installmentCount > 1)
-                  ? amount / installmentCount
-                  : amount;
-
-              if (installmentCount != null && paidInstallmentCount >= installmentCount) {
-                paidInstallmentCount = installmentCount - 1;
-              }
-
-              final currentInstallmentIndex = (installmentCount != null && installmentCount > 1)
-                  ? paidInstallmentCount
-                  : 0;
-
-              final newTx = Transaction(
-                transactionId: existing?.transactionId ?? DateTime.now().millisecondsSinceEpoch,
-                date: addMonthsSafe(baseDate, currentInstallmentIndex),
-                amount: perInstallmentAmount,
-                currency: selectedAccount?['currency'] ?? 'TRY',
-                category: selectedCategory!,
-                subcategory: selectedSubcategory!,
-                title: installmentCount != null && installmentCount > 1
-                    ? '${titleController.text} (${currentInstallmentIndex + 1}/$installmentCount)'
-                    : titleController.text,
-                description: '',
-                isSurplus: false,
-                isFromInvoice: false,
-                installment: installmentCount,
-                initialInstallmentDate: (installmentCount != null && installmentCount > 1) ? baseDate : null,
-                isProvisioned: isProvisioned,
-              );
-
-              setState(() {
-                for (var bank in bankAccounts) {
-                  if (bank['bankId'] != selectedAccount!['bankId']) continue;
-                  final accounts = bank['accounts'] as List?;
-                  if (accounts == null) continue;
-
-                  for (var account in accounts) {
-                    if (account['accountId'] != selectedAccount!['accountId']) continue;
-
-                    account['transactions'] = account['transactions'] ?? [];
-                    Account accountInstance = Account.fromJson(account);
-
-                    if (isEditing) {
-                      final index = (account['transactions'] as List)
-                          .indexWhere((tx) => tx.transactionId == existing!.transactionId);
-                      if (index != -1) {
-                        final oldTx = account['transactions'][index] as Transaction;
-                        account['balance'] = (account['balance'] ?? 0.0) - oldTx.amount + amount;
-                        account['transactions'][index] = newTx;
-                      }
-                    } else {
-                      account['transactions'].add(newTx);
-
-                      final totalAmountToAdd = newTx.amount + transactions.fold(0.0, (sum, tx) => sum + tx.amount);
-                      account['balance'] = (account['balance'] ?? 0.0) + totalAmountToAdd;
-                    }
-
-                    if (account['isDebit'] == false) {
-                      final currentTransactionDate = newTx.date;
-                      double transactionAmount = newTx.amount;
-
-                      account['creditLimit'] = account['creditLimit'] ?? 0.0;
-                      account['availableCredit'] = (account['availableCredit'] ?? 0.0) - transactionAmount;
-
-                      if (isProvisioned) {
-                        account['currentDebt'] = (account['currentDebt'] ?? 0.0);
-                      } else {
-                        account['currentDebt'] = (account['currentDebt'] ?? 0.0) + transactionAmount;
-                      }
-
-                      account['totalDebt'] = (account['totalDebt'] ?? 0.0) + transactionAmount;
-
-                      DateTime parseDate(String dateStr) {
-                        try {
-                          return DateFormat('dd/MM/yyyy').parse(dateStr);
-                        } catch (_) {
-                          return DateTime.now();
+                    if (installmentCount != null && installmentCount > 1) {
+                      for (int i = 0; i < installmentCount; i++) {
+                        final installmentDate = addMonthsSafe(baseDate, i);
+                        if (installmentDate.isBefore(now)) {
+                          paidInstallmentCount++;
                         }
                       }
 
-                      final nextCutoff = parseDate(account['nextCutoffDate'] ?? DateTime.now().toString());
+                      // >>> Yeni cutoff mantığı
+                      if (selectedAccount?['previousCutoffDate'] != null && selectedAccount?['nextCutoffDate'] != null) {
+                        final dateFormat = DateFormat("dd/MM/yyyy");
+                        final previousCutoff = dateFormat.parse(selectedAccount!['previousCutoffDate']);
+                        final nextCutoff = dateFormat.parse(selectedAccount!['nextCutoffDate']);
 
-                      if (!currentTransactionDate.isBefore(nextCutoff)) {
-                        account['previousDebt'] = account['remainingDebt'] ?? 0.0;
+                        // Eğer "normal sayım" 3 taksit bulduysa ama cutoff dönemi 4. taksiti içeriyorsa
+                        if (now.isAfter(previousCutoff) && now.isBefore(nextCutoff)) {
+                          // Bir sonraki taksitin tarihi cutoff öncesinde mi?
+                          final nextInstallmentDate = addMonthsSafe(baseDate, paidInstallmentCount);
+                          if (nextInstallmentDate.isBefore(nextCutoff)) {
+                            paidInstallmentCount++;
+                          }
+                        }
                       }
 
-                      accountInstance = Account.fromJson(account);
-                      account['minPayment'] = accountInstance.calculateMinPayment();
-                      account['remainingMinPayment'] = account['minPayment'];
+                      // Güvenlik: sınırı aşmasın
+                      if (paidInstallmentCount >= installmentCount) {
+                        paidInstallmentCount = installmentCount - 1;
+                      }
                     }
 
-                    selectedAccount = {
-                      'accountId': account['accountId'],
-                      'accountName': account['accountName'],
-                      'balance': account['balance'],
-                      'currency': account['currency'],
-                      'transactions': account['transactions'],
-                      'isDebit': account['isDebit'],
-                      'creditLimit': account['creditLimit'],
-                      'cutoffDate': account['cutoffDate'],
-                      'availableCredit': account['availableCredit'],
-                      'currentDebt': account['currentDebt'],
-                      'totalDebt': account['totalDebt'],
-                      'previousDebt': account['previousDebt'],
-                      'remainingDebt': account['remainingDebt'],
-                      'minPayment': account['minPayment'],
-                      'remainingMinPayment': account['remainingMinPayment'],
-                      'nextCutoffDate': account['nextCutoffDate'],
-                      'bankId': bank['bankId'],
-                      'bankName': bank['bankName'],
-                      'bankCurrency': bank['currency'],
-                    };
+                    final perInstallmentAmount = (installmentCount != null && installmentCount > 1)
+                        ? amount / installmentCount
+                        : amount;
 
-                    break;
+                    final currentInstallmentIndex = (installmentCount != null && installmentCount > 1)
+                        ? paidInstallmentCount
+                        : 0;
+
+                    final newTx = Transaction(
+                      transactionId: existing?.transactionId ?? DateTime.now().millisecondsSinceEpoch,
+                      date: addMonthsSafe(baseDate, currentInstallmentIndex),
+                      amount: perInstallmentAmount,
+                      currency: selectedAccount?['currency'] ?? 'TRY',
+                      category: selectedCategory!,
+                      subcategory: selectedSubcategory!,
+                      title: installmentCount != null && installmentCount > 1
+                          ? '${titleController.text} ($currentInstallmentIndex/$installmentCount)'
+                          : titleController.text,
+                      description: '',
+                      isSurplus: false,
+                      isFromInvoice: false,
+                      installment: installmentCount,
+                      initialInstallmentDate: (installmentCount != null && installmentCount > 1) ? baseDate : null,
+                      isProvisioned: isProvisioned,
+                    );
+
+                    Navigator.pop(context, newTx);
+                  },
+                  child: Text(existing == null ? 'Add' : 'Update'),
+                )
+
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _processTransactionUpdate(Transaction newTx, [Transaction? existing]) async {
+    final isEditing = existing != null;
+
+    setState(() {
+      for (var bank in bankAccounts) {
+        if (bank['bankId'] != selectedAccount!['bankId']) continue;
+        final accounts = bank['accounts'] as List?;
+        if (accounts == null) continue;
+
+        for (var account in accounts) {
+          if (account['accountId'] != selectedAccount!['accountId']) continue;
+
+          account['transactions'] = account['transactions'] ?? [];
+          Account accountInstance = Account.fromJson(account);
+          bool isCredit = account['isDebit'] == false;
+
+          if (isEditing) {
+            final txList = account['transactions'] as List;
+            final index = txList.indexWhere(
+                  (tx) => Transaction.fromJson(tx).transactionId == existing!.transactionId,
+            );
+
+            if (index != -1) {
+              final oldTx = Transaction.fromJson(txList[index]);
+
+              print('--- DEBUG _processTransactionUpdate (EDIT) ---');
+              print('Old Transaction Amount: ${oldTx.amount}');
+              print('New Transaction Amount: ${newTx.amount}');
+              print('Account Balance BEFORE update: ${account['balance']}');
+              print('Account Available Credit BEFORE update: ${account['availableCredit']}');
+
+              account['balance'] = (account['balance'] ?? 0.0) - oldTx.amount + newTx.amount;
+
+              if (isCredit) {
+                account['availableCredit'] = (account['availableCredit'] ?? account['creditLimit']) + oldTx.amount;
+                account['availableCredit'] = (account['availableCredit'] ?? account['creditLimit']) - newTx.amount;
+
+                if (!oldTx.isProvisioned) {
+                  account['currentDebt'] = (account['currentDebt'] ?? 0.0) - oldTx.amount;
+                }
+                if (!newTx.isProvisioned) {
+                  account['currentDebt'] = (account['currentDebt'] ?? 0.0) + newTx.amount;
+                }
+
+                account['totalDebt'] = (account['totalDebt'] ?? 0.0) - oldTx.amount + newTx.amount;
+
+                DateTime parseDate(String dateStr) {
+                  try {
+                    return DateFormat('dd/MM/yyyy').parse(dateStr);
+                  } catch (_) {
+                    return DateTime.now();
                   }
                 }
-              });
 
-              await _saveToPrefs();
-              await _saveSelectedAccount(selectedAccount!);
-              Navigator.pop(context);
-            },
-            child: const Text('Add'),
-          )
-        ],
-      ),
-    );
+                final nextCutoff = parseDate(account['nextCutoffDate'] ?? DateTime.now().toString());
 
+                if (!oldTx.date.isBefore(nextCutoff)) {
+                  account['previousDebt'] = (account['previousDebt'] ?? 0.0) - oldTx.amount;
+                } else {
+                  if (!oldTx.isProvisioned) {
+                    account['remainingDebt'] = (account['remainingDebt'] ?? 0.0) - oldTx.amount;
+                  }
+                }
+
+                if (!newTx.date.isBefore(nextCutoff)) {
+                  account['previousDebt'] = (account['previousDebt'] ?? 0.0) + newTx.amount;
+                } else {
+                  if (!newTx.isProvisioned) {
+                    account['remainingDebt'] = (account['remainingDebt'] ?? 0.0) + newTx.amount;
+                  }
+                }
+
+                accountInstance = Account.fromJson(account);
+                account['minPayment'] = accountInstance.minPayment;
+                account['remainingMinPayment'] = account['minPayment'];
+              }
+
+              txList[index] = newTx.toJson();
+
+              print('Account Balance AFTER update: ${account['balance']}');
+              print('Account Available Credit AFTER update: ${account['availableCredit']}');
+              print('----------------------------------------------');
+            }
+          } else {
+            account['transactions'].add(newTx.toJson());
+            account['balance'] = (account['balance'] ?? 0.0) + newTx.amount;
+
+            if (isCredit) {
+              account['availableCredit'] = (account['availableCredit'] ?? account['creditLimit']) - newTx.amount;
+
+              if (!newTx.isProvisioned) {
+                account['currentDebt'] = (account['currentDebt'] ?? 0.0) + newTx.amount;
+              }
+
+              account['totalDebt'] = (account['totalDebt'] ?? 0.0) + newTx.amount;
+
+              DateTime parseDate(String dateStr) {
+                try {
+                  return DateFormat('dd/MM/yyyy').parse(dateStr);
+                } catch (_) {
+                  return DateTime.now();
+                }
+              }
+
+              final nextCutoff = parseDate(account['nextCutoffDate'] ?? DateTime.now().toString());
+
+              if (!newTx.date.isBefore(nextCutoff)) {
+                account['previousDebt'] = (account['previousDebt'] ?? 0.0) + newTx.amount;
+              } else {
+                if (!newTx.isProvisioned) {
+                  account['remainingDebt'] = (account['remainingDebt'] ?? 0.0) + newTx.amount;
+                }
+              }
+
+              accountInstance = Account.fromJson(account);
+              account['minPayment'] = accountInstance.minPayment;
+              account['remainingMinPayment'] = account['minPayment'];
+            }
+          }
+        }
+      }
+    });
+
+    await _saveToPrefs();
+    await _saveSelectedAccount(selectedAccount!);
+  }
+
+  void _addOrUpdateTransaction([Transaction? existing]) async {
+    final newTx = await _showTransactionDialog(existing);
+    if (newTx == null) return;
+
+    _processTransactionUpdate(newTx, existing);
   }
 
   Map<String, Map<String, List<Transaction>>> transactionsGrouped() {
@@ -837,6 +917,8 @@ class _OutcomePageState extends State<OutcomePage> {
     List<Map<String, dynamic>> transactions = List<Map<String, dynamic>>.from(selectedAccount!['transactions']);
     transactions.removeWhere((t) => t['transactionId'] == tx.transactionId);
     selectedAccount!['transactions'] = transactions;
+    selectedAccount!['balance'] = (selectedAccount!['balance'] ?? 0.0) - tx.amount;
+
 
     // Eğer kredi kartı hesabıysa, borç ve limit değerlerini de güncelle
     if (selectedAccount!['isDebit'] == false) {
@@ -898,219 +980,127 @@ class _OutcomePageState extends State<OutcomePage> {
     });
   }
 
-  Widget buildCategoryProgressBars() {
-    final grouped = transactionsGrouped();
-
-    double totalAmount = 0;
-    for (var cat in grouped.values) {
-      for (var subList in cat.values) {
-        totalAmount += subList.fold(0, (sum, tx) => sum + tx.amount);
-      }
-    }
-
+  Widget buildCategoryProgressBars(Map<String, Map<String, List<Transaction>>> grouped, double totalAmount) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: grouped.entries.map((catEntry) {
         final categoryName = catEntry.key;
-
         double categoryTotal = 0;
         for (var subList in catEntry.value.values) {
           categoryTotal += subList.fold(0, (sum, tx) => sum + tx.amount);
         }
+        final percent = totalAmount > 0 ? categoryTotal / totalAmount : 0.0;
 
-        final double percent = totalAmount > 0 ? (categoryTotal / totalAmount) : 0.0;
-
-        return Container(
-          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))
+        return GlassmorphismContainer(
+          borderRadius: 16,
+          blur: 10,
+          borderColor: Colors.white.withOpacity(0.2),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(categoryName,
+                      style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600, color: Colors.white)),
+                  Text("${categoryTotal.toStringAsFixed(2)} ₺",
+                      style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: Colors.amberAccent)),
+                ],
+              ),
+              SizedBox(height: 8.h),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8.r),
+                child: LinearProgressIndicator(
+                  value: percent.clamp(0.0, 1.0),
+                  minHeight: 10.h,
+                  backgroundColor: Colors.white24,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.amberAccent),
+                ),
+              ),
             ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$categoryName • ${categoryTotal.toStringAsFixed(2)} ₺ (${(percent * 100).toStringAsFixed(1)}%)',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: LinearProgressIndicator(
-                    value: percent.clamp(0.0, 1.0),
-                    minHeight: 10,
-                    backgroundColor: Colors.grey[200],
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.blueAccent),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ...catEntry.value.entries.map((subEntry) {
-                  final subcategoryName = subEntry.key;
-                  final subTotal = subEntry.value.fold<double>(0.0, (sum, tx) => sum + tx.amount);
-                  final subPercent = categoryTotal > 0 ? subTotal / categoryTotal : 0;
-
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '$subcategoryName • ${subTotal.toStringAsFixed(2)} ₺ (${(subPercent * 100).toStringAsFixed(1)}%)',
-                          style: const TextStyle(fontSize: 13, color: Colors.black87),
-                        ),
-                        const SizedBox(height: 4),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: LinearProgressIndicator(
-                            value: subPercent.clamp(0.0, 1.0).toDouble(),
-                            minHeight: 8,
-                            backgroundColor: Colors.grey[100],
-                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.lightBlueAccent),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ],
-            ),
           ),
         );
       }).toList(),
     );
   }
 
-  Widget buildGroupedTransactionList() {
-    final grouped = transactionsGrouped();
-
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: grouped.length,
-      itemBuilder: (context, catIndex) {
-        final catEntry = grouped.entries.elementAt(catIndex);
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          child: Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: Theme(
-              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-              child: ExpansionTile(
-                tilePadding: const EdgeInsets.symmetric(horizontal: 16),
-                title: Text(
-                  catEntry.key,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                children: catEntry.value.entries.map((subEntry) {
-                  return Padding(
-                    padding: const EdgeInsets.only(left: 8),
-                    child: Theme(
-                      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                      child: ExpansionTile(
-                        tilePadding: const EdgeInsets.symmetric(horizontal: 16),
-                        title: Text(
-                          subEntry.key,
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                        ),
-                        children: subEntry.value.map((tx) {
-                          return ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            tileColor: Colors.grey[50],
-                            title: Text(tx.title, style: const TextStyle(fontSize: 14)),
-                            subtitle: Text('${tx.amount.toStringAsFixed(2)} ${tx.currency}'),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit, color: Colors.grey),
-                                  onPressed: () => _addOrUpdateTransaction(tx),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                                  onPressed: () => _deleteTransaction(tx),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
+  Widget buildGroupedTransactionList(Map<String, Map<String, List<Transaction>>> grouped) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: grouped.entries.map((catEntry) {
+        return GlassmorphismContainer(
+          borderRadius: 16,
+          blur: 10,
+          borderColor: Colors.white.withOpacity(0.2),
+          padding: EdgeInsets.zero,
+          child: ExpansionTile(
+            title: Text(catEntry.key,
+                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600, color: Colors.white)),
+            children: catEntry.value.entries.map((subEntry) {
+              return ExpansionTile(
+                title: Text(subEntry.key, style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500, color: Colors.white70)),
+                children: subEntry.value.map((tx) {
+                  return ListTile(
+                    title: Text(tx.title, style: TextStyle(fontSize: 14.sp, color: Colors.white)),
+                    subtitle: Text(DateFormat('dd MMM yyyy').format(tx.date), style: TextStyle(fontSize: 12.sp, color: Colors.white70)),
+                    trailing: Text("${tx.amount.toStringAsFixed(2)} ${tx.currency}", style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: Colors.redAccent)),
                   );
                 }).toList(),
-              ),
-            ),
+              );
+            }).toList(),
           ),
         );
-      },
+      }).toList(),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-
-    for (Invoice invoice in invoices) {
-      print('Before ID: ${invoice.id}, Subcategory: ${invoice.subCategory}');
-    }
-
     final grouped = transactionsGrouped();
+    final totalAmount = _calculateTotalAmount(grouped);
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          "Giderler Detayı",
+          style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w600),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: isDark ? Colors.white : Colors.black87,
+      ),
       body: SingleChildScrollView(
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: userCategories.map((categoryData) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: Text(
-                      'Kategori: ${categoryData.category}, Alt Kategori: ${categoryData.subcategory}',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  );
-                }).toList(),
-              ),
-              Text(
-                "Giderler Detayı",
-                style: TextStyle(
-                  fontFamily: 'Keep Calm',
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 20.h),
-              bankAccounts.isEmpty
-                  ? const Text("Banka hesabı bulunamadı.")
-                  : Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: EdgeInsets.all(16.h),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Account Selection
+            if (bankAccounts.isNotEmpty)
+              GlassmorphismContainer(
+                borderRadius: 16,
+                blur: 10,
+                borderColor: Colors.white.withOpacity(0.2),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                 child: DropdownButtonFormField<int>(
                   value: selectedAccount?['accountId'],
+                  isExpanded: true,
                   decoration: InputDecoration(
-                    labelText: "Choose an account",
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                    labelText: "Hesap Seçiniz",
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
                   ),
                   items: bankAccounts.expand<DropdownMenuItem<int>>((bank) {
                     return (bank['accounts'] as List?)?.map((account) {
                       return DropdownMenuItem<int>(
                         value: account['accountId'],
-                        child: Text("${bank['bankName']} - ${account['name']}"),
+                        child: Text(
+                          "${bank['bankName']} - ${account['name']}",
+                          style: TextStyle(fontSize: 14.sp),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       );
                     }) ?? [];
                   }).toList(),
@@ -1118,26 +1108,111 @@ class _OutcomePageState extends State<OutcomePage> {
                     if (selectedAccountId != null) {
                       final account = _findAccountById(selectedAccountId);
                       if (account != null) {
-                        setState(() {
-                          selectedAccount = account;
-                        });
+                        setState(() => selectedAccount = account);
                         _saveSelectedAccount(account);
                       }
                     }
                   },
                 ),
               ),
-              buildCategoryProgressBars(),
-              buildGroupedTransactionList()
-            ],
-          ),
+            SizedBox(height: 24.h),
+
+            // Summary Card
+            if (totalAmount > 0)
+              GlassmorphismContainer(
+                borderRadius: 16,
+                blur: 10,
+                borderColor: Colors.white.withOpacity(0.2),
+                padding: EdgeInsets.all(16.h),
+                color: isDark ? Colors.grey[900]!.withOpacity(0.4) : Colors.white.withOpacity(0.4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Toplam Gider",
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            color: isDark ? Colors.white70 : Colors.black54,
+                          ),
+                        ),
+                        SizedBox(height: 4.h),
+                        Text(
+                          "${totalAmount.toStringAsFixed(2)} ₺",
+                          style: TextStyle(
+                            fontSize: 20.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.amber,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Icon(Icons.pie_chart, color: Colors.amber, size: 32.r),
+                  ],
+                ),
+              ),
+            SizedBox(height: 24.h),
+
+
+
+            // Category Progress Bars
+            if (grouped.isNotEmpty)
+              buildCategoryProgressBars(grouped, totalAmount),
+            SizedBox(height: 24.h),
+
+            // Transaction List
+            if (grouped.isNotEmpty)
+              buildGroupedTransactionList(grouped),
+
+            // Empty State
+            if (grouped.isEmpty)
+              GlassmorphismContainer(
+                borderRadius: 16,
+                blur: 10,
+                borderColor: Colors.white.withOpacity(0.2),
+                color: isDark ? Colors.grey[900]!.withOpacity(0.4) : Colors.white.withOpacity(0.4),
+                padding: EdgeInsets.symmetric(vertical: 48.h),
+                child: Column(
+                  children: [
+                    Icon(Icons.receipt_long, size: 64.r, color: isDark ? Colors.white54 : Colors.black38),
+                    SizedBox(height: 16.h),
+                    Text(
+                      "Henüz işlem bulunmuyor",
+                      style: TextStyle(fontSize: 16.sp, color: isDark ? Colors.white54 : Colors.black38),
+                    ),
+                    SizedBox(height: 8.h),
+                    Text(
+                      "Yeni işlem eklemek için + butonuna tıklayın",
+                      style: TextStyle(fontSize: 12.sp, color: isDark ? Colors.white54 : Colors.black38),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+          ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _addOrUpdateTransaction(),
-        child: const Icon(Icons.add),
+        backgroundColor: Colors.amber,
+        foregroundColor: Colors.white,
+        child: Icon(Icons.add),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
       ),
     );
+  }
+
+
+  double _calculateTotalAmount(Map<String, Map<String, List<Transaction>>> grouped) {
+    double total = 0;
+    for (var cat in grouped.values) {
+      for (var subList in cat.values) {
+        total += subList.fold(0, (sum, tx) => sum + tx.amount);
+      }
+    }
+    return total;
   }
 
   Map<String, dynamic>? _findAccountById(int? accountId) {
@@ -1160,6 +1235,80 @@ class _OutcomePageState extends State<OutcomePage> {
     return null;
   }
 
+  Widget buildCategoryWidget(Map<String, dynamic> category) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: Colors.blue.withOpacity(0.3),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(category['icon'] ?? Icons.category, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              category['name'] ?? 'Kategori',
+              style: GoogleFonts.montserrat(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          Text(
+            "${category['amount']?.toStringAsFixed(2) ?? '0.00'} ₺",
+            style: GoogleFonts.montserrat(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Colors.white70,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
+}
 
+class GlassmorphismContainer extends StatelessWidget {
+  final Widget child;
+  final double borderRadius;
+  final double blur;
+  final Color borderColor;
+  final EdgeInsetsGeometry? padding;
+  final Color? color; // opsiyonel arkaplan rengi
+
+  const GlassmorphismContainer({
+    super.key,
+    required this.child,
+    this.borderRadius = 16,
+    this.blur = 10,
+    required this.borderColor,
+    this.padding,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        child: Container(
+          padding: padding ?? EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: color ?? Colors.white.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(borderRadius),
+            border: Border.all(color: borderColor),
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
 }

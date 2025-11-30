@@ -88,39 +88,39 @@ class _InvestmentPageState extends State<InvestmentPage> {
 
   KeyboardActionsConfig _buildConfig(BuildContext context) {
     return KeyboardActionsConfig(
-      keyboardActionsPlatform: KeyboardActionsPlatform.ALL,
-      keyboardBarColor: Colors.grey[200],
-      nextFocus: true,
-      actions: [
-        KeyboardActionsItem(
-          focusNode: _nodeText1,
-            toolbarButtons: [
-                  (node) {
-                return GestureDetector(
-                  onTap: () => node.unfocus(),
-                  child: Padding(
-                    padding: EdgeInsets.only(right:20),
-                    child: Text('Done'),
-                  ),
-                );
-              }
-            ]
-        ),
-        KeyboardActionsItem(
-            focusNode: _nodeText2,
-          toolbarButtons: [
-            (node) {
-             return GestureDetector(
-               onTap: () => node.unfocus(),
-               child: Padding(
-                 padding: EdgeInsets.only(right:20),
-                 child: Text('Done'),
-               ),
-             );
-            }
-          ]
-        )
-      ]
+        keyboardActionsPlatform: KeyboardActionsPlatform.ALL,
+        keyboardBarColor: Colors.grey[200],
+        nextFocus: true,
+        actions: [
+          KeyboardActionsItem(
+              focusNode: _nodeText1,
+              toolbarButtons: [
+                    (node) {
+                  return GestureDetector(
+                    onTap: () => node.unfocus(),
+                    child: Padding(
+                      padding: EdgeInsets.only(right:20),
+                      child: Text('Done'),
+                    ),
+                  );
+                }
+              ]
+          ),
+          KeyboardActionsItem(
+              focusNode: _nodeText2,
+              toolbarButtons: [
+                    (node) {
+                  return GestureDetector(
+                    onTap: () => node.unfocus(),
+                    child: Padding(
+                      padding: EdgeInsets.only(right:20),
+                      child: Text('Done'),
+                    ),
+                  );
+                }
+              ]
+          )
+        ]
     );
   }
 
@@ -201,38 +201,38 @@ class _InvestmentPageState extends State<InvestmentPage> {
     FaIcon iconAsset = itemIcons[index];
 
     return Padding(
-        padding: const EdgeInsets.fromLTRB(30, 15, 30, 15),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: GestureDetector(
-            onTap: () {
-              selectCategory(category);
-              togglePopupVisibility(context);
-            },
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Center(
+      padding: const EdgeInsets.fromLTRB(30, 15, 30, 15),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: GestureDetector(
+          onTap: () {
+            selectCategory(category);
+            togglePopupVisibility(context);
+          },
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Center(
                   child: CircleAvatar(
-                    radius: 20.sp,
-                    backgroundColor: Colors.white,
-                    child: iconAsset
+                      radius: 20.sp,
+                      backgroundColor: Colors.white,
+                      child: iconAsset
                   )
+              ),
+              const SizedBox(width: 15),
+              Text(
+                category,
+                style: GoogleFonts.montserrat(
+                  color: Colors.white,
+                  fontSize: 22.sp,
+                  fontWeight: FontWeight.w500,
                 ),
-                const SizedBox(width: 15),
-                Text(
-                  category,
-                  style: GoogleFonts.montserrat(
-                    color: Colors.white,
-                    fontSize: 22.sp,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
-      );
+      ),
+    );
   }
 
   void showEditDialog(int index, int categoryIndex){
@@ -592,12 +592,12 @@ class _InvestmentPageState extends State<InvestmentPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-            category,
-            style: GoogleFonts.montserrat(
-                fontSize: 22,
-                fontWeight: FontWeight.bold
-            )
-        ),
+                category,
+                style: GoogleFonts.montserrat(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold
+                )
+            ),
             const SizedBox(height: 10),
             Container(
               width: double.infinity,
@@ -642,16 +642,16 @@ class _InvestmentPageState extends State<InvestmentPage> {
                               Text(
                                   "${category == 'Döviz' ? 'Döviz Hedefi' : category == 'Nakit' ? 'Nakit Hedefi' : 'Diğer Kategori Hedefi'}",
                                   style: GoogleFonts.montserrat(
-                                      fontSize: 15.sp,
-                                      fontWeight: FontWeight.bold,
+                                    fontSize: 15.sp,
+                                    fontWeight: FontWeight.bold,
                                     color: Colors.black,
                                   )
                               ),
                               Text(
                                   "${formattedGoal}${exchangeCurrencySymbol}",
                                   style: GoogleFonts.montserrat(
-                                      fontSize: 25.sp,
-                                      fontWeight: FontWeight.bold,
+                                    fontSize: 25.sp,
+                                    fontWeight: FontWeight.bold,
                                     color: Colors.black,
                                   )
                               ),
@@ -667,8 +667,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
                     isStretch: true,
                     children: {
                       0: Text(
-                        'Dolar',
-                        textAlign: TextAlign.center,
+                          'Dolar',
+                          textAlign: TextAlign.center,
                           style: GoogleFonts.montserrat(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.bold,
@@ -676,8 +676,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
                           )
                       ),
                       1: Text(
-                        'Euro',
-                        textAlign: TextAlign.center,
+                          'Euro',
+                          textAlign: TextAlign.center,
                           style: GoogleFonts.montserrat(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.bold,
@@ -685,8 +685,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
                           )
                       ),
                       2: Text(
-                        'Türk Lirası',
-                        textAlign: TextAlign.center,
+                          'Türk Lirası',
+                          textAlign: TextAlign.center,
                           style: GoogleFonts.montserrat(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.bold,
@@ -780,16 +780,16 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                                     Text(
                                                         investment.name,
                                                         style: GoogleFonts.montserrat(
-                                                            fontSize: 15.sp,
-                                                            fontWeight: FontWeight.w600,
+                                                          fontSize: 15.sp,
+                                                          fontWeight: FontWeight.w600,
                                                           color: Colors.black,
                                                         )
                                                     ),
                                                     Text(
-                                                      NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(double.parse(investment.amount)) + exchangeCurrencySymbol,
+                                                        NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(double.parse(investment.amount)) + exchangeCurrencySymbol,
                                                         style: GoogleFonts.montserrat(
-                                                            fontSize: 20.sp,
-                                                            fontWeight: FontWeight.bold,
+                                                          fontSize: 20.sp,
+                                                          fontWeight: FontWeight.bold,
                                                           color: Colors.black,
                                                         )
                                                     ),
@@ -825,8 +825,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                                 Text(
                                                     "${NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(investmentModel.aim)}${exchangeCurrencySymbol}",
                                                     style: GoogleFonts.montserrat(
-                                                        fontSize: 20.sp,
-                                                        fontWeight: FontWeight.bold,
+                                                      fontSize: 20.sp,
+                                                      fontWeight: FontWeight.bold,
                                                       color: Colors.black,
                                                     )
                                                 ),
@@ -848,16 +848,16 @@ class _InvestmentPageState extends State<InvestmentPage> {
                                                 Text(
                                                     "Hedef Tarihi $formattedDate",
                                                     style: GoogleFonts.montserrat(
-                                                        fontSize: 12.sp,
-                                                        fontWeight: FontWeight.w600,
+                                                      fontSize: 12.sp,
+                                                      fontWeight: FontWeight.w600,
                                                       color: Colors.black,
                                                     )
                                                 ),
                                                 Text(
                                                     "$remainingDays Gün Kaldı",
                                                     style: GoogleFonts.montserrat(
-                                                        fontSize: 15.sp,
-                                                        fontWeight: FontWeight.bold,
+                                                      fontSize: 15.sp,
+                                                      fontWeight: FontWeight.bold,
                                                       color: Colors.black,
                                                     )
                                                 ),
@@ -1775,16 +1775,16 @@ class _InvestmentPageState extends State<InvestmentPage> {
                           IconButton(
                               onPressed: () {
                                 showModalBottomSheet(
-                                  isScrollControlled: true,
-                                  context: context,
-                                  builder: (context) {
-                                    return _addInvestmentBottomSheet(
-                                      context,
-                                      category,
-                                      amountController,
-                                      nameController,
-                                    );
-                                  }
+                                    isScrollControlled: true,
+                                    context: context,
+                                    builder: (context) {
+                                      return _addInvestmentBottomSheet(
+                                        context,
+                                        category,
+                                        amountController,
+                                        nameController,
+                                      );
+                                    }
                                 ).whenComplete(() {
                                   amountController.clear();
                                   nameController.clear();
@@ -1825,8 +1825,8 @@ class _InvestmentPageState extends State<InvestmentPage> {
       width: 50.r,
       height: 50.r,
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.grey
+          shape: BoxShape.circle,
+          color: Colors.grey
       ),
       child: Center(
         child: Text(
@@ -1843,12 +1843,12 @@ class _InvestmentPageState extends State<InvestmentPage> {
 
   void _saveInvestment(int id, String name, String category, String currency, DateTime deadline, String amount) async {
     Investment newInvestment = Investment(
-      id: id,
-      name: name,
-      category: category,
-      currency : currency,
-      deadline: deadline,
-      amount: amount
+        id: id,
+        name: name,
+        category: category,
+        currency : currency,
+        deadline: deadline,
+        amount: amount
     );
 
     InvestmentService investmentService = InvestmentService();
@@ -2427,21 +2427,21 @@ class _InvestmentPageState extends State<InvestmentPage> {
       liraTotal = calculateTotalInvestmentForCurrency('Türk Lirası');
       euroTotal = calculateTotalInvestmentForCurrency('Euro');
       print("investmentList:${
-        investmentList
-            .map((investment) =>
-                'ID: ${investment.id}, '
-                    'Category: ${investment.category}, '
-                    'Currency: ${investment.currency}, '
-                    'Name: ${investment.name}, '
-                    'Deadline: ${investment.deadline}, '
-                    'Amount: ${investment.amount}'
-        )
-            .join('\n')
+          investmentList
+              .map((investment) =>
+          'ID: ${investment.id}, '
+              'Category: ${investment.category}, '
+              'Currency: ${investment.currency}, '
+              'Name: ${investment.name}, '
+              'Deadline: ${investment.deadline}, '
+              'Amount: ${investment.amount}'
+          )
+              .join('\n')
       }");
       categorizeInvestments(investmentList);
       print("categoryValues:${categoryValues.entries.map((entry) => '${entry.key}: ${entry.value}').join('\n')}");
       print("exchangeList:${exchangeList.map((investment) => 'ID: ${investment.id}, Category: ${investment.category}, Name: ${investment.name}, Deadline: ${investment.deadline}, Amount: ${investment.amount}')
-      .join('\n')
+          .join('\n')
       }");
       sumInvestValue = ab1;
       selectedCategories = ab3;
@@ -2532,310 +2532,345 @@ class _InvestmentPageState extends State<InvestmentPage> {
     return Material(
       child: Stack(
         children: [
-              Scaffold(
-                body: SingleChildScrollView(
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("Birikim",
-                            style: GoogleFonts.montserrat(
-                                fontSize: 22, fontWeight: FontWeight.bold)),
-                        SizedBox(height: 10),
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? Color(0x7D67C5FF) // Dark mode color
-                                : Color(0xFFD5E1F5),// Light mode color
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              selectedCategories.isEmpty
-                                  ? Container(
+          Scaffold(
+            body: SingleChildScrollView(
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Birikim",
+                        style: GoogleFonts.montserrat(
+                            fontSize: 22, fontWeight: FontWeight.bold)),
+                    SizedBox(height: 10),
+                    GlassmorphismContainer(
+                      borderRadius: 20,
+                      blur: 12,
+                      borderColor: Colors.white.withOpacity(0.2),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            selectedCategories.isEmpty
+                                ? GlassmorphismContainer(
+                              borderRadius: 20,
+                              blur: 8,
+                              borderColor: Colors.redAccent.withOpacity(0.2),
+                              child: Container(
                                 padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20),
-                                  color: Colors.redAccent.withOpacity(0.1),
-                                ),
                                 child: Center(
                                   child: Text(
                                     "Lütfen önce birikim ekleyin.",
                                     style: GoogleFonts.montserrat(
-                                      fontSize: 16.sp,
+                                      fontSize: 16,
                                       fontWeight: FontWeight.w600,
                                       color: Colors.redAccent,
                                     ),
                                   ),
                                 ),
-                              )
-                                  : Container(
-                                padding: EdgeInsets.zero,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20),
-                                  color: Color(0xFF87CEEB),
-                                ),
-                                child: Column(
-                                  children: [
-                                    Container(
-                                      width: double.infinity,
-                                      padding: EdgeInsets.all(15),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(20),
-                                        color: Color(0xFF70B8FF),
-                                      ),
-                                      child: Text(
-                                        "Toplam Birikim Hedefi(${currencySymbol})",
-                                        textAlign: TextAlign.left, // Centers text within the container
-                                        style: GoogleFonts.montserrat(
-                                          fontSize: 18.sp,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black,
-                                          height: 1.2, // Adjusts line height for better control
-                                        ),
+                              ),
+                            )
+                                : GlassmorphismContainer(
+                              borderRadius: 20,
+                              blur: 10,
+                              borderColor: Colors.white.withOpacity(0.2),
+                              child: Column(
+                                children: [
+                                  Container(
+                                    width: double.infinity,
+                                    padding: EdgeInsets.all(15),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(20),
+                                      color: Color(0xFF70B8FF).withOpacity(0.3),
+                                    ),
+                                    child: Text(
+                                      "Toplam Birikim Hedefi(${currencySymbol})",
+                                      textAlign: TextAlign.left,
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
                                       ),
                                     ),
-                                    Padding(
-                                        padding: const EdgeInsets.all(20),
-                                        child: Row(
-                                          children: [
-                                            CircularPercentIndicator(
-                                              radius: 35.r,
-                                              lineWidth: 7.h,
-                                              percent: currencySymbol == r'$' ? resultDollar : currencySymbol == '€' ? resultEuro : resultLira,
-                                              center: Text(
-                                                  "%${((currencySymbol == r'$' ? resultDollar : currencySymbol == '€' ? resultEuro : resultLira) * 100).toStringAsFixed(0)}",
-                                                  style: GoogleFonts.montserrat(
-                                                      color: Colors.black,
-                                                      fontSize: (currencySymbol == r'$' ? resultDollar : currencySymbol == '€' ? resultEuro : resultLira) * 100 == 100
-                                                          ? 12
-                                                          : 16,
-                                                      fontWeight: FontWeight.w600
-                                                  )
-                                              ),
-                                              progressColor: Colors.amber,
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(20),
+                                    child: Row(
+                                      children: [
+                                        CircularPercentIndicator(
+                                          radius: 35,
+                                          lineWidth: 7,
+                                          percent: currencySymbol == r'$'
+                                              ? resultDollar
+                                              : currencySymbol == '€'
+                                              ? resultEuro
+                                              : resultLira,
+                                          center: Text(
+                                            "%${((currencySymbol == r'$' ? resultDollar : currencySymbol == '€' ? resultEuro : resultLira) * 100).toStringAsFixed(0)}",
+                                            style: GoogleFonts.montserrat(
+                                              color: Colors.black,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
                                             ),
-                                            SizedBox(width: 15.w),
-                                            Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                    "${currencySymbol == r'$' ? 'Dolar Hedefi ' : currencySymbol == '€' ? 'Euro Hedefi' : 'Türk Lirası Hedefi'}",
-                                                    style: GoogleFonts.montserrat(
-                                                        fontSize: 15.sp,
-                                                        fontWeight: FontWeight.bold,
-                                                      color: Colors.black,
-                                                    )
-                                                ),
-                                                Text(
-                                                    "${currencySymbol == r'$' ? "${formattedDollarTotal}${currencySymbol}" : currencySymbol == "${formattedEuroTotal}${currencySymbol}" ? 'Euro Hedefi' : "${formattedLiraTotal}${currencySymbol}"}",
-                                                    style: GoogleFonts.montserrat(
-                                                        fontSize: 25.sp,
-                                                        fontWeight: FontWeight.bold,
-                                                      color: Colors.black,
-                                                    )
-                                                ),
-                                              ],
-                                            )
+                                          ),
+                                          progressColor: Colors.amber,
+                                        ),
+                                        SizedBox(width: 15),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                                "${currencySymbol == r'$' ? 'Dolar Hedefi ' : currencySymbol == '€' ? 'Euro Hedefi' : 'Türk Lirası Hedefi'}",
+                                                style: GoogleFonts.montserrat(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black,
+                                                )),
+                                            Text(
+                                                "${currencySymbol == r'$' ? formattedDollarTotal : currencySymbol == '€' ? formattedEuroTotal : formattedLiraTotal}${currencySymbol}",
+                                                style: GoogleFonts.montserrat(
+                                                  fontSize: 25,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black,
+                                                )),
                                           ],
                                         )
+                                      ],
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                              SizedBox(height: 10),
-                              CustomSlidingSegmentedControl<int>(
+                            ),
+                            SizedBox(height: 10),
+                            GlassmorphismContainer(
+                              borderRadius: 20,
+                              blur: 10,
+                              borderColor: Colors.white.withOpacity(0.2),
+                              child: CustomSlidingSegmentedControl<int>(
                                 initialValue: 0,
                                 isStretch: true,
                                 children: {
-                                  0: Text(
-                                    'Dolar',
-                                    textAlign: TextAlign.center,
-                                      style: GoogleFonts.montserrat(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
-                                      )
-                                  ),
-                                  1: Text(
-                                    'Euro',
-                                    textAlign: TextAlign.center,
-                                      style: GoogleFonts.montserrat(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
-                                      )
-                                  ),
-                                  2: Text(
-                                    'Türk Lirası',
-                                    textAlign: TextAlign.center,
-                                      style: GoogleFonts.montserrat(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
-                                      )
-                                  ),
+                                  0: Text('Dolar', textAlign: TextAlign.center),
+                                  1: Text('Euro', textAlign: TextAlign.center),
+                                  2: Text('Türk Lirası', textAlign: TextAlign.center),
                                 },
                                 innerPadding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
-                                  color: Color(0xFF86CDEA),
+                                  color: Colors.white.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [],
                                 ),
                                 thumbDecoration: BoxDecoration(
-                                  color: Theme.of(context).brightness == Brightness.dark
-                                      ? Color(0x7D0065a3)  // Dark mode color
-                                      : Colors.white, // Light mode color
+                                  color: Colors.white.withOpacity(0.3),
                                   borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [],
                                 ),
                                 onValueChanged: (v) {
                                   setState(() {
-                                    if (v == 0) {
-                                      currencySymbol = r'$';
-                                      formattedTotal = formattedDollarTotal;
-                                    } else if (v == 1) {
-                                      currencySymbol = r'€';
-                                      formattedTotal = formattedEuroTotal;
-                                    } else if (v == 2) {
-                                      currencySymbol = r'₺';
-                                      formattedTotal = formattedLiraTotal;
-                                    }
+                                    if (v == 0) currencySymbol = r'$';
+                                    if (v == 1) currencySymbol = r'€';
+                                    if (v == 2) currencySymbol = r'₺';
                                   });
                                 },
                               ),
-                              SizedBox(height: 10),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Color(0xFF70B7FE),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
+                            ),
+                            SizedBox(height: 10),
+                            GlassmorphismContainer(
+                              borderRadius: 20,
+                              blur: 10,
+                              borderColor: Colors.white.withOpacity(0.2),
+                              child: InkWell(
+                                onTap: () => togglePopupVisibility(context),
                                 child: Padding(
                                   padding: const EdgeInsets.all(15),
-                                  child: InkWell(
-                                    onTap: () {
-                                      setState(() {
-                                        togglePopupVisibility(context);
-                                      });
-                                    },
-                                    child: SizedBox(
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text("Birikim Ekle", style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w500)),
-                                          Icon(Icons.add_circle),
-                                        ],
-                                      ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text("Birikim Ekle",
+                                          style: GoogleFonts.montserrat(
+                                              color: Colors.black, fontSize: 16)),
+                                      Icon(Icons.add_circle),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    ...selectedCategories.map((category) => GlassmorphismContainer(
+                      borderRadius: 16,
+                      blur: 10,
+                      borderColor: Colors.white.withOpacity(0.2),
+                      child: buildCategoryWidget(category),
+                    )),
+                    Text("investmentList",
+                        style: GoogleFonts.montserrat(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(
+                      investmentList
+                          .map((investment) => 'ID: ${investment.id}, Category: ${investment.category}, Currency: ${investment.currency}, Name: ${investment.name}, Deadline: ${investment.deadline}, Amount: ${investment.amount}')
+                          .join('\n'),
+                    ),
+                    Text("exchangeList",
+                        style: GoogleFonts.montserrat(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(
+                      exchangeList
+                          .map((investment) => 'ID: ${investment.id}, Category: ${investment.category}, Currency: ${investment.currency}, Name: ${investment.name}, Deadline: ${investment.deadline}, Amount: ${investment.amount}')
+                          .join('\n'),
+                    ),
+                    Text("exchangeDollarList",
+                        style: GoogleFonts.montserrat(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(
+                      exchangeDollarList
+                          .map((investment) => 'ID: ${investment.id}, Aim: ${investment.aim}, Amount: ${investment.amount}')
+                          .join('\n'),
+                    ),
+                    Text("cashList",
+                        style: GoogleFonts.montserrat(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(
+                      cashList
+                          .map((investment) => 'ID: ${investment.id}, Category: ${investment.category}, Currency: ${investment.currency}, Name: ${investment.name}, Deadline: ${investment.deadline}, Amount: ${investment.amount}')
+                          .join('\n'),
+                    ),
+                    Text("latestValue:${latestValue.toString()}",
+                        style: GoogleFonts.montserrat(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text("selectedCategories:${selectedCategories}",
+                        style: GoogleFonts.montserrat(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+            ),
+
+          ),
+          AnimatedPositioned(
+              duration: const Duration(milliseconds: 500), // Duration for the animation
+              top: 0,
+              right: 0,
+              left: 0,
+              bottom: 0,
+              child: Stack(
+                children: [
+                  BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: isPopupVisible ? 5 : 0, sigmaY: isPopupVisible ? 5 : 0),
+                    child: AnimatedOpacity(
+                      opacity: isPopupVisible ? 0.7 : 0.0, // Fade in/out based on visibility
+                      duration: const Duration(milliseconds: 500), // Duration for the opacity animation
+                      child: Visibility(
+                        visible: isPopupVisible,
+                        child: Stack(
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  togglePopupVisibility(context);
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.only(bottom: 50.h),
+                                  color: Colors.black.withOpacity(0.2), // Darkened background
+                                  child: Align(
+                                    alignment: Alignment.bottomLeft,
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: itemList.map((category) {
+                                        return GestureDetector(
+                                          onTap: () {}, // Add an empty callback to prevent togglePopupVisibility from being called
+                                          child: buildCategoryButton(category, itemIcons),
+                                        );
+                                      }).toList(),
                                     ),
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
+                            ]
                         ),
-                        SizedBox(height: 20),
-                        ListView(
-                          padding: EdgeInsets.zero,
-                          physics: const NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          children: [
-                            buildSelectedCategories(),
-                          ],
-                        ),
-                        Text("investmentList",
-                            style: GoogleFonts.montserrat(
-                                fontSize: 16, fontWeight: FontWeight.bold)),
-                        Text(
-                          investmentList
-                              .map((investment) => 'ID: ${investment.id}, Category: ${investment.category}, Currency: ${investment.currency}, Name: ${investment.name}, Deadline: ${investment.deadline}, Amount: ${investment.amount}')
-                              .join('\n'),
-                        ),
-                        Text("exchangeList",
-                            style: GoogleFonts.montserrat(
-                                fontSize: 16, fontWeight: FontWeight.bold)),
-                        Text(
-                          exchangeList
-                              .map((investment) => 'ID: ${investment.id}, Category: ${investment.category}, Currency: ${investment.currency}, Name: ${investment.name}, Deadline: ${investment.deadline}, Amount: ${investment.amount}')
-                              .join('\n'),
-                        ),
-                        Text("exchangeDollarList",
-                            style: GoogleFonts.montserrat(
-                                fontSize: 16, fontWeight: FontWeight.bold)),
-                        Text(
-                          exchangeDollarList
-                              .map((investment) => 'ID: ${investment.id}, Aim: ${investment.aim}, Amount: ${investment.amount}')
-                              .join('\n'),
-                        ),
-                        Text("cashList",
-                            style: GoogleFonts.montserrat(
-                                fontSize: 16, fontWeight: FontWeight.bold)),
-                        Text(
-                          cashList
-                              .map((investment) => 'ID: ${investment.id}, Category: ${investment.category}, Currency: ${investment.currency}, Name: ${investment.name}, Deadline: ${investment.deadline}, Amount: ${investment.amount}')
-                              .join('\n'),
-                        ),
-                        Text("latestValue:${latestValue.toString()}",
-                            style: GoogleFonts.montserrat(
-                                fontSize: 16, fontWeight: FontWeight.bold)),
-                        Text("selectedCategories:${selectedCategories}",
-                            style: GoogleFonts.montserrat(
-                                fontSize: 16, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ),
-                ),
-
-              ),
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 500), // Duration for the animation
-            top: 0,
-            right: 0,
-            left: 0,
-            bottom: 0,
-            child: Stack(
-              children: [
-                BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: isPopupVisible ? 5 : 0, sigmaY: isPopupVisible ? 5 : 0),
-                  child: AnimatedOpacity(
-                    opacity: isPopupVisible ? 0.7 : 0.0, // Fade in/out based on visibility
-                    duration: const Duration(milliseconds: 500), // Duration for the opacity animation
-                    child: Visibility(
-                      visible: isPopupVisible,
-                      child: Stack(
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              togglePopupVisibility(context);
-                            },
-                            child: Container(
-                              padding: EdgeInsets.only(bottom: 50.h),
-                              color: Colors.black.withOpacity(0.2), // Darkened background
-                              child: Align(
-                                alignment: Alignment.bottomLeft,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: itemList.map((category) {
-                                    return GestureDetector(
-                                      onTap: () {}, // Add an empty callback to prevent togglePopupVisibility from being called
-                                      child: buildCategoryButton(category, itemIcons),
-                                    );
-                                  }).toList(),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ]
                       ),
                     ),
                   ),
-                ),
-              ],
-            )
+                ],
+              )
           ),
         ],
+      ),
+    );
+  }
+
+  Widget buildCategoryWidget(String categoryName) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: GlassmorphismContainer(
+        borderRadius: 16,
+        blur: 8,
+        borderColor: Colors.white.withOpacity(0.2),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.3),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.category, color: Colors.white),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                categoryName,
+                style: GoogleFonts.montserrat(
+                    fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+}
+
+class GlassmorphismContainer extends StatelessWidget {
+  final Widget child;
+  final double borderRadius;
+  final double blur;
+  final Color borderColor;
+  final EdgeInsetsGeometry? padding;
+  final double? width;
+  final double? height;
+
+  const GlassmorphismContainer({
+    Key? key,
+    required this.child,
+    this.borderRadius = 20,
+    this.blur = 10,
+    this.borderColor = Colors.white24,
+    this.padding,
+    this.width,
+    this.height,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        child: Container(
+          width: width,
+          height: height,
+          padding: padding ?? const EdgeInsets.all(8.0),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(borderRadius),
+            border: Border.all(color: borderColor, width: 1.5),
+          ),
+          child: child,
+        ),
       ),
     );
   }

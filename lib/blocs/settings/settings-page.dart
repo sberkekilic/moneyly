@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -19,6 +19,7 @@ class CategoryStorage {
       'category': e.category,
       'subcategory': e.subcategory,
     })).toList();
+
     await prefs.setStringList(_key, jsonList);
   }
 
@@ -26,6 +27,7 @@ class CategoryStorage {
     final prefs = await SharedPreferences.getInstance();
     final jsonList = prefs.getStringList(_key);
     if (jsonList == null) return [];
+
     return jsonList.map((e) {
       final map = jsonDecode(e);
       return CategoryData(
@@ -52,6 +54,7 @@ class _SettingsPageState extends State<SettingsPage> {
   List<CategoryData> userCategories = [];
   List<Map<String, dynamic>> bankAccounts = [];
   List<Map<String, dynamic>> debtAccounts = [];
+  int? selectedAccountId;
 
   @override
   void initState() {
@@ -59,10 +62,26 @@ class _SettingsPageState extends State<SettingsPage> {
     _loadData();
   }
 
+  Future<void> _saveSelectedAccount(int accountId) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final bank = bankAccounts.firstWhere(
+          (b) => (b['accounts'] as List).any((acc) => acc['accountId'] == accountId),
+    );
+
+    final acc = (bank['accounts'] as List)
+        .firstWhere((acc) => acc['accountId'] == accountId);
+
+    await prefs.setString('selectedAccount', jsonEncode({
+      'accountId': acc['accountId'],
+      'bankId': bank['bankId'],
+    }));
+  }
+
   Future<void> _loadData() async {
     await _loadCategories();
     await _loadAccountsFromPrefs();
-    setState(() {}); // Refresh UI after loading
+    setState(() {});
   }
 
   Future<void> _loadCategories() async {
@@ -72,6 +91,12 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _loadAccountsFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     final accountDataListJson = prefs.getString("accountDataList");
+    final saved = prefs.getString('selectedAccount');
+    if (saved != null) {
+      final map = jsonDecode(saved);
+      selectedAccountId = map['accountId'];
+    }
+
 
     if (accountDataListJson != null) {
       try {
@@ -79,7 +104,7 @@ class _SettingsPageState extends State<SettingsPage> {
         List<Map<String, dynamic>>.from(jsonDecode(accountDataListJson));
         bankAccounts = decodedData.toSet().toList();
 
-        // Sadece borçlu (credit) ve kalan borcu olan hesapları filtrele
+        // Filter for credit accounts with remaining debt
         for (final bank in bankAccounts) {
           final accounts = (bank['accounts'] as List?) ?? [];
           for (final acc in accounts) {
@@ -93,8 +118,6 @@ class _SettingsPageState extends State<SettingsPage> {
       }
     }
   }
-
-  // Kategori ekle/düzenle/sil metodları aynı kalabilir
 
   Future<void> _addCategory() async {
     final result = await _showCategoryDialog();
@@ -134,13 +157,29 @@ class _SettingsPageState extends State<SettingsPage> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(controller: categoryController, decoration: const InputDecoration(labelText: 'Category')),
-            TextField(controller: subcategoryController, decoration: const InputDecoration(labelText: 'Subcategory')),
+            TextField(
+              controller: categoryController,
+              decoration: const InputDecoration(
+                labelText: 'Category',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: subcategoryController,
+              decoration: const InputDecoration(
+                labelText: 'Subcategory',
+                border: OutlineInputBorder(),
+              ),
+            ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
           TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
             onPressed: () {
               final category = categoryController.text.trim();
               final subcategory = subcategoryController.text.trim();
@@ -149,7 +188,7 @@ class _SettingsPageState extends State<SettingsPage> {
               }
             },
             child: const Text('Save'),
-          )
+          ),
         ],
       ),
     );
@@ -168,7 +207,6 @@ class _SettingsPageState extends State<SettingsPage> {
     try {
       final jsonString = jsonEncode(bankAccounts);
       await prefs.setString('accountDataList', jsonString);
-      print('[DEBUG] Saved accountDataList: $jsonString');
     } catch (e) {
       print('[ERROR] Failed to save accountDataList: $e');
     }
@@ -191,18 +229,28 @@ class _SettingsPageState extends State<SettingsPage> {
             children: [
               TextField(
                 controller: titleController,
-                decoration: const InputDecoration(labelText: "Title"),
+                decoration: const InputDecoration(
+                  labelText: "Title",
+                  border: OutlineInputBorder(),
+                ),
               ),
+              const SizedBox(height: 16),
               TextField(
                 controller: amountController,
-                decoration: const InputDecoration(labelText: "Amount"),
+                decoration: const InputDecoration(
+                  labelText: "Amount",
+                  border: OutlineInputBorder(),
+                ),
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
               ),
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
             TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
               onPressed: () {
                 title = titleController.text.trim();
                 amount = double.tryParse(amountController.text.trim());
@@ -218,15 +266,11 @@ class _SettingsPageState extends State<SettingsPage> {
     );
 
     if (title != null && amount != null) {
-      // Örnek olarak ilk borç hesabına ekliyoruz (gerçekte hangi hesaba ekleneceği UI'dan alınmalı)
       if (debtAccounts.isNotEmpty) {
         final acc = debtAccounts.first;
-
-        // Eğer debts listesi yoksa oluştur
         acc['debts'] ??= [];
         (acc['debts'] as List).add({'title': title, 'amount': amount});
 
-        // bankAccounts içinde bu hesabı bulup güncelle
         for (final bank in bankAccounts) {
           final accounts = (bank['accounts'] as List?) ?? [];
           for (var i = 0; i < accounts.length; i++) {
@@ -245,94 +289,432 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDarkMode ? Colors.grey[900]!.withOpacity(0.3) : Colors.white.withOpacity(0.3);
+    final borderColor = isDarkMode ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.1);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Settings"),
+        title: const Text(
+          "Settings",
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: Theme.of(context).colorScheme.onBackground,
       ),
-      body: ListView(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        children: [
-          SwitchListTile(
-            title: const Text("Dark Theme"),
-            value: Theme.of(context).brightness == Brightness.dark,
-            onChanged: (_) => widget.onThemeToggle(),
-          ),
-          const SizedBox(height: 24),
-
-          // CATEGORIES HEADER + ADD BUTTON
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text("Categories", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              IconButton(
-                icon: const Icon(Icons.add),
-                onPressed: _addCategory,
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          ...groupedCategories.entries.map((entry) {
-            final category = entry.key;
-            final subcategories = entry.value;
-            return ExpansionTile(
-              title: Text(category, style: const TextStyle(fontWeight: FontWeight.bold)),
-              children: subcategories.asMap().entries.map((e) {
-                final index = userCategories.indexOf(e.value);
-                final item = e.value;
-                return ListTile(
-                  title: Text(item.subcategory),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Theme Switch
+            GlassmorphismContainer(
+              blur: 10,
+              borderRadius: 16,
+              borderColor: borderColor,
+              color: bgColor,
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
                     children: [
-                      IconButton(icon: const Icon(Icons.edit), onPressed: () => _editCategory(index)),
-                      IconButton(icon: const Icon(Icons.delete), onPressed: () => _deleteCategory(index)),
+                      Icon(
+                        isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        "Dark Theme",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context).colorScheme.onBackground,
+                        ),
+                      ),
                     ],
                   ),
-                );
-              }).toList(),
-            );
-          }),
-
-          const SizedBox(height: 24),
-          const Divider(),
-          const SizedBox(height: 12),
-
-          // DEBTS HEADER + ADD BUTTON
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text("Debts", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              IconButton(
-                icon: const Icon(Icons.add),
-                onPressed: _addDebt,
+                  Switch(
+                    value: isDarkMode,
+                    onChanged: (_) => widget.onThemeToggle(),
+                    activeColor: Theme.of(context).colorScheme.primary,
+                  ),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: 8),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              "Select Account",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onBackground,
+              ),
+            ),
+            SizedBox(height: 12),
 
-          if (debtAccounts.isEmpty)
-            const Text("No active debts.")
-          else
-            ...debtAccounts.expand((acc) {
-              final debts = (acc['debts'] is List) ? acc['debts'] as List : [];
-              return debts.map((debt) {
-                final amount = debt['amount'] ?? 0;
-                final title = debt['title'] ?? '';
-                final dueDate = debt['dueDate'] ?? '';
-                final currency = acc['currency'] ?? '';
-                return ListTile(
-                  title: Text(acc['name'] ?? 'Unnamed Account'),
-                  subtitle: Text("$title • ${amount.toStringAsFixed(2)} $currency"),
-                  leading: const Icon(Icons.credit_card),
-                );
-              });
-            }).toList(),
-        ],
+            bankAccounts.isEmpty
+                ? GlassmorphismContainer(
+              blur: 10,
+              borderRadius: 16,
+              borderColor: borderColor,
+              color: bgColor,
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      "No accounts available",
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Theme.of(context).hintColor,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      // hesap ekleme sayfasına yönlendirme
+                      Navigator.pushNamed(context, "/accounts-add");
+                    },
+                    child: Text("Add"),
+                  ),
+                ],
+              ),
+            )
+                : GlassmorphismContainer(
+              blur: 10,
+              borderRadius: 16,
+              borderColor: borderColor,
+              color: bgColor,
+              padding: const EdgeInsets.all(12),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<int>(
+                  isExpanded: true,
+                  value: selectedAccountId,
+                  hint: Text("Select Account"),
+                  items: bankAccounts.expand<DropdownMenuItem<int>>((bank) {
+                    return (bank['accounts'] as List?)?.map((account) {
+                      return DropdownMenuItem<int>(
+                        value: account['accountId'],
+                        child: Text("${bank['bankName']} - ${account['name']}"),
+                      );
+                    }) ?? [];
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      _saveSelectedAccount(value);
+                      setState(() {
+                        selectedAccountId = value;
+                      });
+                    }
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Categories Section
+            Text(
+              "Categories",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onBackground,
+              ),
+            ),
+            const SizedBox(height: 12),
+            GlassmorphismContainer(
+              blur: 10,
+              borderRadius: 16,
+              borderColor: borderColor,
+              color: bgColor,
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  if (userCategories.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        "No categories added yet",
+                        style: TextStyle(color: Theme.of(context).hintColor),
+                      ),
+                    )
+                  else
+                    ...groupedCategories.entries.map((entry) {
+                      final category = entry.key;
+                      final subcategories = entry.value;
+
+                      return ExpansionTile(
+                        leading: Icon(
+                          Icons.category,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        title: Text(
+                          category,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).colorScheme.onBackground,
+                          ),
+                        ),
+                        children: subcategories.asMap().entries.map((e) {
+                          final index = userCategories.indexOf(e.value);
+                          final item = e.value;
+
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            child: GlassmorphismContainer(
+                              blur: 10,
+                              borderRadius: 12,
+                              borderColor: borderColor,
+                              color: bgColor,
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              child: ListTile(
+                                title: Text(item.subcategory),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: Icon(
+                                        Icons.edit,
+                                        color: Theme.of(context).colorScheme.primary,
+                                        size: 20,
+                                      ),
+                                      onPressed: () => _editCategory(index),
+                                    ),
+                                    IconButton(
+                                      icon: Icon(
+                                        Icons.delete,
+                                        color: Theme.of(context).colorScheme.error,
+                                        size: 20,
+                                      ),
+                                      onPressed: () => _deleteCategory(index),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      );
+                    }).toList(),
+
+                  Divider(
+                    height: 1,
+                    color: Theme.of(context).dividerColor,
+                  ),
+
+                  ListTile(
+                    leading: Icon(
+                      Icons.add,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    title: Text(
+                      "Add Category",
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    onTap: _addCategory,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Debts Section
+            Text(
+              "Debts",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onBackground,
+              ),
+            ),
+            const SizedBox(height: 12),
+            GlassmorphismContainer(
+              blur: 10,
+              borderRadius: 16,
+              borderColor: borderColor,
+              color: bgColor,
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  if (debtAccounts.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        "No active debts",
+                        style: TextStyle(color: Theme.of(context).hintColor),
+                      ),
+                    )
+                  else
+                    ...debtAccounts.expand((acc) {
+                      final debts = (acc['debts'] is List) ? acc['debts'] as List : [];
+                      return debts.map((debt) {
+                        final amount = debt['amount'] ?? 0;
+                        final title = debt['title'] ?? '';
+                        final currency = acc['currency'] ?? '';
+
+                        return ListTile(
+                          leading: Icon(
+                            Icons.credit_card,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          title: Text(
+                            acc['name'] ?? 'Unnamed Account',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              color: Theme.of(context).colorScheme.onBackground,
+                            ),
+                          ),
+                          subtitle: Text(
+                            "$title • ${amount.toStringAsFixed(2)} $currency",
+                            style: TextStyle(color: Theme.of(context).hintColor),
+                          ),
+                          trailing: Icon(
+                            Icons.arrow_forward_ios,
+                            size: 16,
+                            color: Theme.of(context).hintColor,
+                          ),
+                        );
+                      });
+                    }).toList(),
+
+                  Divider(
+                    height: 1,
+                    color: Theme.of(context).dividerColor,
+                  ),
+
+                  ListTile(
+                    leading: Icon(
+                      Icons.add,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    title: Text(
+                      "Add Debt",
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    onTap: _addDebt,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            // App Info Section
+            Text(
+              "App Info",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onBackground,
+              ),
+            ),
+            const SizedBox(height: 12),
+            GlassmorphismContainer(
+              blur: 10,
+              borderRadius: 16,
+              borderColor: borderColor,
+              color: bgColor,
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: Icon(
+                      Icons.info,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    title: Text(
+                      "Version",
+                      style: TextStyle(color: Theme.of(context).colorScheme.onBackground),
+                    ),
+                    trailing: Text(
+                      "1.0.0",
+                      style: TextStyle(color: Theme.of(context).hintColor),
+                    ),
+                  ),
+                  Divider(height: 1, color: Theme.of(context).dividerColor),
+                  ListTile(
+                    leading: Icon(
+                      Icons.privacy_tip,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    title: Text(
+                      "Privacy Policy",
+                      style: TextStyle(color: Theme.of(context).colorScheme.onBackground),
+                    ),
+                    trailing: Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: Theme.of(context).hintColor,
+                    ),
+                  ),
+                  Divider(height: 1, color: Theme.of(context).dividerColor),
+                  ListTile(
+                    leading: Icon(
+                      Icons.description,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    title: Text(
+                      "Terms of Service",
+                      style: TextStyle(color: Theme.of(context).colorScheme.onBackground),
+                    ),
+                    trailing: Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: Theme.of(context).hintColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class GlassmorphismContainer extends StatelessWidget {
+  final Widget child;
+  final double borderRadius;
+  final double blur;
+  final Color borderColor;
+  final EdgeInsetsGeometry? padding;
+  final Color? color; // opsiyonel arkaplan rengi
+
+  const GlassmorphismContainer({
+    super.key,
+    required this.child,
+    this.borderRadius = 16,
+    this.blur = 10,
+    required this.borderColor,
+    this.padding,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        child: Container(
+          padding: padding ?? EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: color ?? Colors.white.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(borderRadius),
+            border: Border.all(color: borderColor),
+          ),
+          child: child,
+        ),
       ),
     );
   }

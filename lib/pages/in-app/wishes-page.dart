@@ -1,5 +1,3 @@
-// ignore_for_file: unnecessary_null_comparison, avoid_print
-
 import 'dart:convert';
 
 import 'package:custom_sliding_segmented_control/custom_sliding_segmented_control.dart';

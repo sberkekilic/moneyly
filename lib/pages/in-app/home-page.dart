@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:percent_indicator/percent_indicator.dart';
@@ -10,10 +13,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 
 
-import '../../blocs/income-selections.dart';
-import '../../models/invoice-page.dart';
-import '../../models/transaction-widget.dart';
-import '../../models/transaction.dart';
+import '../../../blocs/income-selections.dart';
+import '../../../models/account.dart';
+import '../../../models/transaction-widget.dart';
+import '../../../models/transaction.dart';
+import '../../../models/upcoming-payments-section.dart';
+import '../../storage/income_storage_service.dart';
 import '../add-expense/faturalar.dart';
 
 class HomePage extends StatefulWidget {
@@ -156,30 +161,30 @@ class _HomePageState extends State<HomePage> {
   }
   void showDeleteConfirmation(Invoice invoice){
     showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text("Are you sure?"),
-            content: const Text("Do you really want to delete this invoice?"),
-            actions: [
-              TextButton(
-                child: const Text("Cancel"),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              TextButton(
-                child: const Text("Delete"),
-                onPressed: () {
-                  setState(() {
-                    invoices.removeWhere((item) => item.id == invoice.id);
-                  });
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          );
-        },
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Are you sure?"),
+          content: const Text("Do you really want to delete this invoice?"),
+          actions: [
+            TextButton(
+              child: const Text("Cancel"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text("Delete"),
+              onPressed: () {
+                setState(() {
+                  invoices.removeWhere((item) => item.id == invoice.id);
+                });
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
   Future<void> loadSharedPreferencesData(List<String> desiredKeys) async {
@@ -417,52 +422,6 @@ class _HomePageState extends State<HomePage> {
 
     loadSharedPreferencesData(actualDesiredKeys);
   }
-
-  // Save the selected account in SharedPreferences
-  Future<void> _saveSelectedAccount(Map<String, dynamic> account) async {
-    // First get the actual account ID - might be nested in an 'accounts' array
-    final dynamic accountId = account['accountId'] ??
-        (account['accounts'] as List?)?.firstOrNull?['accountId'];
-
-    // Get bank ID - might be at top level
-    final dynamic bankId = account['bankId'];
-
-    if (accountId == null || bankId == null) {
-      print('Cannot save account - missing IDs. Full account data: $account');
-      return;
-    }
-
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('selectedAccount', jsonEncode({
-      'accountId': accountId,
-      'bankId': bankId,
-    }));
-    print('Successfully saved account: $accountId from bank: $bankId');
-  }
-
-  Map<String, dynamic>? _loadSelectedAccount(String? accountData) {
-    if (accountData == null) return null;
-
-    final savedAccount = jsonDecode(accountData);
-    // Find the matching account in your bankAccounts
-    for (var bank in bankAccounts) {
-      for (var account in bank['accounts'] ?? []) {
-        if (account['accountId'] == savedAccount['accountId']) {
-          return {
-            'bankId': bank['bankId'],
-            'bankName': bank['bankName'],
-            'currency': bank['currency'],
-            'isDebit': bank['isDebit'],
-            'creditLimit': bank['creditLimit'],
-            'cutoffDate': bank['cutoffDate'],
-            ...account,
-          };
-        }
-      }
-    }
-    return null;
-  }
-
   List<Transaction> getTransactionsForSelectedAccount() {
     if (selectedAccount == null) {
       print('[DEBUG] No account selected');
@@ -519,16 +478,6 @@ class _HomePageState extends State<HomePage> {
 
     print('[DEBUG] Account not found in bankAccounts');
     return [];
-  }
-
-  // Reset the selected account in SharedPreferences
-  void _resetSelectedAccount() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('selectedAccount'); // Remove the selected account data
-    setState(() {
-      selectedAccount = null; // Reset the selected account in the app
-    });
-    _load(); //REFRESH PAGE
   }
   Future<void> saveInvoices() async {
     final invoicesCopy = invoices.toList();
@@ -692,214 +641,214 @@ class _HomePageState extends State<HomePage> {
     }
 
     showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            title: Text(
-              'Edit ${invoice.category}',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Item Field
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text("Item", style: GoogleFonts.montserrat(fontSize: 18)),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: selectedEditController,
-                    decoration: InputDecoration(
-                      hintText: "e.g., Subscription",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        borderSide: const BorderSide(width: 2, color: Colors.black),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(
+            'Edit ${invoice.category}',
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Item Field
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text("Item", style: GoogleFonts.montserrat(fontSize: 18)),
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: selectedEditController,
+                  decoration: InputDecoration(
+                    hintText: "e.g., Subscription",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: const BorderSide(width: 2, color: Colors.black),
                     ),
-                    style: GoogleFonts.montserrat(fontSize: 18),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   ),
-                  const SizedBox(height: 15),
+                  style: GoogleFonts.montserrat(fontSize: 18),
+                ),
+                const SizedBox(height: 15),
 
-                  // Price Field
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text("Price", style: GoogleFonts.montserrat(fontSize: 18)),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: selectedPriceController,
-                    decoration: InputDecoration(
-                      hintText: "e.g., 10.00",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        borderSide: const BorderSide(width: 2, color: Colors.black),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                // Price Field
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text("Price", style: GoogleFonts.montserrat(fontSize: 18)),
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: selectedPriceController,
+                  decoration: InputDecoration(
+                    hintText: "e.g., 10.00",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: const BorderSide(width: 2, color: Colors.black),
                     ),
-                    style: GoogleFonts.montserrat(fontSize: 18),
-                    keyboardType: TextInputType.number,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   ),
-                  const SizedBox(height: 15),
+                  style: GoogleFonts.montserrat(fontSize: 18),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 15),
 
-                  // Period Date Fields
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text("Period Date", style: GoogleFonts.montserrat(fontSize: 18)),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButtonFormField<int>(
-                          value: _selectedBillingDay,
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedBillingDay = value;
-                            });
-                          },
-                          items: daysList.map((day) {
-                            return DropdownMenuItem<int>(
-                              value: day,
-                              child: Text(day.toString()),
-                            );
-                          }).toList(),
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(20),
-                              borderSide: const BorderSide(width: 2, color: Colors.black),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                // Period Date Fields
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text("Period Date", style: GoogleFonts.montserrat(fontSize: 18)),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<int>(
+                        value: _selectedBillingDay,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedBillingDay = value;
+                          });
+                        },
+                        items: daysList.map((day) {
+                          return DropdownMenuItem<int>(
+                            value: day,
+                            child: Text(day.toString()),
+                          );
+                        }).toList(),
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: const BorderSide(width: 2, color: Colors.black),
                           ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: DropdownButtonFormField<int>(
-                          value: _selectedBillingMonth,
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedBillingMonth = value;
-                            });
-                          },
-                          items: monthsList.map((month) {
-                            return DropdownMenuItem<int>(
-                              value: month,
-                              child: Text(month.toString()),
-                            );
-                          }).toList(),
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(20),
-                              borderSide: const BorderSide(width: 2, color: Colors.black),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: DropdownButtonFormField<int>(
+                        value: _selectedBillingMonth,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedBillingMonth = value;
+                          });
+                        },
+                        items: monthsList.map((month) {
+                          return DropdownMenuItem<int>(
+                            value: month,
+                            child: Text(month.toString()),
+                          );
+                        }).toList(),
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: const BorderSide(width: 2, color: Colors.black),
                           ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 15),
-
-                  // Due Date Field
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text("Due Date", style: GoogleFonts.montserrat(fontSize: 18)),
-                  ),
-                  const SizedBox(height: 10),
-                  DropdownButtonFormField<int>(
-                    value: _selectedDueDay,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedDueDay = value;
-                      });
-                    },
-                    items: daysList.map((day) {
-                      return DropdownMenuItem<int>(
-                        value: day,
-                        child: Text(day.toString()),
-                      );
-                    }).toList(),
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        borderSide: const BorderSide(width: 2, color: Colors.black),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 15),
+
+                // Due Date Field
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text("Due Date", style: GoogleFonts.montserrat(fontSize: 18)),
+                ),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<int>(
+                  value: _selectedDueDay,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedDueDay = value;
+                    });
+                  },
+                  items: daysList.map((day) {
+                    return DropdownMenuItem<int>(
+                      value: day,
+                      child: Text(day.toString()),
+                    );
+                  }).toList(),
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: const BorderSide(width: 2, color: Colors.black),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            actions: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  IconButton(
-                    onPressed: () {
+          ),
+          actions: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                IconButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  icon: const Icon(Icons.cancel),
+                ),
+                IconButton(
+                  onPressed: () {
+                    setState(() {
+                      final priceText = selectedPriceController.text.trim();
+                      double dprice = double.tryParse(priceText) ?? 0.0;
+                      String price = dprice.toStringAsFixed(2);
+                      String name = selectedEditController.text;
+                      invoice.name = name;
+                      invoice.price = price;
+                      if (_selectedDueDay != null) {
+                        editInvoice(
+                          id,
+                          formatPeriodDate(
+                              _selectedBillingDay!, _selectedBillingMonth!, invoice.getPeriodYear()),
+                          formatDueDate(_selectedDueDay,
+                              formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!, invoice.getPeriodYear())),
+                        );
+                      } else {
+                        editInvoice(
+                          id,
+                          formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!, invoice.getPeriodYear()),
+                          null,
+                        );
+                      }
+                      _load();
                       Navigator.of(context).pop();
-                    },
-                    icon: const Icon(Icons.cancel),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      setState(() {
-                        final priceText = selectedPriceController.text.trim();
-                        double dprice = double.tryParse(priceText) ?? 0.0;
-                        String price = dprice.toStringAsFixed(2);
-                        String name = selectedEditController.text;
-                        invoice.name = name;
-                        invoice.price = price;
-                        if (_selectedDueDay != null) {
-                          editInvoice(
-                            id,
-                            formatPeriodDate(
-                                _selectedBillingDay!, _selectedBillingMonth!, invoice.getPeriodYear()),
-                            formatDueDate(_selectedDueDay,
-                                formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!, invoice.getPeriodYear())),
-                          );
-                        } else {
-                          editInvoice(
-                            id,
-                            formatPeriodDate(_selectedBillingDay!, _selectedBillingMonth!, invoice.getPeriodYear()),
-                            null,
-                          );
-                        }
-                        _load();
-                        Navigator.of(context).pop();
-                      });
-                    },
-                    icon: const Icon(Icons.save),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      setState(() {
-                        List<int> quantityOfCategory = getIdsWithSubcategory(invoices, invoice.subCategory);
-                        if (quantityOfCategory.length != 1) {
-                          removeInvoice(id);
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Delete operation not allowed."),
-                            ),
-                          );
-                        }
-                        Navigator.of(context).pop();
-                      });
-                    },
-                    icon: const Icon(Icons.delete_forever),
-                  ),
-                ],
-              ),
-            ],
-          );
+                    });
+                  },
+                  icon: const Icon(Icons.save),
+                ),
+                IconButton(
+                  onPressed: () {
+                    setState(() {
+                      List<int> quantityOfCategory = getIdsWithSubcategory(invoices, invoice.subCategory);
+                      if (quantityOfCategory.length != 1) {
+                        removeInvoice(id);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Delete operation not allowed."),
+                          ),
+                        );
+                      }
+                      Navigator.of(context).pop();
+                    });
+                  },
+                  icon: const Icon(Icons.delete_forever),
+                ),
+              ],
+            ),
+          ],
+        );
 
-        },
+      },
     );
   }
   void removeInvoice(int id) {
@@ -1035,88 +984,128 @@ class _HomePageState extends State<HomePage> {
 
     return sum;
   }
-
-  double calculateTotalAmount(List<Transaction> transactions) {
+  double _calculateTotalAmount(List<Transaction> transactions) {
     return transactions.fold(0.0, (sum, transaction) => sum + transaction.amount);
   }
-  double getTotalSurplusAmountByCurrency(List<Map<String, dynamic>> transactions, String currency, DateTime? startDate, DateTime? endDate) {
 
-    DateTime toDateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
-
-    return transactions
-        .where((t) {
-      if (t['isSurplus'] != true) return false;
-      if (t['currency'] != currency) return false;
-
-      final DateTime txDate = toDateOnly(t['date'] is DateTime
-          ? t['date']
-          : DateTime.tryParse(t['date'].toString()) ?? DateTime.now());
-
-      if (startDate != null && txDate.isBefore(toDateOnly(startDate))) return false;
-      if (endDate != null && txDate.isAfter(toDateOnly(endDate))) return false;
-
-      return true;
-    })
-        .fold(0.0, (sum, t) => sum + (t['amount'] ?? 0.0));
+  Future<double> getTotalIncomeByDateRange(DateTime? startDate, DateTime? endDate) async {
+    if (startDate != null && endDate != null) {
+      // Use date range specific method
+      return await IncomeStorageService.getTotalIncomeByDateRange(startDate, endDate);
+    } else {
+      // Use all-time total
+      return await IncomeStorageService.getTotalIncome();
+    }
   }
 
-  double getTotalDearthAmountByCurrency(List<Map<String, dynamic>> transactions, String currency, DateTime? startDate, DateTime? endDate) {
+  Future<Map<String, String>> calculateFormattedValues(DateTime? startDate, DateTime? endDate, List<Transaction> transactions) async {
+    // Get income from the new storage system
+    final totalIncome = await getTotalIncomeByDateRange(startDate, endDate);
 
-    DateTime toDateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
+    // Get income breakdown by source for more detailed information
+    final incomeSummary = await IncomeStorageService.getIncomeSummary();
 
-    return transactions
-        .where((t) {
-      if (t['isSurplus'] == true) return false;
-      if (t['currency'] != currency) return false;
+    // Calculate outcome from transactions (this stays the same)
+    final outcomeValue = _calculateTotalAmount(transactions);
 
-      final DateTime txDate = toDateOnly(t['date'] is DateTime
-          ? t['date']
-          : DateTime.tryParse(t['date'].toString()) ?? DateTime.now());
+    final profitValue = totalIncome - outcomeValue;
 
-      if (startDate != null && txDate.isBefore(toDateOnly(startDate))) return false;
-      if (endDate != null && txDate.isAfter(toDateOnly(endDate))) return false;
+    final format = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2);
 
-      return true;
-    })
-        .fold(0.0, (sum, t) => sum + (t['amount'] ?? 0.0));
+    return {
+      'income': format.format(totalIncome),
+      'outcome': format.format(outcomeValue),
+      'profit': format.format(profitValue),
+      'work': format.format(incomeSummary['work'] ?? 0.0),
+      'scholarship': format.format(incomeSummary['scholarship'] ?? 0.0),
+      'pension': format.format(incomeSummary['pension'] ?? 0.0),
+    };
   }
 
+  Future<double> getTotalIncomeByCurrencyAndDateRange(String currency, DateTime? startDate, DateTime? endDate) async {
+    final allIncomes = await IncomeStorageService.loadIncomes();
+
+    double total = 0.0;
+    for (final income in allIncomes) {
+      // Filter by currency
+      if (income.currency != currency) continue;
+
+      // Filter by date range if provided
+      if (startDate != null && income.date.isBefore(DateTime(startDate.year, startDate.month, startDate.day))) {
+        continue;
+      }
+      if (endDate != null && income.date.isAfter(DateTime(endDate.year, endDate.month, endDate.day))) {
+        continue;
+      }
+
+      total += income.amount;
+    }
+
+    return total;
+  }
+
+  double getTotalDearthAmountByCurrency(List<Map<String, dynamic>> bankAccounts, String currency, DateTime? startDate, DateTime? endDate) {
+    DateTime toDateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
+
+    double totalOutcome = 0.0;
+
+    // Iterate through all bank accounts
+    for (final bank in bankAccounts) {
+      final accounts = bank['accounts'] as List<dynamic>? ?? [];
+
+      for (final account in accounts) {
+        final transactions = List<Map<String, dynamic>>.from(account['transactions'] ?? []);
+
+        // Sum outcomes for this account
+        final accountOutcome = transactions
+            .where((t) {
+          if (t['isSurplus'] == true) return false;
+          if (t['currency'] != currency) return false;
+
+          final DateTime txDate = toDateOnly(t['date'] is DateTime
+              ? t['date']
+              : DateTime.tryParse(t['date'].toString()) ?? DateTime.now());
+
+          if (startDate != null && txDate.isBefore(toDateOnly(startDate))) return false;
+          if (endDate != null && txDate.isAfter(toDateOnly(endDate))) return false;
+
+          return true;
+        })
+            .fold(0.0, (sum, t) => sum + (t['amount'] ?? 0.0));
+
+        totalOutcome += accountOutcome;
+      }
+    }
+
+    return totalOutcome;
+  }
   @override
   Widget build(BuildContext context) {
     final currency = selectedAccount?['currency'] ?? "";
     final transactions = List<Map<String, dynamic>>.from(selectedAccount?['transactions'] ?? []);
     final debts = List<Map<String, dynamic>>.from(selectedAccount?['debts'] ?? []);
-    // Toplam miktar
-    final totalAmount = debts.fold<double>(
+
+    // 1. Seçili hesabın önceki dönem borcunu hesapla
+    final remainingDebt = debts.fold<double>(
       0,
-          (sum, debt) => sum + (debt['amount'] as num).toDouble(),
+          (sum, debt) => sum + ((debt['amount'] as num?)?.toDouble() ?? 0),
     );
-    print(transactions);
-    final totalSurplus = getTotalSurplusAmountByCurrency(transactions, currency, startDate, endDate);
-    final totalDearth = getTotalDearthAmountByCurrency(transactions, currency, startDate, endDate);
-    double netProfitTransaction = totalSurplus - totalDearth; // NEW NET PROFIT
-    double remainingDebt = selectedAccount?['remainingDebt'] ?? 0.0;
-    double totalDebt = remainingDebt + totalAmount;
-    String formattedIncomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(totalSurplus);
-    String formattedOutcomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(totalDearth);
-    String formattedProfitValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(netProfitTransaction);
-    String formattedRemainingDebt = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(totalDebt);
-    int incomeYuzdesi = (incomeValue * 100).toInt();
-    int bolum;
 
-    if (totalSurplus != 0.0 || totalDearth != 0.0) {
-      double bolumDouble = netProfitTransaction / totalSurplus;
-      if (bolumDouble.isFinite) {
-        bolum = (bolumDouble.abs() * 100).toInt();
-      } else {
-        // Handle the case where bolumDouble is Infinity or NaN
-        bolum = 0; // or any other appropriate value
+    // 2. Tüm bankalardaki kredi hesaplarının toplam borcunu hesapla
+    double totalAmount = 0;
+    for (final bank in bankAccounts) {
+      final accounts = bank['accounts'] as List<dynamic>? ?? [];
+      for (final account in accounts) {
+        if (account['type'] == 'credit') {
+          final balance = (account['balance'] as num?)?.toDouble() ?? 0;
+          totalAmount += balance;
+        }
       }
-    } else {
-      bolum = 0; // Handle the case where incomeValue is 0
     }
-    incomeYuzdesi = incomeYuzdesi*10;
 
+    // 3. Toplam borç
+    final totalDebt = remainingDebt + totalAmount;
+    final totalDearth = getTotalDearthAmountByCurrency(bankAccounts, currency, startDate, endDate);
     void _onDateRangeSelected(DateRangePickerSelectionChangedArgs args) async{
       final prefs = await SharedPreferences.getInstance();
       // Save the selected date range to SharedPreferences
@@ -1149,7 +1138,6 @@ class _HomePageState extends State<HomePage> {
         _load(); //Reload the UI so expense can be refresh
       });
     }
-
     void _showDateRangePicker() async {
       final prefs = await SharedPreferences.getInstance();
       final startDateStr = prefs.getString('startDate');
@@ -1239,7 +1227,6 @@ class _HomePageState extends State<HomePage> {
         },
       );
     }
-
     Future<String> _formatDateRange() async{
       final prefs = await SharedPreferences.getInstance();
       final startDateStr = prefs.getString('startDate');
@@ -1253,7 +1240,6 @@ class _HomePageState extends State<HomePage> {
       }
       return 'Pick a Date Range';
     }
-
     Widget _compactInfo(String label, dynamic value) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
@@ -1268,119 +1254,6 @@ class _HomePageState extends State<HomePage> {
         ),
       );
     }
-
-    Widget _progressBar({
-      required String label,
-      required double progress,
-      required double maxValue,
-      required double currentValue,
-    }) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          LinearProgressIndicator(
-            value: progress,
-            minHeight: 8,
-            backgroundColor: Colors.grey[300],
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-          ),
-          SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "${currentValue.toStringAsFixed(2)} / ${maxValue.toStringAsFixed(2)}",
-                style: TextStyle(fontSize: 14),
-              ),
-              Text(
-                "${(progress * 100).toStringAsFixed(1)}% Used",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-        ],
-      );
-    }
-
-    Widget _infoChip(IconData icon, String label, String value) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16, color: Colors.blueAccent),
-            const SizedBox(width: 6),
-            Text(
-              "$label: ",
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              value,
-              style: const TextStyle(fontSize: 13),
-            ),
-          ],
-        ),
-      );
-    }
-
-    Widget _creditUsageCard({
-      required String usageLabel,
-      required double progress,
-      required double maxValue,
-      required double currentValue,
-    }) {
-      final moneyFormat = NumberFormat.currency(locale: "tr_TR", symbol: "₺", decimalDigits: 2);
-
-      return Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.blue[50],
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              usageLabel,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.blueAccent),
-            ),
-            const SizedBox(height: 8),
-            LinearProgressIndicator(
-              value: progress,
-              minHeight: 8,
-              backgroundColor: Colors.grey[300],
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "${moneyFormat.format(currentValue)} / ${moneyFormat.format(maxValue)}",
-                  style: const TextStyle(fontSize: 13),
-                ),
-                Text(
-                  "%${(progress * 100).toStringAsFixed(1)} Kullanıldı",
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
-          ],
-        ),
-      );
-    }
-
-
     void _showAccountInfo(BuildContext context) {
       showDialog(
         context: context,
@@ -1425,636 +1298,983 @@ class _HomePageState extends State<HomePage> {
         },
       );
     }
+    Widget _creditUsageCard({
+      required String usageLabel,
+      required double progress,
+      required double maxValue,
+      required double currentValue,
+      required BuildContext context,
+    }) {
+      final moneyFormat = NumberFormat.currency(locale: "tr_TR", symbol: "₺", decimalDigits: 2);
+      final percentage = (progress * 100).toStringAsFixed(1);
+      final progressColor = progress > 0.8
+          ? Colors.orange
+          : progress > 0.6
+          ? Colors.amber
+          : Theme.of(context).colorScheme.primary;
 
-    return Scaffold(
-      body: SingleChildScrollView(
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Özet", style: GoogleFonts.montserrat(fontSize: 20.sp, fontWeight: FontWeight.bold)),
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: _showDateRangePicker,
-                    child: FutureBuilder<String>(
-                      future: _formatDateRange(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Text('Loading...');
-                        } else if (snapshot.hasError) {
-                          return Text('Error: ${snapshot.error}');
-                        } else {
-                          return Text(snapshot.data ?? 'Pick a Date Range');
-                        }
-                      },
-                    )
+      return Container(
+        padding: EdgeInsets.all(16.h),
+        decoration: BoxDecoration(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.grey[800]!.withOpacity(0.6)
+              : Colors.blue[50]!.withOpacity(0.6),
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(
+            color: Theme.of(context).dividerColor.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  usageLabel.toUpperCase(),
+                  style: GoogleFonts.montserrat(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w700,
+                    color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.8),
+                    letterSpacing: 0.5,
                   ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: progressColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Text(
+                    "%$percentage",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.w700,
+                      color: progressColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12.h),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12.r),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 6.h,
+                backgroundColor: Theme.of(context).dividerColor.withOpacity(0.3),
+                valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+              ),
+            ),
+            SizedBox(height: 8.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Kullanım",
+                  style: GoogleFonts.montserrat(
+                    fontSize: 10.sp,
+                    color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7),
+                  ),
+                ),
+                Text(
+                  "Limit",
+                  style: GoogleFonts.montserrat(
+                    fontSize: 10.sp,
+                    color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 4.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  moneyFormat.format(currentValue),
+                  style: GoogleFonts.montserrat(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w600,
+                    color: progressColor,
+                  ),
+                ),
+                Text(
+                  moneyFormat.format(maxValue),
+                  style: GoogleFonts.montserrat(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+
+    Widget _buildActionButton({required IconData icon, required String label, required VoidCallback onTap}) {
+      return GestureDetector(
+        onTap: onTap,
+        child: Column(
+          children: [
+            Container(
+              width: 50.r,
+              height: 50.r,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: 24.r,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              label,
+              style: GoogleFonts.montserrat(
+                fontSize: 11.sp,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    Widget _buildQuickActions() {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildActionButton(
+            icon: Icons.arrow_upward_rounded,
+            label: "Para Gönder",
+            onTap: () {
+
+            },
+          ),
+          _buildActionButton(
+            icon: Icons.arrow_downward_rounded,
+            label: "Para Yatır",
+            onTap: () {
+
+            },
+          ),
+          _buildActionButton(
+            icon: Icons.receipt_long_rounded,
+            label: "Dekont",
+            onTap: () {
+
+            },
+          ),
+          _buildActionButton(
+            icon: Icons.more_horiz_rounded,
+            label: "Diğer",
+            onTap: () => _showAccountInfo(context),
+          ),
+        ],
+      );
+    }
+    Widget _buildLoadingState() {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 32.h),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  Theme.of(context).colorScheme.primary,
+                ),
+                strokeWidth: 2.5,
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                "Hesaplar yükleniyor...",
+                style: GoogleFonts.montserrat(
+                  fontSize: 14.sp,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    Widget _buildNoAccountsState() {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(20.h),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 80.r,
+                height: 80.r,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.grey[800]
+                      : Colors.grey[100],
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.account_balance_wallet_outlined,
+                  size: 40.r,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              SizedBox(height: 24.h),
+              Text(
+                "Henüz hesap eklenmemiş",
+                style: GoogleFonts.montserrat(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Text(
+                "Hesap eklemek için aşağıdaki butona tıklayın\nveya banka bağlantısı yapın",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.montserrat(
+                  fontSize: 14.sp,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                ),
+              ),
+              SizedBox(height: 32.h),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
                   ElevatedButton(
-                      onPressed: _resetDateRange,
-                      child: Text("Reset", style: GoogleFonts.montserrat(fontSize: 12.sp, fontWeight: FontWeight.w500))
-                  )
+                    onPressed: () {
+                      // Navigate to add manual account
+                      context.push('/add-account');
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 14.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                    ),
+                    child: Text(
+                      "Hesap Ekle",
+                      style: GoogleFonts.montserrat(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 16.w),
+                  OutlinedButton(
+                    onPressed: () {
+                      // Navigate to bank connection
+                      context.push('/connect-bank');
+                    },
+                    style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      side: BorderSide(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    child: Text(
+                      "Banka Bağla",
+                      style: GoogleFonts.montserrat(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ),
                 ],
               ),
-              SizedBox(height: 20.h),
+            ],
+          ),
+        ),
+      );
+    }
+    Widget _buildSelectAccountPrompt() {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(20.h),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.arrow_drop_up_rounded,
+                size: 48.h,
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                "Hesap Seçin",
+                style: GoogleFonts.montserrat(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                "Yukarıdaki menüden görüntülemek istediğiniz\nhesabı seçin",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.montserrat(
+                  fontSize: 14.sp,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                ),
+              ),
+              SizedBox(height: 24.h),
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: EdgeInsets.all(16.h),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
                   color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.grey[850] // Dark mode color
-                      : Colors.white, // Light mode color
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.black.withOpacity(0.5) // Dark mode shadow color
-                          : Colors.grey.withOpacity(0.5), // Light mode shadow color
-                      spreadRadius: 5,
-                      blurRadius: 7,
-                      offset: const Offset(0, 3),
+                      ? Colors.grey[800]!.withOpacity(0.5)
+                      : Colors.grey[100]!.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      size: 20.h,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: Text(
+                        "${bankAccounts.length} hesap mevcut",
+                        style: GoogleFonts.montserrat(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        color: const Color.fromARGB(125, 155, 228, 242),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  'Kalan',
-                                  style: GoogleFonts.montserrat(
-                                      fontSize: 15.sp,
-                                      fontWeight: FontWeight.w600
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                Container(
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: isDebtVisible
-                                        ? Colors.orange.withOpacity(0.2)  // aktif renk
-                                        : Colors.grey.withOpacity(0.2),   // pasif renk
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black12,
-                                        blurRadius: 6,
-                                        offset: Offset(0, 2),
-                                      )
-                                    ],
-                                  ),
-                                  child: IconButton(
-                                    icon: Icon(
-                                      isDebtVisible ? Icons.visibility : Icons.visibility_off,
-                                      color: isDebtVisible ? Colors.orange.shade800 : Colors.grey,
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        isDebtVisible = !isDebtVisible;
-                                      });
-                                    },
-                                    tooltip: isDebtVisible ? 'Borç durumunu gizle' : 'Borç durumunu göster',
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Text(
-                              formattedProfitValue == "0,00" ? "---" : formattedProfitValue, // KALAN BİLGİSİ
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    Widget _buildAccountDetails() {
+      return SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Account Details Card
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: Container(
+                key: ValueKey(selectedAccount?['accountId']),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16.r),
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.grey[800]
+                      : Colors.grey[50],
+                  border: Border.all(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[700]!
+                        : Colors.grey[200]!,
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.black.withOpacity(0.3)
+                          : Colors.grey.withOpacity(0.2),
+                      blurRadius: 8.r,
+                      spreadRadius: 1.r,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(16.h),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Account header with name and balance
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              selectedAccount?['name'] ?? 'Hesap',
                               style: GoogleFonts.montserrat(
-                                fontSize: 24.sp,
-                                fontWeight: FontWeight.bold,
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w600,
                               ),
                               overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
                             ),
-                            Visibility(
-                              visible: isDebtVisible,
-                              child: Text(
-                                  "Toplam Borç: ${formattedRemainingDebt}",
-                                style: GoogleFonts.montserrat(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.bold,
-                                  fontStyle: FontStyle.italic
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ),
+                          ),
+                          Text(
+                            '${selectedAccount?['balance']?.toStringAsFixed(2) ?? '0.00'} $currency',
+                            style: GoogleFonts.montserrat(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w700,
+                              color: Theme.of(context).colorScheme.primary,
                             ),
-                            LinearPercentIndicator(
-                              padding: const EdgeInsets.only(right: 10),
-                              backgroundColor: const Color(0xffc6c6c7),
-                              animation: true,
-                              lineHeight: 12.h,
-                              animationDuration: 1000,
-                              percent: bolum/100,
-                              trailing: Text(
-                                  netProfitTransaction < 0 ? "-%${bolum.abs()}" : "%${bolum.abs()}",
-                                  style: GoogleFonts.montserrat(
-                                  color: Colors.black,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold)),
-                              barRadius: const Radius.circular(10),
-                              progressColor: const Color(0xff017b94),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 10),
+                      SizedBox(height: 16.h),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _InfoChip(
+                              icon: Icons.attach_money,
+                              label: "Para Birimi",
+                              value: currency,
+                            ),
+                          ),
+                          SizedBox(width: 10.w),
+                          Expanded(
+                            child: _InfoChip(
+                              icon: Icons.account_balance_wallet,
+                              label: "Hesap Türü",
+                              value: (selectedAccount?['isDebit'] ?? true)
+                                  ? "Banka"
+                                  : "Kredi",
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      SizedBox(height: 16.h),
+
+                      // Credit Usage (if credit card)
+                      if ((selectedAccount?['isDebit'] ?? true) == false)
+                        _creditUsageCard(
+                            usageLabel: "Kredi Kullanımı",
+                            progress: (selectedAccount?['availableCredit'] != null &&
+                                selectedAccount?['creditLimit'] != null &&
+                                selectedAccount?['creditLimit'] != 0)
+                                ? (selectedAccount!['availableCredit'] as num) /
+                                (selectedAccount!['creditLimit'] as num)
+                                : 0.0,
+                            maxValue: ((selectedAccount?['creditLimit'] ?? 0) as num)
+                                .toDouble(),
+                            currentValue:
+                            ((selectedAccount?['availableCredit'] ?? 0) as num)
+                                .toDouble(),
+                            context: context
+                        ),
+
+
+                      // Payment Due Warning
+                      if ((selectedAccount?['previousCutoffDate'] != null &&
+                          selectedAccount?['previousDueDate'] != null) ||
+                          (selectedAccount?['cutoffDate'] != null &&
+                              selectedAccount?['dueDate'] != null))
+                        _PaymentDueWarning(
+                          previousCutoffDate: selectedAccount?['previousCutoffDate'],
+                          previousDueDate: selectedAccount?['previousDueDate'],
+                          currentCutoffDate: DateTime(DateTime.now().year,
+                              DateTime.now().month, selectedAccount?['cutoffDate']),
+                          currentDueDate: selectedAccount?['dueDate'],
+                          debt: selectedAccount?['previousDebt'],
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 16.h),
+
+            // Quick Actions
+            _buildQuickActions(),
+            SizedBox(height: 24.h),
+
+            // Transactions
+            TransactionWidget(
+              transactions: getTransactionsForSelectedAccount(),
+              invoices: invoices,
+              startDate: startDate,
+              endDate: endDate,
+            ),
+          ],
+        ),
+      );
+    }
+    return FutureBuilder(
+      future: getTotalIncomeByDateRange(startDate, endDate),
+      builder: (context, incomeSnapshot) {
+        // Calculate values based on income data
+        double totalIncome = 0.0;
+        double netProfitTransaction = 0.0;
+        String formattedIncomeValue = "0,00";
+        String formattedOutcomeValue = "0,00";
+        String formattedProfitValue = "0,00";
+        String formattedRemainingDebt = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(totalDebt);
+        int bolum = 0;
+
+        if (incomeSnapshot.connectionState == ConnectionState.done && incomeSnapshot.hasData) {
+          totalIncome = incomeSnapshot.data!;
+          netProfitTransaction = totalIncome - totalDearth;
+          formattedIncomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(totalIncome);
+          formattedOutcomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(totalDearth);
+          formattedProfitValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(netProfitTransaction);
+          // Calculate percentage
+          if (totalIncome != 0.0 || totalDearth != 0.0) {
+            double bolumDouble = netProfitTransaction / totalIncome;
+            if (bolumDouble.isFinite) {
+              bolum = (bolumDouble.abs() * 100).toInt();
+            } else {
+              bolum = 0;
+            }
+          } else {
+            bolum = 0;
+          }
+        }
+
+        // Show loading while waiting for income data
+        if (incomeSnapshot.connectionState == ConnectionState.waiting) {
+          return _buildLoadingState();
+        }
+
+        return Scaffold(
+          body: SingleChildScrollView(
+            child: Container(
+              padding: EdgeInsets.all(20.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Özet", style: GoogleFonts.montserrat(fontSize: 18.sp, fontWeight: FontWeight.bold)),
+                  if (selectedAccount == null || selectedAccount!['isDebit'] != false)
                     Row(
                       children: [
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: const Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: const EdgeInsets.all(10),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    const CircleAvatar(
-                                      radius: 13,
-                                      backgroundColor: Color.fromARGB(255, 152, 255, 170),
-                                      child: Icon(Icons.arrow_upward, color: Colors.black, size: 16),
-                                    ),
-                                    SizedBox(width: 5.w),
-                                    Text("Gelir", style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w500,)),
-                                  ],
-                                ),
-                                SizedBox(height: 7.h),
-                                FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    formattedIncomeValue == "0,00" ? "---" : formattedIncomeValue, // GELİR BİLGİSİ
-                                    style: GoogleFonts.montserrat(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 20.sp,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                        GestureDetector(
+                            onTap: _showDateRangePicker,
+                            child: FutureBuilder<String>(
+                              future: _formatDateRange(),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState == ConnectionState.waiting) {
+                                  return Text('Loading...', style: GoogleFonts.montserrat(fontSize: 10.sp, fontWeight: FontWeight.normal));
+                                } else if (snapshot.hasError) {
+                                  return Text('Error: ${snapshot.error}', style: GoogleFonts.montserrat(fontSize: 10.sp, fontWeight: FontWeight.normal));
+                                } else {
+                                  return Text(snapshot.data ?? 'Gün Aralığı Seç', style: GoogleFonts.montserrat(fontSize: 10.sp, fontWeight: FontWeight.normal));
+                                }
+                              },
+                            )
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: const Color.fromARGB(120, 152, 255, 170),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: const EdgeInsets.all(10),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    const CircleAvatar(
-                                      radius: 13,
-                                      backgroundColor: Color.fromARGB(255, 152, 255, 170),
-                                      child: Icon(Icons.arrow_downward, color: Colors.black, size: 16),
-                                    ),
-                                    SizedBox(width: 5.w),
-                                    Text("Gider", style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w500)),
-                                  ],
-                                ),
-                                SizedBox(height: 7.h),
-                                FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    formattedOutcomeValue == "0,00" ? "---" : formattedOutcomeValue, // GİDER BİLGİSİ
-                                    style: GoogleFonts.montserrat(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 20.sp,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                        SizedBox(width: 10.w),
+                        ElevatedButton(
+                            onPressed: _resetDateRange,
+                            child: Text("Sıfırla", style: GoogleFonts.montserrat(fontSize: 8.sp, fontWeight: FontWeight.w500))
                         )
                       ],
                     ),
-                    const SizedBox(height: 10),
-                    debts.isEmpty
-                        ? Text(
-                      "Borç bilgisi yok",
-                      style: TextStyle(color: Colors.grey, fontSize: 14),
-                    )
-                        : Visibility(
-                      visible: isDebtVisible,
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.shade50,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.orange.shade100.withOpacity(0.3),
-                              blurRadius: 12,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  SizedBox(height: 20.h),
+                  Container(
+                    padding: EdgeInsets.all(16.h),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20.r),
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.grey[900]
+                          : Colors.grey[50],
+                      border: Border.all(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.grey[800]!
+                            : Colors.grey[300]!,
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+
+                        /// --- HEADER: BALANCE + VISIBILITY ---
+                        Column(
                           children: [
-                            Text(
-                              "Toplam Borç",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                                color: Colors.orange.shade900,
+                            // Kalan (üstte full width + buton)
+                            GlassmorphismCard(
+                              title: "Kalan",
+                              value: () {
+                                final result = formattedProfitValue == null ? "---" : formattedProfitValue;
+                                print('DEBUG GlassmorphismCard:');
+                                print('  formattedProfitValue: $formattedProfitValue');
+                                print('  condition result: $result');
+                                print('  netProfitTransaction: $netProfitTransaction');
+                                return result;
+                              }(),
+                              icon: Icons.account_balance_wallet,
+                              color: Colors.blueAccent,
+                              trailing: IconButton(
+                                icon: Icon(
+                                  isDebtVisible ? Icons.visibility : Icons.visibility_off,
+                                  color: Colors.white,
+                                ),
+                                onPressed: () {
+                                  setState(() => isDebtVisible = !isDebtVisible);
+                                },
                               ),
                             ),
                             const SizedBox(height: 12),
 
+                            // Gelir & Gider (yan yana)
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(
-                                  "Önceki Dönem Borcu",
-                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                                Expanded(
+                                  child: GlassmorphismCard(
+                                    title: "Gelir",
+                                    value: formattedIncomeValue == "0,00" ? "---" : formattedIncomeValue,
+                                    icon: Icons.arrow_upward,
+                                    color: Colors.greenAccent,
+                                  ),
                                 ),
-                                Text(
-                                  "${remainingDebt.toStringAsFixed(2)} ₺",
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: GlassmorphismCard(
+                                    title: "Gider",
+                                    value: formattedOutcomeValue == "0,00" ? "---" : formattedOutcomeValue,
+                                    icon: Icons.arrow_downward,
+                                    color: Colors.redAccent,
+                                  ),
                                 ),
                               ],
                             ),
-
-                            const SizedBox(height: 6),
-
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  "Yeni Borçlar",
-                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                                ),
-                                Text(
-                                  "${totalAmount.toStringAsFixed(2)} ₺",
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 16),
-
-                            LinearProgressIndicator(
-                              value: totalDebt == 0 ? 0 : remainingDebt / totalDebt,
-                              backgroundColor: Colors.orange.shade100,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.orange.shade600),
-                              minHeight: 10,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-
-                            const SizedBox(height: 16),
-
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: IconButton(
-                                icon: Icon(
-                                  showDebtDetails ? Icons.expand_less : Icons.expand_more,
-                                  color: Colors.orange.shade800,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    showDebtDetails = !showDebtDetails;
-                                  });
-                                },
-                                tooltip: showDebtDetails ? "Detayları Gizle" : "Detayları Göster",
-                              ),
-                            ),
-
-                            if (showDebtDetails)
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: debts.map((debt) {
-                                  final amount = (debt['amount'] as num).toDouble();
-                                  final title = debt['title'] ?? 'İsimsiz Borç';
-                                  final percent = totalAmount == 0 ? 0.0 : amount / totalAmount;
-
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 8),
-                                    child: Row(
-                                      crossAxisAlignment: CrossAxisAlignment.center,
-                                      children: [
-                                        CircularPercentIndicator(
-                                          radius: 18,
-                                          lineWidth: 4,
-                                          percent: percent.clamp(0.0, 1.0),
-                                          center: Text(
-                                            '${(percent * 100).toStringAsFixed(0)}%',
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.orange.shade800,
-                                            ),
-                                          ),
-                                          progressColor: Colors.orange.shade600,
-                                          backgroundColor: Colors.orange.shade200.withOpacity(0.3),
-                                          circularStrokeCap: CircularStrokeCap.round,
-                                        ),
-                                        const SizedBox(width: 16),
-                                        Expanded(
-                                          child: Text(
-                                            '$title - ${amount.toStringAsFixed(2)} ₺',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 15,
-                                              color: Colors.orange.shade900,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
                           ],
                         ),
-                      )
-                    ),
-                    const SizedBox(height: 10)
-                  ],
-                ),
-              ),
-              SizedBox(height: 20.h),
-              bankAccounts.isEmpty
-              ? Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: Colors.redAccent.withOpacity(0.1),
-                ),
-                child: Center(
-                  child: Text(
-                    "Lütfen önce hesap ekleyin.",
-                    style: GoogleFonts.montserrat(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.redAccent,
-                    ),
-                  ),
-                ),
-              )
-                  : Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.grey[850]
-                      : Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.black.withOpacity(0.5)
-                          : Colors.grey.withOpacity(0.3),
-                      spreadRadius: 3,
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: isLoading
-                          ? const CircularProgressIndicator()
-                          : bankAccounts.isEmpty
-                          ? const Text("No accounts available.")
-                          : Wrap(
-                        runSpacing: 8,
-                        children: [
-                          DropdownButtonFormField<int>(
-                            value: selectedAccount?['accountId'],
-                            decoration: InputDecoration(
-                              labelText: "Choose an account",
-                              isDense: true,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
+
+                        if (isDebtVisible) ...[
+                          SizedBox(height: 8.h),
+                          Text(
+                            "Toplam Borç: $formattedRemainingDebt",
+                            style: GoogleFonts.montserrat(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w500,
+                              color: Theme.of(context).hintColor,
                             ),
-                            items: bankAccounts.expand<DropdownMenuItem<int>>((bank) {
-                              return (bank['accounts'] as List?)?.map((account) {
-                                return DropdownMenuItem<int>(
-                                  value: account['accountId'],
-                                  child: Text("${bank['bankName']} - ${account['name']}"),
-                                );
-                              }) ?? [];
-                            }).toList(),
-                            onChanged: (selectedAccountId) {
-                              if (selectedAccountId != null) {
-                                final account = _findAccountById(selectedAccountId);
-                                if (account != null) {
-                                  setState(() {
-                                    selectedAccount = account;
-                                  });
-                                  _saveSelectedAccount(account);
-                                }
-                              }
-                            },
                           ),
-                          if (selectedAccount != null)
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                        ],
+                        /// --- DEBT SECTION ---
+                        AnimatedSize(
+                          duration: Duration(milliseconds: 400),
+                          curve: Curves.easeInOut,
+                          child: Visibility(
+                            visible: isDebtVisible,
+                            child: Column(
                               children: [
+                                SizedBox(height: 8.h),
                                 Container(
+                                  padding: EdgeInsets.all(12.h),
                                   decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(16.r),
                                     color: Theme.of(context).brightness == Brightness.dark
                                         ? Colors.grey[850]
                                         : Colors.white,
-                                    borderRadius: BorderRadius.circular(16),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.05),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
+                                    border: Border.all(
+                                      color: Theme.of(context).brightness == Brightness.dark
+                                          ? Colors.grey[800]!
+                                          : Colors.grey[300]!,
+                                    ),
                                   ),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Wrap(
-                                        spacing: 12,
-                                        runSpacing: 12,
+
+                                      /// --- TITLE & TOGGLE ---
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          _infoChip(Icons.attach_money, "Para Birimi", currency),
-                                          _infoChip(
-                                            Icons.account_balance_wallet,
-                                            "Hesap Türü",
-                                            (selectedAccount?['isDebit'] ?? true) ? "Banka" : "Kredi",
+                                          Text(
+                                            "Toplam Borç",
+                                            style: GoogleFonts.montserrat(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14.sp,
+                                              color: Theme.of(context).colorScheme.primary,
+                                            ),
+                                          ),
+                                          IconButton(
+                                            icon: Icon(
+                                              showDebtDetails
+                                                  ? Icons.expand_less
+                                                  : Icons.expand_more,
+                                              size: 22.r,
+                                              color: Theme.of(context).colorScheme.primary,
+                                            ),
+                                            onPressed: () {
+                                              setState(() {
+                                                showDebtDetails = !showDebtDetails;
+                                              });
+                                            },
                                           ),
                                         ],
                                       ),
+                                      SizedBox(height: 12.h),
+
+                                      /// --- PREVIOUS PERIOD & NEW DEBTS ---
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.info_outline, size: 20),
-                                            tooltip: "Hesap Bilgileri",
-                                            onPressed: () => _showAccountInfo(context),
+                                          Text(
+                                            "Önceki Dönem",
+                                            style: GoogleFonts.montserrat(
+                                              fontSize: 13.sp,
+                                              color: Theme.of(context).hintColor,
+                                            ),
                                           ),
-                                          const SizedBox(width: 8),
-                                          TextButton.icon(
-                                            onPressed: _resetSelectedAccount,
-                                            icon: const Icon(Icons.refresh, size: 18),
-                                            label: const Text("Sıfırla", style: TextStyle(fontSize: 13)),
-                                            style: TextButton.styleFrom(
-                                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                              backgroundColor: Theme.of(context).brightness == Brightness.dark
-                                                  ? Colors.white.withOpacity(0.05)
-                                                  : Colors.grey.withOpacity(0.1),
-                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                              visualDensity: VisualDensity.compact,
+                                          Text(
+                                            "${remainingDebt.toStringAsFixed(2)} ₺",
+                                            style: GoogleFonts.montserrat(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 13.sp,
                                             ),
                                           ),
                                         ],
                                       ),
-                                      if ((selectedAccount?['isDebit'] ?? true) == false)
-                                        _creditUsageCard(
-                                          usageLabel: "Kredi Kullanımı",
-                                          progress: selectedAccount!['availableCredit']! / selectedAccount!['creditLimit']!,
-                                          maxValue: selectedAccount!['creditLimit']!,
-                                          currentValue: selectedAccount!['availableCredit']!,
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                if (selectedAccount?['previousCutoffDate'] != null &&
-                                    selectedAccount?['previousDueDate'] != null)
-                                  Builder(
-                                    builder: (context) {
-                                      final now = DateTime.now();
-                                      final inputFormat = DateFormat('dd/MM/yyyy');
-                                      final outputDateFormat = DateFormat("d MMMM", "tr_TR"); // Örn: 23 Mayıs
-                                      final moneyFormat = NumberFormat.currency(locale: "tr_TR", symbol: "₺", decimalDigits: 2);
-
-                                      final previousCutoff = inputFormat.parse(selectedAccount!['previousCutoffDate']);
-                                      final previousDue = inputFormat.parse(selectedAccount!['previousDueDate']);
-
-                                      // Son ödeme günü bugün veya geçtiyse kırmızı, değilse sarı
-                                      final isOverdue = now.isAfter(previousDue) || now.isAtSameMomentAs(previousDue);
-                                      final isInRange = now.isAfter(previousCutoff) && now.isBefore(previousDue);
-
-                                      if (!isOverdue) {
-                                        return Container(
-                                          decoration: BoxDecoration(
-                                            color: Theme.of(context).brightness == Brightness.dark
-                                                ? Colors.grey[850]
-                                                : Colors.grey[200],
-                                            borderRadius: BorderRadius.circular(10),
-                                            boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 2)],
+                                      SizedBox(height: 8.h),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            "Yeni Borçlar",
+                                            style: GoogleFonts.montserrat(
+                                              fontSize: 13.sp,
+                                              color: Theme.of(context).hintColor,
+                                            ),
                                           ),
-                                          padding: const EdgeInsets.all(12),
+                                          Text(
+                                            "${totalAmount.toStringAsFixed(2)} ₺",
+                                            style: GoogleFonts.montserrat(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 13.sp,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+
+                                      SizedBox(height: 16.h),
+
+                                      LinearProgressIndicator(
+                                        value: totalDebt == 0 ? 0 : remainingDebt / totalDebt,
+                                        backgroundColor: Colors.grey.withOpacity(0.2),
+                                        valueColor: AlwaysStoppedAnimation<Color>(
+                                            Theme.of(context).colorScheme.primary),
+                                        minHeight: 8.h,
+                                        borderRadius: BorderRadius.circular(8.r),
+                                      ),
+
+                                      /// --- DEBT DETAILS ---
+                                      AnimatedSize(
+                                        duration: Duration(milliseconds: 400),
+                                        curve: Curves.easeInOut,
+                                        child: Visibility(
+                                          visible: showDebtDetails,
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              Row(
-                                                children: [
-                                                  Icon(
-                                                    Icons.warning_rounded,
-                                                    color: isOverdue ? Colors.red : Colors.orange,
-                                                    size: 20,
-                                                  ),
-                                                  const SizedBox(width: 8),
-                                                  Text(
-                                                    "Son Ödeme: ${outputDateFormat.format(previousDue)}",
-                                                    style: TextStyle(
-                                                      fontWeight: FontWeight.bold,
-                                                      color: isOverdue ? Colors.red : Colors.orange[800],
+                                              SizedBox(height: 16.h),
+                                              if (debts.isNotEmpty)
+                                                Column(
+                                                  children: debts.map((debt) {
+                                                    final amount =
+                                                    (debt['amount'] as num).toDouble();
+                                                    final title =
+                                                        debt['title'] ?? 'İsimsiz Borç';
+                                                    final percent = totalAmount == 0
+                                                        ? 0.0
+                                                        : amount / totalAmount;
+                                                    return Padding(
+                                                      padding: EdgeInsets.symmetric(
+                                                          vertical: 6.h),
+                                                      child: Row(
+                                                        children: [
+                                                          CircularPercentIndicator(
+                                                            radius: 20.r,
+                                                            lineWidth: 4.r,
+                                                            percent: percent.clamp(0.0, 1.0),
+                                                            center: Text(
+                                                              '${(percent * 100).toStringAsFixed(0)}%',
+                                                              style: GoogleFonts.montserrat(
+                                                                fontSize: 11.sp,
+                                                                fontWeight: FontWeight.w600,
+                                                              ),
+                                                            ),
+                                                            progressColor:
+                                                            Theme.of(context)
+                                                                .colorScheme
+                                                                .primary,
+                                                            backgroundColor: Colors.grey
+                                                                .withOpacity(0.2),
+                                                            circularStrokeCap:
+                                                            CircularStrokeCap.round,
+                                                          ),
+                                                          SizedBox(width: 12.w),
+                                                          Expanded(
+                                                            child: Text(
+                                                              "$title - ${amount.toStringAsFixed(2)} ₺",
+                                                              style:
+                                                              GoogleFonts.montserrat(
+                                                                fontSize: 13.sp,
+                                                                fontWeight: FontWeight.w500,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                                ),
+                                              if (debts.isEmpty)
+                                                Padding(
+                                                  padding:
+                                                  EdgeInsets.symmetric(vertical: 12.h),
+                                                  child: Text(
+                                                    "Borç bilgisi yok",
+                                                    style: GoogleFonts.montserrat(
+                                                      fontSize: 12.sp,
+                                                      fontStyle: FontStyle.italic,
+                                                      color: Theme.of(context).hintColor,
                                                     ),
                                                   ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Row(
-                                                children: [
-                                                  const Icon(Icons.payments_outlined, size: 20),
-                                                  const SizedBox(width: 8),
-                                                  Text(
-                                                    "Kalan Ekstre Borcu: ${moneyFormat.format(selectedAccount!['previousDebt'])}",
-                                                    style: const TextStyle(fontWeight: FontWeight.w500),
-                                                  ),
-                                                ],
+                                                ),
+
+                                              if (debts.isNotEmpty) SizedBox(height: 16.h),
+
+                                              /// --- BANKS & ACCOUNTS ---
+                                              Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: bankAccounts.map((bank) {
+                                                  final bankName =
+                                                      bank['bankName'] ?? 'Banka İsmi Yok';
+                                                  final accounts = bank['accounts']
+                                                  as List<dynamic>? ??
+                                                      [];
+                                                  return Padding(
+                                                    padding: EdgeInsets.only(bottom: 16.h),
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                      children: [
+                                                        Text(
+                                                          bankName,
+                                                          style: GoogleFonts.montserrat(
+                                                            fontSize: 14.sp,
+                                                            fontWeight: FontWeight.bold,
+                                                          ),
+                                                        ),
+                                                        SizedBox(height: 8.h),
+                                                        ...accounts.map((account) {
+                                                          final accountName =
+                                                              account['name'] ??
+                                                                  'Hesap İsmi Yok';
+                                                          final debts =
+                                                          List<Map<String, dynamic>>.from(
+                                                              account['debts'] ?? []);
+                                                          if (debts.isEmpty) {
+                                                            return Padding(
+                                                              padding: EdgeInsets.only(
+                                                                  left: 16.w, bottom: 6.h),
+                                                              child: Text(
+                                                                "Borç Yok - $accountName",
+                                                                style:
+                                                                GoogleFonts.montserrat(
+                                                                  fontSize: 12.sp,
+                                                                  color: Theme.of(context)
+                                                                      .hintColor,
+                                                                ),
+                                                              ),
+                                                            );
+                                                          }
+                                                          return Padding(
+                                                            padding: EdgeInsets.only(
+                                                                left: 16.w, bottom: 8.h),
+                                                            child: Column(
+                                                              crossAxisAlignment:
+                                                              CrossAxisAlignment.start,
+                                                              children: [
+                                                                Text(
+                                                                  accountName,
+                                                                  style:
+                                                                  GoogleFonts.montserrat(
+                                                                    fontSize: 13.sp,
+                                                                    fontWeight:
+                                                                    FontWeight.w600,
+                                                                  ),
+                                                                ),
+                                                                SizedBox(height: 4.h),
+                                                                ...debts.map((debt) {
+                                                                  final amount = (debt['amount']
+                                                                  as num?)
+                                                                      ?.toDouble() ??
+                                                                      0;
+                                                                  final title = debt['title'] ??
+                                                                      'İsimsiz Borç';
+                                                                  return Padding(
+                                                                    padding: EdgeInsets.only(
+                                                                        left: 12.w,
+                                                                        bottom: 4.h),
+                                                                    child: Text(
+                                                                      "• $title: ${amount.toStringAsFixed(2)} ₺",
+                                                                      style: GoogleFonts
+                                                                          .montserrat(
+                                                                        fontSize: 12.sp,
+                                                                        color: Theme.of(
+                                                                            context)
+                                                                            .hintColor,
+                                                                      ),
+                                                                    ),
+                                                                  );
+                                                                }).toList(),
+                                                              ],
+                                                            ),
+                                                          );
+                                                        }).toList(),
+                                                      ],
+                                                    ),
+                                                  );
+                                                }).toList(),
                                               ),
                                             ],
                                           ),
-                                        );
-                                      } else {
-                                        return const SizedBox.shrink(); // Tarih aralığında değilse gizle
-                                      }
-                                    },
+                                        ),
+                                      ),
+                                    ],
                                   ),
-
+                                ),
                               ],
-                            )
-                        ],
-                      ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    TransactionWidget(
-                      transactions: getTransactionsForSelectedAccount(),
-                      invoices: invoices,
-                      startDate: startDate,
-                      endDate: endDate,
-                    ),
-                  ],
-                ),
+                  ),
+                  SizedBox(height: 20.h),
+                  isLoading
+                      ? _buildLoadingState()
+                      : bankAccounts.isEmpty
+                      ? _buildNoAccountsState()
+                      : selectedAccount == null
+                      ? _buildSelectAccountPrompt()
+                      : _buildAccountDetails(),
+                  SizedBox(height: 20.h),
+                  Text("Yaklaşan Ödemeler", style: GoogleFonts.montserrat(fontSize: 18.sp, fontWeight: FontWeight.bold)),
+                  //ListView.builder(shrinkWrap: true, physics: NeverScrollableScrollPhysics(), itemCount: invoices.length,itemBuilder: (context, index) {return Text(invoices[index].toDisplayString());},),
+                  SizedBox(height: 20.h),
+                  selectedAccount != null
+                      ? UpcomingPaymentsSection(account: Account.fromJson(selectedAccount!))
+                      : const SizedBox.shrink(),
+                  const SizedBox(height: 20)
+                ],
               ),
-              SizedBox(height: 20.h),
-              Text("Yaklaşan Ödemeler", style: GoogleFonts.montserrat(fontSize: 20.sp, fontWeight: FontWeight.bold)),
-              //ListView.builder(shrinkWrap: true, physics: NeverScrollableScrollPhysics(), itemCount: invoices.length,itemBuilder: (context, index) {return Text(invoices[index].toDisplayString());},),
-              SizedBox(height: 20.h),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.grey[850] // Dark mode color
-                      : Colors.white, // Light mode color
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.black.withOpacity(0.5) // Dark mode shadow color
-                          : Colors.grey.withOpacity(0.5), // Light mode shadow color
-                      spreadRadius: 5,
-                      blurRadius: 7,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: InvoicePage(onReload: _load),
-              ),
-              const SizedBox(height: 20)
-            ],
-          ),
-        ),
-      ),
+            ),
+          )
+        );
+      },
     );
   }
 
-// Add this inside your _HomePageState class
   Map<String, dynamic>? _findAccountById(int? accountId) {
     if (accountId == null) {
       print('Warning: _findAccountById called with null accountId');
@@ -2069,10 +2289,11 @@ class _HomePageState extends State<HomePage> {
             ...account, // Spread all account fields
             'bankId': bank['bankId'],
             'bankName': bank['bankName'],
-            'currency': bank['currency'],
-            'isDebit': bank['isDebit'] ?? true,
-            'creditLimit': bank['creditLimit'] ?? false,
-            'cutoffDate': bank['cutoffDate'] ?? false,
+            'currency': account['currency'],
+            'isDebit': account['isDebit'],
+            'creditLimit': account['creditLimit'],
+            'availableCredit': account['availableCredit'],
+            'cutoffDate': account['cutoffDate']
             // Don't include nested accounts array since we're selecting one account
           };
         }
@@ -2082,3 +2303,329 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
+class GlassmorphismCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color color;
+  final Widget? trailing;
+
+  const GlassmorphismCard({
+    super.key,
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.color,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12.r),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(8.r),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.3),
+              width: 1.2,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Sol taraf
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(icon, size: 28, color: color),
+                  const SizedBox(height: 8),
+                  Text(
+                    title,
+                    style: GoogleFonts.montserrat(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: GoogleFonts.montserrat(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+
+              // Sağ taraf (opsiyonel buton vb.)
+              if (trailing != null) trailing!,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _InfoChip({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+      decoration: BoxDecoration(
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Colors.grey[800]!.withOpacity(0.6)
+            : Colors.grey[50],
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(
+          color: Theme.of(context).dividerColor.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 24.r,
+            height: 24.r,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              size: 12.h,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+          SizedBox(width: 8.w),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: GoogleFonts.montserrat(
+                  fontSize: 9.sp,
+                  color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 2.h),
+              Text(
+                value,
+                style: GoogleFonts.montserrat(
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PaymentDueWarning extends StatelessWidget {
+  final String? previousCutoffDate;
+  final String? previousDueDate;
+  final DateTime? currentCutoffDate;
+  final String? currentDueDate;
+  final dynamic debt;
+
+  const _PaymentDueWarning({
+    this.previousCutoffDate,
+    this.previousDueDate,
+    this.currentCutoffDate,
+    this.currentDueDate,
+    required this.debt,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final inputFormat = DateFormat('dd/MM/yyyy');
+    final outputDateFormat = DateFormat("d MMMM", "tr_TR");
+    final moneyFormat = NumberFormat.currency(
+      locale: "tr_TR",
+      symbol: "₺",
+      decimalDigits: 2,
+    );
+
+    DateTime? prevCutoff;
+    DateTime? prevDue;
+    DateTime? currCutoff;
+    DateTime? currDue;
+
+    if (previousCutoffDate != null && previousDueDate != null) {
+      prevCutoff = inputFormat.parse(previousCutoffDate!);
+      prevDue = inputFormat.parse(previousDueDate!);
+    }
+
+    if (currentCutoffDate != null && currentDueDate != null) {
+      currCutoff = currentCutoffDate;
+      currDue = inputFormat.parse(currentDueDate!);
+    }
+
+    final inPrevRange = prevCutoff != null &&
+        prevDue != null &&
+        (now.isAfter(prevCutoff) || now.isAtSameMomentAs(prevCutoff)) &&
+        now.isBefore(prevDue);
+
+    final inCurrRange = currCutoff != null &&
+        currDue != null &&
+        (now.isAfter(currCutoff) || now.isAtSameMomentAs(currCutoff)) &&
+        now.isBefore(currDue);
+
+    if (!inPrevRange && !inCurrRange) return const SizedBox.shrink();
+
+    final shownDueDate = inPrevRange ? prevDue : currDue;
+    final isOverdue = shownDueDate != null && now.isAfter(shownDueDate);
+    final daysUntilDue = shownDueDate != null ? shownDueDate.difference(now).inDays : 0;
+
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.only(top: 16.h),
+      padding: EdgeInsets.all(16.h),
+      decoration: BoxDecoration(
+        color: isOverdue
+            ? Colors.red.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.15 : 0.08)
+            : Colors.orange.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.15 : 0.08),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: isOverdue
+              ? Colors.red.withOpacity(0.3)
+              : Colors.orange.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32.r,
+                height: 32.r,
+                decoration: BoxDecoration(
+                  color: isOverdue
+                      ? Colors.red.withOpacity(0.2)
+                      : Colors.orange.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isOverdue ? Icons.error_outline : Icons.warning_amber_rounded,
+                  size: 18.h,
+                  color: isOverdue ? Colors.red : Colors.orange,
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isOverdue ? "ÖDEME GECİKTİ" : "SON ÖDEME YAKLAŞIYOR",
+                      style: GoogleFonts.montserrat(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11.sp,
+                        color: isOverdue ? Colors.red : Colors.orange[800],
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    if (shownDueDate != null)
+                      Text(
+                        isOverdue
+                            ? "${outputDateFormat.format(shownDueDate)} tarihinde sona erdi"
+                            : "${daysUntilDue} gün kaldı",
+                        style: GoogleFonts.montserrat(
+                          fontSize: 10.sp,
+                          color: Theme.of(context).textTheme.bodySmall?.color,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+            decoration: BoxDecoration(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.black.withOpacity(0.3)
+                  : Colors.white.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Kalan borç:",
+                  style: GoogleFonts.montserrat(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  moneyFormat.format(debt),
+                  style: GoogleFonts.montserrat(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w700,
+                    color: isOverdue ? Colors.red : Colors.orange[800],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (isOverdue) ...[
+            SizedBox(height: 12.h),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  // Add payment action
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  "HEMEN ÖDE",
+                  style: GoogleFonts.montserrat(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}

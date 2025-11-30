@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui';
 
 import 'package:custom_sliding_segmented_control/custom_sliding_segmented_control.dart';
 import 'package:flutter/cupertino.dart';
@@ -14,7 +15,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../blocs/income-selections.dart';
 import '../../blocs/settings/selected-index-cubit.dart';
 import '../../models/income-group-widget.dart';
+import '../../models/income_model.dart';
 import '../../models/transaction.dart';
+import '../../storage/income_storage_service.dart';
 
 class IncomePage extends StatefulWidget {
   @override
@@ -22,9 +25,10 @@ class IncomePage extends StatefulWidget {
 }
 
 class _IncomePageState extends State<IncomePage> {
+  List<Income> incomes = [];
   List<Map<String, dynamic>> bankAccounts = [];
   Map<String, dynamic>? selectedAccount;
-  bool isLoading = true; // Flag to indicate loading state
+  bool isLoading = true;
 
   String selectedTitle = 'Toplam';
   String selectedKey = "";
@@ -41,10 +45,78 @@ class _IncomePageState extends State<IncomePage> {
   int? segmentControlGroupValue = 0;
   int totalValues = 0;
 
+  bool isEditing = false;
+  bool isIncomeAdding = false;
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController dayController = TextEditingController();
+  final TextEditingController incomeController = TextEditingController();
+  FocusNode focusNode = FocusNode();
+
+  double sumOfSavingValue = 0.0;
+  double savingsValue = 0.0;
+  double totalInvestValue = 0.0;
+  double sumInvestValue = 0.0;
+  double result = 0.0;
+  String formattedsavingsValue = "";
+  String formattedSumOfSavingValue = "";
+  String formattedSumOfIncomeValue = "";
+
   @override
   void initState() {
     super.initState();
     _load();
+    _loadIncomes();
+  }
+
+  // Load incomes from storage
+  Future<void> _loadIncomes() async {
+    final loadedIncomes = await IncomeStorageService.loadIncomes();
+    setState(() {
+      incomes = loadedIncomes;
+    });
+  }
+
+  // Updated method to add income using the new storage system
+  Future<void> _addIncomeToStorage() async {
+    final amount = double.tryParse(incomeController.text);
+
+    if (amount != null && amount > 0 && selectedAccount != null) {
+      final newIncome = Income(
+        incomeId: DateTime.now().millisecondsSinceEpoch,
+        accountId: selectedAccount!['accountId'],
+        accountName: selectedAccount!['name'] ?? 'Unknown Account',
+        source: newSelectedOption,
+        amount: amount,
+        date: DateTime.now(),
+        currency: selectedAccount!['currency'] ?? 'TRY',
+        description: 'Income from $newSelectedOption',
+      );
+
+      // Save to income storage
+      await IncomeStorageService.addIncome(newIncome);
+
+      // Reload incomes to update UI
+      await _loadIncomes();
+
+      setState(() {
+        isIncomeAdding = false;
+        incomeController.clear();
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gelir başarıyla eklendi'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lütfen geçerli bir miktar girin ve hesap seçin'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   String labelForOption(SelectedOption option) {
@@ -69,7 +141,7 @@ class _IncomePageState extends State<IncomePage> {
 
     setState(() {
       sumInvestValue = ab3;
-      // Handle account data list
+
       if (accountDataListJson != null) {
         try {
           List<Map<String, dynamic>> decodedData = List<Map<String, dynamic>>.from(jsonDecode(accountDataListJson));
@@ -80,16 +152,13 @@ class _IncomePageState extends State<IncomePage> {
             final Map<String, dynamic> accountFromPrefs = Map<String, dynamic>.from(jsonDecode(accountData));
             print('Saved account data: $accountFromPrefs');
 
-            // Only proceed if we have both bankId and accountId
             if (accountFromPrefs['bankId'] != null && accountFromPrefs['accountId'] != null) {
-              // Find the bank first
               final bank = bankAccounts.firstWhere(
                     (bank) => bank['bankId'] == accountFromPrefs['bankId'],
                 orElse: () => {},
               );
 
               if (bank.isNotEmpty) {
-                // Then find the specific account within that bank
                 final accounts = bank['accounts'] as List?;
                 if (accounts != null) {
                   final account = accounts.firstWhere(
@@ -98,434 +167,598 @@ class _IncomePageState extends State<IncomePage> {
                   );
 
                   if (account.isNotEmpty) {
-                    // Combine bank info with account info
                     selectedAccount = {
                       ...account,
                       'bankId': bank['bankId'],
                       'bankName': bank['bankName'],
-                      // Include any other bank fields you need
                     };
                   }
                 }
               }
             }
           }
-
-          setState(() => isLoading = false);
         } catch (e) {
           print('Error decoding account data: $e');
-          setState(() => isLoading = false);
         }
-      } else {
-        setState(() => isLoading = false);
       }
-
-      print('Seçili hesap: $accountData');
-      print('Selected account1: $selectedAccount');
 
       if (accountData != null && selectedAccount == null) {
         final savedData = jsonDecode(accountData);
-
-        // Check if accountId exists and is not null
         if (savedData['accountId'] != null) {
           final account = _findAccountById(savedData['accountId']);
           if (account != null) {
-            setState(() {
-              selectedAccount = account;
-            });
+            selectedAccount = account;
           }
-        } else {
-          print('Warning: savedData contains null accountId: $savedData');
         }
       }
+
+      isLoading = false;
     });
   }
 
-  // Define TextEditingControllers for the editable fields
-  TextEditingController keyController = TextEditingController();
-  TextEditingController valueController = TextEditingController();
-
-  Future<void> _saveAccounts() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('accountDataList', jsonEncode(bankAccounts));
-  }
-
-  Future<void> _addTransactionToAccount(String accountId, Transaction transaction) async {
-    try {
-      setState(() {
-        for (var bank in bankAccounts) {
-          final account = (bank['accounts'] as List).firstWhere(
-                (acc) => acc['accountId'].toString() == accountId,
-            orElse: () => null,
-          );
-
-          if (account != null) {
-            account['transactions'] ??= [];
-            (account['transactions'] as List).add(transaction.toJson());
-
-            double currentBalance = (account['balance'] ?? 0.0) as double;
-            double amount = transaction.amount;
-
-            if (transaction.isSurplus) {
-              // Gelir ise artır
-              account['balance'] = currentBalance + amount;
-            } else {
-              // Gider ise azalt
-              account['balance'] = currentBalance - amount;
-            }
-            break;
-          }
-        }
-      });
-      await _saveAccounts();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to add transaction: $e")),
-      );
-    }
-  }
-
-  bool isEditing = false;
-  bool isIncomeAdding = false;
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController dayController = TextEditingController();
-  final TextEditingController incomeController = TextEditingController();
-  FocusNode focusNode = FocusNode();
-
-  double sumOfSavingValue = 0.0;
-  double savingsValue = 0.0;
-  double totalInvestValue = 0.0;
-  double sumInvestValue = 0.0;
-  double result = 0.0;
-  String formattedsavingsValue = "";
-  String formattedSumOfSavingValue = "";
-  String formattedSumOfIncomeValue = "";
-
   @override
   Widget build(BuildContext context) {
-
     sumOfSavingValue = sumInvestValue.isNaN ? 0.0 : sumInvestValue;
     formattedIncomeValue = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(incomeValue);
     nameController.text = formattedIncomeValue;
+
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDarkMode ? Colors.grey[900]!.withOpacity(0.3) : Colors.white.withOpacity(0.3);
+    final borderColor = isDarkMode ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.1);
+
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          "Gelirler Detayı",
+          style: TextStyle(
+            fontSize: 20.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: Theme.of(context).colorScheme.onBackground,
+      ),
       body: SingleChildScrollView(
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Gelirler Detayı",
-                style: TextStyle(
-                  fontFamily: 'Keep Calm',
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 20.h),
-              Container(
-                  padding: EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.grey[850] // Dark mode color
-                        : Colors.white, // Light mode color
-                    boxShadow: [
-                      BoxShadow(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.black.withOpacity(0.5) // Dark mode shadow color
-                            : Colors.grey.withOpacity(0.5), // Light mode shadow color
-                        spreadRadius: 5,
-                        blurRadius: 7,
-                        offset: Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            bankAccounts.isEmpty
-                                ? const Text("Banka hesabı bulunamadı.")
-                                : Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              child: DropdownButtonFormField<int>(
-                                value: selectedAccount?['accountId'],
-                                decoration: InputDecoration(
-                                  labelText: "Choose an account",
-                                  isDense: true,
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
+        padding: EdgeInsets.all(16.h),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Account Selection Section - ADD THIS
+            if (bankAccounts.isNotEmpty) ...[
+              _buildAccountSelector(),
+              SizedBox(height: 16.h),
+            ],
+
+            // Income Addition Section
+            GlassmorphismContainer(
+              blur: 10,
+              borderRadius: 16,
+              borderColor: borderColor,
+              color: bgColor,
+              padding: EdgeInsets.all(16.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (!isIncomeAdding)
+                    GlassmorphismContainer(
+                      blur: 5,
+                      borderRadius: 12,
+                      borderColor: borderColor,
+                      color: isDarkMode ? Colors.green[900]!.withOpacity(0.3) : Colors.green[50]!.withOpacity(0.6),
+                      padding: EdgeInsets.all(16.h),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Gelir Ekle",
+                            style: GoogleFonts.montserrat(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF2E7D32),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              if (selectedAccount == null && bankAccounts.isNotEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Lütfen önce bir hesap seçin'),
+                                    backgroundColor: Colors.orange,
                                   ),
+                                );
+                                return;
+                              }
+                              setState(() {
+                                isIncomeAdding = true;
+                              });
+                            },
+                            icon: Icon(
+                              Icons.add_circle,
+                              color: Color(0xFF2E7D32),
+                              size: 28.r,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  if (isIncomeAdding)
+                    GlassmorphismContainer(
+                      blur: 5,
+                      borderRadius: 12,
+                      borderColor: borderColor,
+                      color: isDarkMode ? Colors.green[900]!.withOpacity(0.3) : Colors.green[50]!.withOpacity(0.6),
+                      padding: EdgeInsets.all(16.h),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Gelir Türü",
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF2E7D32),
                                 ),
-                                items: bankAccounts.expand<DropdownMenuItem<int>>((bank) {
-                                  return (bank['accounts'] as List?)?.map((account) {
-                                    return DropdownMenuItem<int>(
-                                      value: account['accountId'],
-                                      child: Text("${bank['bankName']} - ${account['name']}"),
-                                    );
-                                  }) ?? [];
-                                }).toList(),
-                                onChanged: (selectedAccountId) {
-                                  if (selectedAccountId != null) {
-                                    final account = _findAccountById(selectedAccountId);
-                                    if (account != null) {
-                                      setState(() {
-                                        selectedAccount = account;
-                                      });
-                                      _saveSelectedAccount(account);
-                                    }
-                                  }
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.close,
+                                  color: Color(0xFF2E7D32),
+                                  size: 24.r,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    isIncomeAdding = false;
+                                    incomeController.clear();
+                                  });
                                 },
                               ),
-                            ),
-                            SizedBox(height: 10),
-                            Container(
-                              decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20),
-                              ),
-                              child:  Column(
+                            ],
+                          ),
+
+                          SizedBox(height: 16.h),
+
+                          // Selected Account Display
+                          if (selectedAccount != null)
+                            GlassmorphismContainer(
+                              blur: 3,
+                              borderRadius: 8,
+                              borderColor: borderColor,
+                              color: Colors.blue[50]!.withOpacity(0.3),
+                              padding: EdgeInsets.all(12.h),
+                              child: Row(
                                 children: [
-                                  if (!isIncomeAdding)
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        color:
-                                        Color.fromARGB(120, 152, 255, 170),
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      padding: EdgeInsets.only(left: 20,right: 20),
-                                      child: SizedBox(
-                                        child: Row(
-                                          mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text("Gelir Ekle",
-                                                style: GoogleFonts.montserrat(
-                                                    fontSize: 16,
-                                                    fontWeight:
-                                                    FontWeight.w600)),
-                                            IconButton(
-                                                onPressed: () async {
-                                                  setState(() {
-                                                    isIncomeAdding = true;
-                                                  });
-                                                },
-                                                icon: Icon(Icons.add_circle))
-                                          ],
-                                        ),
-                                      ),
+                                  Icon(Icons.account_balance, size: 16.r, color: Colors.blue),
+                                  SizedBox(width: 8.w),
+                                  Text(
+                                    "Hesap: ${selectedAccount!['bankName']} - ${selectedAccount!['name']}",
+                                    style: GoogleFonts.montserrat(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.blue[700],
                                     ),
-                                  if (isIncomeAdding)
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        color: Color.fromARGB(120, 152, 255, 170),
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      padding: EdgeInsets.all(20),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text("Gelir Türü",
-                                                  style: GoogleFonts.montserrat(
-                                                      fontSize: 18, fontWeight: FontWeight.bold)),
-                                              GestureDetector(
-                                                child: Icon(Icons.cancel, size: 26),
-                                                onTap: () {
-                                                  setState(() {
-                                                    isIncomeAdding = !isIncomeAdding;
-                                                  });
-                                                },
-                                              )
-                                            ],
-                                          ),
-                                          SizedBox(height: 10),
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Expanded(
-                                                child: CustomSlidingSegmentedControl<int>(
-                                                  decoration: BoxDecoration(
-                                                      borderRadius: BorderRadius.circular(20), color: Colors.red),
-                                                  thumbDecoration: BoxDecoration(
-                                                      borderRadius: BorderRadius.circular(20),
-                                                      color: Colors.amber),
-                                                  children: {
-                                                    0: buildSegment('İş'),
-                                                    1: buildSegment('Burs'),
-                                                    2: buildSegment('Emekli'),
-                                                  },
-                                                  isStretch: true,
-                                                  onValueChanged: (segmentControlGroupValue) {
-                                                    setState(() {
-                                                      this.segmentControlGroupValue = segmentControlGroupValue;
-                                                      switch (segmentControlGroupValue) {
-                                                        case 0:
-                                                          newSelectedOption = "İş";
-                                                          break;
-                                                        case 1:
-                                                          newSelectedOption = "Burs";
-                                                          break;
-                                                        case 2:
-                                                          newSelectedOption = "Emekli";
-                                                          break;
-                                                      }
-                                                    });
-                                                  },
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          SizedBox(height: 10),
-                                          Text("Gelir Miktarı",
-                                              style: GoogleFonts.montserrat(
-                                                  fontSize: 18, fontWeight: FontWeight.bold)),
-                                          SizedBox(height: 10),
-                                          GestureDetector(
-                                            onTap: () {
-                                              incomeController.selection = TextSelection.fromPosition(
-                                                TextPosition(offset: incomeController.text.length),
-                                              );
-                                              focusNode.requestFocus();
-                                              SystemChannels.textInput.invokeMethod('TextInput.show');
-                                            },
-                                            child: Row(
-                                              children: [
-                                                Expanded(
-                                                  child: TextFormField(
-                                                    maxLines: 1,
-                                                    controller: incomeController,
-                                                    decoration: InputDecoration(
-                                                      filled: true,
-                                                      isDense: true,
-                                                      fillColor: Colors.white,
-                                                      contentPadding: EdgeInsets.fromLTRB(10, 20, 20, 0),
-                                                      enabledBorder: OutlineInputBorder(
-                                                        borderRadius: BorderRadius.circular(20),
-                                                        borderSide: BorderSide(color: Colors.amber, width: 3),
-                                                      ),
-                                                      focusedBorder: OutlineInputBorder(
-                                                        borderRadius: BorderRadius.circular(20),
-                                                        borderSide: BorderSide(color: Colors.black, width: 3),
-                                                      ),
-                                                      border: OutlineInputBorder(
-                                                        borderRadius: BorderRadius.circular(20),
-                                                      ),
-                                                      hintText: 'GAG',
-                                                      hintStyle: TextStyle(color: Colors.black),
-                                                    ),
-                                                    keyboardType: TextInputType.number,
-                                                  ),
-                                                ),
-                                                SizedBox(width: 20),
-                                                ElevatedButton(
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor: Colors.white,
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius: BorderRadius.circular(20),
-                                                    ),
-                                                  ),
-                                                  onPressed: () async {
-                                                    final amount = double.tryParse(incomeController.text);
-
-                                                    if (amount != null && amount > 0 && selectedAccount != null && selectedAccount!['accountId'] != null) {
-                                                      // 1. Create a transaction record (income with isSurplus true)
-                                                      final transaction = Transaction(
-                                                        transactionId: DateTime.now().millisecondsSinceEpoch,
-                                                        date: DateTime.now(), // or use a selected date if available
-                                                        amount: amount,
-                                                        installment: null,
-                                                        currency: selectedAccount!['currency'] ?? 'USD', // or get from account
-                                                        subcategory: newSelectedOption,
-                                                        category: 'Income', // Explicitly set as income
-                                                        title: 'Income', // or get from a title field if available
-                                                        description: '',
-                                                        isSurplus: true, // Denote this is an income
-                                                        isFromInvoice: false,
-                                                        initialInstallmentDate: null,
-                                                        isProvisioned: false
-                                                      );
-
-                                                      // 2. Add transaction to the account (this will handle balance update)
-                                                      await _addTransactionToAccount(selectedAccount!['accountId'].toString(), transaction);
-                                                      // 3. Save to SharedPreferences
-                                                      await _saveToPrefs();
-                                                      await _saveSelectedAccount(selectedAccount!);
-
-                                                    } else {
-                                                      ScaffoldMessenger.of(context).showSnackBar(
-                                                        SnackBar(content: Text('Please enter a valid positive amount and ensure the account is selected')),
-                                                      );
-                                                    }
-                                                  },
-                                                  child: Icon(Icons.check_circle, size: 26, color: Colors.black),
-                                                )
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
+                                  ),
                                 ],
-                              )
+                              ),
                             ),
-                            IncomeByAccountWidget(bankAccounts: bankAccounts)
-                          ],
-                        )
+
+                          SizedBox(height: 16.h),
+
+                          // Income Type Selector
+                          GlassmorphismContainer(
+                            blur: 5,
+                            borderRadius: 12,
+                            borderColor: borderColor,
+                            color: Colors.white.withOpacity(0.6),
+                            padding: EdgeInsets.all(8.h),
+                            child: CustomSlidingSegmentedControl<int>(
+                              initialValue: segmentControlGroupValue ?? 0,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12.r),
+                                color: Colors.grey[200],
+                              ),
+                              thumbDecoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12.r),
+                                color: Color(0xFF4CAF50),
+                              ),
+                              children: {
+                                0: buildSegment('İş'),
+                                1: buildSegment('Burs'),
+                                2: buildSegment('Emekli'),
+                              },
+                              isStretch: true,
+                              onValueChanged: (value) {
+                                setState(() {
+                                  segmentControlGroupValue = value;
+                                  switch (value) {
+                                    case 0:
+                                      newSelectedOption = "İş";
+                                      break;
+                                    case 1:
+                                      newSelectedOption = "Burs";
+                                      break;
+                                    case 2:
+                                      newSelectedOption = "Emekli";
+                                      break;
+                                  }
+                                });
+                              },
+                            ),
+                          ),
+
+                          SizedBox(height: 16.h),
+
+                          Text(
+                            "Gelir Miktarı",
+                            style: GoogleFonts.montserrat(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF2E7D32),
+                            ),
+                          ),
+
+                          SizedBox(height: 12.h),
+
+                          Row(
+                            children: [
+                              Expanded(
+                                child: GlassmorphismContainer(
+                                  blur: 5,
+                                  borderRadius: 12,
+                                  borderColor: borderColor,
+                                  color: Colors.white.withOpacity(0.6),
+                                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+                                  child: TextFormField(
+                                    controller: incomeController,
+                                    decoration: InputDecoration(
+                                      filled: true,
+                                      fillColor: Colors.transparent,
+                                      border: InputBorder.none,
+                                      hintText: 'Miktar giriniz',
+                                      hintStyle: TextStyle(color: Colors.grey[600]),
+                                      suffixText: '₺',
+                                      suffixStyle: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    keyboardType: TextInputType.numberWithOptions(decimal: true),
+                                    style: TextStyle(
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              SizedBox(width: 12.w),
+
+                              GlassmorphismContainer(
+                                blur: 5,
+                                borderRadius: 28,
+                                borderColor: borderColor,
+                                color: Color(0xFF4CAF50).withOpacity(0.8),
+                                child: IconButton(
+                                  onPressed: _addIncomeToStorage,
+                                  icon: Icon(Icons.check, color: Colors.white, size: 24.r),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
               ),
-            ],
-          ),
+            ),
+
+            SizedBox(height: 24.h),
+
+            // Income Summary
+            _buildIncomeSummary(),
+
+            // Recent Incomes List - ADD THIS NEW SECTION
+            SizedBox(height: 24.h),
+            _buildRecentIncomes(),
+          ],
         ),
       ),
     );
   }
 
-  Future<void> _saveSelectedAccount(Map<String, dynamic> account) async {
-    // First get the actual account ID - might be nested in an 'accounts' array
-    final dynamic accountId = account['accountId'] ??
-        (account['accounts'] as List?)?.firstOrNull?['accountId'];
+  // Add Account Selector Widget
+  Widget _buildAccountSelector() {
+    // Create a unique list of accounts to avoid duplicates
+    final uniqueAccounts = <Map<String, dynamic>>[];
+    final seenAccountIds = <int>{};
 
-    // Get bank ID - might be at top level
-    final dynamic bankId = account['bankId'];
-
-    if (accountId == null || bankId == null) {
-      print('Cannot save account - missing IDs. Full account data: $account');
-      return;
+    for (var bank in bankAccounts) {
+      final accounts = (bank['accounts'] as List?) ?? [];
+      for (var account in accounts) {
+        final accountId = account['accountId'];
+        if (!seenAccountIds.contains(accountId)) {
+          seenAccountIds.add(accountId);
+          uniqueAccounts.add({
+            ...account,
+            'bankId': bank['bankId'],
+            'bankName': bank['bankName'],
+          });
+        }
+      }
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('selectedAccount', jsonEncode({
-      'accountId': accountId,
-      'bankId': bankId,
-    }));
-    print('Successfully saved account: $accountId from bank: $bankId');
+    // Find the current selected account in the unique list
+    Map<String, dynamic>? currentSelectedAccount;
+    if (selectedAccount != null) {
+      currentSelectedAccount = uniqueAccounts.firstWhere(
+            (account) => account['accountId'] == selectedAccount!['accountId'],
+        orElse: () => selectedAccount!,
+      );
+    }
+
+    return GlassmorphismContainer(
+      blur: 10,
+      borderRadius: 16,
+      borderColor: Colors.grey.withOpacity(0.3),
+      color: Colors.white.withOpacity(0.2),
+      padding: EdgeInsets.all(16.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Gelir Alınacak Hesap",
+            style: GoogleFonts.montserrat(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          SizedBox(height: 12.h),
+          DropdownButton<Map<String, dynamic>>(
+            value: currentSelectedAccount,
+            isExpanded: true,
+            hint: Text('Hesap seçin'),
+            items: uniqueAccounts.map((account) {
+              return DropdownMenuItem<Map<String, dynamic>>(
+                value: account,
+                child: Text('${account['bankName']} - ${account['name']}'),
+              );
+            }).toList(),
+            onChanged: (value) {
+              setState(() {
+                selectedAccount = value;
+              });
+            },
+          ),
+        ],
+      ),
+    );
   }
 
-  Future<void> _saveToPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    try {
-      final jsonString = jsonEncode(bankAccounts);
-      await prefs.setString('accountDataList', jsonString);
-      print('[DEBUG] Saved accountDataList: $jsonString');
-    } catch (e) {
-      print('[ERROR] Failed to save accountDataList: $e');
+  Widget _buildIncomeSummary() {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: IncomeStorageService.getIncomeSummary(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        final summary = snapshot.data ?? {
+          'work': 0.0,
+          'scholarship': 0.0,
+          'pension': 0.0,
+          'total': 0.0,
+        };
+
+        final format = NumberFormat.currency(locale: 'tr_TR', symbol: '₺', decimalDigits: 2);
+
+        return GlassmorphismContainer(
+          blur: 10,
+          borderRadius: 16,
+          borderColor: Colors.grey.withOpacity(0.3),
+          color: Colors.white.withOpacity(0.2),
+          padding: EdgeInsets.all(16.h),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Gelir Özeti",
+                style: GoogleFonts.montserrat(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2E7D32),
+                ),
+              ),
+              SizedBox(height: 16.h),
+              _buildIncomeSummaryItem("İş Geliri", summary['work'] ?? 0.0, format),
+              _buildIncomeSummaryItem("Burs Geliri", summary['scholarship'] ?? 0.0, format),
+              _buildIncomeSummaryItem("Emekli Geliri", summary['pension'] ?? 0.0, format),
+              Divider(height: 20.h),
+              _buildIncomeSummaryItem("Toplam Gelir", summary['total'] ?? 0.0, format, isTotal: true),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // Add Recent Incomes List
+  Widget _buildRecentIncomes() {
+    if (incomes.isEmpty) {
+      return GlassmorphismContainer(
+        blur: 10,
+        borderRadius: 16,
+        borderColor: Colors.grey.withOpacity(0.3),
+        color: Colors.white.withOpacity(0.2),
+        padding: EdgeInsets.all(16.h),
+        child: Column(
+          children: [
+            Text(
+              "Son Eklenen Gelirler",
+              style: GoogleFonts.montserrat(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 16.h),
+            Text(
+              "Henüz gelir eklenmemiş",
+              style: GoogleFonts.montserrat(
+                fontSize: 14.sp,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final recentIncomes = incomes.take(5).toList(); // Show last 5 incomes
+
+    return GlassmorphismContainer(
+      blur: 10,
+      borderRadius: 16,
+      borderColor: Colors.grey.withOpacity(0.3),
+      color: Colors.white.withOpacity(0.2),
+      padding: EdgeInsets.all(16.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Son Eklenen Gelirler",
+            style: GoogleFonts.montserrat(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 16.h),
+          ...recentIncomes.map((income) => _buildIncomeItem(income)).toList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIncomeItem(Income income) {
+    final format = NumberFormat.currency(locale: 'tr_TR', symbol: '₺', decimalDigits: 2);
+    final dateFormat = DateFormat('dd/MM/yyyy');
+
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8.h),
+      child: Row(
+        children: [
+          Container(
+            width: 4.w,
+            height: 40.h,
+            decoration: BoxDecoration(
+              color: _getSourceColor(income.source),
+              borderRadius: BorderRadius.circular(2.r),
+            ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  income.source,
+                  style: GoogleFonts.montserrat(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  income.accountName,
+                  style: GoogleFonts.montserrat(
+                    fontSize: 12.sp,
+                    color: Colors.grey,
+                  ),
+                ),
+                Text(
+                  dateFormat.format(income.date),
+                  style: GoogleFonts.montserrat(
+                    fontSize: 11.sp,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            format.format(income.amount),
+            style: GoogleFonts.montserrat(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.bold,
+              color: Colors.green,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getSourceColor(String source) {
+    switch (source) {
+      case 'İş':
+        return Colors.blue;
+      case 'Burs':
+        return Colors.purple;
+      case 'Emekli':
+        return Colors.orange;
+      default:
+        return Colors.grey;
     }
   }
+
+  Widget _buildIncomeSummaryItem(String title, double amount, NumberFormat format, {bool isTotal = false}) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.montserrat(
+              fontSize: 14.sp,
+              fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
+              color: isTotal ? Color(0xFF2E7D32) : Colors.black87,
+            ),
+          ),
+          Text(
+            format.format(amount),
+            style: GoogleFonts.montserrat(
+              fontSize: 14.sp,
+              fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
+              color: isTotal ? Color(0xFF2E7D32) : Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildSegment(String text) => Padding(
+    padding: EdgeInsets.all(8.h),
+    child: Text(
+      text,
+      style: GoogleFonts.montserrat(
+        fontSize: 14.sp,
+        fontWeight: FontWeight.w600,
+        color: Colors.white,
+      ),
+    ),
+  );
 
   Map<String, dynamic>? _findAccountById(int? accountId) {
-    if (accountId == null) {
-      print('Warning: _findAccountById called with null accountId');
-      return null;
-    }
+    if (accountId == null) return null;
 
     for (var bank in bankAccounts) {
       for (var account in bank['accounts'] ?? []) {
         if (account['accountId'] == accountId) {
-          // Return a flattened structure with account + bank info
           return {
-            ...account, // Spread all account fields
+            ...account,
             'bankId': bank['bankId'],
             'bankName': bank['bankName'],
           };
@@ -534,13 +767,44 @@ class _IncomePageState extends State<IncomePage> {
     }
     return null;
   }
+}
 
-  Widget buildSegment(String text) => Padding(
-        padding: EdgeInsets.all(5),
-        child: Text(text,
-            style: GoogleFonts.montserrat(
-                fontSize: 14, fontWeight: FontWeight.bold)),
-      );
+class GlassmorphismContainer extends StatelessWidget {
+  final Widget child;
+  final double borderRadius;
+  final double blur;
+  final Color borderColor;
+  final EdgeInsetsGeometry? padding;
+  final Color? color; // opsiyonel arkaplan rengi
+
+  const GlassmorphismContainer({
+    super.key,
+    required this.child,
+    this.borderRadius = 16,
+    this.blur = 10,
+    required this.borderColor,
+    this.padding,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        child: Container(
+          padding: padding ?? EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: color ?? Colors.white.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(borderRadius),
+            border: Border.all(color: borderColor),
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
 }
 
 double parseAmount(dynamic amount) {
