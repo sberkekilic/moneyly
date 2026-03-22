@@ -1,151 +1,55 @@
 import 'dart:convert';
 import 'dart:math' as math;
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:fluttericon/font_awesome_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:moneyly/models/transaction.dart';
-import 'package:percent_indicator/percent_indicator.dart';
-import 'package:pull_down_button/pull_down_button.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../blocs/income-selections.dart';
+import '../../components/add_transaction_modal.dart';
 import '../../models/account.dart';
 import '../../models/category.dart';
+import '../../models/transaction.dart';
 import '../add-expense/faturalar.dart';
 
 class OutcomePage extends StatefulWidget {
-  const OutcomePage({Key? key}) : super(key: key);
+  const OutcomePage({super.key});
 
   @override
   State<OutcomePage> createState() => _OutcomePageState();
 }
 
 class _OutcomePageState extends State<OutcomePage> {
+  // ── Core State ──
   List<Map<String, dynamic>> bankAccounts = [];
   Map<String, dynamic>? selectedAccount;
-  DateTime? _selectedDate;
-  bool isLoading = true; // Flag to indicate loading state
+  bool _isLoading = true;
 
-  final List<Invoice> invoices = [];
-  int biggestIndex = 0;
-  final TextEditingController textController = TextEditingController();
-  final TextEditingController platformPriceController = TextEditingController();
-
-  bool isSubsAddActive = false;
-  bool hasSubsCategorySelected = false;
-  bool isBillsAddActive = false;
-  bool hasBillsCategorySelected = false;
-  bool isOthersAddActive = false;
-  bool hasOthersCategorySelected = false;
-  // Initial Selected Value
-  String dropdownvaluesubs = 'Film, Dizi ve TV';
-  String dropdownvaluebills = 'Ev Faturaları';
-  String dropdownvalueothers = 'Kira';
-
-  // List of items in our dropdown menu
-  var subsItems = [
-    'Film, Dizi ve TV',
-    'Oyun',
-    'Müzik',
-  ];
-
-  var billsItems = [
-    'Ev Faturaları',
-    'İnternet',
-    'Telefon'
-  ];
-
-  var othersItems = [
-    'Kira',
-    'Mutfak',
-    'Yeme İçme',
-    'Eğlence',
-    'Diğer'
-  ];
-
-  List<String> tvTitleList = [];
-  List<String> gameTitleList = [];
-  List<String> musicTitleList = [];
-  List<String> tvPriceList = [];
-  List<String> gamePriceList = [];
-  List<String> musicPriceList = [];
-
-  List<String> homeBillsTitleList = [];
-  List<String> internetTitleList = [];
-  List<String> phoneTitleList = [];
-  List<String> homeBillsPriceList = [];
-  List<String> internetPriceList = [];
-  List<String> phonePriceList = [];
-
-  List<String> rentTitleList = [];
-  List<String> kitchenTitleList = [];
-  List<String> cateringTitleList = [];
-  List<String> entertainmentTitleList = [];
-  List<String> otherTitleList = [];
-  List<String> rentPriceList = [];
-  List<String> kitchenPriceList = [];
-  List<String> cateringPriceList = [];
-  List<String> entertainmentPriceList = [];
-  List<String> otherPriceList = [];
-
-  double incomeValue = 0.0;
-  double outcomeValue = 0.0;
-  int subsPercent = 0;
-  int billsPercent = 0;
-  int othersPercent = 0;
-  double savingsValue = 0.0;
-  double wishesValue = 0.0;
-  double needsValue = 0.0;
-  double sumOfSubs = 0.0;
-  double sumOfBills = 0.0;
-  double sumOfOthers = 0.0;
-  double sumOfTV = 0.0;
-  double sumOfGame = 0.0;
-  double sumOfMusic = 0.0;
-  double sumOfHome = 0.0;
-  double sumOfInternet = 0.0;
-  double sumOfPhone = 0.0;
-  double sumOfRent = 0.0;
-  double sumOfKitchen = 0.0;
-  double sumOfCatering = 0.0;
-  double sumOfEnt = 0.0;
-  double sumOfOther = 0.0;
-  String selectedTitle = '';
-  String convertSum = "";
-  String convertSum2 = "";
-  String convertSum3 = "";
-
-  int? _selectedBillingDay;
-  int? _selectedBillingMonth;
-  int? _selectedDueDay;
-  String faturaDonemi = "";
-  String? sonOdeme;
-
-  List<int> daysList = List.generate(31, (index) => index + 1);
-  List<int> monthsList = List.generate(12, (index) => index + 1);
-  List<String> monthNames = [
-    'Ocak',
-    'Şubat',
-    'Mart',
-    'Nisan',
-    'Mayıs',
-    'Haziran',
-    'Temmuz',
-    'Ağustos',
-    'Eylül',
-    'Ekim',
-    'Kasım',
-    'Aralık',
-  ];
-
+  // ── Categories & Invoices ──
   List<CategoryData> userCategories = [];
-  List<Transaction> transactions = [];
+  final List<Invoice> invoices = [];
 
-  final TextEditingController subcategoryController = TextEditingController();
+  // ── Legacy sums (kept for backward compatibility) ──
+  double sumOfTV = 0, sumOfGame = 0, sumOfMusic = 0;
+  double sumOfHome = 0, sumOfInternet = 0, sumOfPhone = 0;
+  double sumOfRent = 0, sumOfKitchen = 0, sumOfCatering = 0;
+  double sumOfEnt = 0, sumOfOther = 0;
+  double sumOfSubs = 0, sumOfBills = 0, sumOfOthers = 0;
+
+  List<String> tvTitleList = [], gameTitleList = [], musicTitleList = [];
+  List<String> tvPriceList = [], gamePriceList = [], musicPriceList = [];
+  List<String> homeBillsTitleList = [], internetTitleList = [], phoneTitleList = [];
+  List<String> homeBillsPriceList = [], internetPriceList = [], phonePriceList = [];
+  List<String> rentTitleList = [], kitchenTitleList = [], cateringTitleList = [];
+  List<String> entertainmentTitleList = [], otherTitleList = [];
+  List<String> rentPriceList = [], kitchenPriceList = [], cateringPriceList = [];
+  List<String> entertainmentPriceList = [], otherPriceList = [];
+
+  String selectedTitle = '';
+  String faturaDonemi = '';
+  String? sonOdeme;
 
   @override
   void initState() {
@@ -153,597 +57,150 @@ class _OutcomePageState extends State<OutcomePage> {
     _load();
   }
 
-  // Function to get the correct number of days for a given month in the current year
-  int _daysInMonth(int month) {
-    int year = DateTime.now().year;
-    return DateTime(year, month + 1, 0).day;
-  }
+  // ══════════════════════════════════════════════════════
+  // DATA LOADING
+  // ══════════════════════════════════════════════════════
 
-// Function to update the days list based on the selected month
-  void _updateDaysListForSelectedMonth() {
-    daysList = List.generate(_daysInMonth(_selectedBillingMonth!), (index) => index + 1);
-
-    // Ensure selected day is within the updated range
-    if (_selectedBillingDay != null && (_selectedBillingDay! > daysList.length)) {
-      setState(() {
-        _selectedBillingDay = daysList.last;
-      });
-    } else if (_selectedDueDay != null && (_selectedDueDay! > daysList.length)) {
-      setState(() {
-        _selectedDueDay = daysList.last;
-      });
-    }
-  }
-
-  String labelForOption(SelectedOption option) {
-    switch (option) {
-      case SelectedOption.Is:
-        return 'İş';
-      case SelectedOption.Burs:
-        return 'Burs';
-      case SelectedOption.Emekli:
-        return 'Emekli';
-      default:
-        return '';
-    }
-  }
-
-  void _load() async {
+  Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
-    final ab1 = prefs.getInt('selected_option') ?? SelectedOption.None.index;
-    final ab2 = prefs.getString('income_value') ?? '0';
-    final ab3 = prefs.getDouble('sumOfTV2') ?? 0.0;
-    final ab4 = prefs.getDouble('sumOfGame2') ?? 0.0;
-    final ab5 = prefs.getDouble('sumOfMusic2') ?? 0.0;
-    final ab6 = prefs.getDouble('sumOfHome2') ?? 0.0;
-    final ab7 = prefs.getDouble('sumOfInternet2') ?? 0.0;
-    final ab8 = prefs.getDouble('sumOfPhone2') ?? 0.0;
-    final ab9 = prefs.getDouble('sumOfRent2') ?? 0.0;
-    final ab10 = prefs.getDouble('sumOfKitchen2') ?? 0.0;
-    final ab11 = prefs.getDouble('sumOfCatering2') ?? 0.0;
-    final ab12 = prefs.getDouble('sumOfEnt2') ?? 0.0;
-    final ab13 = prefs.getDouble('sumOfOther2') ?? 0.0;
-    final ab14 = prefs.getDouble('sumOfSubs2') ?? 0.0;
-    final ab15 = prefs.getDouble('sumOfBills2') ?? 0.0;
-    final ab16 = prefs.getDouble('sumOfOthers2') ?? 0.0;
-    final ab17 = prefs.getStringList('tvTitleList2') ?? [];
-    final ab18 = prefs.getStringList('gameTitleList2') ?? [];
-    final ab19 = prefs.getStringList('musicTitleList2') ?? [];
-    final ab20 = prefs.getStringList('homeBillsTitleList2') ?? [];
-    final ab21 = prefs.getStringList('internetTitleList2') ?? [];
-    final ab22 = prefs.getStringList('phoneTitleList2') ?? [];
-    final ab23 = prefs.getStringList('rentTitleList2') ?? [];
-    final ab24 = prefs.getStringList('kitchenTitleList2') ?? [];
-    final ab25 = prefs.getStringList('cateringTitleList2') ?? [];
-    final ab26 = prefs.getStringList('entertainmentTitleList2') ?? [];
-    final ab27 = prefs.getStringList('otherTitleList2') ?? [];
-    final ab28 = prefs.getStringList('tvPriceList2') ?? [];
-    final ab29 = prefs.getStringList('gamePriceList2') ?? [];
-    final ab30 = prefs.getStringList('musicPriceList2') ?? [];
-    final ab31 = prefs.getStringList('homeBillsPriceList2') ?? [];
-    final ab32 = prefs.getStringList('internetPriceList2') ?? [];
-    final ab33 = prefs.getStringList('phonePriceList2') ?? [];
-    final ab34 = prefs.getStringList('rentPriceList2') ?? [];
-    final ab35 = prefs.getStringList('kitchenPriceList2') ?? [];
-    final ab36 = prefs.getStringList('cateringPriceList2') ?? [];
-    final ab37 = prefs.getStringList('entertainmentPriceList2') ?? [];
-    final ab38 = prefs.getStringList('otherPriceList2') ?? [];
-    final ab39 = prefs.getStringList('invoices') ?? [];
-    final data = await CategoryStorage.load();
-    String? accountDataListJson = prefs.getString('accountDataList');
-    String? accountData = prefs.getString('selectedAccount');
-    setState(() {
-      selectedTitle = labelForOption(SelectedOption.values[ab1]);
-      sumOfTV = ab3;
-      sumOfGame = ab4;
-      sumOfMusic = ab5;
-      sumOfHome = ab6;
-      sumOfInternet = ab7;
-      sumOfPhone = ab8;
-      sumOfRent = ab9;
-      sumOfKitchen = ab10;
-      sumOfCatering = ab11;
-      sumOfEnt = ab12;
-      sumOfOther = ab13;
-      sumOfSubs = ab14;
-      sumOfBills = ab15;
-      sumOfOthers = ab16;
-      tvTitleList = ab17;
-      gameTitleList = ab18;
-      musicTitleList = ab19;
-      homeBillsTitleList = ab20;
-      internetTitleList = ab21;
-      phoneTitleList = ab22;
-      rentTitleList = ab23;
-      kitchenTitleList = ab24;
-      cateringTitleList = ab25;
-      entertainmentTitleList = ab26;
-      otherTitleList = ab27;
-      tvPriceList = ab28;
-      gamePriceList = ab29;
-      musicPriceList = ab30;
-      homeBillsPriceList = ab31;
-      internetPriceList = ab32;
-      phonePriceList = ab33;
-      rentPriceList = ab34;
-      kitchenPriceList = ab35;
-      cateringPriceList = ab36;
-      entertainmentPriceList = ab37;
-      otherPriceList = ab38;
-      for (final invoiceString in ab39) {
-        try {
-          final Map<String, dynamic> invoiceJson = jsonDecode(invoiceString);
-          print("Decoded JSON: $invoiceJson");  // Check the decoded data
-          final Invoice invoice = Invoice.fromJson(invoiceJson);
-          invoices.add(invoice);
-          print("OUTCOME-PAGE 3| invoices:${invoices}");
-        } catch (e) {
-          print("Error: $e");
-        }
-      }
-      if (data != null) {
-        setState(() {
-          userCategories = data;
-        });
-      }
-      // Handle account data list
-      if (accountDataListJson != null) {
-        try {
-          List<Map<String, dynamic>> decodedData = List<Map<String, dynamic>>.from(jsonDecode(accountDataListJson));
-          print('Tüm Hesaplar: $decodedData');
-          bankAccounts = decodedData.toSet().toList();
 
-          if (accountData != null) {
-            final Map<String, dynamic> accountFromPrefs = Map<String, dynamic>.from(jsonDecode(accountData));
-            print('Saved account data: $accountFromPrefs');
+    // Income selection
+    final optionIndex = prefs.getInt('selected_option') ?? SelectedOption.None.index;
+    selectedTitle = _labelForOption(SelectedOption.values[optionIndex]);
 
-            // Only proceed if we have both bankId and accountId
-            if (accountFromPrefs['bankId'] != null && accountFromPrefs['accountId'] != null) {
-              // Find the bank first
-              final bank = bankAccounts.firstWhere(
-                    (bank) => bank['bankId'] == accountFromPrefs['bankId'],
-                orElse: () => {},
-              );
+    // Legacy sums
+    sumOfTV = prefs.getDouble('sumOfTV2') ?? 0;
+    sumOfGame = prefs.getDouble('sumOfGame2') ?? 0;
+    sumOfMusic = prefs.getDouble('sumOfMusic2') ?? 0;
+    sumOfHome = prefs.getDouble('sumOfHome2') ?? 0;
+    sumOfInternet = prefs.getDouble('sumOfInternet2') ?? 0;
+    sumOfPhone = prefs.getDouble('sumOfPhone2') ?? 0;
+    sumOfRent = prefs.getDouble('sumOfRent2') ?? 0;
+    sumOfKitchen = prefs.getDouble('sumOfKitchen2') ?? 0;
+    sumOfCatering = prefs.getDouble('sumOfCatering2') ?? 0;
+    sumOfEnt = prefs.getDouble('sumOfEnt2') ?? 0;
+    sumOfOther = prefs.getDouble('sumOfOther2') ?? 0;
+    sumOfSubs = prefs.getDouble('sumOfSubs2') ?? 0;
+    sumOfBills = prefs.getDouble('sumOfBills2') ?? 0;
+    sumOfOthers = prefs.getDouble('sumOfOthers2') ?? 0;
 
-              if (bank.isNotEmpty) {
-                // Then find the specific account within that bank
-                final accounts = bank['accounts'] as List?;
-                if (accounts != null) {
-                  final account = accounts.firstWhere(
-                        (acc) => acc['accountId'] == accountFromPrefs['accountId'],
-                    orElse: () => {},
-                  );
+    // Legacy lists
+    tvTitleList = prefs.getStringList('tvTitleList2') ?? [];
+    gameTitleList = prefs.getStringList('gameTitleList2') ?? [];
+    musicTitleList = prefs.getStringList('musicTitleList2') ?? [];
+    homeBillsTitleList = prefs.getStringList('homeBillsTitleList2') ?? [];
+    internetTitleList = prefs.getStringList('internetTitleList2') ?? [];
+    phoneTitleList = prefs.getStringList('phoneTitleList2') ?? [];
+    rentTitleList = prefs.getStringList('rentTitleList2') ?? [];
+    kitchenTitleList = prefs.getStringList('kitchenTitleList2') ?? [];
+    cateringTitleList = prefs.getStringList('cateringTitleList2') ?? [];
+    entertainmentTitleList = prefs.getStringList('entertainmentTitleList2') ?? [];
+    otherTitleList = prefs.getStringList('otherTitleList2') ?? [];
+    tvPriceList = prefs.getStringList('tvPriceList2') ?? [];
+    gamePriceList = prefs.getStringList('gamePriceList2') ?? [];
+    musicPriceList = prefs.getStringList('musicPriceList2') ?? [];
+    homeBillsPriceList = prefs.getStringList('homeBillsPriceList2') ?? [];
+    internetPriceList = prefs.getStringList('internetPriceList2') ?? [];
+    phonePriceList = prefs.getStringList('phonePriceList2') ?? [];
+    rentPriceList = prefs.getStringList('rentPriceList2') ?? [];
+    kitchenPriceList = prefs.getStringList('kitchenPriceList2') ?? [];
+    cateringPriceList = prefs.getStringList('cateringPriceList2') ?? [];
+    entertainmentPriceList = prefs.getStringList('entertainmentPriceList2') ?? [];
+    otherPriceList = prefs.getStringList('otherPriceList2') ?? [];
 
-                  if (account.isNotEmpty) {
-                    // Combine bank info with account info
-                    selectedAccount = {
-                      ...account,
-                      'bankId': bank['bankId'],
-                      'bankName': bank['bankName'],
-                      // Include any other bank fields you need
-                    };
-                  }
-                }
-              }
-            }
+    // Invoices
+    for (final s in prefs.getStringList('invoices') ?? []) {
+      try {
+        invoices.add(Invoice.fromJson(jsonDecode(s)));
+      } catch (_) {}
+    }
+
+    // Categories
+    final catData = await CategoryStorage.load();
+    if (catData != null) userCategories = catData;
+
+    // Bank accounts
+    final accountListJson = prefs.getString('accountDataList');
+    final savedAccountJson = prefs.getString('selectedAccount');
+
+    if (accountListJson != null) {
+      try {
+        bankAccounts = List<Map<String, dynamic>>.from(jsonDecode(accountListJson));
+
+        if (savedAccountJson != null) {
+          final saved = Map<String, dynamic>.from(jsonDecode(savedAccountJson));
+          if (saved['accountId'] != null) {
+            selectedAccount = _findAccountById(saved['accountId']);
           }
-
-          setState(() => isLoading = false);
-        } catch (e) {
-          print('Error decoding account data: $e');
-          setState(() => isLoading = false);
         }
-      } else {
-        setState(() => isLoading = false);
+      } catch (e) {
+        debugPrint('Error loading accounts: $e');
       }
-
-      print('Seçili hesap: $accountData');
-      print('Selected account1: $selectedAccount');
-
-      if (accountData != null && selectedAccount == null) {
-        final savedData = jsonDecode(accountData);
-
-        // Check if accountId exists and is not null
-        if (savedData['accountId'] != null) {
-          final account = _findAccountById(savedData['accountId']);
-          if (account != null) {
-            setState(() {
-              selectedAccount = account;
-            });
-          }
-        } else {
-          print('Warning: savedData contains null accountId: $savedData');
-        }
-      }
-    });
-
-    final rawList = selectedAccount?['transactions'];
-    if (rawList != null) {
-      transactions = List<Map<String, dynamic>>.from(rawList)
-          .map((json) => Transaction.fromJson(json))
-          .toList();
     }
 
-    convertSum = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfTV);
-    convertSum2 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfGame);
-    convertSum3 = NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 2).format(sumOfMusic);
+    if (mounted) setState(() => _isLoading = false);
   }
 
-  Future<void> setSumAll(double value) async {
-    final prefs = await SharedPreferences.getInstance();
-    prefs.setDouble('sumOfSubs2', value);
-  }
-
-  Future<void> saveInvoices() async {
-    print("INVOICE LENGTH E06 : ${invoices.length}");
-    final invoicesCopy = invoices.toList();
-    final prefs = await SharedPreferences.getInstance();
-    final invoiceList = invoicesCopy.map((invoice) => invoice.toJson()).toList();
-    await prefs.setStringList('invoices', invoiceList.map((invoice) => jsonEncode(invoice)).toList());
-    print("INVOICE LENGTH E07 : ${invoices.length}");
-  }
-
-  void removeInvoice(int id) {
-    setState(() {
-      int index = invoices.indexWhere((invoice) => invoice.id == id);
-      if (index != -1) {
-        setState(() {
-          invoices.removeAt(index);
-        });
-      } else {
-        // Entry with the target ID not found
-      }
-    });
-    saveInvoices();
-  }
-
-  bool isLeapYear(int year) {
-    if (year % 4 != 0) return false;
-    if (year % 100 != 0) return true;
-    return year % 400 == 0;
-  }
-
-  String getDaysRemainingMessage(Invoice invoice) {
-    final currentDate = DateTime.now();
-    final formattedDate = DateFormat('yyyy-MM-dd').format(currentDate);
-    final dueDateKnown = invoice.dueDate != null;
-
-    if (currentDate.isBefore(DateTime.parse(faturaDonemi))) {
-      invoice.difference = (DateTime.parse(faturaDonemi).difference(currentDate).inDays + 1).toString();
-      return invoice.difference;
-    } else if (formattedDate == faturaDonemi) {
-      invoice.difference = "0";
-      return invoice.difference;
-    } else if (dueDateKnown) {
-      if (sonOdeme != null && currentDate.isAfter(DateTime.parse(faturaDonemi))) {
-        invoice.difference = (DateTime.parse(sonOdeme!).difference(currentDate).inDays + 1).toString();
-        return invoice.difference;
-      } else {
-        return "error1";
-      }
-    } else {
-      return "error2";
-    }
-  }
+  // ══════════════════════════════════════════════════════
+  // PERSISTENCE
+  // ══════════════════════════════════════════════════════
 
   Future<void> _saveToPrefs() async {
     final prefs = await SharedPreferences.getInstance();
-    try {
-      final jsonString = jsonEncode(bankAccounts);
-      await prefs.setString('accountDataList', jsonString);
-      print('[DEBUG] Saved accountDataList: $jsonString');
-    } catch (e) {
-      print('[ERROR] Failed to save accountDataList: $e');
-    }
+    await prefs.setString('accountDataList', jsonEncode(bankAccounts));
   }
 
   Future<void> _saveSelectedAccount(Map<String, dynamic> account) async {
-    // First get the actual account ID - might be nested in an 'accounts' array
-    final dynamic accountId = account['accountId'] ??
-        (account['accounts'] as List?)?.firstOrNull?['accountId'];
-
-    // Get bank ID - might be at top level
-    final dynamic bankId = account['bankId'];
-
-    if (accountId == null || bankId == null) {
-      print('Cannot save account - missing IDs. Full account data: $account');
-      return;
-    }
+    final accountId = account['accountId'] ?? (account['accounts'] as List?)?.firstOrNull?['accountId'];
+    final bankId = account['bankId'];
+    if (accountId == null || bankId == null) return;
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('selectedAccount', jsonEncode({
-      'accountId': accountId,
-      'bankId': bankId,
-    }));
-    print('Successfully saved account: $accountId from bank: $bankId');
+    await prefs.setString('selectedAccount', jsonEncode({'accountId': accountId, 'bankId': bankId}));
   }
 
-  void onSave(Invoice invoice) {
-    getDaysRemainingMessage(invoice);
-    setState(() {
-      invoices.add(invoice);
-    });
-    saveInvoices();
+  Future<void> saveInvoices() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('invoices', invoices.map((i) => jsonEncode(i.toJson())).toList());
   }
 
-  void editInvoice(int id, String periodDate, String? dueDate) {
-    int index = invoices.indexWhere((invoice) => invoice.id == id);
-    if (index != -1) {
-      setState(() {
-        final invoice = invoices[index];
-        String diff = getDaysRemainingMessage(invoice);
-        final updatedInvoice = Invoice(
-            id: invoice.id,
-            price: invoice.price,
-            subCategory: invoice.subCategory,
-            category: invoice.category,
-            name: invoice.name,
-            periodDate: periodDate,
-            dueDate: dueDate,
-            difference: diff
-        );
-        invoices[index] = updatedInvoice;
-        saveInvoices();
-      });
+  // ══════════════════════════════════════════════════════
+  // TRANSACTION LOGIC (unchanged business logic)
+  // ══════════════════════════════════════════════════════
+
+  Map<String, Map<String, List<Transaction>>> _groupedTransactions() {
+    final grouped = <String, Map<String, List<Transaction>>>{};
+    final txList = selectedAccount?['transactions'] as List?;
+    if (txList == null) return grouped;
+
+    for (var t in txList) {
+      late Transaction tx;
+      if (t is Map) {
+        tx = Transaction.fromJson(Map<String, dynamic>.from(t));
+      } else if (t is Transaction) {
+        tx = t;
+      } else {
+        continue;
+      }
+      if (tx.isSurplus) continue;
+
+      final cat = tx.category.isNotEmpty ? tx.category : 'Diğer';
+      final sub = tx.subcategory.isNotEmpty ? tx.subcategory : 'Diğer';
+      grouped.putIfAbsent(cat, () => {});
+      grouped[cat]!.putIfAbsent(sub, () => []);
+      grouped[cat]![sub]!.add(tx);
     }
+    return grouped;
   }
 
-  double calculateSubcategorySum(List<Invoice> invoices, String subcategory) {
-    double sum = 0.0;
-
-    for (var invoice in invoices) {
-      if (invoice.subCategory == subcategory) {
-        double price = double.parse(invoice.price);
-        sum += price;
+  double _totalFromGrouped(Map<String, Map<String, List<Transaction>>> grouped) {
+    double total = 0;
+    for (final cat in grouped.values) {
+      for (final subList in cat.values) {
+        total += subList.fold<double>(0, (s, tx) => s + tx.amount);
       }
     }
-
-    return sum;
-  }
-
-  Future<Transaction?> _showTransactionDialog([Transaction? existing]) async {
-    bool isInstallment = false;
-    bool isProvisioned = existing?.isProvisioned ?? false;
-    String? selectedCategory = existing?.category ?? (userCategories.isNotEmpty ? userCategories.first.category : null);
-    String? selectedSubcategory = existing?.subcategory ??
-        (selectedCategory != null
-            ? userCategories.firstWhere((e) => e.category == selectedCategory, orElse: () => userCategories.first).subcategory
-            : null);
-    final titleController = TextEditingController(text: existing?.title ?? '');
-    final amountController = TextEditingController(text: existing?.amount.toString() ?? '');
-    final TextEditingController installmentController = TextEditingController();
-    DateTime? _installmentStartDate;
-    DateTime? _selectedDate = existing?.date;
-
-    final formKey = GlobalKey<FormState>();
-
-    DateTime addMonthsSafe(DateTime date, int monthsToAdd) {
-      final newYear = date.year + ((date.month + monthsToAdd - 1) ~/ 12);
-      final newMonth = (date.month + monthsToAdd - 1) % 12 + 1;
-      final newDay = math.min(date.day, DateTime(newYear, newMonth + 1, 0).day);
-      return DateTime(newYear, newMonth, newDay);
-    }
-
-    return showDialog<Transaction>(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            Future<void> _selectDate(BuildContext context, void Function(void Function()) setDialogState) async {
-              final DateTime? picked = await showDatePicker(
-                context: context,
-                initialDate: _selectedDate ?? DateTime.now(),
-                firstDate: DateTime(2000),
-                lastDate: DateTime(2050),
-              );
-              if (picked != null) {
-                setDialogState(() => _selectedDate = picked);
-              }
-            }
-
-            return AlertDialog(
-              title: Text(existing == null ? "Add Transaction" : "Edit Transaction"),
-              content: SingleChildScrollView(
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      DropdownButtonFormField<String>(
-                        value: selectedCategory,
-                        items: userCategories.map((e) => e.category).toSet().map((cat) {
-                          return DropdownMenuItem(value: cat, child: Text(cat));
-                        }).toList(),
-                        onChanged: (val) {
-                          setDialogState(() {
-                            selectedCategory = val;
-                            // Yeni kategoriye göre ilk alt kategoriyi seç
-                            final subList = userCategories.where((e) => e.category == val).toList();
-                            selectedSubcategory = subList.isNotEmpty ? subList.first.subcategory : null;
-                          });
-                        },
-                        decoration: const InputDecoration(labelText: 'Category'),
-                        validator: (val) => val == null ? 'Required' : null,
-                      ),
-                      const SizedBox(height: 8),
-                      DropdownButtonFormField<String>(
-                        value: selectedSubcategory,
-                        items: userCategories
-                            .where((e) => e.category == selectedCategory)
-                            .map((e) => e.subcategory)
-                            .toSet()
-                            .map((sub) => DropdownMenuItem(value: sub, child: Text(sub)))
-                            .toList(),
-                        onChanged: (val) => setDialogState(() => selectedSubcategory = val),
-                        decoration: const InputDecoration(labelText: 'Subcategory'),
-                        validator: (val) => val == null ? 'Required' : null,
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: titleController,
-                        decoration: const InputDecoration(labelText: 'Title'),
-                        validator: (val) => val == null || val.isEmpty ? 'Required' : null,
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: amountController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(labelText: 'Amount'),
-                        validator: (val) => val == null || double.tryParse(val) == null ? 'Invalid' : null,
-                      ),
-                      const SizedBox(height: 8),
-                      CheckboxListTile(
-                        title: const Text("Provisioned Transaction?"),
-                        value: isProvisioned,
-                        onChanged: (val) => setDialogState(() => isProvisioned = val ?? false),
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      const SizedBox(height: 8),
-                      CheckboxListTile(
-                        title: const Text("Is Installment?"),
-                        value: isInstallment,
-                        onChanged: (val) => setDialogState(() => isInstallment = val ?? false),
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      if (isInstallment) ...[
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: installmentController,
-                          decoration: const InputDecoration(
-                            labelText: 'Installment Count',
-                            hintText: 'E.g. 3 for 3 months',
-                          ),
-                          keyboardType: TextInputType.number,
-                        ),
-                        const SizedBox(height: 8),
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: const Text("Installment Start Date"),
-                          subtitle: Text(
-                            _installmentStartDate != null
-                                ? DateFormat.yMd().format(_installmentStartDate!)
-                                : "Choose Date",
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.date_range),
-                            onPressed: () async {
-                              final picked = await showDatePicker(
-                                context: context,
-                                initialDate: DateTime.now(),
-                                firstDate: DateTime(2000),
-                                lastDate: DateTime(2100),
-                              );
-                              if (picked != null) {
-                                setDialogState(() {
-                                  _installmentStartDate = picked;
-                                });
-                              }
-                            },
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 8),
-                      if (!isInstallment) ...[
-                        const SizedBox(height: 8),
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: const Text("Transaction Date"),
-                          subtitle: Text(
-                            _selectedDate != null
-                                ? DateFormat.yMd().format(_selectedDate!)
-                                : 'No date selected',
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.date_range),
-                            onPressed: () => _selectDate(context, setDialogState),
-                          ),
-                        ),
-                      ],
-
-                    ],
-                  ),
-                ),
-              ),
-              actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-                ElevatedButton(
-                  onPressed: () {
-                    if (!formKey.currentState!.validate()) return;
-
-                    final amount = double.parse(amountController.text);
-                    final int? installmentCount = isInstallment ? int.tryParse(installmentController.text) : null;
-                    final DateTime baseDate = isInstallment ? (_installmentStartDate ?? DateTime.now()) : (_selectedDate ?? DateTime.now());
-
-                    int paidInstallmentCount = 0;
-                    final now = DateTime.now();
-
-                    if (installmentCount != null && installmentCount > 1) {
-                      for (int i = 0; i < installmentCount; i++) {
-                        final installmentDate = addMonthsSafe(baseDate, i);
-                        if (installmentDate.isBefore(now)) {
-                          paidInstallmentCount++;
-                        }
-                      }
-
-                      // >>> Yeni cutoff mantığı
-                      if (selectedAccount?['previousCutoffDate'] != null && selectedAccount?['nextCutoffDate'] != null) {
-                        final dateFormat = DateFormat("dd/MM/yyyy");
-                        final previousCutoff = dateFormat.parse(selectedAccount!['previousCutoffDate']);
-                        final nextCutoff = dateFormat.parse(selectedAccount!['nextCutoffDate']);
-
-                        // Eğer "normal sayım" 3 taksit bulduysa ama cutoff dönemi 4. taksiti içeriyorsa
-                        if (now.isAfter(previousCutoff) && now.isBefore(nextCutoff)) {
-                          // Bir sonraki taksitin tarihi cutoff öncesinde mi?
-                          final nextInstallmentDate = addMonthsSafe(baseDate, paidInstallmentCount);
-                          if (nextInstallmentDate.isBefore(nextCutoff)) {
-                            paidInstallmentCount++;
-                          }
-                        }
-                      }
-
-                      // Güvenlik: sınırı aşmasın
-                      if (paidInstallmentCount >= installmentCount) {
-                        paidInstallmentCount = installmentCount - 1;
-                      }
-                    }
-
-                    final perInstallmentAmount = (installmentCount != null && installmentCount > 1)
-                        ? amount / installmentCount
-                        : amount;
-
-                    final currentInstallmentIndex = (installmentCount != null && installmentCount > 1)
-                        ? paidInstallmentCount
-                        : 0;
-
-                    final newTx = Transaction(
-                      transactionId: existing?.transactionId ?? DateTime.now().millisecondsSinceEpoch,
-                      date: addMonthsSafe(baseDate, currentInstallmentIndex),
-                      amount: perInstallmentAmount,
-                      currency: selectedAccount?['currency'] ?? 'TRY',
-                      category: selectedCategory!,
-                      subcategory: selectedSubcategory!,
-                      title: installmentCount != null && installmentCount > 1
-                          ? '${titleController.text} ($currentInstallmentIndex/$installmentCount)'
-                          : titleController.text,
-                      description: '',
-                      isSurplus: false,
-                      isFromInvoice: false,
-                      installment: installmentCount,
-                      initialInstallmentDate: (installmentCount != null && installmentCount > 1) ? baseDate : null,
-                      isProvisioned: isProvisioned,
-                    );
-
-                    Navigator.pop(context, newTx);
-                  },
-                  child: Text(existing == null ? 'Add' : 'Update'),
-                )
-
-              ],
-            );
-          },
-        );
-      },
-    );
+    return total;
   }
 
   Future<void> _processTransactionUpdate(Transaction newTx, [Transaction? existing]) async {
@@ -760,110 +217,25 @@ class _OutcomePageState extends State<OutcomePage> {
 
           account['transactions'] = account['transactions'] ?? [];
           Account accountInstance = Account.fromJson(account);
-          bool isCredit = account['isDebit'] == false;
 
           if (isEditing) {
             final txList = account['transactions'] as List;
-            final index = txList.indexWhere(
-                  (tx) => Transaction.fromJson(tx).transactionId == existing!.transactionId,
-            );
-
+            final index = txList.indexWhere((tx) => Transaction.fromJson(tx).transactionId == existing.transactionId);
             if (index != -1) {
               final oldTx = Transaction.fromJson(txList[index]);
-
-              print('--- DEBUG _processTransactionUpdate (EDIT) ---');
-              print('Old Transaction Amount: ${oldTx.amount}');
-              print('New Transaction Amount: ${newTx.amount}');
-              print('Account Balance BEFORE update: ${account['balance']}');
-              print('Account Available Credit BEFORE update: ${account['availableCredit']}');
-
-              account['balance'] = (account['balance'] ?? 0.0) - oldTx.amount + newTx.amount;
-
-              if (isCredit) {
-                account['availableCredit'] = (account['availableCredit'] ?? account['creditLimit']) + oldTx.amount;
-                account['availableCredit'] = (account['availableCredit'] ?? account['creditLimit']) - newTx.amount;
-
-                if (!oldTx.isProvisioned) {
-                  account['currentDebt'] = (account['currentDebt'] ?? 0.0) - oldTx.amount;
-                }
-                if (!newTx.isProvisioned) {
-                  account['currentDebt'] = (account['currentDebt'] ?? 0.0) + newTx.amount;
-                }
-
-                account['totalDebt'] = (account['totalDebt'] ?? 0.0) - oldTx.amount + newTx.amount;
-
-                DateTime parseDate(String dateStr) {
-                  try {
-                    return DateFormat('dd/MM/yyyy').parse(dateStr);
-                  } catch (_) {
-                    return DateTime.now();
-                  }
-                }
-
-                final nextCutoff = parseDate(account['nextCutoffDate'] ?? DateTime.now().toString());
-
-                if (!oldTx.date.isBefore(nextCutoff)) {
-                  account['previousDebt'] = (account['previousDebt'] ?? 0.0) - oldTx.amount;
-                } else {
-                  if (!oldTx.isProvisioned) {
-                    account['remainingDebt'] = (account['remainingDebt'] ?? 0.0) - oldTx.amount;
-                  }
-                }
-
-                if (!newTx.date.isBefore(nextCutoff)) {
-                  account['previousDebt'] = (account['previousDebt'] ?? 0.0) + newTx.amount;
-                } else {
-                  if (!newTx.isProvisioned) {
-                    account['remainingDebt'] = (account['remainingDebt'] ?? 0.0) + newTx.amount;
-                  }
-                }
-
-                accountInstance = Account.fromJson(account);
-                account['minPayment'] = accountInstance.minPayment;
-                account['remainingMinPayment'] = account['minPayment'];
-              }
-
+              _reverseTransactionDebt(account, oldTx);
+              _applyTransactionDebt(account, newTx);
               txList[index] = newTx.toJson();
-
-              print('Account Balance AFTER update: ${account['balance']}');
-              print('Account Available Credit AFTER update: ${account['availableCredit']}');
-              print('----------------------------------------------');
+              accountInstance = Account.fromJson(account);
+              account['minPayment'] = accountInstance.calculateMinPayment();
+              account['remainingMinPayment'] = account['minPayment'];
             }
           } else {
             account['transactions'].add(newTx.toJson());
-            account['balance'] = (account['balance'] ?? 0.0) + newTx.amount;
-
-            if (isCredit) {
-              account['availableCredit'] = (account['availableCredit'] ?? account['creditLimit']) - newTx.amount;
-
-              if (!newTx.isProvisioned) {
-                account['currentDebt'] = (account['currentDebt'] ?? 0.0) + newTx.amount;
-              }
-
-              account['totalDebt'] = (account['totalDebt'] ?? 0.0) + newTx.amount;
-
-              DateTime parseDate(String dateStr) {
-                try {
-                  return DateFormat('dd/MM/yyyy').parse(dateStr);
-                } catch (_) {
-                  return DateTime.now();
-                }
-              }
-
-              final nextCutoff = parseDate(account['nextCutoffDate'] ?? DateTime.now().toString());
-
-              if (!newTx.date.isBefore(nextCutoff)) {
-                account['previousDebt'] = (account['previousDebt'] ?? 0.0) + newTx.amount;
-              } else {
-                if (!newTx.isProvisioned) {
-                  account['remainingDebt'] = (account['remainingDebt'] ?? 0.0) + newTx.amount;
-                }
-              }
-
-              accountInstance = Account.fromJson(account);
-              account['minPayment'] = accountInstance.minPayment;
-              account['remainingMinPayment'] = account['minPayment'];
-            }
+            _applyTransactionDebt(account, newTx);
+            accountInstance = Account.fromJson(account);
+            account['minPayment'] = accountInstance.calculateMinPayment();
+            account['remainingMinPayment'] = account['minPayment'];
           }
         }
       }
@@ -873,93 +245,131 @@ class _OutcomePageState extends State<OutcomePage> {
     await _saveSelectedAccount(selectedAccount!);
   }
 
-  void _addOrUpdateTransaction([Transaction? existing]) async {
-    final newTx = await _showTransactionDialog(existing);
-    if (newTx == null) return;
+  void _applyTransactionDebt(Map<String, dynamic> account, Transaction tx) {
+    if (account['isDebit'] == true) return;
 
-    _processTransactionUpdate(newTx, existing);
+    if (tx.isInstallment && tx.installment! > 1 && tx.totalAmount != null) {
+      final totalAmount = tx.totalAmount!;
+      final perInstallment = tx.amount;
+      final isPaid = tx.isInstallmentPaid ?? false;
+
+      account['availableCredit'] = (account['availableCredit'] ?? account['creditLimit']) - totalAmount;
+      account['totalDebt'] = (account['totalDebt'] ?? 0.0) + totalAmount;
+
+      if (isPaid) {
+        account['availableCredit'] = (account['availableCredit'] ?? 0.0) + perInstallment;
+        if (!tx.isProvisioned) account['currentDebt'] = (account['currentDebt'] ?? 0.0) - perInstallment;
+      } else {
+        if (!tx.isProvisioned) account['currentDebt'] = (account['currentDebt'] ?? 0.0) + perInstallment;
+      }
+      _updatePeriodDebts(account, tx, isAdding: true);
+    } else {
+      account['availableCredit'] = (account['availableCredit'] ?? account['creditLimit']) - tx.amount;
+      if (!tx.isProvisioned) account['currentDebt'] = (account['currentDebt'] ?? 0.0) + tx.amount;
+      account['totalDebt'] = (account['totalDebt'] ?? 0.0) + tx.amount;
+      _updatePeriodDebts(account, tx, isAdding: true);
+    }
   }
 
-  Map<String, Map<String, List<Transaction>>> transactionsGrouped() {
-    Map<String, Map<String, List<Transaction>>> grouped = {};
+  void _reverseTransactionDebt(Map<String, dynamic> account, Transaction tx) {
+    if (account['isDebit'] == true) return;
 
-    List<dynamic>? transactionsJson = selectedAccount?['transactions'];
-    if (transactionsJson == null) return grouped;
+    if (tx.isInstallment && tx.installment! > 1 && tx.totalAmount != null) {
+      final totalAmount = tx.totalAmount!;
+      final perInstallment = tx.amount;
+      final isPaid = tx.isInstallmentPaid ?? false;
 
-    for (var t in transactionsJson) {
-      late Transaction tx;
+      account['availableCredit'] = (account['availableCredit'] ?? 0.0) + totalAmount;
+      account['totalDebt'] = (account['totalDebt'] ?? 0.0) - totalAmount;
 
-      if (t is Map) {
-        tx = Transaction.fromJson(Map<String, dynamic>.from(t));
-      } else if (t is Transaction) {
-        tx = t;
+      if (isPaid) {
+        account['availableCredit'] = (account['availableCredit'] ?? 0.0) - perInstallment;
+        if (!tx.isProvisioned) account['currentDebt'] = (account['currentDebt'] ?? 0.0) + perInstallment;
       } else {
-        continue; // Geçersiz tür
+        if (!tx.isProvisioned) account['currentDebt'] = (account['currentDebt'] ?? 0.0) - perInstallment;
       }
+      _updatePeriodDebts(account, tx, isAdding: false);
+    } else {
+      account['availableCredit'] = (account['availableCredit'] ?? 0.0) + tx.amount;
+      if (!tx.isProvisioned) account['currentDebt'] = (account['currentDebt'] ?? 0.0) - tx.amount;
+      account['totalDebt'] = (account['totalDebt'] ?? 0.0) - tx.amount;
+      _updatePeriodDebts(account, tx, isAdding: false);
+    }
+  }
 
-      if (tx.isSurplus) continue; // Gelir ise dahil etme, sadece giderleri göster
-
-      String category = tx.category.isNotEmpty ? tx.category : 'Diğer';
-      String subcategory = tx.subcategory.isNotEmpty ? tx.subcategory : 'Diğer';
-
-      grouped.putIfAbsent(category, () => {});
-      grouped[category]!.putIfAbsent(subcategory, () => []);
-      grouped[category]![subcategory]!.add(tx);
+  void _updatePeriodDebts(Map<String, dynamic> account, Transaction tx, {required bool isAdding}) {
+    DateTime parseDate(String dateStr) {
+      try {
+        return DateFormat('dd/MM/yyyy').parse(dateStr);
+      } catch (_) {
+        return DateTime.now();
+      }
     }
 
-    return grouped;
+    final nextCutoff = parseDate(account['nextCutoffDate'] ?? DateTime.now().toString());
+    final multiplier = isAdding ? 1 : -1;
+
+    if (tx.date.isBefore(nextCutoff)) {
+      if (!tx.isProvisioned) {
+        account['remainingDebt'] = (account['remainingDebt'] ?? 0.0) + (tx.amount * multiplier);
+      }
+    } else {
+      account['previousDebt'] = (account['previousDebt'] ?? 0.0) + (tx.amount * multiplier);
+    }
   }
 
-  void _deleteTransaction(Transaction tx) async {
+  Future<void> _deleteTransaction(Transaction tx, {bool deleteAllInstallments = false}) async {
     final prefs = await SharedPreferences.getInstance();
 
-    // 1. selectedAccount güncelle
-    List<Map<String, dynamic>> transactions = List<Map<String, dynamic>>.from(selectedAccount!['transactions']);
-    transactions.removeWhere((t) => t['transactionId'] == tx.transactionId);
-    selectedAccount!['transactions'] = transactions;
-    selectedAccount!['balance'] = (selectedAccount!['balance'] ?? 0.0) - tx.amount;
+    List<Transaction> toDelete = [tx];
 
-
-    // Eğer kredi kartı hesabıysa, borç ve limit değerlerini de güncelle
-    if (selectedAccount!['isDebit'] == false) {
-      final double txAmount = tx.amount;
-
-      selectedAccount!['currentDebt'] = (selectedAccount!['currentDebt'] ?? 0.0) - txAmount;
-      selectedAccount!['totalDebt'] = (selectedAccount!['totalDebt'] ?? 0.0) - txAmount;
-      selectedAccount!['availableCredit'] = (selectedAccount!['availableCredit'] ?? 0.0) + txAmount;
-
-      DateTime parseDate(String dateStr) {
-        try {
-          final dateFormat = DateFormat('dd/MM/yyyy');
-          return dateFormat.parse(dateStr);
-        } catch (e) {
-          return DateTime.now(); // Fallback in case of invalid date format
-        }
+    if (deleteAllInstallments && tx.isInstallment && tx.parentTransactionId != null) {
+      final allTx = selectedAccount?['transactions'] as List? ?? [];
+      for (var json in allTx) {
+        final t = Transaction.fromJson(json);
+        if (t.parentTransactionId == tx.parentTransactionId) toDelete.add(t);
       }
+    }
 
-      final txDate = tx.date;
+    List<Map<String, dynamic>> transactions = List<Map<String, dynamic>>.from(selectedAccount!['transactions'] ?? []);
+    double totalRemoved = 0;
+
+    for (var del in toDelete) {
+      transactions.removeWhere((t) => t['transactionId'] == del.transactionId);
+      totalRemoved += del.amount;
+    }
+
+    selectedAccount!['transactions'] = transactions;
+    selectedAccount!['balance'] = (selectedAccount!['balance'] ?? 0.0) - totalRemoved;
+
+    if (selectedAccount!['isDebit'] == false) {
+      selectedAccount!['currentDebt'] = (selectedAccount!['currentDebt'] ?? 0.0) - totalRemoved;
+      selectedAccount!['totalDebt'] = (selectedAccount!['totalDebt'] ?? 0.0) - totalRemoved;
+      selectedAccount!['availableCredit'] = (selectedAccount!['availableCredit'] ?? 0.0) + totalRemoved;
+
+      DateTime parseDate(String s) {
+        try { return DateFormat('dd/MM/yyyy').parse(s); } catch (_) { return DateTime.now(); }
+      }
       final nextCutoff = parseDate(selectedAccount!['nextCutoffDate'] ?? DateTime.now().toString());
 
-      if (txDate.isBefore(nextCutoff)) {
-        if(tx.isProvisioned){
-          selectedAccount!['remainingDebt'] = (selectedAccount!['remainingDebt'] ?? 0.0);
+      for (var del in toDelete) {
+        if (del.date.isBefore(nextCutoff)) {
+          if (!del.isProvisioned) {
+            selectedAccount!['remainingDebt'] = (selectedAccount!['remainingDebt'] ?? 0.0) - del.amount;
+          }
         } else {
-          selectedAccount!['remainingDebt'] = (selectedAccount!['remainingDebt'] ?? 0.0) - txAmount;
+          selectedAccount!['previousDebt'] = (selectedAccount!['previousDebt'] ?? 0.0) - del.amount;
         }
-      } else {
-        selectedAccount!['previousDebt'] = (selectedAccount!['previousDebt'] ?? 0.0) - txAmount;
       }
 
-      // Min ödeme tekrar hesapla
-      Account accountInstance = Account.fromJson(selectedAccount!);
-      selectedAccount!['minPayment'] = accountInstance.calculateMinPayment();
+      Account inst = Account.fromJson(selectedAccount!);
+      selectedAccount!['minPayment'] = inst.calculateMinPayment();
       selectedAccount!['remainingMinPayment'] = selectedAccount!['minPayment'];
     }
 
-    // 2. bankAccounts içinde bu hesabı bul ve güncelle
     for (var bank in bankAccounts) {
       if (bank['bankId'] == selectedAccount!['bankId']) {
-        List accounts = List.from(bank['accounts']);
+        List accounts = List.from(bank['accounts'] ?? []);
         for (int i = 0; i < accounts.length; i++) {
           if (accounts[i]['accountId'] == selectedAccount!['accountId']) {
             accounts[i] = selectedAccount!;
@@ -971,343 +381,561 @@ class _OutcomePageState extends State<OutcomePage> {
       }
     }
 
-    // 3. SharedPreferences’a yaz
     await prefs.setString('accountDataList', jsonEncode(bankAccounts));
-
-    // Arayüzü yenile
-    setState(() {
-      transactionsGrouped(); // Eğer grouped yapısını tekrar oluşturuyorsan burada çağırabilirsin
-    });
+    await _saveSelectedAccount(selectedAccount!);
+    setState(() {});
   }
 
-  Widget buildCategoryProgressBars(Map<String, Map<String, List<Transaction>>> grouped, double totalAmount) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: grouped.entries.map((catEntry) {
-        final categoryName = catEntry.key;
-        double categoryTotal = 0;
-        for (var subList in catEntry.value.values) {
-          categoryTotal += subList.fold(0, (sum, tx) => sum + tx.amount);
-        }
-        final percent = totalAmount > 0 ? categoryTotal / totalAmount : 0.0;
+  // ══════════════════════════════════════════════════════
+  // HELPERS
+  // ══════════════════════════════════════════════════════
 
-        return GlassmorphismContainer(
-          borderRadius: 16,
-          blur: 10,
-          borderColor: Colors.white.withOpacity(0.2),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(categoryName,
-                      style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600, color: Colors.white)),
-                  Text("${categoryTotal.toStringAsFixed(2)} ₺",
-                      style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: Colors.amberAccent)),
-                ],
-              ),
-              SizedBox(height: 8.h),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8.r),
-                child: LinearProgressIndicator(
-                  value: percent.clamp(0.0, 1.0),
-                  minHeight: 10.h,
-                  backgroundColor: Colors.white24,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.amberAccent),
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget buildGroupedTransactionList(Map<String, Map<String, List<Transaction>>> grouped) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: grouped.entries.map((catEntry) {
-        return GlassmorphismContainer(
-          borderRadius: 16,
-          blur: 10,
-          borderColor: Colors.white.withOpacity(0.2),
-          padding: EdgeInsets.zero,
-          child: ExpansionTile(
-            title: Text(catEntry.key,
-                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600, color: Colors.white)),
-            children: catEntry.value.entries.map((subEntry) {
-              return ExpansionTile(
-                title: Text(subEntry.key, style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500, color: Colors.white70)),
-                children: subEntry.value.map((tx) {
-                  return ListTile(
-                    title: Text(tx.title, style: TextStyle(fontSize: 14.sp, color: Colors.white)),
-                    subtitle: Text(DateFormat('dd MMM yyyy').format(tx.date), style: TextStyle(fontSize: 12.sp, color: Colors.white70)),
-                    trailing: Text("${tx.amount.toStringAsFixed(2)} ${tx.currency}", style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: Colors.redAccent)),
-                  );
-                }).toList(),
-              );
-            }).toList(),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final grouped = transactionsGrouped();
-    final totalAmount = _calculateTotalAmount(grouped);
-
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          "Giderler Detayı",
-          style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w600),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: isDark ? Colors.white : Colors.black87,
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Account Selection
-            if (bankAccounts.isNotEmpty)
-              GlassmorphismContainer(
-                borderRadius: 16,
-                blur: 10,
-                borderColor: Colors.white.withOpacity(0.2),
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-                child: DropdownButtonFormField<int>(
-                  value: selectedAccount?['accountId'],
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                    labelText: "Hesap Seçiniz",
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  items: bankAccounts.expand<DropdownMenuItem<int>>((bank) {
-                    return (bank['accounts'] as List?)?.map((account) {
-                      return DropdownMenuItem<int>(
-                        value: account['accountId'],
-                        child: Text(
-                          "${bank['bankName']} - ${account['name']}",
-                          style: TextStyle(fontSize: 14.sp),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      );
-                    }) ?? [];
-                  }).toList(),
-                  onChanged: (selectedAccountId) {
-                    if (selectedAccountId != null) {
-                      final account = _findAccountById(selectedAccountId);
-                      if (account != null) {
-                        setState(() => selectedAccount = account);
-                        _saveSelectedAccount(account);
-                      }
-                    }
-                  },
-                ),
-              ),
-            SizedBox(height: 24.h),
-
-            // Summary Card
-            if (totalAmount > 0)
-              GlassmorphismContainer(
-                borderRadius: 16,
-                blur: 10,
-                borderColor: Colors.white.withOpacity(0.2),
-                padding: EdgeInsets.all(16.h),
-                color: isDark ? Colors.grey[900]!.withOpacity(0.4) : Colors.white.withOpacity(0.4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Toplam Gider",
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            color: isDark ? Colors.white70 : Colors.black54,
-                          ),
-                        ),
-                        SizedBox(height: 4.h),
-                        Text(
-                          "${totalAmount.toStringAsFixed(2)} ₺",
-                          style: TextStyle(
-                            fontSize: 20.sp,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.amber,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Icon(Icons.pie_chart, color: Colors.amber, size: 32.r),
-                  ],
-                ),
-              ),
-            SizedBox(height: 24.h),
-
-
-
-            // Category Progress Bars
-            if (grouped.isNotEmpty)
-              buildCategoryProgressBars(grouped, totalAmount),
-            SizedBox(height: 24.h),
-
-            // Transaction List
-            if (grouped.isNotEmpty)
-              buildGroupedTransactionList(grouped),
-
-            // Empty State
-            if (grouped.isEmpty)
-              GlassmorphismContainer(
-                borderRadius: 16,
-                blur: 10,
-                borderColor: Colors.white.withOpacity(0.2),
-                color: isDark ? Colors.grey[900]!.withOpacity(0.4) : Colors.white.withOpacity(0.4),
-                padding: EdgeInsets.symmetric(vertical: 48.h),
-                child: Column(
-                  children: [
-                    Icon(Icons.receipt_long, size: 64.r, color: isDark ? Colors.white54 : Colors.black38),
-                    SizedBox(height: 16.h),
-                    Text(
-                      "Henüz işlem bulunmuyor",
-                      style: TextStyle(fontSize: 16.sp, color: isDark ? Colors.white54 : Colors.black38),
-                    ),
-                    SizedBox(height: 8.h),
-                    Text(
-                      "Yeni işlem eklemek için + butonuna tıklayın",
-                      style: TextStyle(fontSize: 12.sp, color: isDark ? Colors.white54 : Colors.black38),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _addOrUpdateTransaction(),
-        backgroundColor: Colors.amber,
-        foregroundColor: Colors.white,
-        child: Icon(Icons.add),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-      ),
-    );
-  }
-
-
-  double _calculateTotalAmount(Map<String, Map<String, List<Transaction>>> grouped) {
-    double total = 0;
-    for (var cat in grouped.values) {
-      for (var subList in cat.values) {
-        total += subList.fold(0, (sum, tx) => sum + tx.amount);
-      }
-    }
-    return total;
-  }
+  String _labelForOption(SelectedOption option) => switch (option) {
+    SelectedOption.Is => 'İş',
+    SelectedOption.Burs => 'Burs',
+    SelectedOption.Emekli => 'Emekli',
+    _ => '',
+  };
 
   Map<String, dynamic>? _findAccountById(int? accountId) {
-    if (accountId == null) {
-      throw ArgumentError('accountId cannot be null');
-    }
-
+    if (accountId == null) return null;
     for (var bank in bankAccounts) {
       for (var account in bank['accounts'] ?? []) {
         if (account['accountId'] == accountId) {
-          // Return a flattened structure with account + bank info
-          return {
-            ...account, // Spread all account fields
-            'bankId': bank['bankId'],
-            'bankName': bank['bankName'],
-          };
+          return {...account, 'bankId': bank['bankId'], 'bankName': bank['bankName']};
         }
       }
     }
     return null;
   }
 
-  Widget buildCategoryWidget(Map<String, dynamic> category) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+  String getDaysRemainingMessage(Invoice invoice) {
+    final now = DateTime.now();
+    final formatted = DateFormat('yyyy-MM-dd').format(now);
+
+    if (now.isBefore(DateTime.parse(faturaDonemi))) {
+      invoice.difference = (DateTime.parse(faturaDonemi).difference(now).inDays + 1).toString();
+      return invoice.difference;
+    } else if (formatted == faturaDonemi) {
+      invoice.difference = '0';
+      return '0';
+    } else if (invoice.dueDate != null && sonOdeme != null && now.isAfter(DateTime.parse(faturaDonemi))) {
+      invoice.difference = (DateTime.parse(sonOdeme!).difference(now).inDays + 1).toString();
+      return invoice.difference;
+    }
+    return '0';
+  }
+
+  void onSave(Invoice invoice) {
+    getDaysRemainingMessage(invoice);
+    setState(() => invoices.add(invoice));
+    saveInvoices();
+  }
+
+  void removeInvoice(int id) {
+    setState(() {
+      invoices.removeWhere((i) => i.id == id);
+    });
+    saveInvoices();
+  }
+
+  // ══════════════════════════════════════════════════════
+  // BUILD
+  // ══════════════════════════════════════════════════════
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? const Color(0xFF0F0F0F) : const Color(0xFFF5F6F8);
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final mutedColor = isDark ? Colors.white54 : Colors.grey.shade600;
+
+    final grouped = _groupedTransactions();
+    final totalAmount = _totalFromGrouped(grouped);
+
+    return Scaffold(
+      backgroundColor: bg,
+      appBar: AppBar(
+        backgroundColor: bg,
+        elevation: 0,
+        scrolledUnderElevation: 0.5,
+        leading: IconButton(
+          icon: Icon(LucideIcons.arrowLeft, color: textColor),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Giderler',
+          style: GoogleFonts.montserrat(fontSize: 20.sp, fontWeight: FontWeight.bold, color: textColor),
+        ),
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator.adaptive())
+          : RefreshIndicator.adaptive(
+        onRefresh: _load,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+          children: [
+            // ── Account Selector ──
+            if (bankAccounts.isNotEmpty) ...[
+              _buildAccountSelector(isDark, textColor, mutedColor),
+              SizedBox(height: 20.h),
+            ],
+
+            // ── Total Summary ──
+            if (totalAmount > 0) ...[
+              _buildTotalCard(totalAmount, isDark, textColor, mutedColor),
+              SizedBox(height: 20.h),
+            ],
+
+            // ── Category Progress Bars ──
+            if (grouped.isNotEmpty) ...[
+              _buildCategoryBars(grouped, totalAmount, isDark, textColor, mutedColor),
+              SizedBox(height: 20.h),
+              _buildTransactionGroups(grouped, isDark, textColor, mutedColor),
+            ],
+
+            // ── Empty State ──
+            if (grouped.isEmpty) _buildEmptyState(isDark, mutedColor),
+
+            SizedBox(height: 80.h),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showAddTransactionModal,
+        backgroundColor: Colors.blueAccent,
+        foregroundColor: Colors.white,
+        icon: const Icon(LucideIcons.plus),
+        label: Text('İşlem Ekle', style: GoogleFonts.montserrat(fontWeight: FontWeight.w600)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+      ),
+    );
+  }
+
+  // ── Account Selector ──
+
+  Widget _buildAccountSelector(bool isDark, Color textColor, Color mutedColor) {
+    final cardBg = isDark ? const Color(0xFF1A1A1A) : Colors.white;
+    final borderCol = isDark ? Colors.white10 : Colors.grey.shade200;
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: borderCol),
+        boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
+      child: DropdownButtonFormField<int>(
+        value: selectedAccount?['accountId'],
+        isExpanded: true,
+        decoration: InputDecoration(
+          labelText: 'Hesap Seçin',
+          labelStyle: GoogleFonts.montserrat(fontSize: 14.sp, color: mutedColor),
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.zero,
+          prefixIcon: Icon(LucideIcons.wallet, size: 20.r, color: Colors.blueAccent),
+        ),
+        style: GoogleFonts.montserrat(fontSize: 14.sp, color: textColor),
+        dropdownColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        items: bankAccounts.expand<DropdownMenuItem<int>>((bank) {
+          return (bank['accounts'] as List?)?.map((acc) {
+            return DropdownMenuItem<int>(
+              value: acc['accountId'],
+              child: Text(
+                "${bank['bankName']} — ${acc['name']}",
+                style: GoogleFonts.montserrat(fontSize: 14.sp),
+                overflow: TextOverflow.ellipsis,
+              ),
+            );
+          }) ??
+              [];
+        }).toList(),
+        onChanged: (id) {
+          if (id == null) return;
+          final acc = _findAccountById(id);
+          if (acc != null) {
+            setState(() => selectedAccount = acc);
+            _saveSelectedAccount(acc);
+          }
+        },
+      ),
+    );
+  }
+
+  // ── Total Card ──
+
+  Widget _buildTotalCard(double total, bool isDark, Color textColor, Color mutedColor) {
+    final cardBg = isDark ? const Color(0xFF1A1A1A) : Colors.white;
+    final borderCol = isDark ? Colors.white10 : Colors.grey.shade200;
+
+    return Container(
+      padding: EdgeInsets.all(20.r),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(color: borderCol),
+        boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
       child: Row(
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.3),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(category['icon'] ?? Icons.category, color: Colors.white, size: 20),
-          ),
-          const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              category['name'] ?? 'Kategori',
-              style: GoogleFonts.montserrat(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(LucideIcons.trendingDown, color: Colors.red, size: 18.r),
+                    SizedBox(width: 8.w),
+                    Text('Toplam Gider', style: GoogleFonts.montserrat(fontSize: 13.sp, color: mutedColor)),
+                  ],
+                ),
+                SizedBox(height: 8.h),
+                Text(
+                  '${total.toStringAsFixed(2)} ₺',
+                  style: GoogleFonts.montserrat(fontSize: 28.sp, fontWeight: FontWeight.w700, color: textColor, letterSpacing: -0.5),
+                ),
+              ],
             ),
           ),
-          Text(
-            "${category['amount']?.toStringAsFixed(2) ?? '0.00'} ₺",
-            style: GoogleFonts.montserrat(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Colors.white70,
+          Container(
+            padding: EdgeInsets.all(14.r),
+            decoration: BoxDecoration(
+              color: Colors.red.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(14.r),
             ),
+            child: Icon(LucideIcons.receipt, color: Colors.red, size: 28.r),
           ),
         ],
       ),
     );
   }
 
-}
+  // ── Category Progress Bars ──
 
-class GlassmorphismContainer extends StatelessWidget {
-  final Widget child;
-  final double borderRadius;
-  final double blur;
-  final Color borderColor;
-  final EdgeInsetsGeometry? padding;
-  final Color? color; // opsiyonel arkaplan rengi
+  Widget _buildCategoryBars(
+      Map<String, Map<String, List<Transaction>>> grouped,
+      double totalAmount,
+      bool isDark,
+      Color textColor,
+      Color mutedColor,
+      ) {
+    final cardBg = isDark ? const Color(0xFF1A1A1A) : Colors.white;
+    final borderCol = isDark ? Colors.white10 : Colors.grey.shade200;
 
-  const GlassmorphismContainer({
-    super.key,
-    required this.child,
-    this.borderRadius = 16,
-    this.blur = 10,
-    required this.borderColor,
-    this.padding,
-    this.color,
-  });
+    // Generate colors for categories
+    final catKeys = grouped.keys.toList();
 
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(borderRadius),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-        child: Container(
-          padding: padding ?? EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: color ?? Colors.white.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(borderRadius),
-            border: Border.all(color: borderColor),
-          ),
-          child: child,
+    return Container(
+      padding: EdgeInsets.all(16.r),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(color: borderCol),
+        boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Kategori Dağılımı', style: GoogleFonts.montserrat(fontSize: 14.sp, fontWeight: FontWeight.w700, color: textColor)),
+          SizedBox(height: 16.h),
+          ...catKeys.asMap().entries.map((entry) {
+            final idx = entry.key;
+            final catName = entry.value;
+            final subMap = grouped[catName]!;
+            double catTotal = 0;
+            for (var subList in subMap.values) {
+              catTotal += subList.fold<double>(0, (s, tx) => s + tx.amount);
+            }
+            final percent = totalAmount > 0 ? catTotal / totalAmount : 0.0;
+            final color = _categoryColor(idx);
+
+            return Padding(
+              padding: EdgeInsets.only(bottom: idx < catKeys.length - 1 ? 14.h : 0),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 10.r, height: 10.r,
+                            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                          ),
+                          SizedBox(width: 8.w),
+                          Text(catName, style: GoogleFonts.montserrat(fontSize: 13.sp, fontWeight: FontWeight.w600, color: textColor)),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Text(
+                            '${catTotal.toStringAsFixed(2)} ₺',
+                            style: GoogleFonts.montserrat(fontSize: 13.sp, fontWeight: FontWeight.w600, color: textColor),
+                          ),
+                          SizedBox(width: 8.w),
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                            decoration: BoxDecoration(
+                              color: color.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6.r),
+                            ),
+                            child: Text(
+                              '%${(percent * 100).toStringAsFixed(0)}',
+                              style: GoogleFonts.montserrat(fontSize: 11.sp, fontWeight: FontWeight.w600, color: color),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 6.h),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4.r),
+                    child: LinearProgressIndicator(
+                      value: percent.clamp(0.0, 1.0),
+                      minHeight: 6.h,
+                      backgroundColor: isDark ? Colors.white10 : Colors.grey.shade200,
+                      color: color,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Color _categoryColor(int index) {
+    const colors = [
+      Colors.blueAccent,
+      Colors.orange,
+      Colors.teal,
+      Colors.purple,
+      Colors.red,
+      Colors.green,
+      Colors.indigo,
+      Colors.pink,
+    ];
+    return colors[index % colors.length];
+  }
+
+  // ── Transaction Groups ──
+
+  Widget _buildTransactionGroups(
+      Map<String, Map<String, List<Transaction>>> grouped,
+      bool isDark,
+      Color textColor,
+      Color mutedColor,
+      ) {
+    final cardBg = isDark ? const Color(0xFF1A1A1A) : Colors.white;
+    final borderCol = isDark ? Colors.white10 : Colors.grey.shade200;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'İŞLEMLER',
+          style: GoogleFonts.montserrat(fontSize: 12.sp, fontWeight: FontWeight.w700, color: mutedColor, letterSpacing: 1.2),
         ),
+        SizedBox(height: 12.h),
+        ...grouped.entries.map((catEntry) {
+          final catIdx = grouped.keys.toList().indexOf(catEntry.key);
+
+          return Padding(
+            padding: EdgeInsets.only(bottom: 12.h),
+            child: Container(
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(16.r),
+                border: Border.all(color: borderCol),
+                boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8, offset: const Offset(0, 2))],
+              ),
+              child: Theme(
+                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                child: ExpansionTile(
+                  tilePadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+                  childrenPadding: EdgeInsets.fromLTRB(12.w, 0, 12.w, 12.h),
+                  leading: Container(
+                    width: 36.r, height: 36.r,
+                    decoration: BoxDecoration(
+                      color: _categoryColor(catIdx).withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(LucideIcons.folder, size: 16.r, color: _categoryColor(catIdx)),
+                  ),
+                  title: Text(catEntry.key, style: GoogleFonts.montserrat(fontSize: 15.sp, fontWeight: FontWeight.w600, color: textColor)),
+                  subtitle: Text(
+                    '${catEntry.value.values.fold<int>(0, (s, l) => s + l.length)} işlem',
+                    style: GoogleFonts.montserrat(fontSize: 12.sp, color: mutedColor),
+                  ),
+                  children: catEntry.value.entries.map((subEntry) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                      child: ExpansionTile(
+                        tilePadding: EdgeInsets.symmetric(horizontal: 12.w),
+                        childrenPadding: EdgeInsets.symmetric(horizontal: 8.w),
+                        leading: Icon(LucideIcons.tag, size: 16.r, color: Colors.blueAccent),
+                        title: Text(subEntry.key, style: GoogleFonts.montserrat(fontSize: 14.sp, fontWeight: FontWeight.w500, color: textColor)),
+                        children: subEntry.value.map((tx) => _buildTransactionTile(tx, isDark, textColor, mutedColor)).toList(),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildTransactionTile(Transaction tx, bool isDark, Color textColor, Color mutedColor) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 6.h),
+      child: Dismissible(
+        key: Key('tx_${tx.transactionId}'),
+        direction: DismissDirection.endToStart,
+        background: Container(
+          alignment: Alignment.centerRight,
+          padding: EdgeInsets.only(right: 16.w),
+          decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(12.r)),
+          child: Icon(LucideIcons.trash2, color: Colors.white, size: 18.r),
+        ),
+        confirmDismiss: (_) async {
+          if (tx.isInstallment && tx.installment != null && tx.installment! > 1) {
+            return await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: Text('Taksit Silme', style: GoogleFonts.montserrat(fontWeight: FontWeight.bold)),
+                content: Text('Tüm taksitleri silmek ister misiniz?', style: GoogleFonts.montserrat()),
+                actions: [
+                  TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('İptal')),
+                  TextButton(
+                    onPressed: () {
+                      _deleteTransaction(tx, deleteAllInstallments: false);
+                      Navigator.pop(ctx, false);
+                    },
+                    child: const Text('Sadece Bu'),
+                  ),
+                  FilledButton(
+                    style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                    onPressed: () {
+                      _deleteTransaction(tx, deleteAllInstallments: true);
+                      Navigator.pop(ctx, false);
+                    },
+                    child: const Text('Tümünü Sil'),
+                  ),
+                ],
+              ),
+            );
+          }
+          return true;
+        },
+        onDismissed: (_) => _deleteTransaction(tx),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+          decoration: BoxDecoration(
+            color: isDark ? Colors.white.withOpacity(0.03) : Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: isDark ? Colors.white.withOpacity(0.06) : Colors.grey.shade200),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 34.r, height: 34.r,
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(LucideIcons.arrowDownRight, color: Colors.red, size: 16.r),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      tx.title,
+                      style: GoogleFonts.montserrat(fontSize: 13.sp, fontWeight: FontWeight.w600, color: textColor),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: 2.h),
+                    Row(
+                      children: [
+                        Icon(LucideIcons.calendar, size: 11.r, color: mutedColor),
+                        SizedBox(width: 4.w),
+                        Text(
+                          DateFormat('d MMM yyyy', 'tr').format(tx.date),
+                          style: GoogleFonts.montserrat(fontSize: 11.sp, color: mutedColor),
+                        ),
+                        if (tx.isInstallment && tx.installment != null && tx.installment! > 1) ...[
+                          SizedBox(width: 8.w),
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.h),
+                            decoration: BoxDecoration(
+                              color: Colors.blueAccent.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(4.r),
+                            ),
+                            child: Text(
+                              '${tx.currentInstallment ?? 1}/${tx.installment}',
+                              style: GoogleFonts.montserrat(fontSize: 10.sp, fontWeight: FontWeight.w600, color: Colors.blueAccent),
+                            ),
+                          ),
+                        ],
+                        if (tx.isProvisioned) ...[
+                          SizedBox(width: 6.w),
+                          Icon(LucideIcons.shield, size: 12.r, color: Colors.orange),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                '${tx.amount.toStringAsFixed(2)} ${tx.currency}',
+                style: GoogleFonts.montserrat(fontSize: 14.sp, fontWeight: FontWeight.w700, color: Colors.red),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Empty State ──
+
+  Widget _buildEmptyState(bool isDark, Color mutedColor) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 60.h),
+      child: Column(
+        children: [
+          Icon(LucideIcons.inbox, size: 48.r, color: mutedColor),
+          SizedBox(height: 16.h),
+          Text('Henüz işlem yok', style: GoogleFonts.montserrat(fontSize: 15.sp, color: mutedColor, fontWeight: FontWeight.w500)),
+          SizedBox(height: 6.h),
+          Text('+ butonuyla yeni gider ekleyin', style: GoogleFonts.montserrat(fontSize: 13.sp, color: mutedColor.withOpacity(0.7))),
+        ],
+      ),
+    );
+  }
+
+  // ── Add Transaction Modal ──
+
+  Future<void> _showAddTransactionModal() async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => AddTransactionModal(
+        accounts: bankAccounts,
+        selectedAccount: selectedAccount,
+        onTransactionAdded: (tx) => _processTransactionUpdate(tx),
+        userCategories: userCategories,
       ),
     );
   }

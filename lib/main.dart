@@ -2,11 +2,13 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moneyly/blocs/settings/settings_util.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'blocs/transaction/transaction_bloc.dart';
 import 'localization/localization.dart';
 import 'routes/routes.dart';
 
@@ -59,22 +61,30 @@ class _MyAppState extends State<MyApp> {
       builder: (context, themeMode, _) {
         return ScreenUtilInit(
           designSize: const Size(360, 780),
-          child: MaterialApp.router(
-            title: 'Isar Starter Project',
-            debugShowCheckedModeBanner: false,
-            localizationsDelegates: const [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
+          child: MultiBlocProvider( // WRAP WITH MultiBlocProvider
+            providers: [
+              BlocProvider<TransactionBloc>(
+                create: (context) => TransactionBloc(),
+              ),
+              // Add other BLoCs here if needed
             ],
-            supportedLocales: AppLocalizations.supportedLanguages
-                .map((e) => Locale(e, ""))
-                .toList(),
-            theme: ThemeData.light(),
-            themeMode: themeMode,
-            darkTheme: ThemeData.dark(),
-            routerConfig: _router,
+            child: MaterialApp.router(
+              title: 'Isar Starter Project',
+              debugShowCheckedModeBanner: false,
+              localizationsDelegates: const [
+                AppLocalizations.delegate,
+                GlobalMaterialLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+              ],
+              supportedLocales: AppLocalizations.supportedLanguages
+                  .map((e) => Locale(e, ""))
+                  .toList(),
+              theme: ThemeData.light(),
+              themeMode: themeMode,
+              darkTheme: ThemeData.dark(),
+              routerConfig: _router,
+            ),
           ),
         );
       },

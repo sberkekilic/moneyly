@@ -232,6 +232,7 @@ class _Page6State extends State<Page6> {
           ),
         ),
         title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(
@@ -246,7 +247,44 @@ class _Page6State extends State<Page6> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                Row( children: [ GlassmorphismContainer( borderColor: borderColor, blur: 5, borderRadius: 50, color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05), padding: EdgeInsets.all(4), child: IconButton( onPressed: () => context.push('/settings'), icon: Icon( Icons.settings, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87, size: 22.sp, ), ), ), SizedBox(width: 10.w), GlassmorphismContainer( borderColor: borderColor, blur: 5, borderRadius: 50, color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05), padding: EdgeInsets.all(4), child: IconButton( onPressed: () async { SharedPreferences prefs = await SharedPreferences.getInstance(); await prefs.clear(); Navigator.pushNamed(context, 'gelir-ekle'); }, icon: FaIcon( FontAwesomeIcons.circleUser, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87, size: 22.sp, ), ), ), ], ),
+                Row(
+                  children: [
+                    GlassmorphismContainer(
+                      borderColor: borderColor,
+                      blur: 5,
+                      borderRadius: 50,
+                      color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+                      padding: EdgeInsets.zero,
+                      child: IconButton(
+                        onPressed: () => context.push('/settings'),
+                        icon: Icon(
+                          Icons.settings,
+                          color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87,
+                          size: 16.sp),
+                      ),
+                    ),
+                    SizedBox(width: 10.w),
+                    GlassmorphismContainer(
+                      borderColor: borderColor,
+                      blur: 5,
+                      borderRadius: 50,
+                      color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+                      padding: EdgeInsets.zero,
+                      child: IconButton(
+                        onPressed: () async {
+                          SharedPreferences prefs = await SharedPreferences.getInstance();
+                          await prefs.clear();
+                          Navigator.pushNamed(context, 'gelir-ekle');
+                          },
+                        icon: FaIcon(
+                          FontAwesomeIcons.circleUser,
+                          color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87,
+                          size: 16.sp
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
             if (selectedAccount == null)

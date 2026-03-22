@@ -14,7 +14,11 @@ void main() {
     // Create a valid PageController for the test.
 
     // Build the app and pass the PageController.
-    await tester.pumpWidget(MyApp());
+    await tester.pumpWidget(MyApp(
+      savedThemeMode: ThemeMode.system,
+      initialLocation: "/",
+    ));
+
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);

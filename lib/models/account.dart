@@ -54,7 +54,13 @@ class Account {
     this.nextCutoffDate,
     this.previousDueDate,
     this.nextDueDate,
-  });
+  }) {
+    // ID'nin benzersiz olup olmadığını kontrol et (opsiyonel)
+    if (accountId == 0) {
+      // Eğer ID 0 ise, benzersiz bir ID oluştur
+      this.accountId = DateTime.now().millisecondsSinceEpoch;
+    }
+  }
 
   Map<String, dynamic> toJson() {
     final dateFormat = DateFormat('dd/MM/yyyy');
@@ -89,29 +95,59 @@ class Account {
   factory Account.fromJson(Map<String, dynamic> json) {
     final dateFormat = DateFormat('dd/MM/yyyy');
 
-    DateTime? parseDate(String? date) =>
-        date != null ? dateFormat.parse(date) : null;
+    DateTime? parseDate(dynamic date) {
+      if (date == null || date is! String) return null;
+      try {
+        return dateFormat.parse(date);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    double parseDouble(dynamic value) {
+      if (value == null) return 0.0;
+      if (value is double) return value;
+      if (value is int) return value.toDouble();
+      if (value is String) {
+        try {
+          return double.tryParse(value) ?? 0.0;
+        } catch (e) {
+          return 0.0;
+        }
+      }
+      return 0.0;
+    }
 
     return Account(
-      accountId: json['accountId'],
-      name: json['name'],
-      type: json['type'],
-      balance: (json['balance'] ?? 0.0).toDouble(),
+      accountId: json['accountId'] ?? 0,
+      name: json['name']?.toString() ?? '',
+      type: json['type']?.toString() ?? '',
+      balance: parseDouble(json['balance']),
       transactions: (json['transactions'] as List<dynamic>?)
-          ?.map((e) => Transaction.fromJson(e as Map<String, dynamic>))
+          ?.map((e) {
+        try {
+          return Transaction.fromJson(e as Map<String, dynamic>);
+        } catch (e) {
+          print('❌ Error parsing transaction: $e');
+          return null;
+        }
+      })
+          .where((t) => t != null)
+          .cast<Transaction>()
           .toList() ?? [],
       debts: json['debts'] ?? [],
-      currency: json['currency'] ?? '',
+      currency: json['currency']?.toString() ?? 'TRY',
       isDebit: json['isDebit'] ?? true,
-      creditLimit: (json['creditLimit'] ?? 0.0).toDouble(),
-      availableCredit: (json['availableCredit'] ?? 0.0).toDouble(),
-      remainingDebt: (json['remainingDebt'] ?? 0.0).toDouble(),
-      minPayment: (json['minPayment'] ?? 0.0).toDouble(),
-      remainingMinPayment: (json['remainingMinPayment'] ?? 0.0).toDouble(),
-      previousDebt: (json['previousDebt'] ?? 0.0).toDouble(),
-      totalDebt: (json['totalDebt'] ?? 0.0).toDouble(),
-      currentDebt: (json['currentDebt'] ?? 0.0).toDouble(),
-      cutoffDate: json['cutoffDate'] ?? 1,
+      creditLimit: parseDouble(json['creditLimit']),
+      availableCredit: parseDouble(json['availableCredit']),
+      remainingDebt: parseDouble(json['remainingDebt']),
+      minPayment: parseDouble(json['minPayment']),
+      remainingMinPayment: parseDouble(json['remainingMinPayment']),
+      previousDebt: parseDouble(json['previousDebt']),
+      totalDebt: parseDouble(json['totalDebt']),
+      currentDebt: parseDouble(json['currentDebt']),
+      cutoffDate: json['cutoffDate'] is int ? json['cutoffDate'] :
+      (json['cutoffDate'] is String ? int.tryParse(json['cutoffDate']) ?? 1 : 1),
       previousCutoffDate: parseDate(json['previousCutoffDate']),
       nextCutoffDate: parseDate(json['nextCutoffDate']),
       previousDueDate: parseDate(json['previousDueDate']),
@@ -226,6 +262,94 @@ class Account {
       total += tx.amount;
     }
     return total;
+  }
+
+  // Taksitli işlemlerin toplam borca etkisini hesapla
+  void updateDebtFromInstallments() {
+    if (type != 'credit_card') return;
+
+    DateTime now = DateTime.now();
+    updateCreditDates(referenceDate: now);
+
+    double totalInstallmentDebt = 0.0;
+    double currentInstallmentDebt = 0.0;
+    double previousInstallmentDebt = 0.0;
+
+    for (var transaction in transactions) {
+      if (transaction is Transaction &&
+          transaction.installment != null &&
+          transaction.installment! > 1) {
+
+        // Toplam borçtaki miktarı hesapla
+        double amountInTotalDebt = transaction.getAmountIncludedInTotalDebt(nextCutoffDate!);
+        totalInstallmentDebt += amountInTotalDebt;
+
+        // Geçerli dönem borcuna ekle (provizyon değilse)
+        if (!transaction.isProvisioned &&
+            transaction.hasInstallmentDueThisPeriod(previousCutoffDate!, nextCutoffDate!)) {
+          currentInstallmentDebt += transaction.installmentAmount;
+        }
+
+        // Önceki dönem borcuna ekle
+        if (transaction.date.isBefore(previousCutoffDate!)) {
+          previousInstallmentDebt += transaction.installmentAmount;
+        }
+      }
+    }
+
+    // Güncel borç hesaplama (provizyonsuz işlemler + bu dönem taksitleri)
+    double currentDebtSum = transactions
+        .where((t) => t is Transaction && !t.isProvisioned && (t.installment == null || t.installment! <= 1))
+        .fold(0.0, (sum, t) => sum + (t as Transaction).amount);
+
+    currentDebt = currentDebtSum + currentInstallmentDebt;
+
+    // Toplam borç güncelleme
+    totalDebt = (totalDebt ?? 0.0) + totalInstallmentDebt;
+
+    // Kalan limit güncelleme
+    if (creditLimit != null) {
+      availableCredit = creditLimit! - totalDebt!;
+    }
+
+    // Asgari ödeme hesapla
+    minPayment = calculateMinPayment();
+    remainingMinPayment = minPayment;
+  }
+
+  // Taksitli işlem ekleme yardımcı metodu
+  void addInstallmentTransaction(Transaction transaction, int installmentCount) {
+    if (installmentCount <= 1) {
+      transactions.add(transaction);
+      return;
+    }
+
+    // Taksitli işlem için toplam tutarı hesapla
+    double totalAmount = transaction.amount * installmentCount;
+
+    // Ana işlemi oluştur
+    Transaction mainTransaction = Transaction(
+      transactionId: transaction.transactionId,
+      date: transaction.date,
+      amount: transaction.amount, // İlk taksit tutarı
+      installment: installmentCount,
+      isFromInvoice: transaction.isFromInvoice,
+      currency: transaction.currency,
+      subcategory: transaction.subcategory,
+      category: transaction.category,
+      description: transaction.description,
+      title: "${transaction.title} (1/$installmentCount)",
+      isSurplus: transaction.isSurplus,
+      initialInstallmentDate: transaction.date,
+      isProvisioned: transaction.isProvisioned,
+      currentInstallment: 1,
+      totalAmount: totalAmount,
+    );
+
+    transactions.add(mainTransaction);
+
+    // Borçları güncelle
+    updateDebtFromInstallments();
   }
 }
 
